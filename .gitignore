@@ -1,0 +1,9 @@
+# python
+__pycache__/
+*.pyc
+
+# the gate runner's per-run state (logs, markers, the controls' throwaway repositories)
+verify/state/
+
+# round folders: plans, briefs, per-author ledgers, reports. Kept on disk, never committed.
+Data/

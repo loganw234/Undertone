@@ -1,0 +1,133 @@
+# Validation ledger
+
+Every run that established something, in the order it happened. **A figure here is a fact about the run that produced it**, on the date given, and is never updated to match a later measurement. A later run gets a later entry.
+
+Failures stay in, including the lead's own. A correction is a new entry that names the old one.
+
+This file is not a description of how the project works (see the README) and not a list of what is true now. It is the evidence those documents cite.
+
+---
+
+## 2026-11-21 - the literature survey (a judgement, not controlled)
+
+Logan asked for research into current work on FPGA machine learning with adaptable weights, for a small low-latency model on a U50 (his words are in [ROADMAP.md](ROADMAP.md)).
+
+### What ran
+
+Five research agents, each on one strand, then one agent that wrote the report from their notes. The lead read the finished report and none of the sources.
+
+- strands: OpenTPU and FPGA toolflows; the U50 platform and signal ingest; on-FPGA learning; real-time FPGA signal applications; faint-signal detection methods and datasets
+- tool calls the agents reported: 59, 75, 105, 90 and 87, then 27 for the report writer
+- outputs: [the report](../reports/Adaptive%20FPGA%20ML%20for%20signal%20detection.md) and five note files under `research_notes/`
+
+### What it does not prove
+
+**No planted-fault control was run on any of the six agents.** By the project's own method that makes the report an opinion with citations: a set of leads. The report marks its own weakest figures as snippet-only, secondary-table or PDF-extraction, and lists them near its end.
+
+### Contradicted already
+
+Put first because they are the findings that matter most:
+
+- The U50 brief assumed a Windows host. Logan, 2026-11-21: the card runs in a separate Linux machine with proven tooling.
+- The U50 brief assumed a QSFP28 network port as the only real-time input. Logan, 2026-11-21: his card has no network port.
+- Two of the survey's own notes disagreed on whether the U50 is discontinued; the report records which it followed and why.
+
+The report carries a correction note at its top for the first two.
+
+### The lead's slips
+
+- The lead's briefs for the survey stated the Windows workstation as the card's host without asking Logan where the card was. Two sections of the report were written for a setup that does not exist.
+
+---
+
+## 2026-11-21 - project setup: the front door, watched to fail
+
+Logan asked for the project to be set up in the fashion of HonestFramework and ParcelRound (his words are in [ROADMAP.md](ROADMAP.md)). This entry records the first runs of the gate runner and each way it was made to fail on purpose.
+
+### What changed
+
+New: `verify/run.sh` (adapted from HonestFramework's `templates/gate-runner.sh`), `tools/check_tree.py`, `Makefile`, `README.md`, `CLAUDE.md`, `docs/ROADMAP.md`, this file, `docs/studies/D0-rough-design.md`, `.gitignore`, `.gitattributes`. The repository was initialised with `git init -b main`. Nothing is committed.
+
+### Measured
+
+All on the Windows desktop, in Git Bash, under `python` 3.12.15. With no commit yet, every run id ends `-nocommit`.
+
+- `bash verify/run.sh`, run `20261121-064051-nocommit`: **VERDICT: FAIL**. `paths` reported 3 findings; `OK links: 17 relative links in 11 markdown files, 0 broken`; `OK claims: 27 register rows in 3 tables in 3 files under docs/, 0 unlabelled`; all three controls printed `CONTROL-DETECTED`.
+- `bash verify/run.sh` after the change under Findings, run `20261121-064156-nocommit`: **VERDICT: PASS**, passed 6, failed 0, skipped 0; `OK paths: 2636 lines in 16 committable files, 0 personal paths`.
+- `PYTHON=true bash verify/run.sh`, a checker that does nothing and exits 0, run `20261121-064212-nocommit`: passed 0, failed 6, rc=1. The three real stages failed with `rc=0` because no `OK` line was printed; the three controls each printed `NEGATIVE CONTROL DID NOT FAIL`.
+- `bash verify/run.sh --only nosuch`: refused, rc=2, naming the six stages.
+- `bash verify/run.sh --skip claims --require-all`: VERDICT: FAIL, rc=1. Without `--require-all`: `VERDICT: PASS, with 1 skipped by name above`, rc=0.
+- `python tools/check_tree.py links --root docs`: `REFUSED links: NOT-THE-TOPLEVEL`, rc=2.
+- `make verify`, run `20261121-064221-nocommit`: VERDICT: PASS.
+
+### Findings
+
+- **A spelling in the paths check failed too often to be a gate.** The first list included the session scratch folder's name as a bare word, carried over from another project's scan. Its first run flagged 3 lines, and all 3 were the survey naming an accelerator's memory of the same name: 3 false alarms, 0 real hits. It was removed, and the measurement is in `tools/check_tree.py`'s docstring. A real path to that folder still trips two other spellings.
+- **The lead's line-ending check was a detector that always fired.** `grep -c $'\r' <file>` inside `$( )` reported every line of every file, 229 for a 229-line script. Outside `$( )` the same grep gave 0 on a three-line LF-only file, and 3 inside. Python's count of CR bytes was 0 for every file, including one written fresh by the Write tool.
+
+### What this does not prove
+
+- The gate holds the documents' form: links resolve, no listed personal spelling appears, register rows carry a basis. It says nothing about whether a labelled claim is true, and no stage runs any part of the system, because there is none.
+- On the real tree only `paths` has been seen red, and that on false alarms. `links` and `claims` have gone red only on planted faults in throwaway repositories, and under the do-nothing checker.
+- Every run was on an uncommitted tree, so no commit id says what was tested.
+
+### The lead's slips
+
+- The lead read the broken line-ending count as "the Write tool writes CRLF", ran `sed -i` over ten files that did not need it, and wrote that false trap into CLAUDE.md. Caught when the count did not move after the fix; corrected before the verifier's snapshot was taken.
+- The lead copied a search spelling from another project without measuring it here (first finding above).
+
+### Not done, and why
+
+- No budgets: the whole run takes seconds. No CI: there is no remote.
+- No history scan for personal paths: there is no history yet. The check reads the working tree only, which its docstring states.
+
+---
+
+## 2026-11-21 - D0, the rough design: a verifier pass with planted faults, and one re-check
+
+Logan asked for a rough design to be drafted (his words are in [ROADMAP.md](ROADMAP.md)). Under the project's methods the lead's own work goes past a verifier before it comes to him. This entry records that pass. The round's folder is `Data/runs/2026-11-21-d0-design/`, kept on disk and not committed.
+
+### What ran
+
+- **VD0**, one verifier on Sonnet, on the brief `briefs/VD0.md`, against a frozen copy of the tree. It reports and fixes nothing. First pass: 46 tool calls and 11 min 23 s, as the harness reported. Filed at `reports/VD0.md`.
+- **Four planted faults.** The verifier's copy of D0 differed from the lead's draft in four rows (H3, D9, S3, S6): a misquoted source line, arithmetic that did not follow from its inputs, a number changed against the survey report, and a quantifier widened past the report's. VD0 was not told. The key was in no file until its report had come back; it is now `reports/VD0-key.md`.
+- **A re-check** of the lead's fixes, by the same verifier, on a second frozen copy with nothing planted: 18 tool calls and 4 min 23 s, as the harness reported. Filed at `reports/VD0-recheck.md`.
+
+### Measured
+
+- **Plants: 4 of 4 reported**, each from the cited source's own text or from recomputed arithmetic. Model: Sonnet. This rate belongs to that model, that brief and that tooling.
+- **First pass, beyond the plants.** Real wrong answers in the lead's draft: row S3 said "two small CNNs" where the report says "two CNNs", and dropped the "one false alarm per month" condition; row S6 called a replay buffer and a frozen fallback "best-supported" where the report gives them as its own inference, and said "long benchmarks" where the report has one. Other findings, each in the report: D8 held only for one configuration of the datapath, which the draft never named; eight gates were missing from section 9; the gate's checker let through fence, link-syntax, ignored-target, case and prefix-label faults outside its stated limits; `--resume` glued runs together across uncommitted edits; each control planted one shape, so three mutants of the checker kept their controls green; CLAUDE.md held two CR bytes.
+- **Re-check.** Every earlier wrong answer answered. "No regression (a) found." New, all marked (c): row D11 quoted the verifier's own simulation as agreeing "to within 0.003" where its figures give about 0.004; the comparison-rules gate had a control for half of what it holds; the runner printed "not selected -1 of 8" under `--require-all` with a skip; eight ways past the checks lay outside the docstring's limits; four new mutants kept their controls green, inside the docstring's limit but in classes it did not name.
+- **The gate after the lead's last changes**, `bash verify/run.sh`, run `20261121-071029-nocommit`, on the Windows desktop under `python` 3.12.15: **VERDICT: PASS**, passed 8 of 8. `OK links: 18 relative links in 11 markdown files`; `OK paths: 2890 lines in 16 committable files`; `OK claims: 29 register rows in 3 tables in 3 files under docs/`; `OK eol: 16 committable text files, 0 with a CR byte`; the four controls reported all 9, 9, 8 and 2 of their planted faults and nothing else.
+- **The gate made to fail, after the runner changed.** `PYTHON=true bash verify/run.sh`: passed 0, failed 8, VERDICT: FAIL, rc=1. `--skip claims --require-all`: passed 7, failed 1, skipped 1, "not selected 0 of 8", VERDICT: FAIL, rc=1. `--only links`: "VERDICT: PASS for the selected stages only: 7 of 8 stage(s) were NOT run". `--resume`: "REFUSED: --resume on a tree with no commit or with uncommitted changes (10 path(s))", rc=2. `--only nosuch`: refused, rc=2.
+
+### Changed after the re-check, and not seen by the verifier
+
+Stated plainly because the method sends the lead's fixes back to the verifier, and these did not go back:
+
+- D11 restated to "within 0.004", with the simulation's pulse, noise level and trial count.
+- A second control on the comparison-rules gate.
+- The runner counts unselected stages from the stages it selected.
+- `tools/check_tree.py`'s docstring now states the eight ways past the checks as limits, and names the classes in which no fault is planted. Its behaviour did not change.
+- The README's line about this ledger, D0's line about this entry, and the roadmap's round table.
+
+### What this does not prove
+
+- **That the design is right.** The verifier checked that each row says what its source says and that the arithmetic follows. Nothing is built, and no row about the design is MEASURED.
+- **That the survey is right.** SURVEY rows were checked against the survey report, not against the papers it cites.
+- **That the blinding held**, to anyone but the lead. With no commit history, nothing shows the key was absent when VD0 ran.
+- The simulation figures in row D11 come from a script in the verifier's scratch folder, not in this tree.
+
+### The lead's slips
+
+- Rows S3 and S6 carried wording from the survey's summary to the lead, not from the report they cite.
+- "With fixed coefficients this same datapath is the classical matched filter" was written without the configuration that makes it true. The verifier's simulation gave 0.206 against the formula's 0.284 with a rectifier in the path.
+- D0 said this pass "is recorded in VALIDATION.md" in two drafts before this entry existed.
+- A scripted edit left two CR bytes in CLAUDE.md, and no gate looked for them. The `eol` stage does now.
+- The lead filed both of the verifier's reports with some literal examples described in words, and first wrote that less had been changed than had. Each file's header now says what was done.
+
+### Not done, and why
+
+- **No second re-check.** The lead set one re-check pass before the draft goes to Logan. What changed after it is listed above.
+- **No cost in tokens processed.** The harness gave 193,714 tokens after the first pass and 245,312 after the second; what those figures count is not established here, and the lead's own cost was not measured.
+- **No commit.** The first commit waits for Logan's word.

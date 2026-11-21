@@ -1,0 +1,47 @@
+# Working on Undertone
+
+Short, and only things that are non-obvious. The README says what this project is; this says what will bite you.
+
+The project's first name was AOTPU. The folder on the lead's desktop and the round folder of 2026-11-21 still carry it.
+
+## Start here: one command answers "does it still hold?"
+
+    bash verify/run.sh           # every stage and its negative control; seconds
+    bash verify/run.sh --list    # the stages, with * on what would run
+    make verify                  # the same as the first line
+
+There is one size today, because the whole run takes seconds. **There is no cache.** A run id is timestamp + commit, each stage drops a marker, and `--resume` reruns only what has not passed in that run. `--resume` is refused on a tree with uncommitted changes, because nothing then says what the earlier stages ran on. A fresh invocation runs everything.
+
+A stage passes on the line only success prints (`OK <stage>: <count> ...`), not on its exit code. A control passes only when its check exits non-zero **and** its log carries `CONTROL-DETECTED`. Read the verdict line, then the log under `verify/state/<run id>/`. Under `--only` the verdict says how many stages were not run.
+
+`tools/check_tree.py`'s docstring states what each check cannot see. The `claims` check reads register tables under `docs/`; a claim in prose is not checked. Each control plants a fixed list of fault shapes; a check broken for an unplanted shape passes its control.
+
+## The authority
+
+The reference model **is the authority** (README, and D0 section 2). It is not written yet. Until it is, nothing about the system can be held against anything, so nothing about the system is claimed.
+
+Every figure in a design or plan sits in a claims register with a basis: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY or DECISION. An ESTIMATE or SURVEY figure drives no decision until it is measured.
+
+## The machines
+
+Read on 2026-11-21 from `<repos>/cft-fp256/CLAUDE.md`, which has the addresses. Logan allowed this project to use them that day (question 4 of D0): simulation in `cft2204`, builds on `amd-arc-box`, daytime card windows booked through the TimeSheet, and **only the lead touches the box and the card**.
+
+| name | what it is | card? |
+|---|---|---|
+| this desktop | Windows, where the lead works | no |
+| `cft2204` | a WSL distro **on this same desktop**; its threads and memory are shared with Windows | no |
+| `amd-arc-box` | a **separate physical Linux machine** | **yes, the U50** |
+
+"The Linux box" means `amd-arc-box`. The card has no network port: PCIe is the only data path. Other projects of the owner's use these machines, and cft-fp256 holds standing bookings on the card, so card time is booked through the TimeSheet (`<repos>/TimeSheet`).
+
+## Traps, each measured on 2026-11-21
+
+1. **Do not count line endings with grep in this desktop's Git Bash (bash 5.2.26).** `grep -c $'\r' <file>` inside `$( )` counted every line of a three-line LF-only file; outside `$( )` it gave 0 for that file and, the verifier found, 0 for a real CRLF file too. The lead read the first as "the Write tool writes CRLF"; that was false. The `eol` stage of `verify/run.sh` counts CR bytes itself. By hand: `python -c "import sys; print(open(sys.argv[1],'rb').read().count(bytes([13])))" <file>`. A file from the Write tool measured 0.
+2. **The local ParcelRound checkout is behind its remote.** Its `HEAD` is `8767e23` and `origin/main` is `f42242e`. Read the method without touching that tree: `git -C <repos>/ParcelRound show origin/main:METHOD.md`. The templates and `ADOPTION.md` are read the same way.
+3. **`iverilog` and `verilator` are not on this desktop's Git Bash PATH.** `which` finds neither. RTL simulation runs in `cft2204`.
+4. **`verify/run.sh` needs this to be a git repository.** The checks list committable files with git and refuse, by name, anywhere else. They also refuse a folder that is merely inside another repository.
+5. **An escape sequence written into a file through a script can arrive as the byte it names.** The lead's scripted rewrite of trap 1 left two real CR bytes in this file where the text was meant to show the escape. Nothing checked for CR then; the `eol` stage does now.
+
+## The discipline that matters most here
+
+A bit-identity pass is not evidence about sensitivity, and a sensitivity curve is not evidence that the fabric is correct. They have different authorities (D0 section 2). Say which one a result rests on.
