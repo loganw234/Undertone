@@ -131,3 +131,42 @@ Stated plainly because the method sends the lead's fixes back to the verifier, a
 - **No second re-check.** The lead set one re-check pass before the draft goes to Logan. What changed after it is listed above.
 - **No cost in tokens processed.** The harness gave 193,714 tokens after the first pass and 245,312 after the second; what those figures count is not established here, and the lead's own cost was not measured.
 - **No commit.** The first commit waits for Logan's word.
+
+---
+
+## 2026-11-21 - the first commit, the name, and the push
+
+Logan approved D0's six questions as recommended, allowed a remote and a push, and chose the name and the visibility in a question dialog. His words are in [ROADMAP.md](ROADMAP.md). This entry records what was committed and what the remote then held.
+
+### Decided, by Logan
+
+- The project is named Undertone, and its GitHub repository is public. The lead had recommended another name and a private repository; he chose otherwise on both.
+
+### Measured
+
+All on the Windows desktop, in Git Bash, under `python` 3.12.15.
+
+- `git add -A` staged 16 files, the same 16 the checks list as committable. `git diff --cached --name-status` showed 16 additions and nothing else.
+- Commit `0d282f13a56defb3d7d355fdec852e614e6d40c9`. Its message was scanned for the personal spellings: 0 hits in 15 lines.
+- `bash verify/run.sh` at that commit, with 0 uncommitted paths, run `20261121-074106-0d282f1`: **VERDICT: PASS**, passed 8 of 8. `OK links: 20 relative links in 11 markdown files`; `OK paths: 2973 lines in 16 committable files`; `OK claims: 29 register rows in 3 tables in 3 files under docs/`; `OK eol: 16 committable text files, 0 with a CR byte`; the controls reported all 9, 9, 8 and 2 planted faults and nothing else.
+- `bash verify/run.sh --resume` on that clean committed tree: passed 0, cached 8, VERDICT: PASS. This is the first time `--resume` ran where it is allowed; until now it had only been seen refusing.
+- Before publishing, the survey files were searched for long quotations: a pattern for quoted spans of more than 40 words matched 5 times, and all 5 were the report's own prose lying between two short quotations. Spans of 40 words or fewer were counted, not read.
+- `gh repo create loganw234/Undertone --public --source=. --remote=origin`, then `git push -u origin main`: rc=0.
+- `git ls-remote origin refs/heads/main` returned `0d282f13a56defb3d7d355fdec852e614e6d40c9`, equal to `git rev-parse HEAD`. `gh repo view` reported `PUBLIC`, default branch `main`.
+
+### What this does not prove
+
+- That anyone may use what is published. The repository has no licence file, so no right is granted to a reader. Whether to add one, and which, is Logan's.
+- That every quotation in the survey files is short. Only spans over 40 words were looked at.
+- Anything new about the design. Nothing changed in D0 but its status line, one limit restated after Logan's answer to question 4, and his answers at its end.
+
+### Notes
+
+- The commit carries the author identity configured in git on this desktop, the same address as cft-fp256's latest commit.
+- The local folder is still named AOTPU, and so is the round folder of 2026-11-21.
+- The lead noticed no slip of its own in this step.
+
+### Not done, and why
+
+- This entry is a second commit. Its own push is not recorded here, since an entry cannot record the push that carries it.
+- No licence, no CI, no branch protection: none was asked for.
