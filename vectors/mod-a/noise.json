@@ -1,0 +1,88 @@
+{
+ "what": "The noise generator's first frames and a digest of more, for the two runs the design named (seed and sigma per profile) before anything was run.",
+ "how": "Worked by tests/test_mod_a_reference.py, which imports nothing of model/: numpy uint64 words, a table rounded from a 50-digit decimal recomputation of the law, numpy's search. sha256_4096 is the SHA-256 of the canonical bytes of frames 0 to 4095: each sample two's complement, little-endian, in whole bytes, frame by frame, channel by channel.",
+ "runs": [
+  {
+   "profile": "s16x1",
+   "seed": 20261123,
+   "sigma_num": 1000,
+   "sigma_den": 1,
+   "first_frames": [
+    [
+     -1080
+    ],
+    [
+     -1181
+    ],
+    [
+     -231
+    ],
+    [
+     213
+    ],
+    [
+     172
+    ],
+    [
+     -933
+    ],
+    [
+     507
+    ],
+    [
+     -1043
+    ]
+   ],
+   "sha256_4096": "4e3ddd65ce4c6adecf6f9795d372c049a47f04b25ae7b7fa3f4ff5493154cd14"
+  },
+  {
+   "profile": "s24x3",
+   "seed": 20261124,
+   "sigma_num": 5000,
+   "sigma_den": 1,
+   "first_frames": [
+    [
+     -3389,
+     1419,
+     7517
+    ],
+    [
+     2058,
+     2595,
+     -5223
+    ],
+    [
+     -9052,
+     -7082,
+     1903
+    ],
+    [
+     4467,
+     2049,
+     2636
+    ],
+    [
+     -11299,
+     1771,
+     -7770
+    ],
+    [
+     -5778,
+     395,
+     3598
+    ],
+    [
+     -5658,
+     8489,
+     606
+    ],
+    [
+     -341,
+     -5532,
+     -1711
+    ]
+   ],
+   "sha256_4096": "8972a3cbefa551f6a963e57b0e37f68abb0a48b7a12e357e022cf3d7266bbd84"
+  }
+ ]
+}

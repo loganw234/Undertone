@@ -1,0 +1,20 @@
+{
+ "what": "Two small recordings and their bytes, worked by hand. A recording is a 56-byte header and a payload. Header, every integer little-endian: the 8 ASCII letters UNDTSTRM; version 1 in 2 bytes; sample bits in 2; channels in 2; a reserved 0 in 2; the frame count in 8; the SHA-256 of the payload in 32. Payload: frame by frame, channel by channel, each sample two's complement, little-endian, in its bits rounded up to whole bytes.",
+ "how": "Worked by hand, byte by byte, as each 'why' says. The SHA-256 field is not written here: the test computes it with hashlib over the hand-worked payload bytes, and places it between header_before_hash and payload.",
+ "cases": [
+  {
+   "profile": "s16x1",
+   "frames": [[1], [-2], [258]],
+   "why": "U N D T S T R M = 55 4e 44 54 53 54 52 4d; version 1 = 01 00; 16 bits = 10 00; 1 channel = 01 00; reserved 00 00; 3 frames = 03 then seven 00. Payload, 2 bytes a sample: 1 = 01 00; -2 = fe ff; 258 = 0x0102, low byte first = 02 01",
+   "header_before_hash": "554e44545354524d01001000010000000300000000000000",
+   "payload": "0100feff0201"
+  },
+  {
+   "profile": "s24x3",
+   "frames": [[1, -1, 65536], [-8388608, 8388607, 0]],
+   "why": "the same magic and version; 24 bits = 0x18 = 18 00; 3 channels = 03 00; reserved 00 00; 2 frames = 02 then seven 00. Payload, 3 bytes a sample: 1 = 01 00 00; -1 = ff ff ff; 65536 = 0x010000 = 00 00 01; -8388608 = 0x800000 = 00 00 80; 8388607 = 0x7fffff = ff ff 7f; 0 = 00 00 00",
+   "header_before_hash": "554e44545354524d01001800030000000200000000000000",
+   "payload": "010000ffffff000001000080ffff7f000000"
+  }
+ ]
+}

@@ -1,0 +1,50 @@
+{
+ "what": "What an injection adds: each sample of the pulse times amplitude_num / amplitude_den, rounded to the nearest integer, a tie to the even one. The pulse is e0 of spec/pulses/e0.toml.",
+ "how": "Worked by hand, sample by sample. 'whole' is all 64 samples of e0 at one amplitude. 'single' cases are one sample each, at other amplitudes, with the working in 'why'. 'range' is the largest and smallest sample a whole-number amplitude gives, against the 16-bit range -32768..32767.",
+ "whole": [
+  {
+   "amplitude_num": 1,
+   "amplitude_den": 2,
+   "why": "even samples halve exactly. Odd samples are ties and go to the even neighbour: 1/2 -> 0, 7/2 = 3.5 -> 4, 21/2 = 10.5 -> 10, 39/2 = 19.5 -> 20, 61/2 = 30.5 -> 30, 45/2 = 22.5 -> 22, -251/2 = -125.5 -> -126, -317/2 = -158.5 -> -158, -337/2 = -168.5 -> -168, -177/2 = -88.5 -> -88, 215/2 = 107.5 -> 108, 609/2 = 304.5 -> 304, 693/2 = 346.5 -> 346, -655/2 = -327.5 -> -328, -703/2 = -351.5 -> -352, 381/2 = 190.5 -> 190, 635/2 = 317.5 -> 318, -303/2 = -151.5 -> -152, -659/2 = -329.5 -> -330, -565/2 = -282.5 -> -282, 293/2 = 146.5 -> 146, 211/2 = 105.5 -> 106, 133/2 = 66.5 -> 66, -33/2 = -16.5 -> -16, -43/2 = -21.5 -> -22, -9/2 = -4.5 -> -4",
+   "added": [
+    0, 0, 4, 10, 20, 28, 30, 22,
+    0, -36, -81, -126, -158, -168, -146, -88,
+    0, 108, 216, 304, 353, 346, 280, 159,
+    0, -172, -328, -439, -485, -455, -352, -191,
+    0, 190, 348, 448, 475, 428, 318, 166,
+    0, -152, -265, -326, -330, -282, -199, -98,
+    0, 79, 129, 146, 136, 106, 66, 29,
+    0, -16, -22, -18, -11, -4, -1, 0
+   ]
+  }
+ ],
+ "single": [
+  {"sample": 1, "pulse_value": 1, "amplitude_num": -3, "amplitude_den": 2, "added": -2, "why": "-3/2 = -1.5, a tie: the even neighbour is -2"},
+  {"sample": 2, "pulse_value": 7, "amplitude_num": -3, "amplitude_den": 2, "added": -10, "why": "-21/2 = -10.5, a tie: -10 is even"},
+  {"sample": 3, "pulse_value": 21, "amplitude_num": -3, "amplitude_den": 2, "added": -32, "why": "-63/2 = -31.5, a tie: -32 is even"},
+  {"sample": 4, "pulse_value": 39, "amplitude_num": -3, "amplitude_den": 2, "added": -58, "why": "-117/2 = -58.5, a tie: -58 is even"},
+  {"sample": 11, "pulse_value": -251, "amplitude_num": -3, "amplitude_den": 2, "added": 376, "why": "753/2 = 376.5, a tie: 376 is even"},
+  {"sample": 12, "pulse_value": -317, "amplitude_num": -3, "amplitude_den": 2, "added": 476, "why": "951/2 = 475.5, a tie: 476 is even"},
+  {"sample": 5, "pulse_value": 56, "amplitude_num": -3, "amplitude_den": 2, "added": -84, "why": "-168/2 = -84 exactly"},
+  {"sample": 28, "pulse_value": -970, "amplitude_num": -3, "amplitude_den": 2, "added": 1455, "why": "2910/2 = 1455 exactly"},
+  {"sample": 1, "pulse_value": 1, "amplitude_num": 5, "amplitude_den": 3, "added": 2, "why": "5/3 = 1.667, nearest 2"},
+  {"sample": 2, "pulse_value": 7, "amplitude_num": 5, "amplitude_den": 3, "added": 12, "why": "35/3 = 11.667, nearest 12"},
+  {"sample": 3, "pulse_value": 21, "amplitude_num": 5, "amplitude_den": 3, "added": 35, "why": "105/3 = 35 exactly"},
+  {"sample": 9, "pulse_value": -72, "amplitude_num": 5, "amplitude_den": 3, "added": -120, "why": "-360/3 = -120 exactly"},
+  {"sample": 11, "pulse_value": -251, "amplitude_num": 5, "amplitude_den": 3, "added": -418, "why": "-1255/3 = -418.333, nearest -418"},
+  {"sample": 6, "pulse_value": 61, "amplitude_num": 5, "amplitude_den": 3, "added": 102, "why": "305/3 = 101.667, nearest 102"},
+  {"sample": 28, "pulse_value": -970, "amplitude_num": 5, "amplitude_den": 3, "added": -1617, "why": "-4850/3 = -1616.667, nearest -1617"},
+  {"sample": 36, "pulse_value": 950, "amplitude_num": 5, "amplitude_den": 3, "added": 1583, "why": "4750/3 = 1583.333, nearest 1583"},
+  {"sample": 62, "pulse_value": -2, "amplitude_num": 5, "amplitude_den": 3, "added": -3, "why": "-10/3 = -3.333, nearest -3"},
+  {"sample": 61, "pulse_value": -9, "amplitude_num": 5, "amplitude_den": 3, "added": -15, "why": "-45/3 = -15 exactly"},
+  {"sample": 28, "pulse_value": -970, "amplitude_num": 1, "amplitude_den": 1940, "added": 0, "why": "-970/1940 = -0.5, a tie: 0 is even"},
+  {"sample": 28, "pulse_value": -970, "amplitude_num": 3, "amplitude_den": 1940, "added": -2, "why": "-2910/1940 = -1.5, a tie: -2 is even"}
+ ],
+ "range": {
+  "why": "e0's largest sample is 950 (sample 36) and its smallest is -970 (sample 28). At 33/1: 950 * 33 = 31350 and -970 * 33 = -32010, both inside 16 bits. At 34/1: -970 * 34 = -32980, below -32768.",
+  "largest_sample": 950,
+  "smallest_sample": -970,
+  "fits_16_bits": {"amplitude_num": 33, "amplitude_den": 1, "largest_added": 31350, "smallest_added": -32010},
+  "leaves_16_bits": {"amplitude_num": 34, "amplitude_den": 1, "smallest_added": -32980}
+ }
+}

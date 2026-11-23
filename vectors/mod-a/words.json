@@ -1,0 +1,15 @@
+{
+ "what": "Two published known answers for SplitMix64, the word generator under the noise source.",
+ "how": "Not produced by this project. They are the answers the Rosetta Code task 'Pseudo-random numbers/Splitmix64' states: https://rosettacode.org/wiki/Pseudo-random_numbers/Splitmix64 , a page that says it was last edited on 6 November 2026, read on 2026-11-23. The limit of that read: it was made with a tool that hands back a small model's rendering of the page, not the page's bytes, and the reader had recalled all ten figures before asking. Both answers are also reproduced by tests/test_mod_a_reference.py with numpy's uint64 arithmetic, which imports nothing of model/.",
+ "first_words": {
+  "why": "the first five 64-bit words for the seed 1234567",
+  "seed": 1234567,
+  "words": [6457827717110365317, 3203168211198807973, 9817491932198370423, 4593380528125082431, 16408922859458223821]
+ },
+ "counts": {
+  "why": "for the seed 987654321, how many of the first 100,000 words fall in each fifth of the range: bin = floor(word * 5 / 2^64)",
+  "seed": 987654321,
+  "draws": 100000,
+  "counts": [20027, 19892, 20073, 19978, 20030]
+ }
+}
