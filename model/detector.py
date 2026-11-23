@@ -14,8 +14,9 @@ and x_c[m] = 0 for m < 0:
   3. pool          z_k[i] = sum over m = 0..P-1 of r_k[i - m], with r_k[m] = 0
                    for m < 0. A moving sum. Exact.
   4. head          a[i] = sum over k of h[k] * z_k[i]. Exact.
-  5. score         v[i] = floor(a[i] / 2^s): the one rounding in the datapath,
-                   toward minus infinity (an arithmetic shift right).
+  5. score         v[i] = floor(a[i] / 2^s): a rounding toward minus infinity
+                   (an arithmetic shift right). With no hidden layer it is the
+                   one rounding in the datapath; with one, step 4b is a second.
 
 The record's index is i, the index of the newest sample it used.
 
@@ -44,10 +45,10 @@ WIDTHS. Every stage value is reduced to the stage's declared width, two's
 complement, and a reduction that changes the value raises the sticky overflow
 flag. `widths()` derives the declared widths from the definition's maxima; for
 the filter, the rectifier, the pool and the head they are wide enough that the
-reduction never changes anything. The score is the one width that is a choice:
-the record's score field. When v[i] does not fit it, the field holds v[i]
-modulo 2^64 as two's complement, and the flag is set in that record and every
-later one.
+reduction never changes anything. With no hidden layer the score is the one
+width that is a choice: the record's score field. When v[i] does not fit it,
+the field holds v[i] modulo 2^64 as two's complement, and the flag is set in
+that record and every later one.
 
 `hidden_widths()` derives the hidden layer's three. The hidden value's width
 is the second choice, and it is the score field's width, so that today's head

@@ -80,7 +80,7 @@ On disk, blob version 1, every integer little-endian:
 
 `weights.Store` holds an active weight set, a shadow, and an epoch that starts at 0, or at a start epoch given at construction.
 
-- `write_shadow(blob)` replaces the whole shadow. The blob must have the running shape: profile, K, T, each filter's channels, rectifier, P and s.
+- `write_shadow(blob)` replaces the whole shadow. The blob must have the running shape: profile, K, T, each filter's channels, rectifier, P and s; and, where the head has a hidden layer, its unit count, its shift and what stands after it. A blob with a hidden layer and one without never have the same shape.
 - `commit(at)` schedules the swap **at output index `at`**: immediately before output `at` is computed, active and shadow exchange and the epoch rises by one. An index, and not "now", so that a replay swaps at the same sample. A commit for the next output is `commit(core.next_index)`.
 - **Which outputs use which weights.** Every output before `at` uses the old coefficients and the old head and carries the old epoch. Every output from `at` on uses the new coefficients and the new head, on the samples already in the delay lines, and carries the new epoch. No filter sum and no head sum mixes two sets.
 - **Which outputs mix.** The pool does. For `at` <= i <= `at` + P - 2, with `at` at least 1, the pooled sum holds rectified values made under the old coefficients and values made under the new. Those P - 1 outputs carry the new epoch **and the `settling` flag**. Their scores are still defined exactly and the fabric must match them. With P = 1, which includes the matched-filter configuration, no output mixes and the flag never rises.
