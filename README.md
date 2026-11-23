@@ -24,12 +24,17 @@ It does not exist yet. [D0](docs/studies/D0-rough-design.md), section 2, defines
 | | |
 |---|---|
 | [docs/studies/D0-rough-design.md](docs/studies/D0-rough-design.md) | The rough design, approved 2026-11-21. The owner's answers to its six questions close it. |
+| [docs/plans/R1-reference-model.md](docs/plans/R1-reference-model.md) | The plan for round 1, running from 2026-11-23. |
 | [docs/ROADMAP.md](docs/ROADMAP.md) | The owner's decisions in his words, the plan of record, and how rounds are held. |
 | [docs/VALIDATION.md](docs/VALIDATION.md) | The append-only ledger: what ran, when, and what it does and does not show. |
 | [CLAUDE.md](CLAUDE.md) | Notes for an agent working here: the front door and what has already bitten. |
 | [reports/](reports/Adaptive%20FPGA%20ML%20for%20signal%20detection.md) | The literature survey of 2026-11-21. Uncontrolled: read it as leads, not evidence. |
 | `research_notes/` | The notes behind that survey. |
 | `verify/run.sh`, `tools/check_tree.py` | The gate runner and its checks. |
+
+## Licence
+
+MIT. See [LICENSE](LICENSE).
 
 ## How the work is held
 

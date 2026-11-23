@@ -170,3 +170,52 @@ All on the Windows desktop, in Git Bash, under `python` 3.12.15.
 
 - This entry is a second commit. Its own push is not recorded here, since an entry cannot record the push that carries it.
 - No licence, no CI, no branch protection: none was asked for.
+
+---
+
+## 2026-11-23 - the plan for round 1: a verifier pass with planted faults, one re-check, and Logan's word
+
+Logan asked for the plan on 2026-11-21, and offered an idea for real data: seismic records labelled by public launch times. The lead drafted the plan that day, put it past a verifier, and Logan started the round on 2026-11-23. The plan of record is [plans/R1-reference-model.md](plans/R1-reference-model.md). The round's folder is `Data/runs/2026-11-21-r1-model/`, kept on disk and not committed.
+
+### What ran, on 2026-11-21
+
+- **Three web searches** on launches in seismic records. Their summaries are in [plans/R1-search-2026-11-21.md](plans/R1-search-2026-11-21.md). The lead opened none of the pages, so the plan's rows L1 to L5 and L7 are BELIEVED.
+- **VP1**, one verifier on Sonnet, against a frozen copy of the first draft: 14 tool calls and 4 min 27 s, as the harness reported. Its copy carried **five planted faults**; the key was in no file until its report was back.
+- **A re-check** by the same verifier on the second draft, with nothing planted: 3 tool calls and 1 min 23 s.
+- **A test escalation.** At its start VP1 sent the lead one message, as its brief asked.
+
+### Measured
+
+- **Plants: 5 of 5 reported**: a rerun contradicting a version, a recount contradicting a count, recomputed arithmetic, a row against its source file, and an owner's decision against the roadmap. Model: Sonnet.
+- **First pass, beyond the plants.** Two wrong answers of the lead's: a sentence saying each question had three parts when three did not, and a MEASURED row citing `git status -sb` for a commit id that command cannot print. Gaps, each in the report: an unowned `model/__init__.py`; a pulse definition and a quantising rule three pieces needed and none owned; controls that could pass while testing nothing; five ways the launch experiment could pass while showing nothing, beyond the lead's four; the plan redefining D0's stage E3 without saying so; seven of D0's gates with no stated home; and lines of the method's dispatch checklist the plan did not meet.
+- **Re-check.** Every earlier wrong answer fixed; "No regression of type (a) found." One new wrong answer: "Nobody publishes a station that recorded nothing", which the plan's own row L1 contradicts. Seven smaller gaps, among them a gate registry described two ways, one of which would have failed P0's own gate.
+- **The escalation channel works in one direction.** VP1's test message reached the lead while VP1 was still running, queued for the lead's next turn. The lead-to-running-agent direction has not been seen.
+- `bash verify/run.sh` on 2026-11-23, with these documents in the tree, on the branch `r1`: the run and its verdict are in the next entry, since this entry is part of what that run reads.
+
+### Decided, by Logan, on 2026-11-23
+
+- The round starts. His words are in [ROADMAP.md](ROADMAP.md) and close the plan.
+- The licence is MIT. The lead had recommended Apache-2.0 because cft-fp256 uses it; he explained that choice came from a contract there, and gave his test for this project: the easiest option for others to reuse the work.
+
+### Changed after the re-check, and not seen by the verifier
+
+The eight findings of the re-check were answered in a third draft, which is the plan of record. Those answers did not go back to VP1.
+
+### What this does not prove
+
+- **That launch signals are usable.** Nobody here has opened a page the searches summarise, or looked at a seismic record.
+- **That the plan's time boxes hold.** All are estimates.
+- **That the blinding held**, to anyone but the lead: the drafts were not committed, so no history shows the key was absent.
+
+### The lead's slips
+
+- In the D0 round's ledger the lead wrote, unchecked and unlabelled, that an agent has no way to message the lead while it runs. It has.
+- The first draft said a verifier's pass "is recorded in `reports/`" before any report existed: the same slip as in D0, a third time.
+- The first draft filed Logan's idea under "Logan's words" in the lead's paraphrase. The plan now quotes him.
+- The lead recommended Apache-2.0 by analogy with cft-fp256 without knowing why that project chose it.
+- The lead could not file VP1's reports from the agent's transcript, which was empty, and wrote them out from the completion notices.
+
+### Not done, and why
+
+- **No second re-check.** One was set before the plan went to Logan.
+- **No cost in tokens processed.** The harness gave 133,897 tokens after the first pass and 158,012 after the second; what those figures count is not established here.

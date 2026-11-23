@@ -5,7 +5,8 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 ## Where the project stands (2026-11-21)
 
 - **Design:** [D0, the rough design](studies/D0-rough-design.md), approved by Logan on 2026-11-21 with all six of its questions answered as recommended.
-- **Plan of record: none yet.** The next step is the lead's: a plan for the first round, built from D0's section 10, past a verifier, and then to Logan.
+- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. The round is running, on the branch `r1`.
+- **Licence:** MIT, by Logan's test of 2026-11-23: the easiest option for others to reuse the work.
 - **Built:** nothing of the system. The repository holds the survey, the draft, and the front door (`bash verify/run.sh`).
 - **Committed and pushed** under Logan's word of 2026-11-21 (question 6 of D0, and his leave to create a remote). The remote is the public repository `loganw234/Undertone` on GitHub.
 
@@ -59,6 +60,18 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 
 *The lead's reading:* the project is Undertone from this date. The lead had recommended another name and a private repository; he chose otherwise on both. The local folder keeps its old name until he renames it.
 
+**2026-11-21, asking for the plan, and on real data:**
+
+> Sure, draft the plan. One concept I had regarding 'training' is utilizing earthquake sensor data but correlating it with SpaceX (or any publicly available) launch times, we can utilize the sensor stations position in relation to the SpaceX site to have different 'levels' of signal to noise with known timestamps. It would also help prevent our fake data from being 'too fitted' for the purpose. I prefer to work with real data when able.
+
+*The lead's reading:* draft the plan for the first round. A proposal for the real-data stage: seismic records labelled by public launch times, with a station's distance from the launch site as the ladder of signal strength. A standing preference: real data where it can be had. The plan takes this up as a study parcel and as a question back to him; it changes nothing in D0 until he answers.
+
+**2026-11-23, starting round 1, and on the licence:**
+
+> Go ahead and begin your work, you may create bookings using TimeSheet if you need any resources. Regarding the license, would MIT be a better fit? Apache was chosen for cft-fp256 since part of that project is a contract and Apache suits that better, but here may be different. I prefer the easiest option for others to reutilize the work if they desire to.
+
+*The lead's reading:* the round starts, with the plan's questions 1 to 5 and 7 as recommended; bookings on the TimeSheet are allowed; the licence is MIT. The lead's fuller reading closes the plan of record. Because the word to push is read from "go ahead", the lead asks again before the push at the round's close.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
@@ -88,4 +101,5 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 
 | round | what | state |
 |---|---|---|
+| `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | running from 2026-11-23, on `r1` |
 | `2026-11-21-d0-design` | the rough design D0, a verifier pass over it and one re-check | the draft awaits Logan's answers; the record is in [VALIDATION.md](VALIDATION.md) |
