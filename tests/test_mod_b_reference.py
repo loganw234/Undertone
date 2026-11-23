@@ -1,8 +1,9 @@
 """The reference-model gate: the core's score records equal known answers, byte for byte.
 
 The known answers are vectors/mod-b/datapath.json and quantise.json, worked by hand, and the datapath's
-definition written out a second time in test_mod_b_support.py, which uses nothing of the model's modules
-and is itself held to the hand-worked vectors.
+definition written out a second time by `direct_scores` in test_mod_b_support.py. That function uses nothing of
+the model's modules and is itself held to the hand-worked vectors; the harness beside it in that file does
+import the model.
 
 Each control builds a model that is wrong in ONE place, as a subclass or a patched function made here,
 runs the SAME check, and asserts that the check names a miss. The last tests are the model's half of the
@@ -41,7 +42,7 @@ def independent_e0(gains):
     """The matched rows for e0 under per-channel gains, by integers and round half UP.
 
     Round half up equals round half to even when no value is an exact tie, and this asserts none is.
-    It imports nothing of the model.
+    This function uses nothing of the model. (The file it sits in imports the model, to test it.)
     """
     qmax = (1 << (C.COEFF_BITS - 1)) - 1
     values = [g * v for g in gains if g != 0 for v in PULSE]

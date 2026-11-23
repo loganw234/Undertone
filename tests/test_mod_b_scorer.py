@@ -30,9 +30,15 @@ def check_scorer(profile, scorer=Scorer, threshold_error=0):
         args = dict(case["scorer"])
         args["threshold"] += threshold_error
         s = scorer(profile, **args)
-        s.run(zip(frames, case["records"]))
+        completed = []
+        for frame, record in zip(frames, case["records"]):
+            s.feed(frame, record)
+            completed.append(len(s.events))            # the events complete before the next record is fed
+        s.close()
         want = case["expected"]
         for what, got, expected in (
+                ("completed after each record", completed, want["completed_after"]),
+                ("completed at close", len(s.events), want["completed_at_close"]),
                 ("counted", s.counted, want["counted"]), ("excluded", s.excluded, want["excluded"]),
                 ("crossings", s.crossings, want["crossings"]), ("overflow_at", s.overflow_at, want["overflow_at"]),
                 ("histogram", s.histogram(), {"below": want["histogram"]["below"], "bins": tuple(want["histogram"]["bins"]),
@@ -51,7 +57,9 @@ def check_scorer(profile, scorer=Scorer, threshold_error=0):
 def test_gate_scorer__crossings_events_and_histogram_equal_the_hand_worked_vector(profile):
     findings, n = check_scorer(profile)
     assert findings == []
-    assert n == 2
+    assert n == 3
+    posts = {case["scorer"]["post"] for case in S.vector("scorer.json")["cases"]}
+    assert 0 in posts and len(posts) == 3, "a case with no frame after the crossing, and two with some"
 
 
 def test_gate_scorer__the_vector_has_what_the_controls_need():
@@ -158,15 +166,15 @@ class CountsSettling(Scorer):
 @pytest.mark.parametrize("error", [1, -1])
 def test_control_scorer__a_threshold_off_by_one_is_caught(profile, error):
     findings, _n = check_scorer(profile, threshold_error=error)
-    assert what_differs(findings) == ["captured frames", "crossings", "event records"], findings
-    print("CONTROL scorer, threshold off by %+d, %s:" % (error, profile), findings[0])
+    assert what_differs(findings) == ["captured frames", "completed after each record", "crossings", "event records"], findings
+    print("CONTROL scorer, threshold off by %+d, %s:" % (error, profile), [f for f in findings if ": crossings is " in f][0])
 
 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_control_scorer__a_compare_that_is_at_or_above_is_caught(profile):
     findings, _n = check_scorer(profile, scorer=AtOrAbove)
-    assert what_differs(findings) == ["captured frames", "crossings", "event records"], findings
-    print("CONTROL scorer, at-or-above, %s:" % profile, findings[0])
+    assert what_differs(findings) == ["captured frames", "completed after each record", "crossings", "event records"], findings
+    print("CONTROL scorer, at-or-above, %s:" % profile, [f for f in findings if ": crossings is " in f][0])
 
 
 @pytest.mark.parametrize("profile", PROFILES)
@@ -174,7 +182,7 @@ def test_control_scorer__a_compare_that_is_at_or_above_is_caught(profile):
 def test_control_scorer__a_histogram_that_drops_its_last_bin_is_caught(profile, broken):
     findings, _n = check_scorer(profile, scorer=broken)
     named = [f for f in findings if ": histogram is " in f]
-    assert len(named) == len(findings) == 2, "both cases have a score in the last bin, and nothing but the histogram differs"
+    assert len(named) == len(findings) == 3, "each case has a score in the last bin, and nothing but the histogram differs"
     assert what_differs(findings) == ["histogram"]
     print("CONTROL scorer, %s, %s:" % (broken.__name__, profile), named[0])
 
@@ -182,8 +190,9 @@ def test_control_scorer__a_histogram_that_drops_its_last_bin_is_caught(profile, 
 @pytest.mark.parametrize("profile", PROFILES)
 def test_control_scorer__a_scorer_that_counts_a_settling_record_is_caught(profile):
     findings, _n = check_scorer(profile, scorer=CountsSettling)
-    assert what_differs(findings) == ["captured frames", "counted", "crossings", "event records", "excluded", "histogram"],         "the settling record's score is above the threshold: counted, it adds a crossing and hides the event after it"
-    print("CONTROL scorer, counts a settling record, %s:" % profile, findings[0])
+    assert what_differs(findings) == ["captured frames", "completed after each record", "completed at close", "counted",
+                                      "crossings", "event records", "excluded", "histogram"],         "the settling record's score is above the threshold: counted, it adds a crossing and hides the event after it"
+    print("CONTROL scorer, counts a settling record, %s:" % profile, [f for f in findings if ": counted is " in f][0])
 
 
 @pytest.mark.parametrize("profile", PROFILES)
@@ -199,3 +208,35 @@ def test_gate_scorer__the_flag_is_reported_where_it_first_rose_even_on_a_record_
     assert s.overflow_at == 1, "index 1 is left out of the counts, and it is still where the run became a marked run"
     assert (s.counted, s.excluded, s.crossings, [e["index"] for e in s.events]) == (3, 1, 2, [2])
     assert s.closed
+
+
+class DeliversAPostOfZeroLate(Scorer):
+    """An event that wants no later frame is held back, and delivered when the next record is fed or at close."""
+
+    _held = None
+
+    def _release(self):
+        if self._held:
+            self.events.append(self._held[0])
+            self.captures.append(self._held[1])
+            self._held = None
+
+    def feed(self, frame, record):
+        self._release()
+        before = len(self.events)
+        super().feed(frame, record)
+        if self.post == 0 and len(self.events) > before:
+            self._held = (self.events.pop(), self.captures.pop())
+
+    def close(self):
+        self._release()
+        super().close()
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_control_scorer__a_scorer_that_delivers_a_post_of_zero_event_late_is_caught(profile):
+    """The event's record and frames are right and it arrives one record late: only the count after each record sees it."""
+    findings, _n = check_scorer(profile, scorer=DeliversAPostOfZeroLate)
+    assert what_differs(findings, case="a-post-of-zero") == ["completed after each record"], findings
+    assert len(findings) == 1, "the two cases with a post above zero are untouched"
+    print("CONTROL scorer, a post of zero delivered late, %s:" % profile, findings[0])

@@ -1,7 +1,7 @@
 {
   "what": "The scorer on small streams of score records: crossings, events with their captured frames, and the histogram. Every expected value was worked BY HAND from the definition in model/scorer.py's docstring; the working is in each case's 'worked' lines. The score records are written here by hand too: the scorer is fed them directly, so nothing here depends on the detector core.",
   "definition": "A record with the settling flag (flags bit 0) is left out of every count. A counted record is above when score > threshold, strictly. An event is captured at each counted record that is above and whose predecessor was not above or not counted. Its pre is min(configured pre, index); its post is the configured post, or fewer if the stream ends. The histogram has hist_bins bins of width 2^hist_shift from hist_lo; a score under hist_lo counts in below, one past the last bin in above.",
-  "format": "frames gives, for each profile, frame i for i = 0..; in s24x3 the three channels differ. events[n].frames lists the INDEXES of the frames captured, oldest first. overflow_at is the index of the first record carrying the overflow flag (flags bit 1, value 2), or null.",
+  "format": "frames gives, for each profile, frame i for i = 0..; in s24x3 the three channels differ. events[n].frames lists the INDEXES of the frames captured, oldest first. overflow_at is the index of the first record carrying the overflow flag (flags bit 1, value 2), or null. completed_after[i] is the number of events that are complete once record i has been fed and before the next is; completed_at_close is the number once the stream is closed.",
   "cases": [
     {
       "name": "crossings-events-histogram",
@@ -32,10 +32,12 @@
         "bins of width 4 from 0: bin 0 holds 0..3, bin 1 holds 4..7, bin 2 holds 8..11, bin 3 holds 12..15",
         "5 -> bin 1;  10 -> bin 2;  11 -> bin 2;  12 -> bin 3;  -1 -> below;  15 -> bin 3;  16 -> above;  3 -> bin 0;  14 -> bin 3",
         "bins 1, 1, 2, 3; below 1; above 1; and 1 + 1 + 2 + 3 + 1 + 1 = 9, the counted records",
-        "the overflow flag is first seen at index 8"
+        "the overflow flag is first seen at index 8",
+        "complete: the event at 2 once frame 3 is fed; the event at 5 once frame 6 is; the event at 7 once frame 8 is; the event at 9 only at close. So 0, 0, 0, 1, 1, 1, 2, 2, 3, 3 and then 4"
       ],
       "expected": {
         "counted": 9, "excluded": 1, "crossings": 5, "overflow_at": 8,
+        "completed_after": [0, 0, 0, 1, 1, 1, 2, 2, 3, 3], "completed_at_close": 4,
         "histogram": {"below": 1, "bins": [1, 1, 2, 3], "above": 1},
         "events": [
           {"record": {"index": 2, "epoch": 0, "score": 11, "pre": 2, "post": 1}, "frames": [0, 1, 2, 3]},
@@ -65,14 +67,52 @@
         "event at 2: index 1 was not above; pre min(3, 2) = 2 (frames 0, 1); one frame is left, so post 1 (frame 3)",
         "bins of width 1 from -2: bin 0 holds -2, bin 1 holds -1, bin 2 holds 0",
         "1 -> above;  0 -> bin 2;  5 -> above;  -2 -> bin 0",
-        "bins 1, 0, 1; below 0; above 2; 4 counted"
+        "bins 1, 0, 1; below 0; above 2; 4 counted",
+        "complete: the event at 0 once frame 2 is fed; the event at 2 only at close. So 0, 0, 1, 1 and then 2"
       ],
       "expected": {
         "counted": 4, "excluded": 0, "crossings": 2, "overflow_at": null,
+        "completed_after": [0, 0, 1, 1], "completed_at_close": 2,
         "histogram": {"below": 0, "bins": [1, 0, 1], "above": 2},
         "events": [
           {"record": {"index": 0, "epoch": 4, "score": 1, "pre": 0, "post": 2}, "frames": [0, 1, 2]},
           {"record": {"index": 2, "epoch": 4, "score": 5, "pre": 2, "post": 1}, "frames": [0, 1, 2, 3]}
+        ]
+      }
+    },
+    {
+      "name": "a-post-of-zero",
+      "why": "With no frame wanted after the crossing, an event is complete the moment its own record is fed: its captured frames end with the crossing's frame, its post is 0, and it is in the list before the next record arrives. A scorer that held it open would add later frames to it, or deliver it late.",
+      "scorer": {"threshold": 3, "pre": 1, "post": 0, "hist_lo": 0, "hist_shift": 1, "hist_bins": 4},
+      "frames": {
+        "s16x1": [[11], [12], [13], [14], [15], [16]],
+        "s24x3": [[11, -21, 31], [12, -22, 32], [13, -23, 33], [14, -24, 34], [15, -25, 35], [16, -26, 36]]
+      },
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 4},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 5},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 2},
+        {"index": 3, "epoch": 0, "flags": 0, "score": 9},
+        {"index": 4, "epoch": 0, "flags": 0, "score": 1},
+        {"index": 5, "epoch": 0, "flags": 0, "score": 7}
+      ],
+      "worked": [
+        "above (score > 3): index 0 (4), 1 (5), 3 (9), 5 (7): 4 crossings",
+        "events: index 0 (no predecessor); not index 1 (index 0 was above); index 3 (index 2 was not); index 5 (index 4 was not)",
+        "event at 0: pre min(1, 0) = 0, post 0: frame 0 alone. At 3: frame 2 | 3. At 5: frame 4 | 5",
+        "complete at once, each on its own record: 1, 1, 1, 2, 2, 3 and then 3 at close",
+        "bins of width 2 from 0: bin 0 holds 0..1, bin 1 holds 2..3, bin 2 holds 4..5, bin 3 holds 6..7",
+        "4 -> bin 2;  5 -> bin 2;  2 -> bin 1;  9 -> above;  1 -> bin 0;  7 -> bin 3",
+        "bins 1, 1, 2, 1; below 0; above 1; 6 counted"
+      ],
+      "expected": {
+        "counted": 6, "excluded": 0, "crossings": 4, "overflow_at": null,
+        "completed_after": [1, 1, 1, 2, 2, 3], "completed_at_close": 3,
+        "histogram": {"below": 0, "bins": [1, 1, 2, 1], "above": 1},
+        "events": [
+          {"record": {"index": 0, "epoch": 0, "score": 4, "pre": 0, "post": 0}, "frames": [0]},
+          {"record": {"index": 3, "epoch": 0, "score": 9, "pre": 1, "post": 0}, "frames": [2, 3]},
+          {"record": {"index": 5, "epoch": 0, "score": 7, "pre": 1, "post": 0}, "frames": [4, 5]}
         ]
       }
     }

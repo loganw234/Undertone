@@ -370,6 +370,7 @@ def test_gate_refusal__the_order_of_checks_is_the_documented_one(profile):
     damaged = S.forge(profile, **good, reserved=1, magic=b"XXXXXXXX")
     assert name_of(lambda: weights.unpack(damaged[:-1] + bytes([damaged[-1] ^ 1]))) == "BLOB_HASH"      # hash before magic
     assert name_of(lambda: weights.unpack(damaged)) == "BLOB_FORMAT"                                      # magic before reserved
+    assert name_of(lambda: weights.unpack(S.forge(profile, **good, magic=b"XXXXXXXX", name=b"nope"))) == "BLOB_FORMAT"
     assert name_of(lambda: weights.unpack(S.forge(profile, **good, reserved=1, name=b"nope"))) == "PROFILE_UNKNOWN"
     assert name_of(lambda: weights.unpack(S.forge(profile, **good, reserved=1, nfilters=0))) == "RESERVED_BITS"
     assert name_of(lambda: weights.unpack(S.forge(profile, **good, nfilters=0, ntaps=0))) == "SHAPE_FILTERS"
@@ -377,6 +378,8 @@ def test_gate_refusal__the_order_of_checks_is_the_documented_one(profile):
     assert name_of(lambda: weights.unpack(S.forge(profile, **dict(good, rectifier=9, score_shift=99)))) == "SHAPE_RECTIFIER"
     assert name_of(lambda: weights.unpack(S.forge(profile, **dict(good, score_shift=99, pool=0)))) == "SHAPE_SHIFT"
     assert name_of(lambda: weights.unpack(S.forge(profile, **dict(good, pool=0), masks=[0]))) == "SHAPE_POOL"
+    assert name_of(lambda: weights.unpack(S.forge(profile, **dict(good, pool=0), nfilters=C.MAX_FILTERS))) == "SHAPE_POOL"
+    assert name_of(lambda: weights.unpack(S.forge(profile, **good, nfilters=C.MAX_FILTERS, masks=[0]))) == "BLOB_FORMAT"   # the masks' length before a mask
     assert name_of(lambda: weights.unpack(S.forge(profile, **good, masks=[0], extra=bytes(4)))) == "SHAPE_CHANNEL"
     assert name_of(lambda: weights.unpack(S.forge(profile, **dict(good, head=(1 << 20,)), extra=bytes(4)))) == "BLOB_FORMAT"
     assert name_of(lambda: weights.pack("nope", **dict(good, filters=[]))) == "PROFILE_UNKNOWN"
@@ -387,6 +390,17 @@ def test_gate_refusal__the_order_of_checks_is_the_documented_one(profile):
     assert name_of(lambda: weights.pack(profile, **dict(good, rectifier=9, score_shift=99))) == "SHAPE_RECTIFIER"
     assert name_of(lambda: weights.pack(profile, **dict(good, score_shift=99, pool=0))) == "SHAPE_SHIFT"
     assert name_of(lambda: weights.pack(profile, **dict(good, pool=0, head=(1 << 20,)))) == "SHAPE_POOL"
+
+    if last > 0:                                             # SHAPE_ROWS's place, where a filter can have more than one row
+        whole = {c: (1, 2) for c in range(last + 1)}
+        over = [whole] * (C.MAX_ROWS // (last + 1) + 1)
+        assert sum(len(f) for f in over) > C.MAX_ROWS and len(over) < C.MAX_FILTERS
+        many = dict(good, filters=over, head=(1,) * len(over))
+        assert name_of(lambda: weights.pack(profile, **dict(many, filters=over + [{last + 1: (1, 2)}]))) == "SHAPE_CHANNEL"
+        assert name_of(lambda: weights.pack(profile, **dict(many, filters=[{c: () for c in whole}] * len(over)))) == "SHAPE_ROWS"
+        seven = dict(many, filters=over + [whole], head=(1,) * (len(over) + 1))
+        assert name_of(lambda: weights.unpack(S.forge(profile, **seven, masks=[(1 << (last + 1)) - 1] * len(over) + [0]))) == "SHAPE_CHANNEL"
+        assert name_of(lambda: weights.unpack(S.forge(profile, **many, extra=bytes(4)))) == "SHAPE_ROWS"
 
     core = Core(weights.pack(profile, **good), epoch=(1 << 32) - 1)
     core.step(tuple(range(last + 1)))
