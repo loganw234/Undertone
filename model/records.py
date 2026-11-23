@@ -16,9 +16,12 @@ sequence of another. Bit-identity between two producers of records is the
 equality of the digest AND of the count, never of a rounded or thresholded
 view of the records.
 
-Two outcomes only: the answer, or a `Refusal` with a declared name. A kind
-that is not one of the three is refused as RECORD_KIND whatever its type,
-and before anything else is looked at.
+For a kind and for a record there are two outcomes only: the answer, or a
+`Refusal` with a declared name. A kind that is not one of the three is refused
+as RECORD_KIND whatever its type, and before anything else is looked at. A
+record that does not fit is refused by `check`, by `pack` and by `digest`
+alike. What `digest` is handed must be something Python can iterate: a caller
+who passes a number gets Python's own TypeError, not a refusal.
 """
 import hashlib
 

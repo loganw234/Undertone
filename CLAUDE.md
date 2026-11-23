@@ -47,6 +47,8 @@ Read on 2026-11-21 from `<repos>/cft-fp256/CLAUDE.md`, which has the addresses. 
 5. **An escape sequence written into a file through a script can arrive as the byte it names.** The lead's scripted rewrite of trap 1 left two real CR bytes in this file where the text was meant to show the escape. Nothing checked for CR then; the `eol` stage does now.
 6. **The Agent tool's worktree isolation refuses here** (2026-11-23): "Cannot create agent worktree: not in a git repository". The lead makes each worktree by hand, `git worktree add Data/worktrees/<parcel> -b parcel/<parcel> <commit>`, and **an agent's shell starts in the lead's checkout, not in its worktree**. A brief names the worktree's absolute path and says to work only there.
 
+7. **A patch passed to Python through a shell heredoc can lose a level of backslashes, and a `\\uXXXX` escape typed through the Write tool can arrive as the invisible character it names.** Parcel LCH reported both on 2026-11-23; the first is how two CR bytes reached this file on 2026-11-21. Put a script in a file, and look at what was written. The `eol` stage sees a CR byte; it does not see other invisible characters.
+
 ## The discipline that matters most here
 
 A bit-identity pass is not evidence about sensitivity, and a sensitivity curve is not evidence that the fabric is correct. They have different authorities (D0 section 2). Say which one a result rests on.

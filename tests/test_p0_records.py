@@ -86,6 +86,16 @@ def test_p0_digests_of_different_kinds_never_meet_even_when_their_bytes_do():
     assert records.digest("score", []) == (expected_digest("score", []), 0)
 
 
+def test_p0_digest_refuses_a_record_that_does_not_fit_wherever_it_sits():
+    good = one_valid("score")
+    for bad, name in (({"index": -1, "epoch": 0, "flags": 0, "score": 0}, "RECORD_FIELD"),
+                      ({"index": 0, "epoch": 0, "flags": 4, "score": 0}, "RESERVED_BITS")):
+        for sequence in ([bad], [good, bad], [good, good, bad]):
+            with pytest.raises(Refusal) as e:
+                records.digest("score", sequence)
+            assert e.value.name == name
+
+
 def every_field_bound():
     out = []
     for kind in sorted(C.RECORDS):

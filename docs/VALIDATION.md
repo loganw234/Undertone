@@ -219,3 +219,60 @@ The eight findings of the re-check were answered in a third draft, which is the 
 
 - **No second re-check.** One was set before the plan went to Logan.
 - **No cost in tokens processed.** The harness gave 133,897 tokens after the first pass and 158,012 after the second; what those figures count is not established here.
+
+---
+
+## 2026-11-23 - round 1, P0: the one definition, the skeleton, four build stages, and three verifier passes
+
+Round 1 started on Logan's word of 2026-11-23. P0 is the lead's piece: what every parcel of the round stands on. The plan is [plans/R1-reference-model.md](plans/R1-reference-model.md); the round's folder is `Data/runs/2026-11-21-r1-model/`, kept on disk and not committed. Everything below is on the branch `r1`, which is local: nothing has been pushed since `d13281f`.
+
+### What changed
+
+- `spec/undertone.toml`, the one definition, with `tools/gen_spec.py` generating `spec/constants.py` and refusing a definition it does not understand; the reference pulse as integer data.
+- The skeletons of `model/` and `stats/`: `model/refusal.py`, `model/stream.py`, `model/records.py`.
+- `tests/gates.toml`, the gate registry; `vectors/p0/`, hand-worked vectors with a checksum list (`tools/gen_sums.py`).
+- Four build stages in `verify/run.sh`, each with a negative control: `generated`, `model-tests`, `independence`, `registry` (`tools/check_build.py`). The runner also names and counts a test skipped inside a passing stage, records whether a run's tree was clean, and refuses to resume a run that began on a dirty one.
+- A root `conftest.py`; the MIT licence; the live documents.
+
+### What ran
+
+- **VP0**, one verifier on Sonnet, three passes: P0 as first committed, with **four planted faults** in its clone (33 tool calls, 12 min 28 s, as the harness reported); a re-check of the lead's fixes (26 tool calls, 10 min 23 s); a second re-check scoped to `model/records.py` (10 tool calls, 3 min 58 s). Its first two reports are filed verbatim from its transcript, under the round's `reports/`.
+- Each agent of the round sent the lead a test message at its start, and each arrived.
+
+### Measured
+
+- **Plants: 4 of 4 reported**, each by a fault or a mutant the verifier built and ran. Model: Sonnet.
+- **First pass, beyond the plants: seven wrong answers of the lead's.** `--resume --require-all` hid a skipped test; `--resume` carried a pass from a tree with uncommitted changes onto a clean one; a module in a folder with no `__init__.py` was never imported by the independence check; the generator accepted a lower-case refusal name, did not refuse unknown keys its docstring said it refused, and ended in a traceback on a missing or mistyped value; `profile([])` raised a TypeError where a refusal belongs. And no test frame had different values in different channels, so a check of one channel alone would have passed.
+- **Second pass.** All eleven earlier defects answered, no regression, and **three new wrong answers, all in `model/records.py`**, which the lead had written after the first pass: an unhashable kind raised a TypeError; `digest` did not check its kind for an empty sequence; the tests could not see a range check limited to one kind or a digest that skipped its first record. It also showed four truth records and three event records sharing one digest.
+- **Third pass.** "No (a) regression and no (b) wrong answer." 24 mutants of `model/records.py` against the tests: every one that changes behaviour for a real input fails them.
+- **The gate**, `bash verify/run.sh`, on the Windows desktop under `python` 3.12.15, each on a clean tree at the commit named:
+  - `e32d183`, P0 as first committed: VERDICT: PASS, 16 of 16; `OK model-tests: 14 tests ran`. Under a do-nothing checker, `PYTHON=true`: passed 0, failed 16.
+  - `1217faa`, after the first pass's fixes: VERDICT: PASS, 16 of 16.
+  - `60aa75b`, after the second pass's fixes: VERDICT: PASS, 16 of 16; `OK model-tests: 93 tests ran, 0 failed, 0 errored, 0 skipped`; the four build controls reported all 3, 3, 3 and 5 of their planted faults and nothing else.
+- **Each new stage watched to fail on a fault its own control does not plant**, eight cases, before the first commit: a definition edited with its copy left alone; a flag bit used twice; a vector added and not listed; a test file that cannot be imported; a cross-import two packages deep; a stage row naming a control that does not exist; a test claiming a gate with no separator. A skipped test passed, named.
+- **`--resume` in a throwaway clone at `156504d`:** it resumed a run that began on a clean tree; it refused one that began on a dirty tree, with "did not begin on a clean tree"; a fresh run on that tree gave VERDICT: FAIL; under `--require-all` a resumed run with a skipped test gave VERDICT: FAIL; on a dirty tree it refused.
+- **The lead's Agent tool refused worktree isolation** at the first dispatch: "Cannot create agent worktree: not in a git repository". The plan's row P3 is false here. Worktrees are made by hand under `Data/worktrees/`.
+
+### Changed after the last pass, and not seen by the verifier
+
+One sentence of `model/records.py`'s docstring, restated to what the code does when handed something that cannot be iterated; one test added, that `digest` refuses a record that does not fit wherever it sits; one trap added to CLAUDE.md; this entry. No behaviour changed.
+
+### What this does not prove
+
+- **That the definition says what the design means**, beyond the three figures a test pins to D0's rows D1 to D3. The record widths, the flag bits and the pulse are the lead's choices; D0 gives none of them.
+- **That a control catches a fault it does not plant.** The verifier's mutants show which do not, and `tools/check_build.py` states that limit.
+- **Anything about the model.** There is no detector, no generator and no injector yet.
+- **That the blinding held**, to anyone but the lead: the planted clone had no remote and no reflog, and the key was in no file until the report was back, but nothing a later reader can check shows it.
+
+### The lead's slips
+
+- **A commit on a red gate.** `156504d` was made while one control was red: the lead's command ran the gate and committed without testing its verdict. `1217faa` fixes the control. The lead now commits only inside a test of the verdict line.
+- **A false sentence in the round's ledger**: that each fault the verifier got past a check was now planted in that check's control. Four were not. Corrected there by an appended entry.
+- **New code between passes.** `model/records.py` was written after the first pass and sent to the re-check as a fix. It was new work, and it held three wrong answers.
+- **A test whose own anchor was wrong** turned the gate red once; the gate caught it before any commit.
+- **A boundary crossed, disclosed:** P0 creates `stats/__init__.py`, which the plan's file table gives to STAT.
+
+### Not done, and why
+
+- **No push.** `r1` is local. `main` moves, and is pushed, at the round's close, and the lead asks Logan first.
+- **No cost in tokens processed.** The harness gave 200,919, 276,877 and 300,778 tokens after the verifier's three passes; what those figures count is not established here.
