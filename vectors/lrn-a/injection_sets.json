@@ -1,0 +1,25 @@
+{
+  "what": "The injection set of every part of stage E1, fixed and hashed before any run: comparison rule 1 of the design D0, section 8.",
+  "how_worked": "By a script that imports hashlib and struct and nothing of this project, run on 2026-11-23 at 14:08:39 by the clock, before learn/ or E1's script existed; the seven digests were appended to the round's ledger at that time. The same arithmetic is written again in tests/test_lrn_a_e1.py (independent_digest), which the gate runs against this file and against model.records.digest.",
+  "a_set": "Its truth records in order. The training trials first, record i at index 64 + 128 * i for i below N. Then the test trials, record i at index B + 64 + 128 * i, with B = 128 * N + 64 * calibration_scores. Every record: pulse_id 0, amplitude 1/1.",
+  "a_record": "18 bytes, little-endian: index as 8 unsigned, pulse_id as 2 unsigned, amplitude_num as 4 signed, amplitude_den as 4 unsigned.",
+  "a_digest": "SHA-256 over the ASCII bytes of 'undertone-records', one zero byte, the ASCII bytes of 'truth', one zero byte, then every record's 18 bytes.",
+  "first_record_by_hand": "Index 64 is hex 40, so 40 00 00 00 00 00 00 00; pulse 0 is 00 00; numerator 1 is 01 00 00 00; denominator 1 is 01 00 00 00.",
+  "first_record_hex": "400000000000000000000100000001000000",
+  "sets": {
+    "short": {"truth_records_trained_on": 1024, "calibration_scores": 8000, "test_trials": 4000, "records": 5024, "last_index": 1155008,
+              "sha256": "bbebca07efc525c5add32a916d553f01342df399d279ca81edada267bc6bf335"},
+    "full-0": {"truth_records_trained_on": 16, "calibration_scores": 200000, "test_trials": 100000, "records": 100016, "last_index": 25601984,
+               "sha256": "54a444dccc4a394069978ed98d25272163dce598c68879b75fc294f81ad4bca9"},
+    "full-1": {"truth_records_trained_on": 64, "calibration_scores": 200000, "test_trials": 100000, "records": 100064, "last_index": 25608128,
+               "sha256": "5781128df5658f413addd583cbd151292f86324f3db9c45786c4838425813cb5"},
+    "full-2": {"truth_records_trained_on": 256, "calibration_scores": 200000, "test_trials": 100000, "records": 100256, "last_index": 25632704,
+               "sha256": "b805f099e0e1ea82f87d36d213528b2b27d583b9f7fb14f5fbc740179f4610c9"},
+    "full-3": {"truth_records_trained_on": 1024, "calibration_scores": 200000, "test_trials": 100000, "records": 101024, "last_index": 25731008,
+               "sha256": "3e3a8ead5edee3b52b06bef5741cbdc35ad0486aa945b7a2da830ae51aeb398f"},
+    "full-4": {"truth_records_trained_on": 4096, "calibration_scores": 200000, "test_trials": 100000, "records": 104096, "last_index": 26124224,
+               "sha256": "decb47cc321a8edea2e92d5f2376513c6d792bcbc8f36adfd4903e35e617bbb0"},
+    "full-5": {"truth_records_trained_on": 16384, "calibration_scores": 200000, "test_trials": 100000, "records": 116384, "last_index": 27697088,
+               "sha256": "14242cb143963575d55e587d186e31a21257f1a4aae19a021dcee4c1d4185bf7"}
+  }
+}

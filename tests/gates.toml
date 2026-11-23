@@ -82,3 +82,12 @@ kind = "pytest"
 name = "truth-isolation"
 d0 = "truth isolation"
 kind = "pytest"
+
+# LRN-A: the comparison rules of D0's section 8, held on stage E1 in software (tests/test_lrn_a_e1.py).
+# A run on an injection set that is not the committed one, a figure read from frames the learner trained
+# on, a threshold kept across a weight change, a comparison at an equal threshold, and a report of a model
+# that is not the named one are each refused. docs/model/lrn-a.md has the limits.
+[[gate]]
+name = "comparison-rules"
+d0 = "comparison rules"
+kind = "pytest"
