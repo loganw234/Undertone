@@ -34,8 +34,8 @@ It holds Icarus Verilog and cocotb, pinned, and a C compiler. It holds no Verila
 | stage | what it holds | its control plants |
 |---|---|---|
 | `rtl-image` | the image this tree describes exists, and holds Icarus Verilog and every pip package at the pinned version | a tree whose Dockerfile changed, and one that lost its package list: each must be refused by name |
-| `rtl-spec` | Icarus Verilog reads every number of the package, and gcc every number of the header, as the Python copy holds it | a number changed in each copy, and a name missing from the header |
-| `rtl-benches` | every bench passes under each of its profiles, and every mutant of the RTL fails as named | a bench with a wrong expectation, and a bench whose simulator exits with code 0 before any test |
+| `rtl-spec` | Icarus Verilog reads every number of the package, and gcc every number of the header, as the Python copy holds it | in each copy, one number changed of each kind (a bound, a width, a record field's lowest bit, a refusal code, a register's offset, the hash); and a name missing from the header |
+| `rtl-benches` | every bench passes under each of its profiles, and every mutant of the RTL fails as named | a bench with a wrong expectation; a bench whose simulator exits with code 0 before any test; an identity test that compares nothing; and a mutant named for a reason that is not its own |
 
 **A run of the first size says on its verdict line that the rtl stages were not run.** The bare line `== VERDICT: PASS` is printed only when every stage ran.
 
@@ -61,7 +61,7 @@ The controls on the model side are tests in the bench: `compare` is handed a mod
 
 ## The filter of one tap
 
-`rtl/p0/onetap.sv` is the model's core at one setting: one filter of one tap reading every channel, a pool of 1, one head weight. It is not part of the detector and has no weight store, no swap and no refusal. Its bench holds it against the model on random configurations and on every combination of extremes, under both profiles, and its six mutants are the faults the harness was required to see: a coefficient bit, a logical shift for an arithmetic one, an index that starts at one, a flag bit, a design that stops putting records out, and a design one clock late.
+`rtl/p0/onetap.sv` is the model's core at one setting: one filter of one tap reading every channel, a pool of 1, one head weight. It is not part of the detector and has no weight store, no swap and no refusal. Its bench holds it against the model on twelve random configurations and on thirty-two configurations of extremes, under both profiles: the coefficient, the head weight, the rectifier, the shift and the epoch each at both ends, with the channels' coefficients alternating between the two extremes, which is not every combination across the channels. Its seven mutants are the faults the harness was required to see: a coefficient bit, a logical shift for an arithmetic one, an index that starts at one, a flag bit, a design that stops putting records out, a design that puts out one too many, and a design one clock late.
 
 ## The register map, as far as it goes
 
@@ -73,11 +73,12 @@ The definition has the register map's frame (`[bus]`), a read-only block of iden
 2. **The harness does not configure the design.** A bench that loads the same wrong weights into the RTL and the model passes.
 3. **The harness does not check latency.** It reports it; a bench that states one asserts on it. The mutant `one-clock-late` shows both halves: the identity tests pass on it, and the latency test fails.
 4. **No back-pressure, no stalled output, one clock.** The contract has none of them.
-5. **A mutant shows the bench sees that fault.** Six are planted in the filter of one tap. A seventh kind is not shown.
+5. **A mutant shows the bench sees that fault.** Seven are planted in the filter of one tap. An eighth kind is not shown, and a verifier built one that passes: **an index counter of eight bits**. No run of this bench is longer than 200 frames, so the index field's bits above the eighth are never driven, and a design whose index wraps at 256 is identical on every record compared. A bench for the detector core must run past its counter's widths, or preset them.
 6. **The evidence is written from inside the simulator**, by the harness, beside the bench. The stage reads it; it cannot tell a line the harness wrote from one a bench wrote for itself.
 7. **`rtl-spec` holds the two copies against the Python copy**, which `generated` holds against the definition. It does not know whether RTL or a C program uses a constant rightly.
 8. **The base image's own packages are not pinned**: Python, the C compiler and the system libraries are what its archive served on the day of the build. `rtl-image` prints what it finds.
-9. **The register map is not whole**, as above.
+9. **The register map is not whole**, as above. And one of its conventions is held by nothing yet: a value wider than a word takes consecutive words, its lowest bits at the lowest offset. The definition says so in a comment. The first bench that reads `spec_hash` back, eight words, is what will hold it.
+10. **The controls do not cover the whole judge.** `ctl-rtl-benches` plants four of the judge's findings; the others are held by tests in the gate's first size. `tools/check_rtl.py` lists which.
 
 ## Register
 
@@ -87,8 +88,8 @@ The definition has the register map's frame (`[bus]`), a read-only block of iden
 | R2 | The package and the header carry 172 values, the definition's hash among them, and Icarus Verilog and gcc each read every one as `spec/constants.py` holds it | MEASURED | `python tools/check_rtl.py rtl-spec --root . --state <a folder>`, 2026-11-23: its OK line | that command |
 | R3 | Under both profiles the filter of one tap put out 8,960 score records equal to the model's, byte for byte, over the two identity tests; twelve tests passed in the two runs | MEASURED | `python tools/check_rtl.py rtl-benches --root . --state <a folder>`, 2026-11-23: its OK line | that command |
 | R4 | 8,960 is 2 x 12 x 200 for the random test, and 32 x 5 and 32 x 125 for the extremes under one channel and three | COMPUTED | `rtl/tb/bench_p0_onetap.py`: twelve configurations of 200 frames; 32 configurations over every frame of five values a channel. 4,800 + 160 + 4,000 | arithmetic |
-| R5 | Each of the six mutants failed the tests it names, for the kind it names, under both profiles: twelve mutant runs | MEASURED | the same command as R3: "12 mutant run(s) each failed as named" | that command |
-| R6 | The three controls each reported every planted fault and nothing else: 2, 4 and 8 | MEASURED | `python tools/check_rtl.py control <kind> --root . --scratch <a folder>` for each kind, 2026-11-23: each CONTROL-DETECTED line | those commands |
+| R5 | Each of the seven mutants failed the tests it names, for the kind it names, under both profiles: fourteen mutant runs | MEASURED | the same command as R3: "14 mutant run(s) each failed as named" | that command |
+| R6 | The three controls each reported every planted fault and nothing else: 2, 14 and 12 | MEASURED | `python tools/check_rtl.py control <kind> --root . --scratch <a folder>` for each kind, 2026-11-23: each CONTROL-DETECTED line | those commands |
 | R7 | The image is 389 MB | MEASURED | `docker images undertone-sim`, 2026-11-23: the size it prints for the tag `python tools/sim_image.py tag` gives | that command |
 | R8 | The first image built stopped every run before any build with "Unable to find libpython", and adding the package `libpython3.12t64` cured it | MEASURED | the runner's output on the first image, and `find_libpython` before and after installing the package in a throwaway container, 2026-11-23 | a build without that line |
 | R9 | The sibling project's kernel presents an AXI4-Lite slave of 32-bit words under 12 address bits, with the kernel's control at 0x00 and its own registers from 0x10 | READ | `<repos>/cft-fp256/docs/ARCHITECTURE.md`, the table under "CSR map"; the 12-bit address in that project's place-and-route harness | those files |

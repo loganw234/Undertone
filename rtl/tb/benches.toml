@@ -21,8 +21,9 @@
 #              the file exactly once when its turn comes: a mutant that no
 #              longer applies fails the stage
 #   must_fail  the tests that must fail on the copy
-#   kind       WORD or COUNT: the harness must have left a MISMATCH of that
-#              kind for each of those tests. Empty: the failure alone is asked
+#   kind       WORD, COUNT or UNKNOWN-BITS: the harness must have left a
+#              MISMATCH of that kind for each of those tests. Empty: the
+#              failure alone is asked
 #
 # A mutant shows that the bench sees THAT fault. It says nothing of others.
 
@@ -70,6 +71,20 @@ kind = "WORD"
 name = "stops-after-four"
 file = "rtl/p0/onetap.sv"
 edits = [["out_valid <= in_valid;", "out_valid <= in_valid && (index < 4);"]]
+must_fail = ["bit_identity_random", "bit_identity_extremes"]
+kind = "COUNT"
+
+# The other direction: a design that puts out one record too many. Four idle clocks after its last
+# frame it repeats its last record. Between frames the bench leaves at most two idle clocks, so this
+# fires once, after the stream's end, and every word before it is right.
+[[bench.mutant]]
+name = "one-too-many"
+file = "rtl/p0/onetap.sv"
+edits = [
+    ["    logic        [SCORE_INDEX_BITS-1:0] index;", "    logic        [SCORE_INDEX_BITS-1:0] index;\n    logic [2:0] idle;"],
+    ["out_valid  <= 1'b0;", "out_valid  <= 1'b0; idle <= 3'd7;"],
+    ["out_valid <= in_valid;", "out_valid <= in_valid || (idle == 3'd3); idle <= in_valid ? 3'd0 : ((idle == 3'd7) ? 3'd7 : idle + 3'd1);"],
+]
 must_fail = ["bit_identity_random", "bit_identity_extremes"]
 kind = "COUNT"
 

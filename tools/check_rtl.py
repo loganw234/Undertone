@@ -38,24 +38,49 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                files changed, or lost one, is refused by name; the comparison
                of versions has no control.
   rtl-spec     reads the integers and the definition's hash. It takes the
-               names from the two copies with a pattern for each, and a
-               declaration either pattern does not read is a finding; it does
-               not know whether the RTL or a C program USES a constant
-               correctly. What it holds the copies against is the Python copy,
-               which the `generated` stage holds against the definition.
+               names from the two copies with a pattern for each. A line of
+               the package that says `localparam`, `parameter` or `define, and
+               a line of the header that says #define, is a finding when its
+               pattern does not read it. A number declared any other way (an
+               enum or a const in the header, a typedef in the package) is
+               NOT looked for: the copies are generated, and the `generated`
+               stage holds their text. It does not know whether the RTL or a
+               C program USES a constant correctly. What it holds the copies
+               against is the Python copy, which the `generated` stage holds
+               against the definition.
   rtl-benches  a bench's own content. It counts tests and records and reads
                verdicts; it does not read what a test asserts, so a bench that
                compares the wrong streams, or loads the same wrong weights
                into the RTL and the model, passes. The identity tests are the
                ones the manifest names: a comparison the manifest does not
                name is not required to leave evidence. A mutant shows the
-               bench sees that one fault. The evidence file is written by
+               bench sees that one fault, and its run holds only the tests it
+               must fail: what the mutant does to any other test is not
+               looked at. A mutant's kind is one of the harness's three, WORD,
+               COUNT or UNKNOWN-BITS, or empty. The evidence file is written by
                code running inside the simulator, beside the bench: a bench
                could write its own lines. Tests are found by the decorator
                `@cocotb.test`, written that way; one made some other way
                (a test factory) is not in the list this check requires, and
                shows as UNKNOWN-TEST when the results carry it.
-  control      plants the faults listed in plants() and no others.
+  control      plants the faults listed in plants() and no others. The
+               benches' control cuts its copy's manifest down to the
+               foundation's own bench, p0-onetap, and plants there: it shows
+               that the stage reads a wrong expectation and a run with no
+               results as findings, on that bench. It runs no other bench,
+               so it says nothing about any other bench's own tests.
+               Of the judge's findings the benches' control plants four:
+               a failed test, a run with no results, an identity test that
+               left no evidence, and a mutant that failed for another reason.
+               The rest (a mutant that survived, a test not run, an unknown
+               test, evidence whose digests disagree) are held by the tests
+               in tests/test_p0_rtl_gate.py, in the gate's first size, and by
+               no control: a verifier disabled the judge's evidence checks and
+               this control, as it then was, still printed its line.
+               The rtl-spec control plants one changed number of each kind in
+               each copy: a bound, a width, a record field's lowest bit, a
+               refusal code, a register's offset and the hash; and a name
+               missing from the header.
 """
 import argparse
 import ast
@@ -76,7 +101,7 @@ from check_tree import Refusal  # noqa: E402
 
 MANIFEST = "rtl/tb/benches.toml"
 NAME = re.compile(r"[a-z][a-z0-9-]*\Z")
-KINDS_OF_MISMATCH = ("WORD", "COUNT", "")
+KINDS_OF_MISMATCH = ("WORD", "COUNT", "UNKNOWN-BITS", "")
 
 
 def constants(root):
@@ -162,14 +187,14 @@ def declared(root):
                 sv.append(m.group(1))
             elif SV_HASH.match(line):
                 sv.append("SPEC_SHA256")
-            elif "localparam" in line or "parameter" in line.split("//")[0]:
+            elif "localparam" in line or "parameter" in line.split("//")[0] or "`define" in line.split("//")[0]:
                 findings.append(("spec/undertone_pkg.sv line %d" % n, "a declaration this check cannot read: %r" % line.strip()))
     with open(os.path.join(root, "spec", "undertone.h"), encoding="utf-8") as f:
         for n, line in enumerate(f, 1):
             m = C_DEFINE.match(line)
             if m:
                 c.append(m.group(1))
-            elif line.startswith("#define") and not C_GUARD.match(line.rstrip()):
+            elif line.lstrip().startswith("#") and "define" in line and not C_GUARD.match(line.rstrip()):
                 findings.append(("spec/undertone.h line %d" % n, "a definition this check cannot read: %r" % line.strip()))
     for label, names in (("spec/undertone_pkg.sv", sv), ("spec/undertone.h", c)):
         for name in sorted(set(n for n in names if names.count(n) > 1)):
@@ -323,7 +348,7 @@ def manifest(root):
                 bad("%s: mutant %s must fail %s, and the module has no such test"
                     % (b["name"], m["name"], sorted(set(m["must_fail"]) - set(b["tests"])) or "nothing"))
             if m["kind"] not in KINDS_OF_MISMATCH:
-                bad("%s: mutant %s: kind is WORD, COUNT or empty" % (b["name"], m["name"]))
+                bad("%s: mutant %s: kind is WORD, COUNT, UNKNOWN-BITS or empty" % (b["name"], m["name"]))
     return benches
 
 
@@ -497,11 +522,19 @@ def plants(kind, root, scratch):
         a = copy_tree(root, scratch, "a")
         # The package and the header each changed in one number, consistently with nothing; and the header short of
         # one name. `generated` would see the text; this check must see the numbers.
-        edit(a, "spec/undertone_pkg.sv", "localparam int MAX_TAPS = ", "localparam int MAX_TAPS = 1 + ")
+        want = set()
+        for name in ("MAX_TAPS", "COEFF_BITS", "SCORE_SCORE_LSB", "REFUSAL_SWAP_PENDING", "REG_CAP_TAPS_OFFSET"):
+            edit(a, "spec/undertone_pkg.sv", "localparam int %s = " % name, "localparam int %s = 4 + " % name)
+            want.add("spec/undertone_pkg.sv %s" % name)
+        edit(a, "spec/undertone_pkg.sv", "SPEC_SHA256 = 256'h", "SPEC_SHA256 = 256'h1 + 256'h")
         edit(a, "spec/undertone.h", "#define UNDERTONE_COEFF_MIN (", "#define UNDERTONE_COEFF_MIN -(")
+        for name in ("SCORE_RECORD_BITS", "TRUTH_AMPLITUDE_NUM_LSB", "REFUSAL_BLOB_HASH", "REG_ID_OFFSET"):
+            edit(a, "spec/undertone.h", "#define UNDERTONE_%s " % name, "#define UNDERTONE_%s 4 + " % name)
+            want.add("spec/undertone.h %s" % name)
+        edit(a, "spec/undertone.h", "#define UNDERTONE_SPEC_SHA256 \"", "#define UNDERTONE_SPEC_SHA256 \"0")
         edit(a, "spec/undertone.h", "#define UNDERTONE_FLAG_OVERFLOW_BIT ", "#define UNDERTONE_PLANTED_OTHER_NAME ")
-        return [(a, {"spec/undertone_pkg.sv MAX_TAPS", "spec/undertone.h COEFF_MIN",
-                     "spec/undertone.h FLAG_OVERFLOW_BIT", "spec/undertone.h PLANTED_OTHER_NAME"})]
+        return [(a, want | {"spec/undertone_pkg.sv SPEC_SHA256", "spec/undertone.h SPEC_SHA256", "spec/undertone.h COEFF_MIN",
+                            "spec/undertone.h FLAG_OVERFLOW_BIT", "spec/undertone.h PLANTED_OTHER_NAME"})]
     if kind == "rtl-benches":
         a = copy_tree(root, scratch, "a")
         # The plants are written for the foundation's own bench, by name: its module has BASE, one_run and
@@ -510,6 +543,14 @@ def plants(kind, root, scratch):
         if not named or len(named[0]["profiles"]) < 2:
             raise Refusal("PLANT-DOES-NOT-APPLY: there is no bench p0-onetap under two profiles")
         bench = named[0]
+        # The copy's manifest keeps that bench alone: everything from the second top-level [[bench]] on is cut.
+        with open(os.path.join(a, MANIFEST), encoding="utf-8", newline="") as f:
+            lines = f.read().split("\n")
+        starts = [i for i, line in enumerate(lines) if line.strip() == "[[bench]]"]
+        if not starts or manifest(root)[0]["name"] != "p0-onetap":
+            raise Refusal("PLANT-DOES-NOT-APPLY: p0-onetap is not the manifest's first bench")
+        if len(starts) > 1:
+            write(a, MANIFEST, "\n".join(lines[:starts[1]]).rstrip("\n") + "\n")
         first, second = bench["profiles"][0], bench["profiles"][1]
         module = "rtl/tb/%s.py" % bench["module"]
         # Under the second profile the simulator exits, with exit code 0, before any test: no results file.
@@ -521,7 +562,18 @@ def plants(kind, root, scratch):
                          "    coef, head, rectifier, shift, epoch = BASE\n"
                          "    await one_run(dut, BASE, control_frames(), \"planted_wrong_expectation\", \"head one less\",\n"
                          "                  model_config=(coef, head - 1, rectifier, shift, epoch))\n", "a")
-        want = {"%s.%s planted_wrong_expectation" % (bench["name"], first), "%s.%s" % (bench["name"], second)}
+        # An identity test that compares nothing: the manifest now names one that leaves no evidence.
+        edit(a, MANIFEST, 'identity = ["bit_identity_random", "bit_identity_extremes"]',
+             'identity = ["bit_identity_random", "bit_identity_extremes", "control_nothing_compared"]')
+        # And a mutant asked to fail for a reason that is not its own: the design that stops is named WORD.
+        edit(a, MANIFEST, 'edits = [["out_valid <= in_valid;", "out_valid <= in_valid && (index < 4);"]]\n'
+                          'must_fail = ["bit_identity_random", "bit_identity_extremes"]\nkind = "COUNT"',
+             'edits = [["out_valid <= in_valid;", "out_valid <= in_valid && (index < 4);"]]\n'
+             'must_fail = ["bit_identity_random", "bit_identity_extremes"]\nkind = "WORD"')
+        want = {"%s.%s planted_wrong_expectation" % (bench["name"], first), "%s.%s" % (bench["name"], second),
+                "%s.%s control_nothing_compared" % (bench["name"], first),
+                "%s.%s.mutant.stops-after-four bit_identity_random" % (bench["name"], first),
+                "%s.%s.mutant.stops-after-four bit_identity_extremes" % (bench["name"], first)}
         want |= set("%s.%s.mutant.%s" % (bench["name"], second, m["name"]) for m in bench["mutant"])
         return [(a, want)]
     raise Refusal("no control for %s" % kind)

@@ -803,3 +803,68 @@ Logan approved round 2's plan with one change: "Approved with recommendations ex
 - **Two figures were written into `docs/rtl/README.md` before they were measured**: the count of generated values, written as 127, and the image's size from an earlier build. Both were measured and corrected before the commit: 172, and 389 MB.
 - **A docstring promised a stage that did not exist yet.** `tools/gen_spec.py` named `rtl-spec` while the tree had no such stage; the sentence was taken out of commit `dcc1f51` and put back with the stage.
 - **One of the lead's thirty-seven faults changed nothing**, and was counted as a survivor until its text was read.
+
+## 2026-11-23 - round 2: the first passes of two verifiers, and a WSL shell the lead's tests had been starting
+
+The foundation for RTL and parcel HEAD's hidden layer each went to a verifier on a sealed clone, on Opus, with a sixty-minute box. This entry is what each first pass found and what the lead changed in the foundation in answer. **Neither piece is READY yet**: each verifier used under eight minutes of its hour and listed what it did not do, and a second pass on each follows. Nothing is pushed.
+
+### What ran
+
+- **VP0**, on the foundation: 13:12:05 to 13:19:37 by its own clock; 55 tool calls in 502 seconds, as the harness reported. Twelve items in its brief.
+- **VHEAD**, on parcel HEAD's commit: 13:15:52 to 13:22:43 by its own clock; 39 tool calls in 464 seconds. Eleven items.
+- Each clone held **six faults the lead planted**, in files its tip commit already changes, with no remote, no reflog, and the tip before the faults not in it; each passed its gate before it was handed over.
+
+### Measured
+
+- **Plants: 6 of 6, and 6 of 6.** Each verifier reported every planted fault as a wrong answer, with the smallest case that shows it.
+- **Before planting in HEAD's clone the lead tried ten faults against HEAD's own tests.** Nine were caught, each by four tests or more; one did not apply. So each of the two code faults planted there had its test changed beside it.
+- **VHEAD, with code of its own that imports nothing of the model:** all 24 records of HEAD's hand-worked vectors, equal; the old head and its setting, equal on every record of eight configurations of its own, with the score driven past its field; the three new widths, by hand; the 14 printed lines of the overflow controls, by hand; every refusal of its brief's list, by its name and in its order; thirteen changes of its own to the model, each caught by a test of HEAD's. Its gate run on the clone: VERDICT: PASS, 838 tests. On the owner's test for "simple enough", as built: parts 1, 2 and 3 hold, by its own count of 204 multipliers against 204.8.
+- **VP0:** the six `rtl` stage lines as the lead recorded them; the filter of one tap's widths and extremes worked by hand under both sample formats, and its header's bound confirmed; eight designs of its own run through the harness.
+
+### What VP0 found that was the lead's, beyond the plants
+
+- **`rtl-spec`'s docstring said "a declaration either pattern does not read is a finding". Four forms were not**: a macro in the package, an indented `#define`, an enum and a constant in the header. Two are read now; the docstring says which forms are not looked for, and that the copies' text is held by `generated`.
+- **An index counter of eight bits passes the bench.** No run is longer than 200 frames, so the index field's higher bits are never driven. Stated as a limit, with what a bench for the detector core must do about it.
+- **`ctl-rtl-benches` still printed its line with the judge's evidence checks disabled.** The unit tests held them; the control did not. The control now plants four of the judge's findings where it planted two, and the docstring says which are held by tests alone.
+- **"Every combination of extremes" overstated the bench**, in its docstring, in the document and in this ledger's last entry: within one configuration the channels' coefficients alternate between the two extremes. It is thirty-two configurations, and not every combination across the channels. Restated in the two files.
+- **"Its name is made from the files under `docker/`"** in CLAUDE.md: it is made from two named files. Restated.
+- **A mutant could not be named for the harness's third kind of mismatch**, an unknown bit. It can now.
+- **"About 85 seconds"** for the first size: the verifier measured 97 on a shared desktop. Restated as 85 to 100.
+- **A value wider than a word takes consecutive words, lowest bits first: nothing holds that.** Stated as a limit.
+- Left as they are: the generator lets a register sit at 0x80 or above, which is where the control block will go; and the verifier's `--only links` printed "15 of 16", which is the planted fault speaking.
+
+Two of VP0's figures against the lead's are the clone's and not the tree's: it counted 776 tests where this ledger says 777, and 69 more than round 1 where it says 70. One of the planted faults removed a test case beside it. At the lead's commit `5f25c50` the gate printed 777.
+
+### What the plants taught, and what was added for each
+
+Each planted fault passed the gate, which is what made it worth planting. Four showed something the gate did not hold:
+
+- **A harness that does not report a record too many.** No mutant put one out. A seventh mutant does now: the filter repeats its last record four idle clocks after its last frame.
+- **A judge that takes a wrong word for a mutant named for a count.** The tests held one direction. They hold four now.
+- **An `rtl-spec` that does not compare refusal codes.** Its control planted a bound and a sign. It now plants one number of each kind in each copy: a bound, a width, a record field's lowest bit, a refusal code, a register's offset and the hash.
+- **A runner that prints the bare verdict for the first size.** Nothing ran the runner to read its verdict line. `tests/test_runner_verdict.py` does now, on a copy of the runner in which every stage's command stands in for a pass: the first size, the second, a selection, a skip, and a skip under `--require-all`.
+
+### What VHEAD found that was HEAD's
+
+Three sentences, each sent back as a wrong answer: a vector's note that says three of eight hidden sums are negative and not multiples of four, where there are five; the model's docstring still calling the score's "the one rounding in the datapath"; and a sentence of `docs/model/mod-b.md` on what a shadow blob must match. HEAD found a fourth of the same kind while fixing them. Its commit and the second pass are not in this entry.
+
+### The gate, after the changes
+
+`bash verify/run.sh --with rtl`: `== VERDICT: PASS`, 22 of 22 stages, `OK model-tests: 792 tests ran, 0 failed, 0 errored, 0 skipped`, on the tree before this entry was written. `OK rtl-benches: 12 test(s) passed in 2 run(s) of 1 bench(es); 8960 record(s) identical to the model's, word for word; 14 mutant run(s) each failed as named`. The three controls: 2, 14 and 12 planted faults, each reported, nothing else.
+
+### What this does not prove
+
+- **That either piece is READY.** A first pass that used an eighth of its box is not a verification of twelve items. VP0 did not break the checks under two of the four controls, tried one further fault of seven it was asked to look for, and left three register rows unchecked. VHEAD did not check two of the four vector files, did not break each control separately, and did not drive a core with a hidden layer to the extremes from empty.
+- **That six of six means a verifier finds everything.** The faults were the lead's choice of what to plant.
+
+### The lead's slips
+
+- **Two tests of the foundation started a shell in the WSL distro `cft2204` on every gate run.** They handed Python's `subprocess` the bare name `bash`. On Windows that is found in System32 before the PATH, and System32's is the WSL launcher. From the foundation's commit at 13:05 until it was seen at 13:26: in the lead's checkout, in VP0's clone, which ran the gate twice, and in nothing else that is known. What ran there was `verify/run.sh --list` and two invocations the runner refuses; none writes a file. The rules it broke are this project's own: no parcel touches WSL, and that distro is booked on the TimeSheet as one user at a time. It was found by accident: a new test passed a Windows environment variable that did not arrive. The tests now take the first `bash` on the PATH, and a test fails if any test or tool hands `subprocess` the bare name. CLAUDE.md's trap 13.
+- **A docstring that claimed more than its pattern reads**, and **"every combination"** where it was thirty-two: both the lead's own sentences, both found by the verifier.
+- **A control that covered half of what it guards.**
+- **The brief for the launch experiment asked for terms pages read inside a design that may make no request.** The parcel found it; the lead ruled the pages are its first requests.
+- **The ledger of the round gave VHEAD's start as "about 13:20".** Its own first message says 13:15:52.
+
+### Changed after the first pass, and not yet seen by a verifier
+
+Everything under "what VP0 found" and "what the plants taught"; the runner's mutant runs, which now run only the tests the mutant must fail; the benches' control, which now cuts its copy's manifest to the foundation's own bench; the WSL change; this entry. All of it goes to VP0's second pass.

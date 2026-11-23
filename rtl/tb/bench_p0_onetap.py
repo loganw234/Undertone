@@ -6,10 +6,13 @@ the filter with that profile's SAMPLE_BITS and CHANNELS.
 Two tests hold the filter against the model, on every score record:
 
   bit_identity_random     seeded random configurations and frames
-  bit_identity_extremes   every combination of extreme coefficient, head
-                          weight, rectifier, shift and epoch, over every frame
-                          whose samples are each an extreme, zero, one or
-                          minus one
+  bit_identity_extremes   thirty-two configurations: the coefficient, the
+                          head weight, the rectifier, the shift and the epoch
+                          each at both of its ends. Within one configuration
+                          the channels' coefficients alternate between the two
+                          extremes: it is NOT every combination of coefficient
+                          across the channels. Each over every frame whose
+                          samples are each an extreme, zero, one or minus one
 
 One states the filter's latency, and the rest are the harness's own negative
 controls on the MODEL side: each hands `compare` a model that is wrong in one

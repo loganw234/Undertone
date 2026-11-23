@@ -6,7 +6,10 @@
 The tree is mounted read-only; everything this writes goes under --out or the
 container's own /tmp. For each bench and each of its profiles there is one
 RUN, named <bench>.<profile>, and one more for each mutant, named
-<bench>.<profile>.mutant.<mutant>. A run leaves, under --out:
+<bench>.<profile>.mutant.<mutant>. A bench's own run runs every test of its
+module. A mutant's run runs only the tests the mutant must fail: the others
+say nothing about it, and on a large design they are most of the time. A run
+leaves, under --out:
 
     <run>.xml             the results file cocotb writes
     <run>.evidence.jsonl  the lines rtl/tb/harness.py appends
@@ -60,7 +63,7 @@ def mutated_sources(root, bench, mutant, where):
     return out
 
 
-def one_run(root, out, run, bench, profile, prof, sources):
+def one_run(root, out, run, bench, profile, prof, sources, only=None):
     build_dir = os.path.join("/tmp", "build", run)
     test_dir = os.path.join("/tmp", "test", run)
     os.makedirs(test_dir, exist_ok=True)
@@ -75,7 +78,8 @@ def one_run(root, out, run, bench, profile, prof, sources):
         "PYTHONDONTWRITEBYTECODE": "1",
     }
     runner.test(test_module=bench["module"], hdl_toplevel=bench["toplevel"], build_dir=build_dir, test_dir=test_dir,
-                results_xml=os.path.join(out, run + ".xml"), extra_env=env, seed=20261123, log_file=log)
+                results_xml=os.path.join(out, run + ".xml"), extra_env=env, seed=20261123, log_file=log,
+                testcase=only)
 
 
 def main():
@@ -116,7 +120,8 @@ def main():
                 def mutated():
                     where = os.path.join("/tmp", "src", mrun)
                     shutil.rmtree(where, ignore_errors=True)
-                    one_run(root, out, mrun, bench, profile, prof, mutated_sources(root, bench, mutant, where))
+                    one_run(root, out, mrun, bench, profile, prof, mutated_sources(root, bench, mutant, where),
+                            only=list(mutant["must_fail"]))
                 attempt(mrun, "mutant", mutated)
     with open(os.path.join(out, "runs.json"), "w", encoding="utf-8", newline="\n") as f:
         json.dump(tried, f, indent=1)

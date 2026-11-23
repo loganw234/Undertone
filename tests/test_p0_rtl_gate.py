@@ -216,6 +216,59 @@ def test_p0_a_mutant_must_fail_the_named_test_for_the_named_reason(tmp_path, ver
     assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1.mutant.m identity | %s" % want]
 
 
+@pytest.mark.parametrize("named, left", [("COUNT", "WORD"), ("WORD", "COUNT"), ("UNKNOWN-BITS", "WORD"),
+                                         ("COUNT", "UNKNOWN-BITS")])
+def test_p0_a_mutant_named_for_one_kind_is_not_satisfied_by_another(tmp_path, named, left):
+    """Each direction. A design named for putting out the wrong number of records, which failed because
+    a word was wrong, failed for another reason: the bench did not see the fault the mutant is there for."""
+    out = good(tmp_path)
+    bench = dict(BENCH, mutant=[{"name": "m", "must_fail": ["identity"], "kind": named}])
+    evidence(os.path.join(out, "b.s16x1.mutant.m.evidence.jsonl"), dict(MISMATCH, kind=left))
+    assert wheres(check_rtl.judge([bench], out)[0]) == ["b.s16x1.mutant.m identity | MUTANT-WRONG-REASON"]
+    evidence(os.path.join(out, "b.s16x1.mutant.m.evidence.jsonl"), dict(MISMATCH, kind=left), dict(MISMATCH, kind=named))
+    assert check_rtl.judge([bench], out)[0] == []
+
+
+def spec_tree(tmp_path, package_line=None, header_line=None):
+    root = str(tmp_path)
+    shutil.copytree(os.path.join(ROOT, "spec"), os.path.join(root, "spec"), ignore=shutil.ignore_patterns("__pycache__"))
+    for name, line, before in (("undertone_pkg.sv", package_line, "endpackage"), ("undertone.h", header_line, "#endif")):
+        if line is not None:
+            path = os.path.join(root, "spec", name)
+            with open(path, encoding="utf-8") as f:
+                text = f.read()
+            assert text.count(before) == 1
+            with open(path, "w", encoding="utf-8", newline="\n") as f:
+                f.write(text.replace(before, line + "\n" + before))
+    return root
+
+
+def test_p0_the_real_copies_declare_the_same_names_and_nothing_the_patterns_cannot_read():
+    sv, c, findings = check_rtl.declared(ROOT)
+    assert findings == [] and sorted(sv) == sorted(c) and "SPEC_SHA256" in sv and len(sv) == len(set(sv))
+
+
+@pytest.mark.parametrize("package_line, header_line, where", [
+    ("  localparam logic [7:0] ODD = 8'd5;", None, "spec/undertone_pkg.sv line"),
+    ("  parameter int ODD = 5;", None, "spec/undertone_pkg.sv line"),
+    ("`define UNDERTONE_ODD 5", None, "spec/undertone_pkg.sv line"),
+    (None, "  #define UNDERTONE_ODD 5", "spec/undertone.h line"),
+    (None, "#define OTHER_PREFIX_ODD 5", "spec/undertone.h line"),
+    (None, "# define UNDERTONE_ODD 5", "spec/undertone.h line"),
+])
+def test_p0_a_declaration_the_patterns_do_not_read_is_a_finding(tmp_path, package_line, header_line, where):
+    findings = check_rtl.declared(spec_tree(tmp_path, package_line, header_line))[2]
+    assert len(findings) == 1 and findings[0][0].startswith(where) and "cannot read" in findings[0][1]
+
+
+def test_p0_a_number_declared_some_other_way_is_not_looked_for_and_the_docstring_says_so(tmp_path):
+    """The stated limit, shown: an enum and a const in the header pass this reading unseen. The copies
+    are generated, and it is the `generated` stage that holds their text."""
+    root = spec_tree(tmp_path, header_line="enum { UNDERTONE_ODD = 3 };\nstatic const int undertone_odd = 4;")
+    assert check_rtl.declared(root)[2] == []
+    assert "NOT looked for" in check_rtl.__doc__
+
+
 def test_p0_a_mutant_asked_only_to_fail_needs_no_evidence(tmp_path):
     out = good(tmp_path)
     bench = dict(BENCH, mutant=[{"name": "m", "must_fail": ["other"], "kind": ""}])
@@ -234,9 +287,10 @@ def test_p0_the_manifest_is_read_and_its_tests_are_found_in_the_bench_source():
     assert first["tests"] == ["bit_identity_random", "bit_identity_extremes", "latency_is_one_clock",
                               "control_model_coefficient_bit", "control_model_other_fields",
                               "control_nothing_compared"]
-    assert set(first["identity"]) <= set(first["tests"]) and len(first["mutant"]) == 6
+    assert set(first["identity"]) <= set(first["tests"]) and len(first["mutant"]) == 7
+    assert sorted(m["kind"] for m in first["mutant"]) == ["", "COUNT", "COUNT", "WORD", "WORD", "WORD", "WORD"]
     runs = [r[0] for r in check_rtl.runs_of([first])]
-    assert len(runs) == 2 * (1 + 6) and runs[0] == "p0-onetap.s16x1" and runs[1] == "p0-onetap.s16x1.mutant.coefficient-bit"
+    assert len(runs) == 2 * (1 + 7) and runs[0] == "p0-onetap.s16x1" and runs[1] == "p0-onetap.s16x1.mutant.coefficient-bit"
 
 
 BENCH_SOURCE = '''import cocotb
@@ -304,7 +358,7 @@ def manifest_tree(tmp_path, old, new):
     ('identity = ["bit_identity_random", "bit_identity_extremes"]', 'identity = ["bit_identity_random", "no_such_test"]'),
     ('must_fail = ["latency_is_one_clock"]', 'must_fail = ["no_such_test"]'),
     ('must_fail = ["latency_is_one_clock"]', 'must_fail = []'),
-    ('kind = "COUNT"', 'kind = "SOMETHING"'),
+    ('kind = ""', 'kind = "SOMETHING"'),
     ('sources = ["spec/undertone_pkg.sv", "rtl/p0/onetap.sv"]', 'sources = ["spec/undertone_pkg.sv", "../outside.sv"]'),
     ('name = "p0-onetap"', 'name = "P0 Onetap"'),
     ('module = "bench_p0_onetap"', 'module = "bench_that_is_not_there"'),
@@ -365,8 +419,36 @@ def test_p0_the_pins_are_read_from_the_two_files(tmp_path):
 
 # ---- the runner's two sizes ----
 
+def the_gates_own_bash():
+    """The bash the gate itself runs under: the first one on the PATH.
+
+    NEVER a bare "bash" handed to subprocess. On Windows, Python then looks in System32 before the
+    PATH and finds the WSL launcher: the command runs inside a WSL distro, another machine's worth of
+    environment, which no test and no parcel of this project may touch. The first two tests of this
+    kind did exactly that from 2026-11-23's foundation commit until it was seen that afternoon.
+    When the only bash to be found is that launcher, the test is skipped, by name, and the gate counts it."""
+    path = shutil.which("bash")
+    if path is None or "system32" in path.lower().replace("\\", "/").split("/"):
+        pytest.skip("no bash on the PATH but the WSL launcher (%r); the runner's own tests need the gate's bash" % path)
+    return path
+
+
+def test_p0_no_test_or_tool_starts_a_bare_bash():
+    """The slip above, held: nothing under tests/ or tools/ hands subprocess the bare name."""
+    bare = re.compile(r"""\[\s*["']bash["']""")
+    found = []
+    for folder in ("tests", "tools", os.path.join("rtl", "tb")):
+        for name in sorted(os.listdir(os.path.join(ROOT, folder))):
+            if name.endswith(".py"):
+                with open(os.path.join(ROOT, folder, name), encoding="utf-8") as f:
+                    for n, line in enumerate(f, 1):
+                        if bare.search(line) and "re.compile" not in line:
+                            found.append("%s/%s:%d" % (folder, name, n))
+    assert found == []
+
+
 def runner(*args):
-    r = subprocess.run(["bash", "verify/run.sh"] + list(args), cwd=ROOT, capture_output=True, text=True)
+    r = subprocess.run([the_gates_own_bash(), "verify/run.sh"] + list(args), cwd=ROOT, capture_output=True, text=True)
     return r.returncode, r.stdout + r.stderr
 
 
