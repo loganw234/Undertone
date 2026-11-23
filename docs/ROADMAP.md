@@ -15,7 +15,7 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 
 His answers are below, verbatim, under "Logan's words, as given". What they leave open:
 
-1. **What round 2 is.** He asked for a plan on 2026-11-23 ("Yes draft the plan"). The draft is [plans/R2-fabric-in-simulation-and-the-learner.md](plans/R2-fabric-in-simulation-and-the-learner.md); it recommends two tracks, the fabric in simulation and the learner in software, and ends with seven questions for him. Nothing of round 2 has started.
+1. **What round 2 is.** He asked for a plan on 2026-11-23 ("Yes draft the plan"). The draft is [plans/R2-fabric-in-simulation-and-the-learner.md](plans/R2-fabric-in-simulation-and-the-learner.md); it recommends two tracks, the fabric in simulation and the learner in software, and ends with six questions for him. A seventh, how the RTL simulators are provided, he answered while the draft was being checked: a Docker image of this project's own. Nothing of round 2 has started.
 2. **Whether a hidden layer is "simple enough".** His word: "Hidden layer from the start if simple enough, otherwise without for the initial design." The draft proposes a four-part test for it, fixed before the design is drawn, and asks him whether that test is the one he means (its question 2).
 3. **Which sample format the RTL takes.** His word on D0's row D1 was "Proposed is approved", which the lead reads as 16-bit samples on one channel, to start. The draft asks it as its question 3, and recommends RTL that takes the format as a parameter.
 4. **Raspberry Shake's licence.** Held, by his word.
@@ -116,6 +116,12 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 > Yes draft the plan
 
 *The lead's reading:* draft it, for his approval, as with round 1. It is not leave to start round 2, to commit beyond the draft's own branch, or to push.
+
+**2026-11-23, on Docker.** The lead had told him that the WSL environment has no RTL simulator installed, that the sibling project runs its benches in a Docker image, and that the draft asked whether this project should have an image of its own.
+
+> You may install anything needed to the docker environment, or create a new one for this project if needed
+
+*The lead's reading:* a Docker image of this project's own may be created, and what the work needs installed in it. The lead takes the new image and leaves the sibling project's as it is. It answers that one question of the draft. It is not approval of round 2, and no image is built before the round is approved; the lead ran one throwaway container of the base image already on the desktop, to read which versions it offers.
 
 ## Standing rules
 
