@@ -23,6 +23,23 @@ The matched-filter configuration is one setting of this, not another path:
 one filter, the rectifier passing, P = 1, s = 0 and a head weight of 1 give
 score[i] = y_0[i].
 
+A HIDDEN LAYER (a version 2 blob; docs/model/head.md) puts H units between the
+pooled values and the score. Step 4 becomes four, and step 5 is unchanged:
+
+  4a. hidden sum    u_j[i] = sum over k of g[j][k] * z_k[i], for each unit j.
+                    Step 4's sum under the unit's own weights. Exact.
+  4b. hidden value  t_j[i] = floor(u_j[i] / 2^q), q the hidden shift: a second
+                    rounding, toward minus infinity like the score's.
+  4c. between       b_j[i] = t_j[i] (pass) or |t_j[i]| (abs): the rectifier's
+                    two modes, by the blob's `between` code. Exact.
+  4d. output sum    a[i] = sum over j of o[j] * b_j[i], o the H head weights.
+                    Exact.
+
+Today's head is one setting of that: one unit whose weights are the old head
+weights, q = the old score shift, pass between, a head weight of 1 and a score
+shift of 0 give the old score and the old flag at every output. A version 1
+blob does not take that route here: it takes steps 4 and 5 as they are.
+
 WIDTHS. Every stage value is reduced to the stage's declared width, two's
 complement, and a reduction that changes the value raises the sticky overflow
 flag. `widths()` derives the declared widths from the definition's maxima; for
@@ -31,6 +48,14 @@ reduction never changes anything. The score is the one width that is a choice:
 the record's score field. When v[i] does not fit it, the field holds v[i]
 modulo 2^64 as two's complement, and the flag is set in that record and every
 later one.
+
+`hidden_widths()` derives the hidden layer's three. The hidden value's width
+is the second choice, and it is the score field's width, so that today's head
+is exactly the setting above: when floor(u_j / 2^q) does not fit, t_j is that
+value modulo 2^64 as two's complement, the same flag is set in that record and
+every later one, and what follows is computed from the reduced value. The
+other two, between and the output sum, are wide enough that the reduction
+never changes anything. The hidden sum is step 4's and has step 4's width.
 
 THE SWAP is the store's (`model.weights.Store`): which outputs use which
 weights, and which carry the settling flag, is defined there.
@@ -42,6 +67,7 @@ from spec import constants as C
 from model import records, stream, weights
 
 STAGES = ("filter", "rectifier", "pool", "head", "score")
+HIDDEN_STAGES = ("hidden", "between", "output")    # what a hidden layer adds, between "head" and "score"
 
 
 def bits_for(lo, hi):
@@ -85,6 +111,29 @@ def widths(profile_name):
     return out
 
 
+def hidden_ranges(profile_name):
+    """The extreme values each stage of a hidden layer can take: {stage: (lowest, highest)} for HIDDEN_STAGES.
+
+    The hidden value is a choice, and the choice is the record's score field:
+    every value that field holds. Between: pass keeps the sign and abs folds
+    it, as at the rectifier. The output sum: MAX_HIDDEN units, each head
+    weight at an extreme. None of the three depends on the sample format; the
+    profile is named all the same, and an undeclared one is refused.
+    """
+    stream.profile(profile_name)
+    bits = dict((f[0], f[1]) for f in C.RECORDS["score"])["score"]
+    t_lo, t_hi = -(1 << (bits - 1)), (1 << (bits - 1)) - 1
+    b_lo, b_hi = t_lo, max(t_hi, -t_lo)
+    weighted = [o * b for o in (C.COEFF_MIN, C.COEFF_MAX) for b in (b_lo, b_hi)]
+    return {"hidden": (t_lo, t_hi), "between": (b_lo, b_hi),
+            "output": (C.MAX_HIDDEN * min(weighted), C.MAX_HIDDEN * max(weighted))}
+
+
+def hidden_widths(profile_name):
+    """The declared width, in signed bits, of each stage a hidden layer adds."""
+    return {stage: bits_for(lo, hi) for stage, (lo, hi) in hidden_ranges(profile_name).items()}
+
+
 class Core:
     """A detector core built from a configuration blob.
 
@@ -98,9 +147,12 @@ class Core:
         self.store = weights.Store(blob, epoch)
         config = self.store.config
         self.profile = stream.profile(config["profile"])
-        self.width = widths(config["profile"])
+        self.width = dict(widths(config["profile"]), **hidden_widths(config["profile"]))
         self.rectifier = config["rectifier"]
         self.shift = config["score_shift"]
+        self.hidden = len(config["hidden"]) if "hidden" in config else 0     # how many hidden units; 0 is no layer
+        self.hidden_shift = config.get("hidden_shift")
+        self.between = config.get("between")
         taps, pool = self.store.shape[2], config["pool"]
         self._line = [deque([0] * taps, maxlen=taps) for _ in range(self.profile["channels"])]
         self._window = [deque([0] * pool, maxlen=pool) for _ in config["filters"]]
@@ -148,6 +200,17 @@ class Core:
     def _head(self, pooled, head):
         return self._fit(sum(map(mul, head, pooled)), "head")
 
+    # The hidden layer's three stages. A hidden unit's sum is `_head` under the unit's weights.
+
+    def _hidden(self, u):
+        return self._fit(u >> self.hidden_shift, "hidden")    # the hidden shift: floor, as the score's
+
+    def _between(self, t):
+        return self._fit(-t if self.between == weights.ABS and t < 0 else t, "between")
+
+    def _output(self, values, head):
+        return self._fit(sum(map(mul, head, values)), "output")
+
     def _score(self, a):
         return self._fit(a >> self.shift, "score")            # >> on a Python int is floor division by 2^shift
 
@@ -158,7 +221,11 @@ class Core:
         for line, sample in zip(self._line, frame):
             line.append(sample)
         pooled = [self._pool(k, self._rectify(self._filter(rows))) for k, rows in enumerate(coefficients)]
-        score = self._score(self._head(pooled, head))
+        if self.hidden:
+            units, out = head
+            score = self._score(self._output([self._between(self._hidden(self._head(pooled, unit))) for unit in units], out))
+        else:
+            score = self._score(self._head(pooled, head))
         flags = (settling << C.FLAGS["settling"]) | (self.overflow << C.FLAGS["overflow"])
         return records.check("score", {"index": index, "epoch": epoch, "flags": flags, "score": score})
 
