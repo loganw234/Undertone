@@ -181,6 +181,24 @@ def test_p0_the_judge_reports_a_failed_a_missing_and_an_unknown_test(tmp_path, v
     assert wheres(check_rtl.judge([BENCH], out)[0]) == want
 
 
+def test_p0_the_judge_reports_a_test_named_twice_in_one_results_file(tmp_path):
+    """Two verdicts for one name: the judge cannot say which is the test's, so it is a finding, TWICE,
+    whatever the two verdicts are. A verifier found this reading held by no test and no control."""
+    out = good(tmp_path)
+    with open(os.path.join(out, "b.s16x1.xml"), "w", encoding="utf-8") as f:
+        f.write('<testsuites><testsuite name="x"><testcase classname="x" name="identity" />'
+                '<testcase classname="x" name="identity" /><testcase classname="x" name="other" /></testsuite></testsuites>')
+    assert check_rtl.read_results(os.path.join(out, "b.s16x1.xml"))["identity"] == ("twice", "")
+    assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1 identity | TWICE"]
+
+
+def test_p0_an_evidence_line_that_cannot_be_read_is_a_finding_of_its_run(tmp_path):
+    out = good(tmp_path)
+    with open(os.path.join(out, "b.s16x1.evidence.jsonl"), "a", encoding="utf-8") as f:
+        f.write("this is not what the harness writes\n")
+    assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1 | EVIDENCE-UNREADABLE"]
+
+
 def test_p0_the_judge_names_a_skipped_test_and_does_not_count_it_as_passed(tmp_path):
     out = good(tmp_path)
     results(os.path.join(out, "b.s16x1.xml"), identity="pass", other="skip")
@@ -267,6 +285,20 @@ def test_p0_a_number_declared_some_other_way_is_not_looked_for_and_the_docstring
     root = spec_tree(tmp_path, header_line="enum { UNDERTONE_ODD = 3 };\nstatic const int undertone_odd = 4;")
     assert check_rtl.declared(root)[2] == []
     assert "NOT looked for" in check_rtl.__doc__
+
+
+@pytest.mark.parametrize("kind, lines", [("", []), ("WORD", [MISMATCH])])
+def test_p0_a_mutant_whose_named_test_is_not_in_its_results_has_not_failed_it(tmp_path, kind, lines):
+    """A test that did not run did not fail. The results hold another test, failed, and the evidence may
+    even name the missing one: the mutant still survived. A verifier was handed a judge that took absent
+    for failed, and found it; nothing here held it before."""
+    out = good(tmp_path)
+    bench = dict(BENCH, mutant=[{"name": "m", "must_fail": ["identity"], "kind": kind}])
+    results(os.path.join(out, "b.s16x1.mutant.m.xml"), other="fail")
+    evidence(os.path.join(out, "b.s16x1.mutant.m.evidence.jsonl"), *lines)
+    assert wheres(check_rtl.judge([bench], out)[0]) == ["b.s16x1.mutant.m identity | MUTANT-SURVIVED"]
+    results(os.path.join(out, "b.s16x1.mutant.m.xml"), identity_renamed="fail")
+    assert wheres(check_rtl.judge([bench], out)[0]) == ["b.s16x1.mutant.m identity | MUTANT-SURVIVED"]
 
 
 def test_p0_a_mutant_asked_only_to_fail_needs_no_evidence(tmp_path):
@@ -356,6 +388,7 @@ def manifest_tree(tmp_path, old, new):
     ('profiles = ["s16x1", "s24x3"]', 'profiles = ["s16x1", "s99x9"]'),
     ('profiles = ["s16x1", "s24x3"]', 'profiles = ["s16x1", "s16x1"]'),
     ('identity = ["bit_identity_random", "bit_identity_extremes"]', 'identity = ["bit_identity_random", "no_such_test"]'),
+    ('identity = ["bit_identity_random", "bit_identity_extremes"]', 'identity = []'),
     ('must_fail = ["latency_is_one_clock"]', 'must_fail = ["no_such_test"]'),
     ('must_fail = ["latency_is_one_clock"]', 'must_fail = []'),
     ('kind = ""', 'kind = "SOMETHING"'),
@@ -420,31 +453,60 @@ def test_p0_the_pins_are_read_from_the_two_files(tmp_path):
 # ---- the runner's two sizes ----
 
 def the_gates_own_bash():
-    """The bash the gate itself runs under: the first one on the PATH.
+    """The shell the gate itself runs under: the first one of that name on the PATH.
 
-    NEVER a bare "bash" handed to subprocess. On Windows, Python then looks in System32 before the
+    NEVER the bare name handed to subprocess. On Windows, Python then looks in System32 before the
     PATH and finds the WSL launcher: the command runs inside a WSL distro, another machine's worth of
     environment, which no test and no parcel of this project may touch. The first two tests of this
     kind did exactly that from 2026-11-23's foundation commit until it was seen that afternoon.
-    When the only bash to be found is that launcher, the test is skipped, by name, and the gate counts it."""
+    When the only one to be found is that launcher, the test is skipped, by name, and the gate counts it."""
     path = shutil.which("bash")
     if path is None or "system32" in path.lower().replace("\\", "/").split("/"):
-        pytest.skip("no bash on the PATH but the WSL launcher (%r); the runner's own tests need the gate's bash" % path)
+        pytest.skip("no shell on the PATH but the WSL launcher (%r); the runner's own tests need the gate's own" % path)
     return path
 
 
-def test_p0_no_test_or_tool_starts_a_bare_bash():
-    """The slip above, held: nothing under tests/ or tools/ hands subprocess the bare name."""
-    bare = re.compile(r"""\[\s*["']bash["']""")
+# Put together from pieces, so that this file does not carry what it looks for.
+THE_NAME = "ba" + "sh"
+QUOTED_NAME = re.compile("[\"']" + THE_NAME + "[\"' ]")
+THE_ONE_CALL = "shutil.which(\"" + THE_NAME + "\")"
+A_SHELL = "shell" + "=True"
+
+
+def lines_that_start_a_shell(text):
+    """The numbers of the lines of a Python source that carry the quoted name anywhere but in the one
+    call that looks it up on the PATH, or that ask subprocess for a shell."""
+    return [n for n, line in enumerate(text.split("\n"), 1)
+            if QUOTED_NAME.search(line.replace(THE_ONE_CALL, "")) or A_SHELL in line]
+
+
+def test_p0_no_test_or_tool_carries_the_bare_name_or_asks_for_a_shell():
+    """The slip above, held, as far as reading source can hold it: no line of a Python file under tests/,
+    tools/ or rtl/tb/ carries the quoted name outside the one call, or asks for a shell. A name put
+    together at run time, as this file's own is, is not seen."""
     found = []
     for folder in ("tests", "tools", os.path.join("rtl", "tb")):
         for name in sorted(os.listdir(os.path.join(ROOT, folder))):
             if name.endswith(".py"):
                 with open(os.path.join(ROOT, folder, name), encoding="utf-8") as f:
-                    for n, line in enumerate(f, 1):
-                        if bare.search(line) and "re.compile" not in line:
-                            found.append("%s/%s:%d" % (folder, name, n))
+                    found += ["%s/%s:%d" % (folder, name, n) for n in lines_that_start_a_shell(f.read())]
     assert found == []
+
+
+@pytest.mark.parametrize("line", [
+    "subprocess.run([NAME, '-c', 'true'])",
+    "subprocess.run((NAME, '-c', 'true'))",
+    "subprocess.run(NAME + ' -c true', SHELL)",
+    "subprocess.Popen(args=[ NAME ])",
+    "os.system('echo hello', SHELL)",
+    "r = subprocess.run('NAMEBARE -c true'.split())",
+])
+def test_p0_each_way_of_starting_the_bare_name_is_seen(line):
+    """Each form a verifier tried, and the first two the guard missed when it looked for a list alone."""
+    text = line.replace("NAMEBARE", "'" + THE_NAME + " x'").replace("NAME", "'" + THE_NAME + "'").replace("SHELL", A_SHELL)
+    assert lines_that_start_a_shell("import subprocess\n" + text + "\n") == [2]
+    assert lines_that_start_a_shell("path = " + THE_ONE_CALL + "\n") == []
+
 
 
 def runner(*args):

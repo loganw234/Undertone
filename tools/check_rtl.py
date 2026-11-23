@@ -42,7 +42,9 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                the package that says `localparam`, `parameter` or `define, and
                a line of the header that says #define, is a finding when its
                pattern does not read it. A number declared any other way (an
-               enum or a const in the header, a typedef in the package) is
+               enum or a const in the header, a typedef in the package, a
+               second name after a comma on a localparam line, the rest of a
+               #define that a backslash carries onto the next line) is
                NOT looked for: the copies are generated, and the `generated`
                stage holds their text. It does not know whether the RTL or a
                C program USES a constant correctly. What it holds the copies
@@ -73,14 +75,18 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                a failed test, a run with no results, an identity test that
                left no evidence, and a mutant that failed for another reason.
                The rest (a mutant that survived, a test not run, an unknown
-               test, evidence whose digests disagree) are held by the tests
-               in tests/test_p0_rtl_gate.py, in the gate's first size, and by
-               no control: a verifier disabled the judge's evidence checks and
-               this control, as it then was, still printed its line.
-               The rtl-spec control plants one changed number of each kind in
-               each copy: a bound, a width, a record field's lowest bit, a
-               refusal code, a register's offset and the hash; and a name
-               missing from the header.
+               test, a test named twice, evidence whose digests disagree, an
+               evidence line that cannot be read) are held by the tests in
+               tests/test_p0_rtl_gate.py, in the gate's first size, and by
+               no control: a verifier disabled each of them in turn and this
+               control still printed its line.
+               The rtl-spec control changes EVERY number in each copy, the
+               hash among them, and takes one name out of the header: every
+               one must be reported, so a check that skipped any name, or any
+               kind of name, fails it.
+               The rtl-image control plants three trees: one whose Dockerfile
+               changed, one whose package list changed, one that lost its
+               package list. It plants no image.
 """
 import argparse
 import ast
@@ -328,8 +334,9 @@ def manifest(root):
         b["tests"] = bench_tests(root, b["module"])
         if not b["tests"] or len(set(b["tests"])) != len(b["tests"]):
             bad("%s: rtl/tb/%s.py has no test under @cocotb.test, or names one twice" % (b["name"], b["module"]))
-        if not strings(b["identity"]) or set(b["identity"]) - set(b["tests"]):
-            bad("%s: identity names %s, which the module does not have" % (b["name"], sorted(set(b["identity"]) - set(b["tests"]))))
+        if not strings(b["identity"]) or not b["identity"] or set(b["identity"]) - set(b["tests"]):
+            bad("%s: identity names no test, or names %s, which the module does not have: a bench that holds nothing "
+                "against the model is not a bench" % (b["name"], sorted(set(b["identity"]) - set(b["tests"]))))
         b.setdefault("mutant", [])
         mseen = set()
         if not isinstance(b["mutant"], list):
@@ -427,6 +434,8 @@ def judge(benches, out):
                                      "from the harness" % (message, mutant["kind"])))
             continue
         nruns += 1
+        if any(e.get("verdict") == "UNREADABLE" for e in evidence):
+            findings.append((run, "EVIDENCE-UNREADABLE: a line of the run's evidence file is not what the harness writes"))
         for test in bench["tests"]:
             if test not in results:
                 findings.append(("%s %s" % (run, test), "NOT-RUN: the bench has this test and the results file does not"))
@@ -516,25 +525,31 @@ def plants(kind, root, scratch):
         a = copy_tree(root, scratch, "a")
         write(a, "docker/Dockerfile.sim", "# planted: one more line\n", "a")     # a tree whose docker files changed
         b = copy_tree(root, scratch, "b")
-        os.remove(os.path.join(b, "docker", "requirements-sim.txt"))             # and one that lost a file
-        return [(a, ("REFUSED", "IMAGE-MISSING")), (b, ("REFUSED", "IMAGE-INPUT-MISSING"))]
+        os.remove(os.path.join(b, "docker", "requirements-sim.txt"))             # one that lost a file
+        c = copy_tree(root, scratch, "c")
+        write(c, "docker/requirements-sim.txt", "# planted: one more line\n", "a")  # and one whose package list changed
+        return [(a, ("REFUSED", "IMAGE-MISSING")), (b, ("REFUSED", "IMAGE-INPUT-MISSING")),
+                (c, ("REFUSED", "IMAGE-MISSING"))]
     if kind == "rtl-spec":
         a = copy_tree(root, scratch, "a")
         # The package and the header each changed in one number, consistently with nothing; and the header short of
         # one name. `generated` would see the text; this check must see the numbers.
+        # EVERY number of each copy is changed, by the names the copy itself declares: one is added to it.
+        sv, c, unreadable = declared(a)
+        if unreadable or sorted(sv) != sorted(c):
+            raise Refusal("PLANT-DOES-NOT-APPLY: the two copies do not declare the same readable names")
         want = set()
-        for name in ("MAX_TAPS", "COEFF_BITS", "SCORE_SCORE_LSB", "REFUSAL_SWAP_PENDING", "REG_CAP_TAPS_OFFSET"):
-            edit(a, "spec/undertone_pkg.sv", "localparam int %s = " % name, "localparam int %s = 4 + " % name)
-            want.add("spec/undertone_pkg.sv %s" % name)
-        edit(a, "spec/undertone_pkg.sv", "SPEC_SHA256 = 256'h", "SPEC_SHA256 = 256'h1 + 256'h")
-        edit(a, "spec/undertone.h", "#define UNDERTONE_COEFF_MIN (", "#define UNDERTONE_COEFF_MIN -(")
-        for name in ("SCORE_RECORD_BITS", "TRUTH_AMPLITUDE_NUM_LSB", "REFUSAL_BLOB_HASH", "REG_ID_OFFSET"):
-            edit(a, "spec/undertone.h", "#define UNDERTONE_%s " % name, "#define UNDERTONE_%s 4 + " % name)
-            want.add("spec/undertone.h %s" % name)
-        edit(a, "spec/undertone.h", "#define UNDERTONE_SPEC_SHA256 \"", "#define UNDERTONE_SPEC_SHA256 \"0")
+        for name in sv:
+            if name == "SPEC_SHA256":
+                edit(a, "spec/undertone_pkg.sv", "SPEC_SHA256 = 256'h", "SPEC_SHA256 = 256'h1 + 256'h")
+                edit(a, "spec/undertone.h", "#define UNDERTONE_SPEC_SHA256 \"", "#define UNDERTONE_SPEC_SHA256 \"0")
+            else:
+                edit(a, "spec/undertone_pkg.sv", "localparam int %s = " % name, "localparam int %s = 1 + " % name)
+                edit(a, "spec/undertone.h", "#define UNDERTONE_%s " % name, "#define UNDERTONE_%s 1 + " % name)
+            want |= {"spec/undertone_pkg.sv %s" % name, "spec/undertone.h %s" % name}
+        # And one name taken out of the header, under another: missing, and one too many.
         edit(a, "spec/undertone.h", "#define UNDERTONE_FLAG_OVERFLOW_BIT ", "#define UNDERTONE_PLANTED_OTHER_NAME ")
-        return [(a, want | {"spec/undertone_pkg.sv SPEC_SHA256", "spec/undertone.h SPEC_SHA256", "spec/undertone.h COEFF_MIN",
-                            "spec/undertone.h FLAG_OVERFLOW_BIT", "spec/undertone.h PLANTED_OTHER_NAME"})]
+        return [(a, want | {"spec/undertone.h PLANTED_OTHER_NAME"})]
     if kind == "rtl-benches":
         a = copy_tree(root, scratch, "a")
         # The plants are written for the foundation's own bench, by name: its module has BASE, one_run and

@@ -9,7 +9,7 @@ The gate cannot run itself from inside its own tests: so this test runs A COPY o
 every stage's command is replaced by one that prints what that stage prints when it passes. Everything
 else in the copy is the runner's own text: its options, its counting, its verdict line.
 
-What this cannot see: any stage's own check, and the wording for a failing run. It holds four
+What this cannot see: any stage's own check, and the wording for a failing run. It holds five
 invocations and no others. It takes about eight seconds, which is why it is in a file of its own:
 the `model-tests` control keeps the files named test_p0_* in its copies and would run it again in each.
 

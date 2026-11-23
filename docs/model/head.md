@@ -151,6 +151,7 @@ Each is stated by the behaviour it concedes.
 - **HL10. Nothing is trained, and nothing here is evidence about sensitivity.** No rule quantises a hidden weight or a head weight. D0's row D8 holds for the matched-filter configuration only, which has no hidden layer.
 - **HL11. The order of the new checks is held for the pairs the test lists,** not for every pair.
 - **HL12. The flipped-bit control uses one shape:** two filters, three units, a pool of 2, under both things that can stand between and two pairs of shifts. A flip that hides in another shape is not planted.
+- **HL13. A flipped bit behind a zero head weight is unseen in the score, not in the flag.** Added by the lead on 2026-11-23, from the second verifier's pass. Section 5 says such a flip "is not seen", and that is true of the shape the test uses. A flipped weight that makes its unit's hidden value overflow raises the sticky flag whatever the head weight is: the verifier's case is one filter of one tap at the lowest coefficient, a pool of 65,536 and every sample at its lowest, where a hidden weight of -131,071 raises the flag from index 16,384 and every score is unchanged. So a zero head weight hides a unit from the score and never from the flag.
 
 ## 8. Claims register
 
