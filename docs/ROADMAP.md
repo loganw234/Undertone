@@ -15,9 +15,9 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 
 His answers are below, verbatim, under "Logan's words, as given". What they leave open:
 
-1. **What round 2 is.** The plan of record ends with round 1. He was asked and did not answer.
-2. **Whether a hidden layer is "simple enough".** His word: "Hidden layer from the start if simple enough, otherwise without for the initial design." Round 2's plan is to answer it with a measurement, at a design stop, before any RTL.
-3. **Which sample format the first RTL target takes.** His word on D0's row D1 was "Proposed is approved", which the lead reads as 16-bit samples on one channel, to start; the lead asks again when the target is chosen.
+1. **What round 2 is.** He asked for a plan on 2026-11-23 ("Yes draft the plan"). The draft is [plans/R2-fabric-in-simulation-and-the-learner.md](plans/R2-fabric-in-simulation-and-the-learner.md); it recommends two tracks, the fabric in simulation and the learner in software, and ends with seven questions for him. Nothing of round 2 has started.
+2. **Whether a hidden layer is "simple enough".** His word: "Hidden layer from the start if simple enough, otherwise without for the initial design." The draft proposes a four-part test for it, fixed before the design is drawn, and asks him whether that test is the one he means (its question 2).
+3. **Which sample format the RTL takes.** His word on D0's row D1 was "Proposed is approved", which the lead reads as 16-bit samples on one channel, to start. The draft asks it as its question 3, and recommends RTL that takes the format as a parameter.
 4. **Raspberry Shake's licence.** Held, by his word.
 
 Settled by those answers: the push of round 1; the package index's terms.
@@ -111,7 +111,11 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 4. The package index may be used. Its terms exclude a person on a sanctions list, and he does not believe he is on one. Installs still go into a virtual environment, with the shared cache off.
 5. Raspberry Shake stays held: no request to it, and no row from it in a committed file.
 
-The sixth, what round 2 is, he did not answer.
+The sixth, what round 2 is, he did not answer then. Asked next whether the lead should draft the plan, he said, the same day:
+
+> Yes draft the plan
+
+*The lead's reading:* draft it, for his approval, as with round 1. It is not leave to start round 2, to commit beyond the draft's own branch, or to push.
 
 ## Standing rules
 
@@ -143,5 +147,6 @@ The sixth, what round 2 is, he did not answer.
 
 | round | what | state |
 |---|---|---|
+| `2026-11-23-r2-plan` | the draft plan for round 2, a verifier pass over it | drafted 2026-11-23 on the local branch `r2-plan`; awaits Logan's answers; not pushed |
 | `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | run on 2026-11-23, on `r1`: five merges of four parcels (LCH twice, MOD-A, MOD-B, STAT), each past a verifier of its own before it merged, and the lead's two pieces, the foundation and the seam, each past a verifier too; pushed on Logan's word of 2026-11-23. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-21-d0-design` | the rough design D0, a verifier pass over it and one re-check | approved by Logan on 2026-11-21; the record is in [VALIDATION.md](VALIDATION.md) |
