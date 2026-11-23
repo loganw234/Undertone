@@ -22,3 +22,20 @@ d0 = "generated copies"
 kind = "stage"
 test = "generated"
 control = "ctl-generated"
+
+# MOD-A: the source and the injector. Tests in tests/test_mod_a_inject.py,
+# tests/test_mod_a_source.py and tests/test_mod_a_tails.py.
+[[gate]]
+name = "injection"
+d0 = "injection"
+kind = "pytest"
+
+[[gate]]
+name = "replay"
+d0 = "replay"
+kind = "pytest"
+
+[[gate]]
+name = "noise-tails"
+d0 = "noise tails"
+kind = "pytest"
