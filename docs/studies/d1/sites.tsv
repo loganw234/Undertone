@@ -1,0 +1,9 @@
+# The launch sites of study D1. Tab-separated: id, latitude, longitude, name.
+# Each coordinate is the decimal pair shown in the "Coordinates" line of the
+# page named in the study's register (rows C1 to C4), read 2026-11-23.
+# The query centres used for the station lists were these values rounded to
+# three decimals; distances are computed from the values below.
+VSFB	34.633	-120.613	Vandenberg Space Launch Complex 4 (SLC-4E launch pad, SLC-4W landing zone)
+CCSFS	28.5619	-80.5772	Cape Canaveral Space Launch Complex 40
+KSC	28.60833	-80.60444	Kennedy Space Center Launch Complex 39A
+STARBASE	25.997	-97.157	SpaceX Starbase launch site, Boca Chica, Texas

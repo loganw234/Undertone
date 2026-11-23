@@ -1,0 +1,92 @@
+# Every quotation in the sources register of ../D1-launch-data.md.
+# Tab-separated: the register row, the file the page or response was saved
+# under on 2026-11-23, its URL, and the quotation, at most 25 words.
+# check_quotes.py holds each quotation against the saved bytes and against
+# the study's row. The saved files are not committed.
+L1a	pages/arxiv-2502.01982-abs.html	https://arxiv.org/abs/2502.01982	Nine passive three-component (3C) seismometers were deployed every 18.75 meters along a 45-degree line from the launch site
+L1a	pages/arxiv-2502.01982-abs.html	https://arxiv.org/abs/2502.01982	starting at the offset of about 7 km kilometers from the launch pad
+L1b	pages/arxiv-2502.01982-abs.html	https://arxiv.org/abs/2502.01982	a 3C recorder placed approximately 15 km from the launch site did not capture any discernible body wave arrivals
+L1c	pages/arxiv-2502.01982-abs.html	https://arxiv.org/abs/2502.01982	Stronger Rayleigh waves were also recorded and inverted to give an S-velocity profile to a depth of 60 m.
+L2	pages/usf-thompson2017.html	https://digitalcommons.usf.edu/geo_facpub/2182	The seismic signal consists mainly of air-coupled Rayleigh waves with frequencies of 5-23 Hz.
+L2	pages/usf-thompson2017.html	https://digitalcommons.usf.edu/geo_facpub/2182	a broadband 3-component seismometer at the Astronaut Beach House, just 0.87 miles (1.4 km) from the launch pad
+L3a	pages/scsn-p4154.html	https://tungsten2.gps.caltech.edu/?p=4154	This week we detected what is most likely the energy translated to the ground by the thrusters of a Falcon 9 rocket during take-off.
+L3b	pages/scsn-p4154.html	https://tungsten2.gps.caltech.edu/?p=4154	it lacks distinct seismic phases, and differs in both the duration of the energy signal and the speed at which it reaches different sensors
+L3c	pages/scsn-p4154.html	https://tungsten2.gps.caltech.edu/?p=4154	at 8:56 pm local time on Monday September 13th
+L3d	pages/scsn-p4154.html	https://tungsten2.gps.caltech.edu/?p=4154	our Live Seismograms Feed detected the launch, which is visible on the channel LCP near Santa Maria
+L3d	pages/scsn-p4154.html	https://tungsten2.gps.caltech.edu/?p=4154	a number of our partner seismic networks have equipment at the base itself
+L3e	pages/scsn-rocket-launch.html	https://www.scsn.org/index.php/education-outreach-2/understanding-waveforms/rocket-launch/	which is visible on the channel CI.LCP near Santa Maria
+L5a	pages/gcat-index.html	https://planet4589.org/space/gcat/index.html	Licence: CC-BY-4.0
+L5a	pages/gcat-index.html	https://planet4589.org/space/gcat/index.html	GCAT is released under the Creative Commons CC-BY licence.
+L5a	pages/gcat-index.html	https://planet4589.org/space/gcat/index.html	You are free to use the data in GCAT as long as you include a citation to it.
+L5b	pages/gcat-launch-index.html	https://planet4589.org/space/gcat/web/launch/index.html	The database gives launch times in UTC to the nearest second where available.
+L5c	pages/gcat-lcols.html	https://planet4589.org/space/gcat/web/launch/lcols.html	defined as first motion, so may differ by a few seconds from some sources which use rocket ignition
+L5d	pages/gcat-vague.html	https://planet4589.org/space/gcat/web/intro/vague.html	In the General Catalog we only allow 1 second precision
+L5d	pages/gcat-vague.html	https://planet4589.org/space/gcat/web/intro/vague.html	We provide the ability to encode greater uncertainty by allowing rightmost fields to be omitted, and optionally a question mark symbol to be appended.
+L5e	pages/gcat-lcols.html	https://planet4589.org/space/gcat/web/launch/lcols.html	A for pad abort (ignition but no launch, and no explosion; included only for human spaceflight launch attempts.
+L5f	pages/gcat-count.html	https://planet4589.org/space/gcat/web/launch/count.html	O Orbital Launches 7001
+L5f	pages/gcat-count.html	https://planet4589.org/space/gcat/web/launch/count.html	Total 76034
+L5g	pages/gcat-launch-index.html	https://planet4589.org/space/gcat/web/launch/index.html	For each launch a citation (LTCite) is given for the existence of the launch and the source of the launch time.
+L6	pages/wiki-speed-of-sound.html	https://en.wikipedia.org/wiki/Speed_of_sound	the speed of sound in air is about 343 m/s
+L7a	pages/usf-mcnutt2017.html	https://digitalcommons.usf.edu/geo_facpub/2184	there is a clear Doppler shift in seismic and infrasound spectrograms from all launches, with lower frequencies occurring later in the recorded signal
+L7b	pages/usf-mcnutt2017.html	https://digitalcommons.usf.edu/geo_facpub/2184	8 rocket launches have been recorded by the infrasound array, as well as 2 static tests, 1 aborted launch and 1 rocket explosion
+L7b	pages/usf-mcnutt2017.html	https://digitalcommons.usf.edu/geo_facpub/2184	In May 2016 the network was scaled back to a single station
+A1	pages/osti-1891700.html	https://www.osti.gov/biblio/1891700	Ground-coupled airwaves are created from incident pressure waves traveling through the atmosphere that couple to the earth and transmit as a seismic wave
+A2	pages/osti-1891700.html	https://www.osti.gov/biblio/1891700	rocket motor fuel elimination events at the Utah Test and Training Range (UTTR) as well as a 2020 rocket launch in Southern California
+A2	pages/osti-1891700.html	https://www.osti.gov/biblio/1891700	from 50-100 km and up to 400 km
+A3	pages/agu-1001.html	https://news.agu.org/press-release/scientists-identify-distinctive-deep-infrasound-rumbles-of-space-launches-audio/	They examined 7,637 infrasound signatures recorded at IMS stations from 2009 to mid-2020, a period that included 1,001 rocket launches.
+A4	pages/agu-1001.html	https://news.agu.org/press-release/scientists-identify-distinctive-deep-infrasound-rumbles-of-space-launches-audio/	The researchers found infrasonic signatures for up to 73% of these rockets, or 733.
+A5	pages/pmc6736795.html	https://pmc.ncbi.nlm.nih.gov/articles/PMC6736795	three separate acoustic phases with celerities of 332, 292, and 250 m/s
+A6	pages/pmc6736795.html	https://pmc.ncbi.nlm.nih.gov/articles/PMC6736795	The infrasound signal is detectable on seismic stations within 10–350 km from the source
+A7	pages/pmc6736795.html	https://pmc.ncbi.nlm.nih.gov/articles/PMC6736795	Seismo-acoustic amplitudes are strongly affected by the type of seismic installation
+A8	pages/wiki-falcon9.html	https://en.wikipedia.org/wiki/Falcon_9	Burn time FT: 162 seconds
+A9	pages/wiki-slc4.html	https://en.wikipedia.org/wiki/Vandenberg_Space_Launch_Complex_4	one for launch operations, and the other as Landing Zone 4 (LZ-4) for SpaceX landings
+C1	pages/wiki-slc4.html	https://en.wikipedia.org/wiki/Vandenberg_Space_Launch_Complex_4	34.633°N 120.613°W
+C2	pages/wiki-slc40.html	https://en.wikipedia.org/wiki/Cape_Canaveral_Space_Launch_Complex_40	28.5619°N 80.5772°W
+C3	pages/wiki-lc39a.html	https://en.wikipedia.org/wiki/Kennedy_Space_Center_Launch_Complex_39A	28.60833°N 80.60444°W
+C4	pages/wiki-starbase.html	https://en.wikipedia.org/wiki/SpaceX_Starbase	25.997°N 97.157°W
+K1	pages/fdsn-channel-codes.html	https://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html	H High Broadband >= 80 to < 250 >= 10 sec
+K1	pages/fdsn-channel-codes.html	https://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html	B Broadband >= 10 to < 80 >= 10 sec
+K2	pages/fdsn-channel-codes.html	https://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html	Source Code D Subsource Code O Outside I Inside D Down hole F Infrasound
+K2	pages/fdsn-channel-codes.html	https://docs.fdsn.org/projects/source-identifiers/en/v1.0/channel-codes.html	H High Gain Seismometer L Low Gain Seismometer M Mass Position Seismometer N Accelerometer
+K3	pages/fdsn-ms3-encodings.html	https://docs.fdsn.org/projects/miniseed3/en/latest/data-encodings.html	3 32-bit integer (two’s complement), little endian byte order
+K3	pages/fdsn-ms3-encodings.html	https://docs.fdsn.org/projects/miniseed3/en/latest/data-encodings.html	11 Steim-2 integer compression, big endian byte order
+T1	pages/scedc-citation.html	https://scedc.caltech.edu/about/citation.html	Please use the following citation to cite data downloaded from SCEDC: SCEDC (2013): Southern California Earthquake Center. Caltech.Dataset. doi: 10.7909/C3WD3xH1
+T2	pages/scedc-service-home.html	https://service.scedc.caltech.edu/	please be limit your downloads to 3 concurrent sessions
+T3	pages/scedc-waveform.html	https://scedc.caltech.edu/data/waveform.html	Archival of continuous waveforms 80 sps and greater began in 2008 and by 2010, all continuous waveforms have been archived at the SCEDC.
+T4	pages/scedc-seed.html	https://scedc.caltech.edu/station/seed.html	HH[ZNE] Triggered High Broadband (80 or 100 sps); Seismic data: High gain
+T4	pages/scedc-seed.html	https://scedc.caltech.edu/station/seed.html	BH[ZNE] Continuous Broadband (20 or 40 sps); Seismic data: High gain
+T5	availability/scedc-extent-CI-LCP-continuous.txt	https://service.scedc.caltech.edu/fdsnws/availability/1/extent?network=CI&station=LCP&asset=continuous	CI LCP -- HHZ 100.00 2003/02/22 05:59:57.430000 2026/11/23 07:49:28.000000 NA NA OPEN
+T5	availability/scedc-extent-CI-LCP-continuous.txt	https://service.scedc.caltech.edu/fdsnws/availability/1/extent?network=CI&station=LCP&asset=continuous	CI LCP -- BHZ 40.00 2009/01/01 00:59:58.500000 2026/11/23 07:47:22.000000 NA NA OPEN
+T6	pages/scedc-availability-home.html	https://service.scedc.caltech.edu/fdsnws/availability/1/	/query continuous records (*H*, *N* and *L*) from Jan 01 2011 - April 28, 2020
+T7	pages/scedc-dataselect-home.html	https://service.scedc.caltech.edu/fdsnws/dataselect/1/	Only miniSEED is supported as of now.
+T7	pages/scedc-dataselect-home.html	https://service.scedc.caltech.edu/fdsnws/dataselect/1/	(timewindow * sr + 100) <= 400 * 1024 * 1024 / 4
+T8	pages/scedc-cloud.html	https://scedc.caltech.edu/data/cloud.html	AWS Bucket Name and Region: s3://scedc-pds; us-west-2
+T8	pages/scedc-cloud.html	https://scedc.caltech.edu/data/cloud.html	Continuous archive of 100 sps broadband begins in 2008.
+T9	pages/scedc-service-home.html	https://service.scedc.caltech.edu/	continuous waveform time series triggered waveform time series miniSEED SAC ASCII text
+T10	pages/ncedc-home.html	https://ncedc.org/	If you use data from the NCEDC, we ask that you acknowledge both the NCEDC and the organizations that contributed the data.
+T11	pages/es-service-home.html	https://service.earthscope.org/	These services may be used under EarthScope Terms of Service
+T11	pages/es-terms.html	https://www.earthscope.org/terms-of-service/	By visiting (in any manner) the Website (“Visitor”) you accept these terms and conditions
+T12	pages/rs-data-home.html	https://data.raspberryshake.org/	By using this service, you automatically accept these license terms
+T12	pages/rs-company-license.html	https://raspberryshake.org/license/	Free for hobbyists, school teachers, researchers and geophysical institutes.
+T13	pages/rs-company-license.html	https://raspberryshake.org/license/	It is strictly prohibited to redistribute Raspberry Shake waveform data obtained from https://data.raspberryshake.org/fdsnws/ via your own FDSN Web Service, data center or server
+T14	pages/scsn-rocket-launch.html	https://www.scsn.org/index.php/education-outreach-2/understanding-waveforms/rocket-launch/	Permission required to reproduce any portion of this site.
+T15	pages/scedc-event-home.html	https://service.scedc.caltech.edu/fdsnws/event/1/	By default, results are returned in QuakeML format, but may also be requested in text format.
+S1	pages/rll-scrubs.html	https://www.rocketlaunch.live/scrub-statistics	classified as a scrub (called off within 30 minutes of the target time, or after it) or a postponement (called off earlier that day)
+S2	pages/rll-scrubs.html	https://www.rocketlaunch.live/scrub-statistics	reconstructed from this site's own edit history of schedule changes rather than official announcements
+S3	pages/rll-api.html	https://www.rocketlaunch.live/api	Full access to the API is available to our Premium Members only.
+S4	pages/rll-scrubs.html	https://www.rocketlaunch.live/scrub-statistics	Falcon 9 579 149 190 0.59
+S4	pages/rll-scrubs.html	https://www.rocketlaunch.live/scrub-statistics	Vandenberg SFB 221 6 1 18 33% 0.70
+P1	pages/pypi-obspy.html	https://pypi.org/project/obspy/	obspy-1.5.2-cp312-cp312-win_amd64.whl 14.8 MB
+P1	pages/pypi-obspy.html	https://pypi.org/project/obspy/	GNU Lesser General Public License v3 (LGPLv3)
+# Quotations used only in PROVENANCE.md, at the root. Their row is PV.
+PV	pages/wiki-slc4.html	https://en.wikipedia.org/wiki/Vandenberg_Space_Launch_Complex_4	Text is available under the Creative Commons Attribution-ShareAlike 4.0 License
+PV	pages/wiki-slc4.html	https://en.wikipedia.org/wiki/Vandenberg_Space_Launch_Complex_4	By using this site, you agree to the Terms of Use and Privacy Policy
+PV	pages/pmc6736795.html	https://pmc.ncbi.nlm.nih.gov/articles/PMC6736795	To view a copy of this license, visit http://creativecommons.org/licenses/by/4.0/
+PV	pages/rll-api.html	https://www.rocketlaunch.live/api	We humbly request that when you use this data you display the text
+PV	pages/gcat-index.html	https://planet4589.org/space/gcat/index.html	data from GCAT (J. McDowell, planet4589.org/space/gcat)
+PV	pages/scedc-citation.html	https://scedc.caltech.edu/about/citation.html	California Institute of Technology (Caltech) (1926): Southern California Seismic Network. International Federation of Digital Seismograph Networks. Other/Seismic Network. doi:10.7914/SN/CI
+PV	pages/rs-data-home.html	https://data.raspberryshake.org/	For publication purposes, please use DOI:10.7914/SN/AM
+PV	pages/es-terms.html	https://www.earthscope.org/terms-of-service/	User must acknowledge EarthScope Consortium and our sponsors
+PV	pages/es-terms.html	https://www.earthscope.org/terms-of-service/	Non-Human Visitors are restricted from taxing the resources of the Website beyond what would be typical of a human visitor.
+PV	pages/scedc-service-home.html	https://service.scedc.caltech.edu/	Excessive downloads will result in your IP(s) being blacklisted.
+PV	pages/rs-company-license.html	https://raspberryshake.org/license/	For commercial enterprises, access to the data archive needs to be negotiated
