@@ -10,7 +10,7 @@ They bind `model/` and `stats/` alike. A document of a parcel's that says otherw
 
 In what follows a stream is a sequence of frames, numbered from 0. Frame i holds one sample for each channel, x_c[i] for channel c. A filter has T taps.
 
-**(a) A truth record's index is the stream index of the pulse's first sample.** An injection of a pulse of length L with index j changes frames j to j + L - 1 and no others.
+**(a) A truth record's index is the stream index of the pulse's first sample.** An injection of a pulse of length L with index j adds the pulse's k-th sample, scaled, to frame j + k, for k from 0 to L - 1, and touches no frame outside j to j + L - 1. A frame inside that span is unchanged wherever what is added is zero. The reference pulse `e0` has nine zero samples, its first and its last among them, so a lone `e0` at j changes 55 frames, the first j + 1 and the last j + 62. A test that every frame of the span changes would fail on a correct injector.
 
 **(b) A filter is causal, and its coefficients are written oldest sample first.**
 
@@ -47,7 +47,7 @@ Had the coefficients been written newest first, the scores would be 0, 0, 1, 4, 
 
 | id | claim | basis | source | falsified by |
 |---|---|---|---|---|
-| CV1 | A truth record's index is the stream index of the pulse's first sample | DECISION | the lead, 2026-11-23, round 1's ledger; recorded in `docs/VALIDATION.md` at the wave's merge | an injector that changes a frame before its record's index, or a seam test that needs another index to pass |
+| CV1 | A truth record's index is the stream index of the pulse's first sample | DECISION | the lead, 2026-11-23, round 1's ledger; recorded in `docs/VALIDATION.md` at the wave's merge | an injector that changes a frame before its record's index or after index + L - 1, or a seam test that needs another index to pass |
 | CV2 | Coefficients are oldest sample first, a sample before the start is zero, and a score's index is its newest sample's | DECISION | the lead, 2026-11-23, the same entry | a model whose scores for the worked answer above are not 0, 0, 3, 8, 14, 8, 3 |
 | CV3 | A crossing is strictly greater than the threshold | DECISION | the lead, 2026-11-23, the same entry | a scorer that counts a score equal to its threshold |
 | CV4 | A filter's output is the sum over the channels it reads of each channel's row | DECISION | the lead, 2026-11-23, on the detector core's design | a core whose output changes when a row of zeros is added for a channel it did not read |
