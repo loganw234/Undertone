@@ -3,7 +3,7 @@
 
     python docs/studies/d1/figures.py
 
-It reads nothing. Every input is written in this file beside the row of the
+It reads nothing, and imports stations.py beside it for one distance. Every input is written in this file beside the row of the
 study it comes from. It prints one labelled line per figure; a COMPUTED row
 of the study cites the label. It cannot see whether an input is true: each
 input is a READ, MEASURED, ESTIMATE or BELIEVED row of the study, named in
@@ -32,7 +32,7 @@ line("F3", "window slopes: sound %.2f to %.2f s/km; ground %.2f to %.2f s/km"
      % (1 / 0.345, 1 / 0.240, 1 / 6.5, 1 / 1.5))
 
 # F4: 20:56 local on 2021-09-13 (row L3c), if local time was 7 h behind UTC
-# (row W6, BELIEVED), is 03:56 UTC on 2021-09-14.
+# (row W6 as first written, BELIEVED then), is 03:56 UTC on 2021-09-14.
 h = 20 + 7
 line("F4", "20:56 at UTC-7 on 2021-09-13 -> %02d:56 UTC on 2021-09-%d" % (h % 24, 13 + h // 24))
 
@@ -101,5 +101,72 @@ line("F16", "2^24 / 40 = %.1f counts a volt; 419430 x 40 / 2^24 = %.6f"
 
 # F17: a day-long file of the cloud bucket (row T8) against a 50-minute request.
 line("F17", "86400 s / 3000 s = %.1f" % (86400 / 3000))
+
+# ---- study D1b. Inputs are rows of D1b-first-look.md, named beside each. ----
+
+# F18: the wheels pip downloaded into the scratch environment, in MB as pip
+# printed them (D1b row R2), and the ones it took from the desktop's pip cache.
+got = [0.127, 0.214, 0.011, 2.5, 4.0, 12.6, 14.8, 0.092, 2.4]
+cached = [0.234, 0.0083, 0.069, 0.070, 9.3, 0.129, 7.3, 0.126, 0.073, 36.7, 0.876, 0.045,
+          0.348, 0.135]
+line("F18", "downloaded: %d wheels, %.1f MB; from the cache: %d wheels, %.1f MB"
+     % (len(got), sum(got), len(cached), sum(cached)))
+
+# F19: bytes a sample in the fetched waveform files (D1b row Q5e): the
+# smallest file, the largest, and all 25 together, each of 300001 samples.
+line("F19", "327680 / 300001 = %.2f; 655360 / 300001 = %.2f; 10788864 / (25 x 300001) = %.2f"
+     % (327680 / 300001, 655360 / 300001, 10788864 / (25 * 300001)))
+
+# F20: the launch list as fetched (D1b row R1): bytes an entry.
+line("F20", "13818818 bytes / 76039 entries = %.0f bytes an entry" % (13818818 / 76039))
+
+# F21: CI.LOC's onset, 45 s at 16.5 km (D1b row Q3b), with the 2 s either
+# side that a 4 s frame leaves.
+line("F21", "16.5 km / 45 s = %.3f km/s; / 47 s = %.3f; / 43 s = %.3f"
+     % (16.5 / 45, 16.5 / 47, 16.5 / 43))
+
+# F22: the catalogue's time, 03:55:50 UTC on 2021-09-14 (D1b row Q6a), seven
+# hours earlier: the post's "8:56 pm local time on Monday September 13th".
+line("F22", "03:55:50 UTC on 2021-09-14 less 7 h = 20:55:50 on 2021-09-13")
+
+# F23: the press release's two figures (D1 rows A3, A4).
+line("F23", "733 / 1001 = %.3f" % (733 / 1001))
+
+# F24: what a volts-to-counts gain of 419430 fits (D1 row M9): bits b over a
+# full range of V volts give 2^b / V counts a volt.
+line("F24", "419430 counts a volt: " + ", ".join(
+    "2^%d / %g V = %.1f" % (b, v, 2 ** b / v) for b, v in ((24, 40), (22, 10), (21, 5), (20, 2.5))))
+
+# F25: sample ranges. A signed 16-bit sample runs from -32768 to 32767.
+line("F25", "35420 > 32767 and -36647 < -32768: both need 17 bits (2^16 = %d)" % 2 ** 16)
+
+# F26: when each sound window closes against when the stretch ended (D1b row Q4a).
+for sta, d, end in (("LOC", 16.5, 502), ("LCP", 32.6, 511), ("SYN", 49.9, 481), ("MPP", 78.5, 574)):
+    close = d / 0.240 + 185
+    line("F26", "CI.%s: window closes at %.0f s; the stretch's last up second is %d, %+.0f s"
+         % (sta, close, end, end - close))
+
+# F27: the steps between neighbouring stations' onsets (D1b row Q3b): seconds
+# over km, for 45, 100, 211 and 224 s at 16.5, 32.6, 49.9 and 78.5 km.
+pts = [(16.5, 45), (32.6, 100), (49.9, 211), (78.5, 224)]
+line("F27", "; ".join("%d s / %.1f km = %.2f s per km" % (t2 - t1, d2 - d1, (t2 - t1) / (d2 - d1))
+                       for (d1, t1), (d2, t2) in zip(pts, pts[1:])))
+
+# F28: the magnitude 0.70 earthquake of 2021-09-15 04:18:15.26 at 34.01217,
+# -116.3260 (the day's earthquake listing) against CI.SRN's stretch of that
+# day, 1329 s to 1375 s after 03:55:50 (D1b row Q2e). CI.SRN is at 33.8285,
+# -117.7894 (D1's block for 2021-09-14). 6.5 km/s is the fastest ground speed
+# of D1's row W2. The distance is stations.py's, the same formula as the study's.
+import os  # noqa: E402
+import sys  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import stations  # noqa: E402
+origin = (4 * 3600 + 18 * 60 + 15.26) - (3 * 3600 + 55 * 60 + 50)
+km = stations.vincenty_km(34.01217, -116.3260, 33.8285, -117.7894)
+first = origin + km / 6.5
+line("F28", "origin %.0f s after the stand-in time, %.0f s after the stretch's first up "
+     "second (1329); %.1f km / 6.5 km/s = %.0f s, so no wave before %.0f s, %.0f s "
+     "before the stretch's last up second (1375)"
+     % (origin, origin - 1329, km, km / 6.5, first, 1375 - first))
 
 print("\n".join(out))

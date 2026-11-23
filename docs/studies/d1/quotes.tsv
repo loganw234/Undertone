@@ -81,6 +81,10 @@ S4	pages/rll-scrubs.html	https://www.rocketlaunch.live/scrub-statistics	Falcon 9
 S4	pages/rll-scrubs.html	https://www.rocketlaunch.live/scrub-statistics	Vandenberg SFB 221 6 1 18 33% 0.70
 P1	pages/pypi-obspy.html	https://pypi.org/project/obspy/	obspy-1.5.2-cp312-cp312-win_amd64.whl 14.8 MB
 P1	pages/pypi-obspy.html	https://pypi.org/project/obspy/	GNU Lesser General Public License v3 (LGPLv3)
+# The quotations of ../D1b-first-look.md's register.
+R4	pages/pypi-terms.html	https://policies.python.org/pypi.org/Terms-of-Service/	Please read this Terms of Service agreement carefully before accessing or using PyPI.
+R4	pages/pypi-terms.html	https://policies.python.org/pypi.org/Terms-of-Service/	You may not use PyPI if you are or are working on behalf of a Specially Designated National (SDN)
+Q6h	pages/scedc-event-home.html	https://service.scedc.caltech.edu/fdsnws/event/1/	Event Types Any Earthquake Quarry blast Nuclear test Sonic blast Shot Long period Explosion Unknown
 # Quotations used only in PROVENANCE.md, at the root. Their row is PV.
 PV	pages/wiki-slc4.html	https://en.wikipedia.org/wiki/Vandenberg_Space_Launch_Complex_4	Text is available under the Creative Commons Attribution-ShareAlike 4.0 License
 PV	pages/wiki-slc4.html	https://en.wikipedia.org/wiki/Vandenberg_Space_Launch_Complex_4	By using this site, you agree to the Terms of Use and Privacy Policy
