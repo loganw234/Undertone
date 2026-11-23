@@ -1,6 +1,6 @@
-# Round 2: the fabric in simulation, and the learner - a draft work order for Logan
+# Round 2: the fabric in simulation, and the learner - the work order (approved by Logan, 2026-11-23)
 
-Drafted by the lead on 2026-11-23, the day round 1 closed, on Logan's word "Yes draft the plan". **Nothing here is approved, and nothing of round 2 has started.** This is the third draft. A verifier, VP2, read the first against its sources, re-checked the second, and read the changes of the third, where it found no wrong answer. Its wrong answers are all answered here; four of its smaller points are left as they were, and the record of the three passes in `docs/VALIDATION.md` names them. A few words changed after its last pass, and that record says which. It ends with six questions, each answerable in a few words.
+Drafted by the lead on 2026-11-23, the day round 1 closed, on Logan's word "Yes draft the plan", and approved by him the same day with one change: his word closes this document, and the fifth question he answered otherwise than recommended. This is the third draft. A verifier, VP2, read the first against its sources, re-checked the second, and read the changes of the third, where it found no wrong answer. Its wrong answers are all answered here; four of its smaller points are left as they were, and the record of the three passes in `docs/VALIDATION.md` names them. A few words changed after its last pass, and that record says which. It ends with six questions, each answerable in a few words.
 
 Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION. `<repos>` is the folder that holds this repository and its siblings.
 
@@ -162,3 +162,29 @@ Each has a recommendation and a real alternative. A few words answer each. One q
 6. **The push at the close?**
    - *(Recommended)* **The lead asks you again** before `main` moves and anything is pushed, as in round 1.
    - *The alternative:* a standing word now, to push once the closing verifier's pass is clean.
+
+## Logan's word (2026-11-23, verbatim)
+
+> Approved with recommendations except 5 do a synthesis to measure real cost
+
+*The lead's reading.* Round 2 runs as this plan has it, with each question answered as recommended but the fifth:
+
+1. Shape C: both tracks.
+2. The four-part test for "simple enough", as written.
+3. The RTL takes the sample format as a parameter, and every bench runs under both formats.
+4. The launch experiment, LCH-3, is in this round, as a fifth parcel.
+5. **Not as recommended.** The alternative: after RTL-B is READY, one synthesis of the head alone on the box, by the lead, booked on the TimeSheet, to measure its real cost.
+6. The lead asks him again before `main` moves and anything is pushed.
+
+## Notes after approval
+
+**SYN, the lead's, a piece his fifth answer adds.** The draft said it had no time box or control for it. It has these:
+
+- *When:* in wave 2, after RTL-B is READY and merged. It cannot change the head's decision, which HEAD and the four-part test make in wave 0.
+- *What:* one out-of-context synthesis of the head's RTL alone, as RTL-B built it, under each of the two sample formats, on `amd-arc-box`, by the lead and nobody else. It reads the utilisation report: DSP slices, look-up tables, registers. No implementation, no timing closure, no bitstream, nothing on the card.
+- *What it settles:* row N14 becomes MEASURED or is shown wrong, and with it D0's row D2, one slice for an 18-bit by 27-bit multiply. It shows whether the test's third part, a count of multipliers, was a fair proxy for cost.
+- *Its control:* a module of one multiplier, 18 bits by 16, synthesised the same way first. Its report must show exactly one DSP slice. If it does not, the lead's reading of the report is wrong, and no figure for the head is reported until that is understood.
+- *Its time box:* one hour of the lead's, an ESTIMATE; the box's time is booked on the TimeSheet before the run, in the mildest mode that is true, around the sibling project's standing bookings.
+- *What it does not show:* whether the head meets timing, what the whole design costs, or anything about the card.
+
+**Wave 0's simulators.** Row N20 stands: the image starts on Icarus Verilog. Logan's word of 2026-11-23 on Docker covers building it.

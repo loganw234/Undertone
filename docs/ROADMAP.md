@@ -5,7 +5,7 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 ## Where the project stands (2026-11-23)
 
 - **Design:** [D0, the rough design](studies/D0-rough-design.md), approved by Logan on 2026-11-21 with all six of its questions answered as recommended.
-- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work was done and verified on the branch `r1`, and `main` was moved to `r1`'s tip and pushed on Logan's word of 2026-11-23.
+- **Plan of record:** [round 2, the fabric in simulation and the learner](plans/R2-fabric-in-simulation-and-the-learner.md), approved by Logan on 2026-11-23 with one change, and running on the local branch `r2`. Before it: [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work was done and verified on the branch `r1`, and `main` was moved to `r1`'s tip and pushed on Logan's word of 2026-11-23.
 - **Licence:** MIT, by Logan's test of 2026-11-23: the easiest option for others to reuse the work.
 - **Built, in software only:** the reference model (`model/`), the statistics that judge sensitivity (`stats/`), and the eleven gates of D0 that need no hardware. As a matched filter the model reproduces the textbook curve at five amplitudes. **Nothing of the system is built**: no RTL, no host library, nothing on the card. Five of D0's sixteen gates wait for those.
 - **Looked at, once:** one rocket launch in public seismic records. By the rule fixed before the data was fetched it is seen at three stations, 16.5, 49.9 and 78.5 km from the pad, and not at 181 or 275 km. At a fourth, 32.6 km, the launch-day figure is as large as at the others, and the rule reads "cannot tell" because one control day has a ten-second stretch in the window. One launch and two control days; not a rate. [D1b](studies/D1b-first-look.md).
@@ -15,7 +15,7 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 
 His answers are below, verbatim, under "Logan's words, as given". What they leave open:
 
-1. **What round 2 is.** He asked for a plan on 2026-11-23 ("Yes draft the plan"). The draft is [plans/R2-fabric-in-simulation-and-the-learner.md](plans/R2-fabric-in-simulation-and-the-learner.md); it recommends two tracks, the fabric in simulation and the learner in software, and ends with six questions for him. A seventh, how the RTL simulators are provided, he answered while the draft was being checked: a Docker image of this project's own. Nothing of round 2 has started.
+1. **What round 2 is: answered.** He approved the plan on 2026-11-23 with one change (his words are below). He asked for it that day ("Yes draft the plan"). The draft is [plans/R2-fabric-in-simulation-and-the-learner.md](plans/R2-fabric-in-simulation-and-the-learner.md); it recommends two tracks, the fabric in simulation and the learner in software, and ends with six questions for him. A seventh, how the RTL simulators are provided, he answered while the draft was being checked: a Docker image of this project's own. Nothing of round 2 has started.
 2. **Whether a hidden layer is "simple enough".** His word: "Hidden layer from the start if simple enough, otherwise without for the initial design." The draft proposes a four-part test for it, fixed before the design is drawn, and asks him whether that test is the one he means (its question 2).
 3. **Which sample format the RTL takes.** His word on D0's row D1 was "Proposed is approved", which the lead reads as 16-bit samples on one channel, to start. The draft asks it as its question 3, and recommends RTL that takes the format as a parameter.
 4. **Raspberry Shake's licence.** Held, by his word.
@@ -123,6 +123,12 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 *The lead's reading:* a Docker image of this project's own may be created, and what the work needs installed in it. The lead takes the new image and leaves the sibling project's as it is. It answers that one question of the draft. It is not approval of round 2, and no image is built before the round is approved; the lead ran one throwaway container of the base image already on the desktop, to read which versions it offers.
 
+**2026-11-23, approving round 2's plan.** The lead had put the draft's six questions to him, each with a recommendation: which round; the four-part test for "simple enough"; the sample format for the RTL; whether the launch experiment is in this round; whether anything runs on the box; and the push at the close.
+
+> Approved with recommendations except 5 do a synthesis to measure real cost
+
+*The lead's reading:* round 2 starts. Questions 1, 2, 3, 4 and 6 are answered as recommended: both tracks; the test as written; RTL that takes the sample format as a parameter; the launch experiment in this round; and the lead asks again before `main` moves and anything is pushed. Question 5 he answered with its alternative: after the detector core's RTL is READY, the lead makes one synthesis of the head alone on the box, booked on the TimeSheet, to measure what it costs. The plan's notes after approval say what that piece is, its control and its limits. His word is not leave to push.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
@@ -153,6 +159,7 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 | round | what | state |
 |---|---|---|
-| `2026-11-23-r2-plan` | the draft plan for round 2, and a verifier's three passes over its three drafts | drafted 2026-11-23 on the local branch `r2-plan`; awaits Logan's answers to its six questions; nothing of round 2 started; not pushed. The record is in [VALIDATION.md](VALIDATION.md) |
+| `2026-11-23-r2` | round 2: the fabric in simulation, the learner, the head, the launch experiment | running from 2026-11-23, on the local branch `r2`; nothing pushed |
+| `2026-11-23-r2-plan` | the draft plan for round 2, and a verifier's three passes over its three drafts | drafted 2026-11-23 on the local branch `r2-plan`; approved by Logan on 2026-11-23 with one change; not pushed. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | run on 2026-11-23, on `r1`: five merges of four parcels (LCH twice, MOD-A, MOD-B, STAT), each past a verifier of its own before it merged, and the lead's two pieces, the foundation and the seam, each past a verifier too; pushed on Logan's word of 2026-11-23. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-21-d0-design` | the rough design D0, a verifier pass over it and one re-check | approved by Logan on 2026-11-21; the record is in [VALIDATION.md](VALIDATION.md) |
