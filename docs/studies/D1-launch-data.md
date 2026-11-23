@@ -14,7 +14,7 @@ Each sentence points at the rows that carry it.
 - **The catalogue is good enough for a window, and its documentation names no code for a scrub.** GCAT gives launch times in UTC to the second where available, defined as first motion, under CC-BY (L5a to L5d). Its column descriptions name no code for a scrubbed countdown; the nearest are a pad abort, kept only for crewed attempts, and Z, an entry that is not a launch (L5e). No catalogue file was opened, so what the lists hold is not known. One other site counts scrubs, inferred from its own schedule edits, with the records behind a paid interface (S1 to S3).
 - **The label is a window, and it widens with distance:** 207 s long at 13.5 km, 539 s at 275 km, for sound (W7). On the speeds chosen here the ground path's window overlaps it near the pad and separates from it by 100 km. That is arithmetic on constants this study picked (W1 is a DECISION, W2 an ESTIMATE; W4), not a finding about the ground.
 - **For D0's row D1:** three components and 100 samples a second are MEASURED from metadata (M2). Samples wider than 16 bits are now MEASURED: two of the 25 files fetched hold values that need 17 (M6). The converters' width is another question and is still BELIEVED (M6b): the metadata names sensors, not digitisers (M5), and the one gain a service gives fits 24 bits over 40 volts and three narrower converters equally (M9).
-- **The proposed download** is 30 small requests to one data centre. Their size is an ESTIMATE on believed inputs (E4, E5): about 41 MB if no sample is stored wider than 32 bits, about half that if compression is typical. With it go one catalogue file of perhaps 23 MB (E6, an ESTIMATE), the catalogue's pad table, and either one 14.8 MB package with dependencies not yet sized (P1) or a short reader written here. It has since been fetched: what came, and its sizes, are in rows E1 to E6 and in D1b.
+- **The proposed download** is 30 small requests to one data centre. Before anything was fetched their size was estimated, on believed inputs, at about 41 MB at most and half that typically, with one catalogue file of perhaps 23 MB; what came was 10.8 MB and 13.8 MB (E4 to E6, now MEASURED). With them go the catalogue's pad table, and either one 14.8 MB package with dependencies not yet sized (P1) or a short reader written here. It has since been fetched: what came, and its sizes, are in rows E1 to E6 and in D1b.
 
 ## Labels, and how this file is held
 
@@ -573,10 +573,10 @@ A run whose manifest does not hash to the committed value is refused. A hash rec
 | item | what | from | size | why |
 |---|---|---|---|---|
 | 1 | availability listings, as text, for the other 7 stations: 7 requests of the documented form, `https://service.scedc.caltech.edu/fdsnws/availability/1/extent?network=CI&station=GATR&asset=continuous` and the same for LOC, SYN, MPP, CDM, HDH and SRN; LCP's is in hand (T5) | SCEDC | a few KB each; LCP's was 3,795 bytes | whether anything at all is listed for each station around September 2021 (T3 and T4 disagree). An extent gives the earliest and the latest time and cannot show a gap, so it does not settle whether the launch hour is whole. Only the fetched record does (measure 7) |
-| 2 | the launch list, `https://planet4589.org/space/gcat/tsv/launch/launch.tsv` | GCAT | perhaps 23 MB (E6, an ESTIMATE); not read | T0 to the second; whether the two control days held a launch; what the lists hold of scrubs and of code Z (L5e) |
+| 2 | the launch list, `https://planet4589.org/space/gcat/tsv/launch/launch.tsv` | GCAT | perhaps 23 MB, as estimated beforehand; E6 has what came | T0 to the second; whether the two control days held a launch; what the lists hold of scrubs and of code Z (L5e) |
 | 3 | the pad table and the site table, `https://planet4589.org/space/gcat/tsv/tables/lp.tsv` and `https://planet4589.org/space/gcat/tsv/tables/sites.tsv` | GCAT | not read; small beside the launch list (BELIEVED) | the pad of each launch and its coordinates, which section 2 says an experiment needs |
-| 4 | tier A below: 3 requests | SCEDC | about 4.1 MB at most, 2.1 MB typically (E5, an ESTIMATE) | the core: three distances, 13.5, 32.6 and 49.9 km, one launch |
-| 5 | tiers B, C and D below: 27 requests | SCEDC | with tier A, about 41.1 MB at most, 20.6 MB typically (E5, an ESTIMATE) | B: the rest of the ladder, to 275 km, and a second station near the pad. C: the same hour on the day before and the day after. D: the two horizontal components at the three nearest rungs |
+| 4 | tier A below: 3 requests | SCEDC | about 4.1 MB at most, 2.1 MB typically, as estimated beforehand; E4 and E5 have what came | the core: three distances, 13.5, 32.6 and 49.9 km, one launch |
+| 5 | tiers B, C and D below: 27 requests | SCEDC | with tier A, about 41.1 MB at most, 20.6 MB typically, as estimated beforehand; E5 has what came | B: the rest of the ladder, to 275 km, and a second station near the pad. C: the same hour on the day before and the day after. D: the two horizontal components at the three nearest rungs |
 | 6 | the earthquake catalogue for the three windows, as text: `https://service.scedc.caltech.edu/fdsnws/event/1/query?starttime=2021-09-14T03:00:00&endtime=2021-09-14T05:00:00&format=text`, and the same hours on 2021-09-13 and 2021-09-15 | SCEDC | a few KB each (ESTIMATE; an hour or two of a regional catalogue) | control 7 |
 | 7 | a reader for miniSEED: either the package obspy, 14.8 MB (P1) and whatever else it needs installed, which was not sized; or none, see below | PyPI, or nobody | 14.8 MB and more, or nothing | to turn the files into numbers |
 
@@ -704,7 +704,7 @@ It would report every rung, with or without a signal.
 - A READ row is held to its page by check_quotes.py; whether the quotation carries the claim beside it is a reader's judgement, and the verifier's.
 - The windows rest on speeds chosen here (W1, W2). They are wide on purpose and are not a prediction.
 - One launch, chosen because someone wrote it up, cannot say how often a launch is seen.
-- Every size in section 8 is an upper bound or rests on a figure from memory (E1, E2, E3).
+- The sizes in section 8's list were estimates on figures from memory, and two of those figures were wrong. They have since been measured (E1 to E6).
 
 ## Changes after the verifier's pass, 2026-11-23
 
