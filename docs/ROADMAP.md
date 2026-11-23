@@ -5,22 +5,22 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 ## Where the project stands (2026-11-23)
 
 - **Design:** [D0, the rough design](studies/D0-rough-design.md), approved by Logan on 2026-11-21 with all six of its questions answered as recommended.
-- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work is done and verified on the branch `r1`, which is local; what remains is Logan's word before `main` moves and anything is pushed.
+- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work was done and verified on the branch `r1`, and `main` was moved to `r1`'s tip and pushed on Logan's word of 2026-11-23.
 - **Licence:** MIT, by Logan's test of 2026-11-23: the easiest option for others to reuse the work.
 - **Built, in software only:** the reference model (`model/`), the statistics that judge sensitivity (`stats/`), and the eleven gates of D0 that need no hardware. As a matched filter the model reproduces the textbook curve at five amplitudes. **Nothing of the system is built**: no RTL, no host library, nothing on the card. Five of D0's sixteen gates wait for those.
 - **Looked at, once:** one rocket launch in public seismic records. By the rule fixed before the data was fetched it is seen at three stations, 16.5, 49.9 and 78.5 km from the pad, and not at 181 or 275 km. At a fourth, 32.6 km, the launch-day figure is as large as at the others, and the rule reads "cannot tell" because one control day has a ten-second stretch in the window. One launch and two control days; not a rate. [D1b](studies/D1b-first-look.md).
-- **Committed and pushed** under Logan's word of 2026-11-21 (question 6 of D0, and his leave to create a remote): the setup, up to `d13281f`. The remote is the public repository `loganw234/Undertone` on GitHub. **Nothing of round 1 is pushed.**
+- **Committed and pushed:** the setup, under Logan's word of 2026-11-21, up to `d13281f`; and round 1, under his word of 2026-11-23 at its close ("1. Push"). The remote is the public repository `loganw234/Undertone` on GitHub.
 
-### Open with Logan (2026-11-23)
+### Open with Logan (2026-11-23, after his answers at the round's close)
 
-Each is his to decide. None blocked the round.
+His answers are below, verbatim, under "Logan's words, as given". What they leave open:
 
-1. **The push.** `main` moves to `r1`'s tip, and is pushed, only on his word. The lead asks at the round's close.
-2. **The detector's head.** D0 says "a small dense head"; the model's is one linear layer with no bias, which cannot represent a detector that needs a hidden layer. Accepted by the lead for round 1 as a stated limit.
-3. **D0's row D1, 16-bit samples on one channel.** The real records are three components, and two of 25 files hold samples that need 17 bits. The model already runs under a 24-bit, three-channel profile.
-4. **A package index's terms.** They exclude a person on a sanctions list. A parcel installed nine packages from it, into a virtual environment, before that was put to him.
-5. **Raspberry Shake's licence**, which he said he would look into. Held: no request, and no row of its data in any committed file.
-6. **What round 2 is.** The plan of record ends with round 1.
+1. **What round 2 is.** The plan of record ends with round 1. He was asked and did not answer.
+2. **Whether a hidden layer is "simple enough".** His word: "Hidden layer from the start if simple enough, otherwise without for the initial design." Round 2's plan is to answer it with a measurement, at a design stop, before any RTL.
+3. **Which sample format the first RTL target takes.** His word on D0's row D1 was "Proposed is approved", which the lead reads as 16-bit samples on one channel, to start; the lead asks again when the target is chosen.
+4. **Raspberry Shake's licence.** Held, by his word.
+
+Settled by those answers: the push of round 1; the package index's terms.
 
 ## Logan's words, as given
 
@@ -95,6 +95,24 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 3. EarthScope's service may be used, and rows from it committed, with the acknowledgement its terms ask for.
 4. Raspberry Shake stays held until he has looked: no request to it, and no row from it in a committed file.
 
+**2026-11-23, at the close of round 1.** The lead had put six things to him: the push; the detector's head, which is one linear layer with no bias where D0 says "a small dense head"; D0's row D1, 16-bit samples on one channel, beside real records of three components of which two files in 25 need 17 bits; a package index whose terms exclude a person on a sanctions list; Raspberry Shake; and what round 2 is. He answered the first five, by number:
+
+> 1. Push
+> 2. Hidden layer from the start if simple enough, otherwise without for the initial design.
+> 3. Proposed is approved
+> 4. I don't believe I'm on a sanctions list so should be good there.
+> 5. Stays held for now.
+
+*The lead's reading:*
+
+1. `main` moves to `r1`'s tip and is pushed. This is his word for round 1's push, not a standing word for later ones.
+2. The detector's head gets a hidden layer if that is simple enough, and stays one linear layer for the initial design if it is not. He did not say who judges "simple enough". The lead takes it as a question for round 2's plan to answer with a measurement, at a design stop, before any RTL is written: what a hidden layer costs in the model (the datapath, the blob's version, every width after the pool) and in the fabric (multipliers and bits), set beside what one layer costs. Until that is answered the model is as it is.
+3. Row D1 of D0 is approved as proposed: 16-bit signed samples on one channel, to start. That is the lead's reading of four words, and there is another: that the wider, three-channel format the lead had described beside it is what he approves. The model runs under both formats and nothing built is tied to either, so the two readings part only when the first RTL target is chosen. The lead asks him then.
+4. The package index may be used. Its terms exclude a person on a sanctions list, and he does not believe he is on one. Installs still go into a virtual environment, with the shared cache off.
+5. Raspberry Shake stays held: no request to it, and no row from it in a committed file.
+
+The sixth, what round 2 is, he did not answer.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
@@ -125,5 +143,5 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 
 | round | what | state |
 |---|---|---|
-| `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | run on 2026-11-23, on `r1`: five merges of four parcels (LCH twice, MOD-A, MOD-B, STAT), each past a verifier of its own before it merged, and the lead's two pieces, the foundation and the seam, each past a verifier too; the push is open. The record is in [VALIDATION.md](VALIDATION.md) |
+| `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | run on 2026-11-23, on `r1`: five merges of four parcels (LCH twice, MOD-A, MOD-B, STAT), each past a verifier of its own before it merged, and the lead's two pieces, the foundation and the seam, each past a verifier too; pushed on Logan's word of 2026-11-23. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-21-d0-design` | the rough design D0, a verifier pass over it and one re-check | approved by Logan on 2026-11-21; the record is in [VALIDATION.md](VALIDATION.md) |
