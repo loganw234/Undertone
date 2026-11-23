@@ -62,6 +62,7 @@ from spec import constants as C  # noqa: E402
 from model import inject, run, source, weights  # noqa: E402
 from stats import matched as stat_matched  # noqa: E402
 from stats import recovery, theory, tolerance  # noqa: E402
+from stats.errors import StatRefusal  # noqa: E402
 
 PROFILE = "s16x1"
 SIGMA = (1477, 1)
@@ -243,6 +244,79 @@ def test_control_statistics__seam_a_run_of_nothing_is_refused_not_passed():
     assert type(e.value).__name__ == "StatRefusal"
 
 
+def stated_parts():
+    """Five part records that ARE the stated experiment, with made-up counts at D8's own figures."""
+    parts = []
+    for k in range(len(AMPLITUDES)):
+        f = facts(k)
+        parts.append({"part": k, "amplitude": f["amplitude"], "n": FULL_N, "seed": FULL_SEED + k, "profile": PROFILE,
+                      "sigma": list(SIGMA), "pfa": PFA, "spacing": SPACING, "d": f["d"], "threshold": f["threshold"],
+                      "found": round(f["expected"] * FULL_N), "noise_crossings": round(PFA * FULL_N), "flags": 0,
+                      "scores_identical_to_stats": True, "real_found": round(f["expected"] * FULL_N), "model_only": 0,
+                      "real_only": 0, "stream_sha256": "%064x" % k, "spec_sha256": C.SPEC_SHA256})
+    return parts
+
+
+def judged(parts, tmp_path, capsys):
+    paths = []
+    for p in parts:
+        path = tmp_path / ("part%d-%d.json" % (p["part"], len(paths)))
+        path.write_text(json.dumps(p), encoding="utf-8")
+        paths.append(str(path))
+    code = judge_parts(paths)
+    return code, capsys.readouterr().out
+
+
+def test_seam_e0_the_judge_passes_parts_that_are_the_stated_experiment(tmp_path, capsys):
+    code, out = judged(stated_parts(), tmp_path, capsys)
+    assert code == 0 and "== E0 SOFTWARE VERDICT: PASS" in out and "NOT AS STATED" not in out
+    assert not_as_stated(stated_parts()) == []
+
+
+def test_control_statistics__seam_the_judge_fails_parts_that_are_not_the_stated_experiment(tmp_path, capsys):
+    """Each of these has counts that sit exactly on D8's figures: a judge that read only the counts
+    would print PASS for every one. The closing verifier's point."""
+    def one_seed(parts):
+        for p in parts:
+            p["seed"] = FULL_SEED
+
+    def one_stream(parts):
+        parts[3]["stream_sha256"] = parts[2]["stream_sha256"]
+
+    def threshold_up(parts):
+        parts[2]["threshold"] += 1
+
+    def other_d(parts):
+        parts[1]["d"] += 1e-6
+
+    def short_run(parts):
+        parts[4]["n"] = 20000
+
+    def missing_part(parts):
+        del parts[0]
+
+    def two_of_one(parts):
+        parts[0] = dict(parts[1])
+
+    def other_definition(parts):
+        parts[2]["spec_sha256"] = "0" * 64
+
+    for change in (one_seed, one_stream, threshold_up, other_d, short_run, missing_part, two_of_one, other_definition):
+        parts = stated_parts()
+        change(parts)
+        assert not_as_stated(parts), change.__name__
+        (tmp_path / change.__name__).mkdir()
+        code, out = judged(parts, tmp_path / change.__name__, capsys)
+        assert code == 1 and "NOT AS STATED" in out and "== E0 SOFTWARE VERDICT: FAIL" in out, change.__name__
+    # and a count outside the tolerance still fails on its own, with the parts otherwise as stated
+    parts = stated_parts()
+    parts[2]["found"] -= 2000
+    assert not_as_stated(parts) == []
+    (tmp_path / "low").mkdir()
+    code, out = judged(parts, tmp_path / "low", capsys)
+    assert code == 1 and "OUTSIDE" in out and "NOT AS STATED" not in out
+
+
 # ------------------------------------------------------------ the full run, as a script
 
 def full_part(k, n, seed, out):
@@ -277,19 +351,54 @@ def full_part(k, n, seed, out):
     return part
 
 
+def not_as_stated(parts):
+    """Why these parts are not the experiment this file states: a list of reasons, empty when they are.
+
+    A judge that only read the counts would pass five parts made under one seed, or under a
+    threshold or a deflection that is not this experiment's. So each part is held to what `facts`
+    gives for its amplitude now, and the set is held to one part an amplitude, each under its own
+    seed, each of the full length. The round's closing verifier asked for this.
+    """
+    reasons = []
+    if sorted(p["part"] for p in parts) != list(range(len(AMPLITUDES))):
+        reasons.append("the parts are %s, not one for each of the %d amplitudes"
+                       % (sorted(p["part"] for p in parts), len(AMPLITUDES)))
+    for p in parts:
+        k = p["part"]
+        if not 0 <= k < len(AMPLITUDES):
+            continue
+        f = facts(k)
+        for name, want in (("seed", FULL_SEED + k), ("n", FULL_N), ("amplitude", f["amplitude"]),
+                           ("threshold", f["threshold"]), ("profile", PROFILE), ("sigma", list(SIGMA)),
+                           ("pfa", PFA), ("spacing", SPACING), ("spec_sha256", C.SPEC_SHA256)):
+            if p.get(name) != want:
+                reasons.append("part %d: %s is %r, the experiment's is %r" % (k, name, p.get(name), want))
+        if abs(p.get("d", 0.0) - f["d"]) > 1e-12:
+            reasons.append("part %d: d is %r, the experiment's is %r" % (k, p.get("d"), f["d"]))
+    if len({p["stream_sha256"] for p in parts}) != len(parts):
+        reasons.append("two parts were run on the same stream")
+    return reasons
+
+
 def judge_parts(paths):
     parts = []
     for p in paths:
         with open(p, encoding="utf-8") as fh:
             parts.append(json.load(fh))
     parts.sort(key=lambda p: p["part"])
-    ok = True
+    reasons = not_as_stated(parts)
+    ok = not reasons
     print("E0 in software: profile %s, sigma %d/%d, Pfa %.2f, the reference model as a matched filter for e0"
           % (parts[0]["profile"], parts[0]["sigma"][0], parts[0]["sigma"][1], parts[0]["pfa"]))
     print("  %-9s %-11s %-7s %-7s %-16s %-10s %-8s %-9s %s"
           % ("amplitude", "seed", "d", "D8", "found", "efficiency", "se from", "tolerance", "verdict"))
     for p in parts:
-        v = tolerance.check_efficiency(p["found"], p["n"], p["pfa"], p["d"])
+        try:
+            v = tolerance.check_efficiency(p["found"], p["n"], p["pfa"], p["d"])
+        except StatRefusal as e:        # a count the statistics will not judge is a failure, said plainly
+            ok = False
+            print("  %-9s REFUSED by the statistics: %s" % ("%d/%d" % tuple(p["amplitude"]), e))
+            continue
         ok = ok and v["inside"] and p["flags"] == 0 and p["scores_identical_to_stats"]
         print("  %-9s %-11d %-7.4f %-7.4f %-16s %-10.5f %+-8.2f %-9.5f %s"
               % ("%d/%d" % tuple(p["amplitude"]), p["seed"], p["d"], v["expected"],
@@ -297,7 +406,12 @@ def judge_parts(paths):
                  "INSIDE" if v["inside"] else "OUTSIDE"))
     print("  noise alone, at the same threshold:")
     for p in parts:
-        v = tolerance.check_count(p["noise_crossings"], p["n"], p["pfa"])
+        try:
+            v = tolerance.check_count(p["noise_crossings"], p["n"], p["pfa"])
+        except StatRefusal as e:
+            ok = False
+            print("  %-9s REFUSED by the statistics: %s" % ("%d/%d" % tuple(p["amplitude"]), e))
+            continue
         ok = ok and v["inside"]
         print("  %-9s %d of %d cross, rate %.5f, %+.2f se from %.2f, %s"
               % ("%d/%d" % tuple(p["amplitude"]), p["noise_crossings"], p["n"], v["measured"], v["z_score"], p["pfa"],
@@ -308,6 +422,11 @@ def judge_parts(paths):
               " found by the model only %d, by the real set only %d"
               % ("%d/%d" % tuple(p["amplitude"]), "yes" if p["scores_identical_to_stats"] else "NO", p["flags"],
                  p["real_found"], p["found"], p["model_only"], p["real_only"]))
+    print("  the parts against the experiment as this file states it: %s"
+          % ("one part an amplitude, each under its own seed, threshold and deflection as stated" if not reasons
+             else "NOT AS STATED"))
+    for reason in reasons:
+        print("    " + reason)
     print("== E0 SOFTWARE VERDICT: %s" % ("PASS, every amplitude inside D8's tolerance" if ok else "FAIL"))
     return 0 if ok else 1
 

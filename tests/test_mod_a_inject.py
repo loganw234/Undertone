@@ -495,6 +495,10 @@ def test_mod_a_the_stream_carries_nothing_but_samples(name):
     channels = C.PROFILES[name]["channels"]
     # A frame is exactly a tuple (model/stream.py, tightened at the seam): one that carries a label is
     # refused as not a frame, at the first frame, before anything is handed on.
+    # What this edit of the lead's gave up: the parcel's test fed tagged frames THROUGH the injector and
+    # saw plain tuples come out, so an injector that handed its input objects on unchanged was caught.
+    # Now no tagged frame can get in, and the assertions below run on plain input, where such an
+    # injector would pass them. It is harmless only for as long as the frame check stays this strict.
     tagged = [Tagged(f) for f in noise_frames(name)]
     stream, _truth = inject.inject(name, iter(tagged), SCHEDULE, FRAMES)
     refused("CHANNELS", lambda: next(stream))

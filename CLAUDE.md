@@ -55,6 +55,10 @@ Read on 2026-11-21 from `<repos>/cft-fp256/CLAUDE.md`, which has the addresses. 
 
 7. **A patch passed to Python through a shell heredoc can lose a level of backslashes, and a `\\uXXXX` escape typed through the Write tool can arrive as the invisible character it names.** Parcel LCH reported both on 2026-11-23; the first is how two CR bytes reached this file on 2026-11-21. Put a script in a file, and look at what was written. The `eol` stage sees a CR byte; it does not see other invisible characters.
 
+8. **Git Bash's `curl` fails on some hosts with error 43** ("a libcurl function was given a bad argument"), 2026-11-23, twice. `/c/Windows/System32/curl.exe` fetched the same address.
+9. **`pip` inside a virtual environment still writes the desktop's shared pip cache.** A parcel's install on 2026-11-23 put nine wheels there, outside its own folder. Pass `--no-cache-dir` when nothing may be written outside a folder. And read an index's terms whole before the first install: a search of the page for a few words missed the sentence that mattered.
+10. **Two things about a verifier's clone, each learned by getting it wrong on 2026-11-23.** A clone keeps its remote and its reflog unless they are removed, and either shows the commit before the planted faults. And a fault planted by amending a commit shows in that commit's own diff: plant it in a file the commit already changes, or squash the work into one commit first. An agent's transcript file is empty until that agent is resumed, so neither its report nor its commands can be read from it before then.
+
 ## The discipline that matters most here
 
 A bit-identity pass is not evidence about sensitivity, and a sensitivity curve is not evidence that the fabric is correct. They have different authorities (D0 section 2). Say which one a result rests on.

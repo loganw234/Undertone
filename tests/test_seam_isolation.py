@@ -9,8 +9,15 @@ samples, or adding none. The score records must come out the same, byte for byte
 `model.records.digest`. Then the control: a runner made here, which lets ONE BIT of truth reach
 the detector's output, must be reported by the same check.
 
-What this gate cannot see, stated: a detector that reads truth and does not let it change a
-record; and anything about a detector other than the shipped core run through `model.run`.
+What this gate cannot see, stated:
+  - a detector that reads truth and does not let it change a record;
+  - a leak keyed on something the other truths here do not vary. They vary whether there is a
+    record, its index, and its amplitude's denominator. They cannot vary the pulse id, because
+    one pulse is declared, and every one of them adds nothing to the samples; so a detector
+    that changed a record only for a second pulse, or only for a non-zero amplitude it had not
+    seen in the samples, would pass. The round's closing verifier built two such leaks and both
+    passed;
+  - anything about a detector other than the shipped core run through `model.run`.
 """
 import pytest
 
@@ -47,13 +54,26 @@ def the_samples(profile):
 
 def other_truths():
     """Schedules that add nothing to a stream and say different things: none at all; the real
-    indexes at amplitude zero; other indexes at amplitude zero; one record too faint to add a sample."""
+    indexes at amplitude zero; the same with another denominator; other indexes at amplitude
+    zero; one record too faint to add a sample."""
     faint = rec(2500, 1, 5000)
     assert inject.scaled_pulse(faint["pulse_id"], 1, 5000) == (0,) * len(E0)
     return [("no truth at all", []),
             ("the real indexes, amplitude zero", [rec(r["index"], 0) for r in REAL]),
+            ("the real indexes, amplitude zero over three", [rec(r["index"], 0, 3) for r in REAL]),
             ("other indexes, amplitude zero", [rec(i, 0) for i in (64, 500, 1100, 1900, 2600)]),
             ("one record too faint to add anything", [faint])]
+
+
+OTHERS = 5
+
+
+def refusal_of(call):
+    """(result, None), or (None, a finding) when the call was refused: a refusal is reported, not raised."""
+    try:
+        return call(), None
+    except Refusal as e:
+        return None, "refused as %s: %s" % (e.name, e.detail)
 
 
 def isolation_findings(runner, profile):
@@ -61,7 +81,10 @@ def isolation_findings(runner, profile):
     Returns a list of findings; empty means every run's score records had one digest."""
     blob = blob_for(profile)
     noise = source.Noise(profile, SEED, SIGMA[0], SIGMA[1], LENGTH)
-    first, truth = runner(noise, REAL, LENGTH, blob)
+    result, refused = refusal_of(lambda: runner(noise, REAL, LENGTH, blob))
+    if refused:
+        return ["NOTHING-COMPARED: the real run was " + refused]
+    first, truth = result
     if not first or len(first) != LENGTH:
         return ["NOTHING-COMPARED: the real run gave %d records" % len(first)]
     want = records.digest("score", first)
@@ -69,15 +92,20 @@ def isolation_findings(runner, profile):
     findings = []
     compared = 0
     for what, schedule in other_truths():
-        got, other = runner(samples, schedule, LENGTH, blob)
+        result, refused = refusal_of(lambda: runner(samples, schedule, LENGTH, blob))
+        if refused:
+            # a detector that refuses under one truth and not under another has let the truth out
+            findings.append("%s: the run was %s, where the real run was not" % (what, refused))
+            continue
+        got, other = result
         compared += 1
         if records.digest("truth", other) == records.digest("truth", truth):
             findings.append("%s: the truth records did not differ, so nothing was tested" % what)
         if records.digest("score", got) != want:
             where = [i for i, (a, b) in enumerate(zip(first, got)) if a != b]
             findings.append("%s: the score records differ, first at index %s" % (what, where[0] if where else "?"))
-    if compared != 4:
-        findings.append("NOTHING-COMPARED: %d of 4 other truths were run" % compared)
+    if compared != OTHERS and not findings:
+        findings.append("NOTHING-COMPARED: %d of %d other truths were run" % (compared, OTHERS))
     return findings
 
 
@@ -157,6 +185,32 @@ def test_control_truth_isolation__a_runner_that_hands_the_detector_one_bit_of_tr
     differ = [i for i, (a, b) in enumerate(zip(honest, leaky)) if a != b]
     assert set(differ) <= {r["index"] for r in REAL}
     assert all(abs(honest[i]["score"] - leaky[i]["score"]) == 1 for i in differ)
+
+
+class RefusingCore(Core):
+    """A detector that has been handed the truth and lets it out another way: it refuses the frame
+    where a truth record says a pulse begins."""
+    starts = frozenset()
+
+    def step(self, frame):
+        if self.next_index in self.starts:
+            raise Refusal("SAMPLE_RANGE", "a refusal that depends on the truth")
+        return super().step(frame)
+
+
+def refusing_detect(frames, schedule_records, length, blob, epoch=0):
+    core = RefusingCore(blob, epoch)
+    injected, truth = inject.inject(weights.unpack(blob)["profile"], frames, schedule_records, length)
+    core.starts = frozenset(r["index"] for r in truth if r["amplitude_den"] == 3)
+    return tuple(core.step(frame) for frame in injected), truth
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_control_truth_isolation__a_leak_through_a_refusal_is_reported_and_not_raised(profile):
+    """The closing verifier's leak: a refusal that happens under one truth and not another. The
+    check must report it as a finding; before, the refusal went straight out of the check."""
+    findings = isolation_findings(refusing_detect, profile)
+    assert len(findings) == 1 and "amplitude zero over three" in findings[0] and "refused as SAMPLE_RANGE" in findings[0]
 
 
 @pytest.mark.parametrize("profile", PROFILES)

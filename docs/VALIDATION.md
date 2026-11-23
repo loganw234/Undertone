@@ -575,3 +575,81 @@ It is **not** evidence that any fabric is correct. Nothing here is bit identity 
 - **No verifier's pass yet.** It follows, on the round's tip, with planted faults.
 - **The integration verifier has not re-made the merges.** The same pass.
 - **Nothing pushed.**
+
+## 2026-11-23 - round 1, the close: a verifier on the seam, the merges and the record
+
+The lead's own work since the parcels merged went past a verifier, VSEAM, on the round's tip. This entry is what it found, what was fixed, three corrections to earlier entries, and what the round cost. **`r1` is local. `main` has not moved and nothing is pushed: that is Logan's word to give.**
+
+### What ran
+
+- **VSEAM**, a new agent on Sonnet, 75 minutes allowed, on a sealed clone of `r1` with its history whole and **five faults planted in the tip commit** (70 tool calls, 22 min 24 s, as the harness reported). It was asked to re-make each merge from its parents, to attack the seam and the isolation gate with leaks of its own, to set the experiment's code beside its text, to reproduce one part of the full run of stage E0, and to check the record's figures against the runs' outputs. Its report and the key are under the round's `reports/`.
+
+### Measured
+
+- **Plants: 5 of 5 reported.** Model: Sonnet. Read the next line with it.
+- **That count measures less than it says.** The lead planted by amending the tip commit, which only added ledger entries and restated documents. Four of the five faults were in files that commit did not otherwise change, so the commit's own diff showed each as a change with no reason to be there. The verifier found two that way and said so during the pass; its report then gives for each of the five a check that finds it without the diff. The fifth, a wrong count inside a ledger entry the tip commit itself added, could not be found that way, and was found: 99,473 where the run printed 99,743. The lead wrote this weakness in the round's ledger before the report came back.
+- **The five merges, re-made from their parents by the verifier.** Three merge cleanly and equal the round's merge commits exactly. Two, MOD-B's and STAT's, conflict in `tests/gates.toml`; as parsed rows each of the round's resolutions is the first parent's rows followed by the second parent's new ones. Every file each parcel's own commit changed is byte for byte in its merge.
+- **The lead's recorded run of stage E0 reproduces.** In its own copy, at the seam's code and under the stated seed, the verifier's run of part 2 gave every field of the lead's record: 99,743 found of 200,000, 2,008 noise crossings, the same threshold, the same SHA-256 of the stream. The judge on the lead's five parts printed the recorded output byte for byte.
+- **D8's figure at each amplitude, by the verifier's own arithmetic**, importing nothing of `model/` or `stats/`: 0.122433, 0.280508, 0.500206, 0.719840 and 0.877777. Its own threshold: 1595666164.0556, so the integer the run used, 1595666164, counts exactly the scores above the real one.
+- **Three leaks of its own against the isolation gate**, through a record's flags, its epoch, and one score changed by one in the middle of a pulse: each reported, under both profiles.
+- **No regression.** Each parcel's own tests give the same counts on the tip as at the parcel's commit.
+- **Two false sentences of the lead's**, both in the record, both now restated:
+  1. The roadmap said "six parcels merged, each past a verifier". Five parcel merges were; the seam was the lead's and had been past none when that was written.
+  2. The roadmap, and the plan's note on row V2, said the launch was "plain at four stations ... by a measure fixed before the data was fetched". By the rule fixed beforehand it is seen at **three** stations, 16.5, 49.9 and 78.5 km. At the fourth, 32.6 km, the launch-day figure is as large and the rule reads "cannot tell", because a control day has a ten-second stretch there. The lead had claimed the fourth for the rule.
+
+### What changed after the pass
+
+- The two sentences, and the plan's "three merges conflicted" (two did).
+- `tests/test_seam_isolation.py`: a fifth other truth, which varies the amplitude's denominator; a refusal that happens under one truth and not another is now a finding, where it went out of the check as an exception; and the file's list of what the gate cannot see gains what the verifier showed it cannot: a leak keyed on a feature of the truth that none of the schedules varies.
+- `tests/test_seam_e0.py`: the judge of the full run now holds each part to the experiment as stated: one part an amplitude, each under its own seed, with the stated threshold, deflection, length and definition, no two on one stream. Before, it read only the counts, and five parts made under one seed would have been judged PASS. Eight ways of not being the stated experiment are each judged FAIL in a new control. The lead's recorded parts are judged again: PASS, and the first eighteen lines of the output are the recorded ones.
+- One sentence of parcel MOD-A's document that the lead's edit at the seam had left stale, and a comment in MOD-A's test saying what that edit gave up.
+- CLAUDE.md: three traps.
+
+### Corrections to earlier entries
+
+- **The entry for LCH's part B** says, under what it does not prove, that "the signal is at four distances". By the rule fixed beforehand it is at three, as that entry's own table shows; the fourth is by the numbers. The same slip as the roadmap's.
+- **The entry for wave 1** says the long run of the noise's tail was "made at MOD-A's merged commit". It was made at the parcel's own commit, `097ead6`, in a scratch clone, before the merge. The parcel's files in the merge are byte for byte that commit's.
+- **The entry for wave 2** says no verifier had seen the seam. This entry is that pass.
+
+### Merged with these stated limits
+
+- **The isolation gate sees a leak only through what its schedules vary.** They vary whether there is a record, its index and its amplitude's denominator. One pulse is declared, so they cannot vary the pulse; and every one adds nothing to the samples. The verifier's two leaks keyed on other features passed.
+- **The lead's edit to MOD-A's test** no longer catches an injector that hands its input objects on unchanged. That is harmless only while the frame check stays as strict as it now is.
+- **The verifier did not derive the noise law's exact variance itself**, did not rerun four of the five parts, and did not check this ledger's tallies of the earlier verifiers.
+
+### What the round cost
+
+By the wall clock, about three and a half hours on 2026-11-23, from the round's first TimeSheet notice at 07:06 to this entry.
+
+Agents, as the harness reported each at its last pass. **What these token figures count is not established here**, and the lead's own use is not among them.
+
+| agent | passes | tool calls | time, summed | tokens, at the last pass |
+|---|---|---|---|---|
+| LCH, the launch study | 3 | 322 | 1 h 24 min | 863,567 |
+| MOD-A | 1 | 168 | 1 h 14 min | 566,991 |
+| MOD-B | 2 | 127 | 1 h 6 min | 537,872 |
+| STAT | 2 | 170 | 1 h 12 min | 589,887 |
+| VP0, the foundation's verifier | 4 | 86 | 34 min | 354,834 |
+| VLCH | 4 | 93 | 18 min | 390,393 |
+| VMODA | 1 | 33 | 9 min | 145,078 |
+| VMODB | 2 | 73 | 19 min | 259,214 |
+| VSTAT | 3 | 54 | 17 min | 227,891 |
+| VSEAM | 1 | 70 | 22 min | 209,092 |
+
+The plan's verifier, VP1, ran before the round opened and is in the entry for the plan. Machine time booked on the TimeSheet: the long run of the noise's tail, four processes for six and a half minutes; the full run of stage E0, five processes for seven minutes.
+
+**Planted faults from the foundation onward: 40 planted, 39 reported**, by six verifiers on Sonnet, across nine passes that carried plants (4, 4, 5, 5, 5, 3 of 4, 3, 5 and 5). The plan's verifier, before the round opened, reported 5 of 5. The one miss was a wrong figure in a table, in a pass that reported the table as checked after checking two of its columns; the pass that followed was scoped to exactly that.
+
+### What this does not prove
+
+- **That a second verifier would find nothing.** One pass, by one model, whose blinding was weaker than its count suggests.
+- **Anything the earlier entries say is not proved.** No hardware, no learning, one launch.
+
+### Open with Logan
+
+In [ROADMAP.md](ROADMAP.md): the push; the detector's head; D0's row D1; a package index's terms; Raspberry Shake's licence; what round 2 is.
+
+### Not done, and why
+
+- **`main` has not moved and nothing is pushed.** The lead asks first.
+- **The parcels' worktrees and branches are kept**, under the ignored `Data/worktrees/`, until Logan has seen the round.
