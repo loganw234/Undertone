@@ -446,3 +446,63 @@ D0's row D1 proposes 16-bit samples on one channel. These records are three comp
 - **No wider look.** A second launch with every definition fixed first, more control days, the nearest station's other channels, the infrasound stations: the study lists these, and none was run. That is a decision for the next round's plan.
 - **Distant large earthquakes in the three windows were not checked.** The national catalogue's policy pages answered 403, so its terms could not be read, and it was not queried.
 - **Nothing pushed.**
+
+## 2026-11-23 - round 1, wave 1: the reference model's parts and the statistics, three parcels, each past a verifier
+
+Three parcels built to one interface without seeing one another's code, and are merged into `r1`: MOD-A as `b1e0bc2`, MOD-B as `f48efa4`, STAT as `9ee6fb4`. With them the reference model exists in software, and so does the second authority that judges sensitivity. **Nothing of the system exists: no RTL, no host library, nothing on the card.**
+
+### What changed
+
+- **MOD-A**, `model/source.py` and `model/inject.py`: seeded integer noise from a counter-based generator and a 63-bit table of a discrete Gaussian; a recording format and its replay; an injector that adds a known pulse, scaled by a fraction and rounded half to even, where a schedule of truth records says, and refuses a sum outside the range where another design would clip. Gates: injection, replay, noise-tails. [model/mod-a.md](model/mod-a.md).
+- **MOD-B**, `model/detector.py`, `model/weights.py`, `model/scorer.py`: a filter bank, a rectifier, a pool, one linear head and a shifted score, every width derived from the definition; the quantising rule in exact integers; a configuration blob; a store whose weights swap at a named output index; a scorer with a strict threshold. Gates: reference-model, swap, refusal, overflow, scorer. [model/mod-b.md](model/mod-b.md).
+- **STAT**, `stats/`: D8's formula; a floating-point matched filter that imports nothing of `model/`; the tolerance a measured efficiency is judged by; the script for D0's row D11; and [sources/D8.md](sources/D8.md), what was read of D8's source and by whom. Gate: statistics. [model/stat.md](model/stat.md).
+- Before them, the lead's: `adb10d1`, the definition gaining what two parcels' designs asked for (an earlier entry), and [model/conventions.md](model/conventions.md), four conventions ruled while three parcels each needed the same answer.
+
+### What ran
+
+- Each parcel on the lead's model, **design first**: a design in the round's ledger, the lead's rulings on it, then the build. MOD-A 168 tool calls and 73 min 34 s, as the harness reported; MOD-B 102 and 57 min 11 s; STAT 147 and 63 min 54 s. MOD-B and STAT each then made one send-back commit.
+- **Three verifiers on Sonnet, one a parcel, on sealed clones** (the parcel's commits as one commit, no remote, no reflog, the parcel's own commits not in the clone): VMODA one pass; VMODB two; VSTAT three. Reports and keys are under the round's `reports/`.
+- **The lead's own faults first.** Before planting, the lead tried candidate faults one at a time against each parcel's tests in throwaway copies: MOD-B's tests reported all ten, STAT's all eight, MOD-A's all eight. So every code fault planted for a verifier needed a test changed beside it to keep the gate green.
+
+### Measured
+
+- **Plants: VMODA 5 of 5. VMODB 5 of 5. VSTAT 3 of 4, then 3 of 3.** The miss: a wrong figure in a table of STAT's document, in a pass whose report said "the by-hand table matches" after checking two of its columns. The lead scoped a second pass to exactly that: every table cell and every register row set beside a number the verifier produced. That pass found a wrong figure of the parcel's own.
+- **Wrong answers of the parcels' own, found by the verifiers:** MOD-B, one row of its document's refusal table naming the wrong refusal. STAT, one exact figure wrong in its fourth digit (0.3146 for 0.3143) behind a test that allowed 0.0005; the parcel's own sweep then found three more figures in its tests behind loose allowances, and cut fifteen allowances to half a last digit. MOD-A, none.
+- **What the verifiers measured by their own roads.** VMODA: its own generator, written from the public page, matched the model on 2,000 random seed and index pairs; its own table in 80-digit decimal matched every entry at five sigmas; every single flipped bit of three recordings refused. VMODB: three cases worked by hand that the core matched, one with two channels, an absolute value and a pool, one with a swap; every case of two vector files matched an evaluator of its own; the design's ten items and the lead's eight rulings each found in the code. VSTAT: its own Q and inverse agree with the package to 2.4e-15; its own simulation, 2,000,000 trials with its own seed, sits 0.24 standard errors from D8; the gate's seeds changed three ways with every gate test still passing.
+- **The scorer's widths** (MOD-B, checked by hand by its verifier): under the 16-bit one-channel profile the filter sum needs 41 signed bits, the pool 57, the head 77; under the 24-bit three-channel profile 50, 66 and 85. The core is run at its true extreme inputs once a profile and reaches exactly the last bit of each width; a core one bit narrower overflows.
+- **The noise's tail, the long run** (the lead's, booked on the TimeSheet, made at MOD-A's merged commit): 2^30 draws, one channel, sigma 1000, the seed MOD-A's design named before any run. Every count from 1 to 5.42 sigma, on each side, within 4 standard deviations of its expectation; at 5.42 sigma 32 and 40 where 32.1 are expected; the same draws clipped one below that depth are reported. The furthest of twenty counts is 2.5 standard deviations out.
+- **The source for D8.** The lead fetched chapter 14 of MIT's 6.011 class notes and read it through text extraction. It states that the correlation test is optimal in the Neyman-Pearson sense and gives the two Gaussian distributions of the test statistic. **It does not write the closed form.** So D8's formula is COMPUTED from what was READ, in two lines, in `docs/sources/D8.md`; one secondary page writes it whole.
+- **The plan's row V3** asked whether two model parcels could build to one stream interface without meeting in one file, the gate registry apart. Three did. The only conflict in three merges was `tests/gates.toml`, where each appended its rows; the lead kept every row.
+- **The gate at each merge**, `bash verify/run.sh`, Windows desktop, `python` 3.12.15, each with the merge staged and the commit made only on the verdict line: MOD-A, VERDICT: PASS, 16 of 16, 277 tests; MOD-B, PASS, 433 tests; STAT, PASS, `OK model-tests: 656 tests ran, 0 failed, 0 errored, 0 skipped`, `OK independence: 9 module(s) in model/ and 9 in stats/ import with the other blocked`, `OK registry: 10 gate row(s), each with its test and its control; 91 gate-claiming test(s), each with a row`. For each parcel the files on `r1` are byte for byte its commit.
+
+### Merged with these stated limits
+
+Each parcel's document lists its own: 25, 19 and 17. Beside them:
+
+- **One linear head with no bias.** This model cannot represent a detector that needs a hidden layer. D0's words are "a small dense head". The lead accepted it for round 1 and has put it to Logan.
+- **One amplitude on every channel.** The injector cannot make a signal whose strength differs between channels. The first look at real records (the entry before this one) shows such signals: the three components of one station differ.
+- **The scorer is fixed when it is made.** Nothing changes its threshold or reads its histogram mid-run, where D0 speaks of a threshold register.
+- **A detector wrong by less than the catch margin can pass the statistics.** At D0 row D9's 10,000 injections that margin is 0.04 in efficiency; a detector 0.01 below D8 passes 97.7% of the time. D9's figure is a standard error, and is not a strong check.
+- **The gate counts the noise's tail to 4.0 sigma; the long run to 5.42.** Beyond that the claim rests on the table and on the boundary-word test, and D0's row D7 is one bound on a false-alarm claim and not the bound: a score's tail also needs the samples to be independent, which no single-sample test shows.
+- **A schedule or a stream that cannot be iterated gives a TypeError from the injector**, not a refusal by name. The parcel's document says so.
+- **The published words the generator is held to come from a wiki**, read by the parcel through a rendering and found by the lead in the page's bytes.
+
+### What this does not prove
+
+- **That the model is the right model.** It does what its design says, by tests and three verifiers. Whether that design finds faint signals is the experiments' question.
+- **Anything about a fabric.** Bit identity needs RTL, a host library and the card. Five of D0's sixteen gates wait for those.
+- **That the verifiers' blinding held, beyond what was measured.** The clones were sealed. The round's ledger, which each brief has its verifier read, says that the clones hold planted faults. For VSTAT and VMODB the lead read the transcripts afterwards: no tool input reaches for the unplanted work. VMODA's transcript was empty and could not be read.
+- **That a verifier's "confirmed" covers what it did not do.** Each report ends with what was not done, and VMODB's first pass used nine minutes of an hour. Its second covered its own list.
+
+### The lead's slips
+
+- **A wrong sentence in the conventions page**, found by MOD-A: that an injection changes every frame of its span. The reference pulse has nine zero samples. Restated in `948c8cc`.
+- **A hole in the lead's own foundation**, found by MOD-A: `model/stream.py` took a subclass of tuple as a frame, so a frame object could carry more than its samples. Closed at the seam, in the next entry.
+- **The brief gave the pulse's peak as 1000.** It is 970.
+- **Two briefs' errors on STAT's side**: that row D11's 0.284 was D8's figure at d = 1.75 (it is 0.2822), and that a float in the document was a case a zero-width guard fails (it is not).
+- **The plan said the gate runs in seconds.** With the model's tests it takes over a minute. CLAUDE.md is restated.
+
+### Not done, and why
+
+- **No hidden layer, no per-channel amplitude, no second pulse.** Each is a stated limit and a decision for the next plan.
+- **Nothing pushed.**

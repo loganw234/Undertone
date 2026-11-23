@@ -167,6 +167,59 @@ def test_control_truth_isolation__a_check_that_compared_nothing_says_so(profile)
     assert isolation_findings(runs_nothing, profile)[0].startswith("NOTHING-COMPARED")
 
 
+# ------------------------------------------------------------ the runner itself
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_seam_the_runner_is_the_parts_run_by_hand_and_nothing_more(profile):
+    """`model.run` adds no arithmetic of its own: its records are the core's on the injector's
+    stream, its truth is the injector's, its frames are the frames the core was given, and a start
+    epoch reaches every record."""
+    blob = blob_for(profile)
+    by_hand_stream, by_hand_truth = inject.inject(profile, source.Noise(profile, SEED, SIGMA[0], SIGMA[1], LENGTH),
+                                                  REAL, LENGTH)
+    by_hand_stream = list(by_hand_stream)
+    by_hand = tuple(Core(blob, 7).run(by_hand_stream))
+    pairs, truth = run.scores(source.Noise(profile, SEED, SIGMA[0], SIGMA[1], LENGTH), REAL, LENGTH, blob, 7)
+    pairs = list(pairs)
+    assert [frame for frame, _record in pairs] == by_hand_stream
+    assert tuple(record for _frame, record in pairs) == by_hand
+    assert truth == by_hand_truth and list(truth) == REAL
+    assert {record["epoch"] for _frame, record in pairs} == {7}, "the start epoch is carried, not dropped"
+    records_only, truth_again = run.detect(source.Noise(profile, SEED, SIGMA[0], SIGMA[1], LENGTH), REAL, LENGTH, blob, 7)
+    assert records_only == by_hand and truth_again == truth
+    assert {r["epoch"] for r in run.detect(by_hand_stream, [], LENGTH, blob)[0]} == {0}, "and the default is 0"
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_seam_the_runner_refuses_by_the_parts_own_names_the_blob_before_the_schedule(profile):
+    blob = blob_for(profile)
+    channels = C.PROFILES[profile]["channels"]
+    silence = [(0,) * channels] * 100
+    broken = blob[:-1] + bytes([blob[-1] ^ 1])
+    past_end = [rec(90, 1)]
+
+    def name_of(call):
+        with pytest.raises(Refusal) as e:
+            call()
+        return e.value.name
+
+    assert name_of(lambda: run.scores(silence, [], 100, broken)) == "BLOB_HASH"
+    assert name_of(lambda: run.scores(silence, past_end, 100, blob)) == "INJECT_PAST_END"
+    assert name_of(lambda: run.scores(silence, past_end, 100, broken)) == "BLOB_HASH", "the blob is checked first"
+    assert name_of(lambda: run.scores(silence, [], 100, blob, epoch=-1)) == "SWAP_EPOCH"
+    # nothing is read from the stream before those refusals: a stream that cannot be read is never touched
+    def unreadable():
+        raise AssertionError("a frame was asked for")
+        yield
+    assert name_of(lambda: run.scores(unreadable(), past_end, 100, blob)) == "INJECT_PAST_END"
+    # and a refusal while the pairs run ends them there; the pairs before it stand
+    short = silence[:40]
+    pairs, _truth = run.scores(short, [], 100, blob)
+    got = []
+    assert name_of(lambda: got.extend(pairs)) == "STREAM_LENGTH"
+    assert len(got) == 40 and got[-1][1]["index"] == 39
+
+
 # ------------------------------------------------------------ what a frame may be
 
 class Tagged(tuple):
