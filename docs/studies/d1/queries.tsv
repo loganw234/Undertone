@@ -1,0 +1,25 @@
+# The station-service requests made for study D1, all on 2026-11-23, all
+# answered with HTTP 200 and plain text. Tab-separated: the file the response
+# was saved under, the site, the date the request asked about, "used" or
+# "held", and the URL.
+#
+# "used": stations.py reads the response from the folder given as --responses.
+# "held": the response is never opened by stations.py, and no row from it is
+# in any committed file. A service is held when it says that using it accepts
+# terms and the owner has not accepted them. EarthScope's rows were held until
+# the owner allowed that service on 2026-11-23; Raspberry Shake's still are.
+#
+# No response is committed. No request carries a name, an address or a path.
+#
+# One more request is read by digitisers.py, not by stations.py, and so has
+# no row here: the response-level answer for the 2021 ladder, saved as
+# scedc-ladder-20210914-response.xml. The study's row M9 gives its URL.
+scedc-vsfb-channel.txt	VSFB	2026-11-23	used	https://service.scedc.caltech.edu/fdsnws/station/1/query?latitude=34.632&longitude=-120.611&maxradius=3&level=channel&format=text&endafter=2026-01-01T00:00:00&channel=HH?,BH?,EH?,SH?,HN?,EN?,?D?
+ncedc-vsfb-channel.txt	VSFB	2026-11-23	used	https://service.ncedc.org/fdsnws/station/1/query?latitude=34.632&longitude=-120.611&maxradius=3&level=channel&format=text&endafter=2026-01-01T00:00:00&channel=HH?,BH?,EH?,SH?,HN?,EN?,?D?
+es-vsfb-channel.txt	VSFB	2026-11-23	used	https://service.earthscope.org/fdsnws/station/1/query?latitude=34.632&longitude=-120.611&maxradius=3&level=channel&format=text&endafter=2026-01-01&channel=HH?,BH?,EH?,SH?,HN?,EN?,?D?
+es-cape-channel.txt	CCSFS	2026-11-23	used	https://service.earthscope.org/fdsnws/station/1/query?latitude=28.562&longitude=-80.577&maxradius=4&level=channel&format=text&endafter=2026-01-01
+es-starbase-channel.txt	STARBASE	2026-11-23	used	https://service.earthscope.org/fdsnws/station/1/query?latitude=25.996&longitude=-97.154&maxradius=4&level=channel&format=text&endafter=2026-01-01
+rs-vsfb-channel.txt	VSFB	2026-11-23	held	https://data.raspberryshake.org/fdsnws/station/1/query?network=AM&latitude=34.632&longitude=-120.611&maxradius=2&level=channel&format=text&endafter=2026-01-01T00:00:00
+rs-cape-channel.txt	CCSFS	2026-11-23	held	https://data.raspberryshake.org/fdsnws/station/1/query?network=AM&latitude=28.562&longitude=-80.577&maxradius=2&level=channel&format=text&endafter=2026-01-01T00:00:00
+rs-starbase-channel.txt	STARBASE	2026-11-23	held	https://data.raspberryshake.org/fdsnws/station/1/query?network=AM&latitude=25.996&longitude=-97.154&maxradius=2&level=channel&format=text&endafter=2026-01-01T00:00:00
+scedc-vsfb-20210914-channel.txt	VSFB	2021-09-14	used	https://service.scedc.caltech.edu/fdsnws/station/1/query?latitude=34.632&longitude=-120.611&maxradius=3&level=channel&format=text&startbefore=2021-09-14T00:00:00&endafter=2021-09-15T00:00:00&channel=HH?,BH?,EH?,SH?,HN?,EN?,?D?
