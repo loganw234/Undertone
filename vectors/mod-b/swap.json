@@ -1,0 +1,97 @@
+{
+  "what": "Score records around a weight swap. Every expected record was worked BY HAND from the swap's definition in model/weights.py (class Store), and the sums are written out in each case's 'worked' lines. Nothing here was produced by the model. Every swap is to weights that DIFFER from the active ones: a swap to the same weights would test nothing.",
+  "definition": "commit(at) makes the shadow active immediately before output `at`, and the epoch rises by one. Outputs before `at` use the old coefficients and head; outputs from `at` on use the new ones. With a pool of P, outputs at .. at+P-2 sum rectified values from both sets: they carry the settling flag, which is bit 0 of flags (value 1).",
+  "format": "As datapath.json, plus swaps: each is done when `after` records have been produced. `write` is the weights written to the shadow first (null: nothing is written, so the swap is back to the set that was active before), then commit(`at`).",
+  "cases": [
+    {
+      "name": "s16x1-swap-pool-1",
+      "why": "No pool, so no output mixes. Output 3 is the first under the new coefficients (10, -20) and the new head 3, on samples that were already in the delay line. A swap that brought tap 1 in a sample late would give (10*3 + 2*4)*3 = 114 at i = 3.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, 2]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[1], [2], [3], [4], [5], [6]],
+      "swaps": [{"after": 0, "write": {"filters": [{"0": [10, -20]}], "head": [3]}, "at": 3}],
+      "worked": [
+        "old, epoch 0: score[i] = 1*x[i-1] + 2*x[i]:  i=0: 0 + 2 = 2;  i=1: 1 + 4 = 5;  i=2: 2 + 6 = 8",
+        "new, epoch 1: score[i] = 3*(10*x[i-1] - 20*x[i]):  i=3: 3*(30 - 80) = -150;  i=4: 3*(40 - 100) = -180;  i=5: 3*(50 - 120) = -210"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 2},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 5},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 8},
+        {"index": 3, "epoch": 1, "flags": 0, "score": -150},
+        {"index": 4, "epoch": 1, "flags": 0, "score": -180},
+        {"index": 5, "epoch": 1, "flags": 0, "score": -210}
+      ]
+    },
+    {
+      "name": "s16x1-swap-pool-3-settling",
+      "why": "A pool of 3: outputs 3 and 4 sum values made under both coefficient sets, and carry the settling flag. Output 5 is the first whose window is all new.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [2]}], "head": [1], "rectifier": 0, "pool": 3, "score_shift": 0},
+      "frames": [[1], [2], [3], [4], [5], [6], [7]],
+      "swaps": [{"after": 0, "write": {"filters": [{"0": [-5]}], "head": [2]}, "at": 3}],
+      "worked": [
+        "old: r[i] = 2*x[i] = 2, 4, 6 for i = 0, 1, 2.   new: r[i] = -5*x[i] = -20, -25, -30, -35 for i = 3, 4, 5, 6",
+        "z (last 3 of r): i=0: 2;  i=1: 2+4 = 6;  i=2: 2+4+6 = 12;  i=3: 4+6-20 = -10;  i=4: 6-20-25 = -39;  i=5: -20-25-30 = -75;  i=6: -25-30-35 = -90",
+        "head 1 for i < 3: 2, 6, 12.   head 2 for i >= 3: -20, -78, -150, -180",
+        "settling at i = 3 and i = 4 (at .. at + P - 2 = 3 .. 4): flags = 1"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 2},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 6},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 12},
+        {"index": 3, "epoch": 1, "flags": 1, "score": -20},
+        {"index": 4, "epoch": 1, "flags": 1, "score": -78},
+        {"index": 5, "epoch": 1, "flags": 0, "score": -150},
+        {"index": 6, "epoch": 1, "flags": 0, "score": -180}
+      ]
+    },
+    {
+      "name": "s24x3-swap-pool-1-on-channel-1",
+      "why": "The first case on the middle channel of three, with other values on channels 0 and 2.",
+      "profile": "s24x3",
+      "config": {"filters": [{"1": [1, 2]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[5, 1, -5], [6, 2, -6], [7, 3, -7], [8, 4, -8], [9, 5, -9], [10, 6, -10]],
+      "swaps": [{"after": 0, "write": {"filters": [{"1": [10, -20]}], "head": [3]}, "at": 3}],
+      "worked": [
+        "x1 = 1, 2, 3, 4, 5, 6: the sums are those of s16x1-swap-pool-1"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 2},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 5},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 8},
+        {"index": 3, "epoch": 1, "flags": 0, "score": -150},
+        {"index": 4, "epoch": 1, "flags": 0, "score": -180},
+        {"index": 5, "epoch": 1, "flags": 0, "score": -210}
+      ]
+    },
+    {
+      "name": "s24x3-two-swaps-pool-2",
+      "why": "A filter across channels 0 and 2, a pool of 2, and two swaps: the first to new weights at output 2, the second, committed once the first has settled and with nothing written to the shadow, back to the first set at output 4. Each swap mixes one output.",
+      "profile": "s24x3",
+      "config": {"filters": [{"0": [1], "2": [10]}], "head": [1], "rectifier": 0, "pool": 2, "score_shift": 0},
+      "frames": [[1, 99, 1], [2, 98, 2], [3, 97, 3], [4, 96, 4], [5, 95, 5], [6, 94, 6]],
+      "swaps": [
+        {"after": 0, "write": {"filters": [{"0": [-2], "2": [3]}], "head": [2]}, "at": 2},
+        {"after": 3, "write": null, "at": 4}
+      ],
+      "worked": [
+        "first set: y[i] = x0[i] + 10*x2[i] = 11*(i+1): 11, 22, 33, 44, 55, 66.   second set: y[i] = -2*x0[i] + 3*x2[i] = i+1: 1, 2, 3, 4, 5, 6",
+        "i=0, epoch 0: z = 11; score 11",
+        "i=1, epoch 0: z = 11 + 22 = 33; score 33",
+        "i=2, epoch 1, settling: y = 3; z = 22 + 3 = 25; head 2: score 50",
+        "i=3, epoch 1: y = 4; z = 3 + 4 = 7; head 2: score 14",
+        "i=4, epoch 2, settling: back to the first set, y = 55; z = 4 + 55 = 59; head 1: score 59",
+        "i=5, epoch 2: y = 66; z = 55 + 66 = 121; score 121"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 11},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 33},
+        {"index": 2, "epoch": 1, "flags": 1, "score": 50},
+        {"index": 3, "epoch": 1, "flags": 0, "score": 14},
+        {"index": 4, "epoch": 2, "flags": 1, "score": 59},
+        {"index": 5, "epoch": 2, "flags": 0, "score": 121}
+      ]
+    }
+  ]
+}

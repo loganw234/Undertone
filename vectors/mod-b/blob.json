@@ -1,0 +1,51 @@
+{
+  "what": "Configuration blobs and their bytes, worked BY HAND from the layout in model/weights.py's docstring: every integer little-endian, two's complement where signed. The bytes listed are the blob WITHOUT its last 32 bytes; those are the SHA-256 of the bytes listed, which the test computes with hashlib from these hand-worked bytes and never through the model.",
+  "format": "bytes is a list of [what the bytes are, hex]. config.filters is as in datapath.json.",
+  "cases": [
+    {
+      "name": "s16x1-one-filter",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, -2, 3]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "bytes": [
+        ["magic, the ASCII letters UNDTBLOB", "554e4454424c4f42"],
+        ["version 1, 2 bytes", "0100"],
+        ["the profile name's length, 5", "05"],
+        ["the name s16x1 in ASCII: s 73, 1 31, 6 36, x 78, 1 31", "7331367831"],
+        ["filters 1, 2 bytes", "0100"],
+        ["taps 3, 2 bytes", "0300"],
+        ["rectifier 0 (pass)", "00"],
+        ["score_shift 0", "00"],
+        ["pool 1, 4 bytes", "01000000"],
+        ["reserved, 4 bytes of zero", "00000000"],
+        ["filter 0's channel mask: channel 0, bit 0", "0100"],
+        ["coefficient 1", "01000000"],
+        ["coefficient -2: FFFFFFFE, low byte first", "feffffff"],
+        ["coefficient 3", "03000000"],
+        ["head weight 1", "01000000"]
+      ]
+    },
+    {
+      "name": "s24x3-two-filters",
+      "profile": "s24x3",
+      "config": {"filters": [{"0": [1, 2], "2": [-1, 3]}, {"1": [5, -4]}], "head": [2, -1], "rectifier": 1, "pool": 258, "score_shift": 1},
+      "bytes": [
+        ["magic", "554e4454424c4f42"],
+        ["version 1", "0100"],
+        ["the profile name's length, 5", "05"],
+        ["the name s24x3 in ASCII: s 73, 2 32, 4 34, x 78, 3 33", "7332347833"],
+        ["filters 2", "0200"],
+        ["taps 2", "0200"],
+        ["rectifier 1 (abs)", "01"],
+        ["score_shift 1", "01"],
+        ["pool 258 = 0x0102, low byte first", "02010000"],
+        ["reserved", "00000000"],
+        ["filter 0's mask: channels 0 and 2, bits 0 and 2 = 5", "0500"],
+        ["filter 1's mask: channel 1, bit 1 = 2", "0200"],
+        ["filter 0, channel 0: 1, 2", "0100000002000000"],
+        ["filter 0, channel 2: -1, 3", "ffffffff03000000"],
+        ["filter 1, channel 1: 5, -4 (FFFFFFFC)", "05000000fcffffff"],
+        ["head: 2, -1", "02000000ffffffff"]
+      ]
+    }
+  ]
+}
