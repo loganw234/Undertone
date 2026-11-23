@@ -81,13 +81,22 @@ STAGELIST=$(grep -E '^stage [a-z0-9-]+ "' "$SELF" | awk '{print $2}' | tr '\n' '
 STAGELIST="${STAGELIST% }"
 
 if [ "$LIST" = 1 ]; then
+  # A list of what would run refuses what a run would refuse.
+  for _n in $(echo "$ONLY" | tr ',' ' '); do
+    if is_rtl "$_n" && [ "$WITH_RTL" != 1 ]; then
+      echo "ERROR: --only names the rtl stage '$_n'; add --with rtl" >&2
+      exit 2
+    fi
+  done
   while IFS=$'\t' read -r _nm _ds; do
     if [ -z "$ONLY" ] || in_list "$_nm" "$ONLY"; then _mk="*"; else _mk=" "; fi
     if is_rtl "$_nm" && [ "$WITH_RTL" != 1 ]; then _mk=" "; fi
+    if [ "$_mk" = "*" ] && in_list "$_nm" "$SKIP"; then _mk="-"; fi
     printf '%s %-17s%s\n' "$_mk" "$_nm" "$_ds"
   done < <(grep -E '^stage [a-z0-9-]+ "' "$SELF" \
       | sed -E 's/^stage ([a-z0-9-]+) +"([^"]*)".*/\1\t\2/')
   echo
+  if [ -n "$SKIP" ]; then echo "- = named by --skip: it would NOT run, and the verdict line would say so."; fi
   if [ -n "$ONLY" ]; then echo "* = would run. Unmarked stages are NOT in this selection."
   elif [ "$WITH_RTL" = 1 ]; then echo "* = would run: every stage (--with rtl, no --only)."
   else echo "* = would run: the first size. The rtl stages are NOT in it; --with rtl adds them."; fi
@@ -314,7 +323,7 @@ stage rtl-benches "every RTL bench passes, read from its results file, and every
 MUST_FAIL=1
 stage ctl-rtl-image "a tree whose docker files changed, or lost one, MUST be refused by name" -- rcontrol rtl-image
 MUST_FAIL=1
-stage ctl-rtl-spec "an edited number in each copy and a missing name MUST each be reported" -- rcontrol rtl-spec
+stage ctl-rtl-spec "every number of each copy changed, and a name taken out, MUST each be reported" -- rcontrol rtl-spec
 MUST_FAIL=1
 stage ctl-rtl-benches "a bench with a wrong expectation MUST fail, and runs that wrote no results MUST be reported" -- rcontrol rtl-benches
 

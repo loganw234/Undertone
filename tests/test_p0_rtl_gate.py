@@ -127,8 +127,9 @@ def evidence(path, *lines):
             f.write(json.dumps(line) + "\n")
 
 
-IDENTICAL = {"test": "identity", "verdict": "IDENTICAL", "records": 40, "model_digest": "aa", "rtl_digest": "aa"}
-MISMATCH = {"test": "identity", "verdict": "MISMATCH", "kind": "WORD", "at": 0}
+IDENTICAL = {"mark": "BIT-IDENTITY", "test": "identity", "verdict": "IDENTICAL", "records": 40, "model_digest": "aa",
+             "rtl_digest": "aa"}
+MISMATCH = {"mark": "BIT-IDENTITY", "test": "identity", "verdict": "MISMATCH", "kind": "WORD", "at": 0}
 
 
 def good(tmp_path):
@@ -192,11 +193,26 @@ def test_p0_the_judge_reports_a_test_named_twice_in_one_results_file(tmp_path):
     assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1 identity | TWICE"]
 
 
-def test_p0_an_evidence_line_that_cannot_be_read_is_a_finding_of_its_run(tmp_path):
+@pytest.mark.parametrize("line", [
+    "this is not what the harness writes",
+    "5", "[1]", "null", '"a string"',                      # JSON, and not an object
+    '{"foo": 1}',                                           # an object the harness never writes
+    '{"test": "identity", "verdict": "IDENTICAL", "records": 40, "model_digest": "aa", "rtl_digest": "aa"}',   # no mark
+    '{"mark": "SOMETHING-ELSE", "test": "identity", "verdict": "IDENTICAL", "records": 40}',
+])
+def test_p0_an_evidence_line_that_is_not_the_harnesss_is_a_finding_of_its_run(tmp_path, line):
+    """Beside good lines, in a bench's own run and in a mutant's. A verifier found that a line of JSON
+    that is not an object stopped the judge with an error of Python's own, and that an object the harness
+    never writes was passed over."""
     out = good(tmp_path)
     with open(os.path.join(out, "b.s16x1.evidence.jsonl"), "a", encoding="utf-8") as f:
-        f.write("this is not what the harness writes\n")
+        f.write(line + "\n")
     assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1 | EVIDENCE-UNREADABLE"]
+    (tmp_path / "mutant").mkdir()
+    out = good(tmp_path / "mutant")
+    with open(os.path.join(out, "b.s16x1.mutant.m.evidence.jsonl"), "a", encoding="utf-8") as f:
+        f.write(line + "\n")
+    assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1.mutant.m | EVIDENCE-UNREADABLE"]
 
 
 def test_p0_the_judge_names_a_skipped_test_and_does_not_count_it_as_passed(tmp_path):
@@ -389,6 +405,8 @@ def manifest_tree(tmp_path, old, new):
     ('profiles = ["s16x1", "s24x3"]', 'profiles = ["s16x1", "s16x1"]'),
     ('identity = ["bit_identity_random", "bit_identity_extremes"]', 'identity = ["bit_identity_random", "no_such_test"]'),
     ('identity = ["bit_identity_random", "bit_identity_extremes"]', 'identity = []'),
+    ('identity = ["bit_identity_random", "bit_identity_extremes"]', 'identity = ["bit_identity_random", 5]'),
+    ('identity = ["bit_identity_random", "bit_identity_extremes"]', 'identity = "bit_identity_random"'),
     ('must_fail = ["latency_is_one_clock"]', 'must_fail = ["no_such_test"]'),
     ('must_fail = ["latency_is_one_clock"]', 'must_fail = []'),
     ('kind = ""', 'kind = "SOMETHING"'),
@@ -468,29 +486,47 @@ def the_gates_own_bash():
 
 # Put together from pieces, so that this file does not carry what it looks for.
 THE_NAME = "ba" + "sh"
-QUOTED_NAME = re.compile("[\"']" + THE_NAME + "[\"' ]")
+# The name inside quotes: bare, with .exe, or at the end of a path; then the closing quote or white space. Any case.
+QUOTED_NAME = re.compile(r"""["'](?:[^"']*[\\/])?""" + THE_NAME + r"""(?:\.exe)?["'\s]""", re.I)
 THE_ONE_CALL = "shutil.which(\"" + THE_NAME + "\")"
-A_SHELL = "shell" + "=True"
+A_SHELL = re.compile("shell" + r"\s*=\s*True")
 
 
 def lines_that_start_a_shell(text):
-    """The numbers of the lines of a Python source that carry the quoted name anywhere but in the one
+    """The numbers of the lines of a Python source that carry the name in quotes anywhere but in the one
     call that looks it up on the PATH, or that ask subprocess for a shell."""
     return [n for n, line in enumerate(text.split("\n"), 1)
-            if QUOTED_NAME.search(line.replace(THE_ONE_CALL, "")) or A_SHELL in line]
+            if QUOTED_NAME.search(line.replace(THE_ONE_CALL, "")) or A_SHELL.search(line)]
+
+
+def shell_starts_under(root, tops=("tests", "tools", "rtl")):
+    """Every line of every Python file under those folders of a tree, subfolders among them, that
+    `lines_that_start_a_shell` reports: a list of "<path from the root>:<line number>"."""
+    found = []
+    for top in tops:
+        for folder, dirs, files in os.walk(os.path.join(root, top)):
+            dirs[:] = sorted(d for d in dirs if d != "__pycache__")
+            for name in sorted(files):
+                if name.endswith(".py"):
+                    with open(os.path.join(folder, name), encoding="utf-8") as f:
+                        where = os.path.relpath(os.path.join(folder, name), root).replace("\\", "/")
+                        found += ["%s:%d" % (where, n) for n in lines_that_start_a_shell(f.read())]
+    return found
 
 
 def test_p0_no_test_or_tool_carries_the_bare_name_or_asks_for_a_shell():
     """The slip above, held, as far as reading source can hold it: no line of a Python file under tests/,
-    tools/ or rtl/tb/ carries the quoted name outside the one call, or asks for a shell. A name put
-    together at run time, as this file's own is, is not seen."""
-    found = []
-    for folder in ("tests", "tools", os.path.join("rtl", "tb")):
-        for name in sorted(os.listdir(os.path.join(ROOT, folder))):
-            if name.endswith(".py"):
-                with open(os.path.join(ROOT, folder, name), encoding="utf-8") as f:
-                    found += ["%s/%s:%d" % (folder, name, n) for n in lines_that_start_a_shell(f.read())]
-    assert found == []
+    tools/ or rtl/, subfolders among them, carries the name in quotes outside the one call, or asks for a
+    shell. What it cannot see: a name put together at run time, as this file's own is, and a name that
+    reaches Python from outside the file (an environment variable, a configuration file)."""
+    assert shell_starts_under(ROOT) == []
+
+
+def test_p0_the_guard_reads_each_folder_and_its_subfolders(tmp_path):
+    for rel in ("tests/a.py", "tools/deep/er/b.py", "rtl/tb/c.py", "rtl/core/tb/d.py", "docs/e.py", "tools/f.txt"):
+        (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
+        (tmp_path / rel).write_text("import subprocess\nsubprocess.run(['%s', '-c', 'true'])\n" % THE_NAME, encoding="utf-8")
+    assert shell_starts_under(str(tmp_path)) == ["tests/a.py:2", "tools/deep/er/b.py:2", "rtl/core/tb/d.py:2", "rtl/tb/c.py:2"]
 
 
 @pytest.mark.parametrize("line", [
@@ -499,14 +535,31 @@ def test_p0_no_test_or_tool_carries_the_bare_name_or_asks_for_a_shell():
     "subprocess.run(NAME + ' -c true', SHELL)",
     "subprocess.Popen(args=[ NAME ])",
     "os.system('echo hello', SHELL)",
-    "r = subprocess.run('NAMEBARE -c true'.split())",
+    "subprocess.run('echo', SPACED)",
+    "r = subprocess.run(SENTENCE.split())",
+    "subprocess.run([EXE, '-c', 'true'])",
+    "subprocess.run([UPPER, '-c', 'true'])",
+    "subprocess.run([FULLPATH, '-c', 'true'])",
+    "subprocess.run(TABBED)",
 ])
 def test_p0_each_way_of_starting_the_bare_name_is_seen(line):
-    """Each form a verifier tried, and the first two the guard missed when it looked for a list alone."""
-    text = line.replace("NAMEBARE", "'" + THE_NAME + " x'").replace("NAME", "'" + THE_NAME + "'").replace("SHELL", A_SHELL)
+    """Each form two verifiers tried. The guard first looked for a list alone, and missed a tuple and a
+    command string; then it did not look for a shell asked of subprocess, nor for the name with .exe,
+    which finds the same launcher."""
+    forms = {"NAME": "'%s'" % THE_NAME, "EXE": "'%s.exe'" % THE_NAME, "UPPER": "'%s.EXE'" % THE_NAME.upper(),
+             "FULLPATH": "'C:/Windows/System32/%s.exe'" % THE_NAME, "SENTENCE": "'%s -c true'" % THE_NAME,
+             "TABBED": "'%s\t-c true'" % THE_NAME, "SHELL": "shell" + "=True", "SPACED": "shell" + " = True"}
+    text = line
+    for word in sorted(forms, key=len, reverse=True):
+        text = text.replace(word, forms[word])
+    assert text != line
     assert lines_that_start_a_shell("import subprocess\n" + text + "\n") == [2]
-    assert lines_that_start_a_shell("path = " + THE_ONE_CALL + "\n") == []
 
+
+def test_p0_the_one_call_and_a_sentence_about_the_name_are_not_taken_for_it():
+    assert lines_that_start_a_shell("path = " + THE_ONE_CALL + "\n") == []
+    assert lines_that_start_a_shell("print('the first %s on the PATH')\n" % THE_NAME) == []
+    assert lines_that_start_a_shell("x = '%sful'\n" % THE_NAME) == []
 
 
 def runner(*args):
@@ -525,5 +578,13 @@ def test_p0_the_first_size_lists_the_rtl_stages_as_not_run_and_the_second_marks_
 def test_p0_naming_an_rtl_stage_without_its_size_is_refused_and_so_is_an_unknown_size():
     code, out = runner("--only", "rtl-spec")
     assert code == 2 and "add --with rtl" in out
+    code, out = runner("--list", "--only", "rtl-spec")           # the list refuses what the run would refuse
+    assert code == 2 and "add --with rtl" in out
+
+
+def test_p0_the_list_shows_a_skipped_stage_as_one_that_would_not_run():
+    code, out = runner("--with", "rtl", "--skip", "rtl-spec,links", "--list")
+    assert code == 0 and re.search(r"^- rtl-spec ", out, re.M) and re.search(r"^- links ", out, re.M)
+    assert re.search(r"^\* rtl-benches ", out, re.M) and "would NOT run" in out
     code, out = runner("--with", "everything")
     assert code == 2 and "unknown size" in out

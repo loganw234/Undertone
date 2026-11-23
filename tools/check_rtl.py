@@ -42,9 +42,8 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                the package that says `localparam`, `parameter` or `define, and
                a line of the header that says #define, is a finding when its
                pattern does not read it. A number declared any other way (an
-               enum or a const in the header, a typedef in the package, a
-               second name after a comma on a localparam line, the rest of a
-               #define that a backslash carries onto the next line) is
+               enum or a const in the header, a const or a typedef in the
+               package, a second name after a comma on a localparam line) is
                NOT looked for: the copies are generated, and the `generated`
                stage holds their text. It does not know whether the RTL or a
                C program USES a constant correctly. What it holds the copies
@@ -83,10 +82,16 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                The rtl-spec control changes EVERY number in each copy, the
                hash among them, and takes one name out of the header: every
                one must be reported, so a check that skipped any name, or any
-               kind of name, fails it.
+               kind of name, fails it. Each change is one added: a check that
+               saw only some other kind of change (one that compared whether
+               a number is odd, say) would pass this control.
                The rtl-image control plants three trees: one whose Dockerfile
                changed, one whose package list changed, one that lost its
-               package list. It plants no image.
+               package list. Each change is a comment line added, which
+               changes the file's bytes and nothing an image is built from.
+               It plants no image.
+               An unreadable evidence line is a finding in a bench's own run
+               and in a mutant's.
 """
 import argparse
 import ast
@@ -391,17 +396,24 @@ def read_results(path):
     return out or None
 
 
+EVIDENCE_MARK = "BIT-IDENTITY"      # what rtl/tb/harness.py puts in every line it writes
+
+
 def read_evidence(path):
-    """The harness's lines for a run: a list of dicts. A line that is not JSON is kept as {"verdict": "UNREADABLE"}."""
+    """The harness's lines for a run: a list of dicts. A line that is not JSON, not an object, or does not
+    carry the harness's mark is kept as {"verdict": "UNREADABLE"}."""
     out = []
     if os.path.isfile(path):
         with open(path, encoding="utf-8") as f:
             for line in f:
                 if line.strip():
                     try:
-                        out.append(json.loads(line))
+                        entry = json.loads(line)
                     except ValueError:
-                        out.append({"verdict": "UNREADABLE"})
+                        entry = None
+                    if not isinstance(entry, dict) or entry.get("mark") != EVIDENCE_MARK:
+                        entry = {"verdict": "UNREADABLE"}
+                    out.append(entry)
     return out
 
 
@@ -421,6 +433,8 @@ def judge(benches, out):
             findings.append((run, "NO-RESULTS: the run left no results file with a test in it%s"
                              % (" (%s)" % errors[run] if run in errors else "")))
             continue
+        if any(e.get("verdict") == "UNREADABLE" for e in evidence):
+            findings.append((run, "EVIDENCE-UNREADABLE: a line of the run's evidence file is not what the harness writes"))
         if mutant is not None:
             nmutants += 1
             for test in mutant["must_fail"]:
@@ -434,8 +448,6 @@ def judge(benches, out):
                                      "from the harness" % (message, mutant["kind"])))
             continue
         nruns += 1
-        if any(e.get("verdict") == "UNREADABLE" for e in evidence):
-            findings.append((run, "EVIDENCE-UNREADABLE: a line of the run's evidence file is not what the harness writes"))
         for test in bench["tests"]:
             if test not in results:
                 findings.append(("%s %s" % (run, test), "NOT-RUN: the bench has this test and the results file does not"))

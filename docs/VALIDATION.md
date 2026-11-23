@@ -938,3 +938,57 @@ What the lead measured of it: the freeze commit's time, 13:41:35, and the freeze
 - **RTL-A and RTL-B are not dispatched.** They wait for the foundation's third pass.
 - **The head has not been synthesised.** There is no head in RTL.
 - **The bank's multiplier under the 24-bit format, 18 by 24, was not synthesised.** One more run on the box; it is the lead's, with the head's.
+
+## 2026-11-23 - round 2: the launch experiment is in; the foundation's third pass, and a gate run that would not stop
+
+The launch experiment passed its verifier and is merged. The foundation's third verifier found one more wrong sentence of the lead's and several smaller things, answered here; a fourth pass follows, on what changed, before any RTL parcel starts. **Nothing is pushed.**
+
+### What ran
+
+- **VLCH3**, a fresh verifier on Opus, on a sealed clone of parcel LCH-3 that keeps its freeze commit as it was: 14:15:56 to 14:23:32 by its own clock; 43 tool calls in 498 seconds, as the harness reported. Four faults planted in the tip, one of them a frozen file changed after the freeze.
+- **VP0-3**, a fresh verifier on Opus, on a sealed clone of the round branch's tip: 14:19:13 to 14:29:29; 72 tool calls in 674 seconds. Three faults planted.
+
+### Measured
+
+- **Plants: 4 of 4, and 3 of 3.** In this round so far, 25 of 25. Neither verifier's commands reached for a key, the round's ledger, a commit without the faults or an earlier verifier's folder.
+- **VLCH3 found nothing that was the parcel's to fix.** With a scorer of its own, written from the document's words and importing only the record reader: **all 548 scored windows agree with the parcel's, in the count of up seconds and in the hit.** Its own list of the 35 launches, the split and the 104 control times equal the parcel's on every row. The frozen files at the freeze commit reproduce the committed output byte for byte. Every p value by exact arithmetic; the constants from the twelve launches, the same.
+- **Parcel LCH-3 is READY, and merged** as `4b97653`, no conflict. The gate after the merge, second size: `== VERDICT: PASS`, 22 of 22 stages, `OK model-tests: 958 tests ran, 0 failed, 0 errored, 0 skipped`.
+- **The lead's commit on top of the merge**, `6e80436`: `== VERDICT: PASS`, 22 of 22, 961 tests. It adds a test, `tests/test_p0_study_freeze.py`, that works the freeze hash from the seven frozen files and holds it to the one the scoring run printed. On the merged tree it passes: by the lead's own code, the frozen files are the frozen ones.
+- **The gate after the answers below**, second size: `== VERDICT: PASS`, 22 of 22 stages, `OK model-tests: 978 tests ran, 0 failed, 0 errored, 0 skipped`, on the tree before this entry was written, in a run of its own into a file of its own. `OK rtl-benches: 12 test(s) passed in 2 run(s) of 1 bench(es); 8960 record(s) identical to the model's, word for word; 14 mutant run(s) each failed as named`. The three controls: 3, 345 and 12. Thirteen faults the lead then planted in its own answers, one at a time in a copy, each failed a test.
+
+### The launch experiment's result, now verified
+
+By a rule frozen before any scored launch's record was opened, 23 Falcon 9 launches of 2024 from Vandenberg: 23 of 23 launch windows hit at CI.LOC (16.5 km) and at CI.LCP (32.6 km), 20 of 23 at CI.SYN (49.9 km), against 0 of 68 control windows at each; 7 of 7 against 0 of 21 at CI.GATR (13.5 km), which has a record for seven of them. Neither control on the real records rejects. **Within 50 km the launch is loud, not faint**: the study's own first limit. It shows the source can label a loud event near the pad. It says nothing yet of a faint one farther out, and nothing about the detector.
+
+Two limits the verifier raised are added to the study as the lead's: no file in the tree orders the scoring after the freeze, which rests on the freeze commit's time, the lead's ledger entry allowing the scoring at 13:44 and the parcel's account of its run; and launch 2024-171 is both the one window an hour early that hit and one of the farthest station's three misses.
+
+### What VP0-3 found that was the lead's, beyond the plants, and the answers
+
+- **The limit on late words, restated an hour before, was off by one.** The harness sees an extra record up to `settle` + 1 clocks after the last expected one: nine at the default, not eight. The verifier measured it: extra records seven, eight and nine clocks after were caught; ten, eleven and twelve passed. The last entry's sentence "It listens eight clocks past the last expected record" is wrong by that one. The limit is restated in the harness and the document with the measured figures. It conceded more than the code misses, not less.
+- **The guard against the WSL launcher missed the name with `.exe`**, which finds the same launcher, the name at the end of a path, a tab after it, and `shell = True` written with spaces. It reads all of those now, in subfolders too, with a test for each form; and it says what it cannot see.
+- **An evidence line that is JSON and not an object stopped the judge with an error of Python's own**, and an object the harness never writes was passed over. A line is the harness's when it is an object carrying the harness's mark; anything else is a finding, in a bench's own run and now in a mutant's.
+- **`--list` did not refuse what a run refuses**, an rtl stage named without its size, and did not show a stage named by `--skip`. It does both now. One stage's own line in the runner still described an older control.
+- **A mutant that names no kind passes on any failure**: the last entry called that a stated limit and it was in no list of limits. It is in the document now.
+- **HL13**, the limit the lead added to parcel HEAD's document, holds for a hidden shift of 0, which its case did not say. It says so now.
+- Left as stated limits, each now written where the control is described: the `rtl-spec` control changes every number by adding one, so a check that saw only some other kind of change would pass it; the `rtl-image` control's changes are added comment lines.
+
+**One sentence of the last entry was wrong beyond that**: it listed "a `#define` carried over a line end" among the things `rtl-spec` does not read. It reads the name, and the compiler evaluates the whole value. What is not read is a second name after a comma on one `localparam` line.
+
+### What this does not prove
+
+- **That the foundation is READY.** Three passes have each found something that was the lead's. A fourth follows.
+- **That the launch result reaches a faint launch.** It does not try one.
+- **That the scoring came after the freeze**, beyond what the study's sixteenth limit says it rests on.
+
+### The lead's slips
+
+- **A gate run the lead stopped kept running, and its verdict was read as the next run's.** The lead stopped a run to change two documents and started another. Stopping the task ended its shell and not the runner under it. Both runs wrote to one output file; the stopped run, its tests killed under it, ended FAIL, and the file's one verdict line was that. The run that mattered had passed every stage, by its own state folder, and its verdict line had been overwritten. The lead committed on neither: a third run, alone, into a file of its own, printed the line. One gate run at a time in one tree; a run that is stopped is waited out; a run's output goes to a file no other run writes.
+- **A new test file was written into the tree while a merge's gate run was in progress.** Its tests were not collected by that run, which counted 958; the run's count of committable files includes it.
+- **The same limit restated wrongly twice**, once conceding less than the code and once more.
+- **A guard that was fixed for the two forms a verifier named, and not for the form beside them.**
+
+### Not done, and why
+
+- **RTL-A and RTL-B are not dispatched.** They wait for the foundation's fourth pass.
+- **A second pass on the launch experiment** is out: on the lead's commit and on what its first verifier did not reach.
+- **Parcel LRN-A** is building; nothing of it is in this entry.

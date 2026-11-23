@@ -46,13 +46,16 @@ WHAT IT DOES NOT DO, each a stated limit:
     latency asserts on `Identity.latencies` itself.
   - It does not model back-pressure, a stalled output, or a second clock.
   - It waits at most `max_latency` clocks for the last expected word, and then
-    listens `settle` clocks more. An EXPECTED word later than `max_latency` is
-    a COUNT mismatch, one too few. An EXTRA word more than `settle` clocks after
-    the last expected one is NOT SEEN AT ALL: the comparison passes, and the
-    next reset hides it. A verifier built that design: the filter of one tap
-    repeating its last record eleven clocks after its last frame passed, and
-    seven clocks after was caught. A bench whose design could put a word out
-    late sets `settle` past it.
+    listens on. An EXPECTED word later than `max_latency` is a COUNT mismatch,
+    one too few. An EXTRA word is seen when it comes out up to `settle` + 1
+    clocks after the last expected one, and NOT SEEN AT ALL from `settle` + 2:
+    the comparison passes, and the next reset hides it. At the default of 8
+    that is seen to nine clocks and unseen from ten. Two verifiers built that
+    design, the filter of one tap repeating its last record some clocks after
+    its last expected one: at seven, eight and nine it was caught, and at ten,
+    eleven and twelve it passed. (The one more than `settle` is the monitor's
+    last look: it samples once more after it is told to stop.) A bench whose
+    design could put a word out late sets `settle` past it.
   - A model refusal (a frame the model refuses) propagates as the model's own
     `Refusal`, before anything is driven: nothing is compared.
   - An X or a Z in the output word while its valid is high, or in the valid
