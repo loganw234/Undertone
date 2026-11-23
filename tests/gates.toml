@@ -1,0 +1,24 @@
+# The gate registry.
+#
+# One row for each gate of the design D0, section 9, that has been built. A row
+# names the gate and what holds it. The `registry` stage of verify/run.sh fails
+# by name in both directions: a row nothing claims, and a test claiming a gate
+# that has no row.
+#
+#   name     this project's short name for the gate, lower case with hyphens
+#   d0       the gate's name in D0's section 9, exactly as written there
+#   kind     "pytest": tests named  test_gate_<name>__*  hold it, and tests named
+#                      test_control_<name>__*  are its negative controls
+#                      (a hyphen in <name> is written as an underscore)
+#            "stage":  a stage of verify/run.sh holds it; `test` and `control`
+#                      name the stage and its control stage
+#
+# A parcel adds its rows in the same commit as the tests that claim them, so
+# this stage passes at every commit.
+
+[[gate]]
+name = "generated-copies"
+d0 = "generated copies"
+kind = "stage"
+test = "generated"
+control = "ctl-generated"

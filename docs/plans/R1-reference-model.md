@@ -201,3 +201,11 @@ Each has a recommendation, what it rests on, and what would show it wrong.
 > Go ahead and begin your work, you may create bookings using TimeSheet if you need any resources. Regarding the license, would MIT be a better fit? Apache was chosen for cft-fp256 since part of that project is a contract and Apache suits that better, but here may be different. I prefer the easiest option for others to reutilize the work if they desire to.
 
 *The lead's reading:* the lead had asked whether he approved the plan with its seven recommendations, and this is his answer. The round starts. Questions 1 to 5 and 7 stand as recommended. The lead may book on the TimeSheet. On question 6 he asked whether MIT fits better and gave his test: the easiest option for others to reuse the work. By that test the answer is MIT, and the lead added an MIT licence on the round branch; the recommendation of Apache-2.0 is withdrawn. The standing word of question 5 is read from "go ahead", not from words about pushing, so the lead confirms with him before the push at the round's close.
+
+## Notes after approval
+
+Appended as the round runs. Nothing above is edited.
+
+- **2026-11-23, row P3 is false here.** At the first dispatch the tool refused: "Cannot create agent worktree: not in a git repository". The lead makes each worktree by hand under `Data/worktrees/`, on a branch `parcel/<name>`, and an agent's shell starts in the lead's checkout. Every brief names its worktree's absolute path. The base-commit check in "How the round is held" stands.
+- **2026-11-23, P0 also creates `stats/__init__.py`.** The file table gives `stats/` to STAT. The `independence` stage needs both packages to exist, so the skeleton holds both `__init__.py` files and STAT adds modules beside its own.
+- **2026-11-23, the definition carries two profiles.** Question 2 left the sample format unfixed, so `spec/undertone.toml` names two formats, 16 bits on one channel and 24 bits on three, and code takes one by name. The second is a guess at a seismic record until LCH reports.

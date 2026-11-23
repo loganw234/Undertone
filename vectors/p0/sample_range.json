@@ -1,0 +1,9 @@
+{
+  "what": "The range of a signed field of b bits, worked by hand: -2^(b-1) to 2^(b-1) - 1.",
+  "worked": "2^15 = 32768, 2^17 = 131072, 2^23 = 8388608",
+  "cases": [
+    {"bits": 16, "min": -32768, "max": 32767},
+    {"bits": 18, "min": -131072, "max": 131071},
+    {"bits": 24, "min": -8388608, "max": 8388607}
+  ]
+}

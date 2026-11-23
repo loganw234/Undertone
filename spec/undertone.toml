@@ -1,0 +1,67 @@
+# The one definition.
+#
+# Every other place that states one of these facts is generated from this file
+# (tools/gen_spec.py writes spec/constants.py) or reads that generated copy.
+# To change a fact: edit here, run `python tools/gen_spec.py`, commit both.
+# The `generated` stage of verify/run.sh fails when the two disagree.
+#
+# This file is the lead's. A parcel that needs a change asks for it.
+
+[meta]
+spec_version = 1
+
+# A profile is a complete sample format. Row D1 of the design D0 (16-bit, one
+# channel) is NOT fixed in round 1, so nothing may assume one profile: code
+# takes a profile by name, and tests run under at least two.
+[profile.e0]
+sample_bits = 16
+channels = 1
+
+[profile.wide3]
+sample_bits = 24
+channels = 3
+
+[core]
+coeff_bits = 18     # D0 row D2
+max_filters = 16    # D0 row D3
+max_taps = 128      # D0 row D3
+
+# How a real coefficient set becomes an integer one. This is the rule only:
+# model/ and stats/ each implement it, and share no code.
+#   scale    = "peak_to_max": multiply the set so its largest magnitude maps
+#              to 2^(coeff_bits - 1) - 1
+#   rounding = "half_to_even"
+[quantise]
+scale = "peak_to_max"
+rounding = "half_to_even"
+
+# Record formats: [name, bits, "signed" | "unsigned"], in order.
+# The score field is wide on purpose. MOD-B's width argument may narrow it.
+[records]
+score = [["index", 64, "unsigned"], ["epoch", 32, "unsigned"], ["flags", 8, "unsigned"], ["score", 64, "signed"]]
+truth = [["index", 64, "unsigned"], ["pulse_id", 16, "unsigned"], ["amplitude_num", 32, "signed"], ["amplitude_den", 32, "unsigned"]]
+event = [["index", 64, "unsigned"], ["epoch", 32, "unsigned"], ["score", 64, "signed"], ["pre", 16, "unsigned"], ["post", 16, "unsigned"]]
+
+# Bit positions in a score record's flags field. Every other bit is reserved
+# and must be zero. There is no bit for "an injection is here": truth goes
+# around the detector, never through its records.
+[flags]
+settling = 0    # this output mixes two weight epochs
+overflow = 1    # sticky: an accumulator overflowed
+
+# The only names a refusal may carry.
+[refusals]
+names = [
+    "PROFILE_UNKNOWN",
+    "CHANNELS",
+    "SAMPLE_RANGE",
+    "SHAPE_FILTERS",
+    "SHAPE_TAPS",
+    "RESERVED_BITS",
+    "BLOB_HASH",
+    "SWAP_PENDING",
+]
+
+# Reference pulses, as integer data, by path under spec/.
+[pulses]
+e0 = "pulses/e0.toml"

@@ -61,7 +61,7 @@ STAGELIST="${STAGELIST% }"
 if [ "$LIST" = 1 ]; then
   while IFS=$'\t' read -r _nm _ds; do
     if [ -z "$ONLY" ] || in_list "$_nm" "$ONLY"; then _mk="*"; else _mk=" "; fi
-    printf '%s %-12s%s\n' "$_mk" "$_nm" "$_ds"
+    printf '%s %-17s%s\n' "$_mk" "$_nm" "$_ds"
   done < <(grep -E '^stage [a-z0-9-]+ "' "$SELF" \
       | sed -E 's/^stage ([a-z0-9-]+) +"([^"]*)".*/\1\t\2/')
   echo
@@ -122,7 +122,7 @@ if [ -z "$PY" ]; then
   elif command -v python >/dev/null 2>&1; then PY=python; fi
 fi
 
-PASSED=0; FAILED=0; SKIPPED=0; CACHED=0; SELECTED=0
+PASSED=0; FAILED=0; SKIPPED=0; CACHED=0; SELECTED=0; INNER=0
 note () { echo "   $*"; }
 
 echo "== run $RUNID"
@@ -144,7 +144,7 @@ stage() {
   SELECTED=$((SELECTED+1))
   if [ -f "$RUNDIR/$name.ok" ]; then
     CACHED=$((CACHED+1))
-    note "$(printf '%-12s %-5s %s' "$name" "ok" "(passed earlier in this run)")"
+    note "$(printf '%-17s %-5s %s' "$name" "ok" "(passed earlier in this run)")"
     echo "{\"stage\":\"$name\",\"verdict\":\"ok-cached\"}" >> "$JSONL"
     return 0
   fi
@@ -155,7 +155,7 @@ stage() {
   fi
   if [ "$verdict" = SKIP ]; then
     SKIPPED=$((SKIPPED+1))
-    note "$(printf '%-12s %-5s %s' "$name" "SKIP" "$reason")"
+    note "$(printf '%-17s %-5s %s' "$name" "SKIP" "$reason")"
     echo "{\"stage\":\"$name\",\"verdict\":\"skip\",\"reason\":\"$reason\"}" >> "$JSONL"
     [ "$REQUIRE_ALL" = 1 ] && FAILED=$((FAILED+1))
     return 0
@@ -170,13 +170,13 @@ stage() {
     if [ "$rc" -ne 0 ] && grep -q '^CONTROL-DETECTED ' "$RUNDIR/$name.log"; then
       : > "$RUNDIR/$name.ok"
       PASSED=$((PASSED+1))
-      note "$(printf '%-12s %-5s %s' "$name" "ok" "(control failed as it must: $(grep -m1 '^CONTROL-DETECTED ' "$RUNDIR/$name.log"))")"
+      note "$(printf '%-17s %-5s %s' "$name" "ok" "(control failed as it must: $(grep -m1 '^CONTROL-DETECTED ' "$RUNDIR/$name.log"))")"
       echo "{\"stage\":\"$name\",\"verdict\":\"ok\",\"control\":true,\"seconds\":$((t1-t0))}" >> "$JSONL"
       return 0
     fi
     : > "$RUNDIR/$name.fail"
     FAILED=$((FAILED+1))
-    note "$(printf '%-12s %-5s %s' "$name" "FAIL" "NEGATIVE CONTROL DID NOT FAIL (rc=$rc) - this check cannot detect its fault; see $RUNDIR/$name.log")"
+    note "$(printf '%-17s %-5s %s' "$name" "FAIL" "NEGATIVE CONTROL DID NOT FAIL (rc=$rc) - this check cannot detect its fault; see $RUNDIR/$name.log")"
     echo "{\"stage\":\"$name\",\"verdict\":\"control-passed\",\"rc\":$rc}" >> "$JSONL"
     return 0
   fi
@@ -185,12 +185,18 @@ stage() {
   if [ "$rc" -eq 0 ] && grep -q "^OK $name: [1-9]" "$RUNDIR/$name.log"; then
     : > "$RUNDIR/$name.ok"
     PASSED=$((PASSED+1))
-    note "$(printf '%-12s %-5s %ss  %s' "$name" "ok" "$((t1-t0))" "$(grep -m1 "^OK $name: " "$RUNDIR/$name.log")")"
+    # A check skipped INSIDE a stage that passed is counted and named too.
+    local inner; inner=$(grep -c '^SKIPPED ' "$RUNDIR/$name.log")
+    if [ "$inner" -ne 0 ]; then
+      INNER=$((INNER+inner))
+      grep '^SKIPPED ' "$RUNDIR/$name.log" | head -n 20 | sed "s/^/      $name: /"
+    fi
+    note "$(printf '%-17s %-5s %ss  %s' "$name" "ok" "$((t1-t0))" "$(grep -m1 "^OK $name: " "$RUNDIR/$name.log")")"
     echo "{\"stage\":\"$name\",\"verdict\":\"ok\",\"seconds\":$((t1-t0))}" >> "$JSONL"
   else
     : > "$RUNDIR/$name.fail"
     FAILED=$((FAILED+1))
-    note "$(printf '%-12s %-5s rc=%s  see %s' "$name" "FAIL" "$rc" "$RUNDIR/$name.log")"
+    note "$(printf '%-17s %-5s rc=%s  see %s' "$name" "FAIL" "$rc" "$RUNDIR/$name.log")"
     grep -E '^(FINDING|REFUSED|FAIL) ' "$RUNDIR/$name.log" | head -n 20 | sed 's/^/      /'
     echo "{\"stage\":\"$name\",\"verdict\":\"fail\",\"rc\":$rc}" >> "$JSONL"
   fi
@@ -198,6 +204,9 @@ stage() {
 
 check ()   { "$PY" "$ROOT/tools/check_tree.py" "$1" --root "$ROOT"; }
 control () { "$PY" "$ROOT/tools/check_tree.py" control "$1" --scratch "$RUNDIR/control-$1"; }
+# The build checks: what the tree generates, runs and imports.
+build ()   { "$PY" "$ROOT/tools/check_build.py" "$1" --root "$ROOT" --state "$RUNDIR/$1"; }
+bcontrol () { "$PY" "$ROOT/tools/check_build.py" control "$1" --root "$ROOT" --scratch "$RUNDIR/control-$1"; }
 
 # ======================================================================
 # THE STAGES. One `stage` line each, the description in double quotes on
@@ -208,6 +217,10 @@ stage links "every relative markdown link in a committable file resolves" -- che
 stage paths "no personal path in any committable file" -- check paths
 stage claims "every claims-register row under docs/ carries a basis label" -- check claims
 stage eol "no CR byte in any committable text file" -- check eol
+stage generated "the generated constants and the vectors' checksum lists equal their sources" -- build generated
+stage model-tests "the tests under tests/ pass, read from their results file" -- build model-tests
+stage independence "model/ and stats/ each import with the other blocked" -- build independence
+stage registry "gate rows and gate-claiming tests agree, in both directions" -- build registry
 
 # The controls. Each plants a list of faults in a throwaway repository under
 # this run's own state folder and runs the same check on it. Every planted
@@ -220,6 +233,14 @@ MUST_FAIL=1
 stage ctl-claims "every planted unlabelled claim MUST be reported" -- control claims
 MUST_FAIL=1
 stage ctl-eol "every planted CR byte MUST be reported" -- control eol
+MUST_FAIL=1
+stage ctl-generated "an edited constant and an edited vector MUST each be reported" -- bcontrol generated
+MUST_FAIL=1
+stage ctl-model-tests "a planted failing test MUST fail, and a tree with no test MUST be refused" -- bcontrol model-tests
+MUST_FAIL=1
+stage ctl-independence "a planted import across model/ and stats/ MUST be reported, each way" -- bcontrol independence
+MUST_FAIL=1
+stage ctl-registry "a row nothing claims and a test with no row MUST each be reported" -- bcontrol registry
 
 # ======================================================================
 
@@ -230,6 +251,10 @@ NSTAGES=$(echo "$STAGELIST" | wc -w | tr -d " ")
 NOTRUN=$((NSTAGES - SELECTED))
 echo "   passed $PASSED, failed $FAILED, skipped $SKIPPED, cached $CACHED, not selected $NOTRUN of $NSTAGES"
 echo "   record $JSONL"
+if [ "$INNER" -ne 0 ]; then
+  echo "   $INNER check(s) were skipped inside stages that passed; they are named above"
+  [ "$REQUIRE_ALL" = 1 ] && FAILED=$((FAILED+1))
+fi
 if [ "$FAILED" -ne 0 ]; then
   echo "== VERDICT: FAIL"
   exit 1
@@ -240,8 +265,8 @@ if [ $((PASSED + CACHED)) -eq 0 ]; then
 fi
 SCOPE=""
 [ "$NOTRUN" -ne 0 ] && SCOPE=" for the selected stages only: $NOTRUN of $NSTAGES stage(s) were NOT run"
-if [ "$SKIPPED" -ne 0 ]; then
-  echo "== VERDICT: PASS$SCOPE, with $SKIPPED skipped by name above (--require-all makes a skip a failure)"
+if [ "$SKIPPED" -ne 0 ] || [ "$INNER" -ne 0 ]; then
+  echo "== VERDICT: PASS$SCOPE, with $SKIPPED stage(s) and $INNER inner check(s) skipped by name above (--require-all makes a skip a failure)"
   exit 0
 fi
 echo "== VERDICT: PASS$SCOPE"

@@ -1,6 +1,7 @@
 # python
 __pycache__/
 *.pyc
+.pytest_cache/
 
 # the gate runner's per-run state (logs, markers, the controls' throwaway repositories)
 verify/state/

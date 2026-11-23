@@ -10,15 +10,19 @@ The project's first name was AOTPU. The folder on the lead's desktop and the rou
     bash verify/run.sh --list    # the stages, with * on what would run
     make verify                  # the same as the first line
 
-There is one size today, because the whole run takes seconds. **There is no cache.** A run id is timestamp + commit, each stage drops a marker, and `--resume` reruns only what has not passed in that run. `--resume` is refused on a tree with uncommitted changes, because nothing then says what the earlier stages ran on. A fresh invocation runs everything.
+There is one size today, because the whole run takes well under a minute. **There is no cache.** A run id is timestamp + commit, each stage drops a marker, and `--resume` reruns only what has not passed in that run. `--resume` is refused on a tree with uncommitted changes, because nothing then says what the earlier stages ran on. A fresh invocation runs everything.
 
 A stage passes on the line only success prints (`OK <stage>: <count> ...`), not on its exit code. A control passes only when its check exits non-zero **and** its log carries `CONTROL-DETECTED`. Read the verdict line, then the log under `verify/state/<run id>/`. Under `--only` the verdict says how many stages were not run.
 
-`tools/check_tree.py`'s docstring states what each check cannot see. The `claims` check reads register tables under `docs/`; a claim in prose is not checked. Each control plants a fixed list of fault shapes; a check broken for an unplanted shape passes its control.
+Eight checks, each with a control: four on the documents (`links`, `paths`, `claims`, `eol`, in `tools/check_tree.py`) and four on the build (`generated`, `model-tests`, `independence`, `registry`, in `tools/check_build.py`). Each file's docstring states what its checks cannot see. Each control plants a fixed list of faults; a check broken some other way passes its control. A test skipped inside a stage that passed is named, counted on the verdict line, and fails under `--require-all`.
+
+To change a shared fact: edit `spec/undertone.toml`, run `python tools/gen_spec.py`, commit both. To add a frozen vector: put it under `vectors/<parcel>/` and run `python tools/gen_sums.py`. A test that holds a gate is named `test_gate_<gate>__...`, its negative control `test_control_<gate>__...`, and the gate has a row in `tests/gates.toml`.
 
 ## The authority
 
-The reference model **is the authority** (README, and D0 section 2). It is not written yet. Until it is, nothing about the system can be held against anything, so nothing about the system is claimed.
+The reference model **is the authority** (README, and D0 section 2). Round 1 is writing it: only the skeleton exists (the definition in `spec/`, `model/refusal.py`, `model/stream.py`). Until the model is whole, nothing about the system can be held against anything, so nothing about the system is claimed.
+
+A known answer in a frozen vector is worked by hand or by independent code, never produced by the model it then judges.
 
 Every figure in a design or plan sits in a claims register with a basis: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY or DECISION. An ESTIMATE or SURVEY figure drives no decision until it is measured.
 
@@ -41,6 +45,7 @@ Read on 2026-11-21 from `<repos>/cft-fp256/CLAUDE.md`, which has the addresses. 
 3. **`iverilog` and `verilator` are not on this desktop's Git Bash PATH.** `which` finds neither. RTL simulation runs in `cft2204`.
 4. **`verify/run.sh` needs this to be a git repository.** The checks list committable files with git and refuse, by name, anywhere else. They also refuse a folder that is merely inside another repository.
 5. **An escape sequence written into a file through a script can arrive as the byte it names.** The lead's scripted rewrite of trap 1 left two real CR bytes in this file where the text was meant to show the escape. Nothing checked for CR then; the `eol` stage does now.
+6. **The Agent tool's worktree isolation refuses here** (2026-11-23): "Cannot create agent worktree: not in a git repository". The lead makes each worktree by hand, `git worktree add Data/worktrees/<parcel> -b parcel/<parcel> <commit>`, and **an agent's shell starts in the lead's checkout, not in its worktree**. A brief names the worktree's absolute path and says to work only there.
 
 ## The discipline that matters most here
 

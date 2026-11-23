@@ -1,0 +1,14 @@
+# The reference pulse of stage E0, as integers. Made by tools/make_pulse.py:
+# 64 samples of a 4-cycle sine under a Hann window, peak near 1000.
+# This file is the fact. Nothing regenerates it.
+name = "e0"
+samples = [
+        0,     1,     7,    21,    39,    56,    61,    45,
+        0,   -72,  -162,  -251,  -317,  -337,  -292,  -177,
+        0,   215,   432,   609,   706,   693,   560,   318,
+        0,  -344,  -655,  -878,  -970,  -910,  -703,  -382,
+        0,   381,   696,   896,   950,   856,   635,   332,
+        0,  -303,  -530,  -652,  -659,  -565,  -398,  -196,
+        0,   158,   258,   293,   272,   211,   133,    58,
+        0,   -33,   -43,   -36,   -22,    -9,    -2,     0,
+]
