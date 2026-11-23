@@ -375,3 +375,74 @@ The cases and the test added to `tests/test_p0_generator.py`; the lower-case com
 - **No verifier has seen the conventions page.** It is a statement of decisions already in the ledger, and it is checked with the tests that will hold it.
 - **`spec_version` was not raised.** Nothing built has carried version 1 out of this tree, and `SPEC_SHA256` names the definition exactly.
 - **Nothing pushed.**
+
+## 2026-11-23 - round 1, parcel LCH, part B: a first look at real records of one launch
+
+Parcel LCH's second phase is merged into `r1` as `06e14a6` (the parcel's commits `a1aae8f`, `f2398a2`, `f7029cf` and `cf3259a`): [studies/D1b-first-look.md](studies/D1b-first-look.md), with the scripts that fetch, read and measure under `docs/studies/d1/`, the manifest of what was fetched, and two figures. It ran under Logan's word of 2026-11-23 that downloads are permitted. **It is a look at one launch with two control days. It scores nothing, and it is not a rate.**
+
+### What changed
+
+- The first look: 50 minutes of record from seven stations of a regional network, 16.5 to 275 km from the pad, on the launch day (2021-09-14, launch at 03:55:50 UTC by the catalogue) and on the day before and the day after; the launch catalogue; three listings of local earthquakes.
+- A reader for the records' format written for the study, held against a second, independent reader.
+- Eleven rows of study D1 restated from what the records showed, each saying what it said before.
+- No fetched file is committed. The manifest lists each request with its time, size and SHA-256: 43 requests, 38 files, 25,134,897 bytes.
+
+### What ran
+
+- **LCH**, on the lead's model: the first look (114 tool calls, 37 min 3 s, as the harness reported, with the send-back on part A), then a send-back after its verifier's pass (21 tool calls, 5 min 34 s).
+- **VLCH**, the study's verifier on Sonnet: a third pass, on a sealed clone holding the first look as one commit with **five planted faults** (20 tool calls, 5 min 8 s); then a fourth, scoped to the fix commit, with nothing planted (6 tool calls, 1 min 50 s). Both reports are filed verbatim under the round's `reports/`, with the key.
+
+### Measured
+
+- **Plants: 5 of 5 reported.** A duration its own table contradicted, a measure chosen after looking presented as fixed beforehand, a sentence saying nothing else could have made the signal, a catalogue count, and an average that did not follow from its inputs. Model: Sonnet. The clone was sealed, and none of the verifier's tool inputs names the parcel's commits, worktree or branch.
+- **The measure was written before the data was fetched.** From the parcel's transcript, by the lead: the ledger entry holding the measure was written at 08:11:28 local time; the first waveform request in the manifest is at 08:14:01. The code that applies the measure was written after the records were on disk. The verifier set that code beside the ledger's text and found it to be that measure.
+- **What the parcel reports, by that measure** (power between 2 and 8 Hz in 4-second frames, as a ratio to the median of the ten minutes ending a minute before the launch; the median ratio over the window in which sound from the pad was predicted to arrive). Launch day, then the day before and the day after:
+
+  | station | km | launch day | control days | reading by the rule fixed beforehand |
+  |---|---|---|---|---|
+  | CI.LOC | 16.5 | 614.02 | 1.47, 0.72 | seen |
+  | CI.LCP | 32.6 | 440.16 | 0.56, 1.49 | cannot tell |
+  | CI.SYN | 49.9 | 88.08 | 0.89, 0.80 | seen |
+  | CI.MPP | 78.5 | 843.99 | 0.79, 1.43 | seen |
+  | CI.CDM | 120.4 | 1.65 | 1.03, 1.05 | cannot tell |
+  | CI.HDH | 181.4 | 0.95 | 1.41, 1.08 | nothing visible |
+  | CI.SRN | 275.0 | 0.94 | 0.74, 1.13 | nothing visible |
+
+  The rule reads "cannot tell" at 32.6 km because one control day has a ten-second stretch in the window, and at 120.4 km because a stretch begins at the same second on the launch day and the day before.
+- **The same, by the verifier's own measure and code** (mean power between 2 and 8 Hz from 60 to 420 s after the launch time over the mean from 600 to 60 s before). Day before, launch day, day after: LOC 1.05, 860.9, 0.93. LCP 0.42, 264.2, 1.54. SYN 1.00, 53.7, 1.01. MPP 0.84, 220.4, 1.67. CDM 1.07, 1.23, 1.00. HDH 5.13, 0.39, 5.66. SRN 0.79, 0.90, 0.82. A different measure, so different numbers; the same four stations stand out on the launch day and on neither control day.
+- **The records**, by the parcel's reader and by a second reader, which agree on all 7,500,025 samples; the verifier read all 25 files with the second reader itself: 300,001 samples each at 100 a second, no gap, samples from -36,647 to 35,420. **Two of the 25 files hold samples that need 17 bits.**
+- **The stretch lasts 270 to 454 seconds** at the four stations, and outlasts every window the study had drawn from a source assumed to last 180.
+- **The gate on the staged merge**, `bash verify/run.sh`, Windows desktop: VERDICT: PASS, 16 of 16; `OK claims: 171 register rows in 13 tables in 8 files under docs/, 0 unlabelled`. The study's files on `r1` are byte for byte the parcel's commit.
+
+### Merged with these stated limits
+
+- **The arrival speed is a description, not a test.** The slope fixed beforehand came out meaningless, because one station has an earlier, weaker stretch that the definition of an onset picked up. A slope chosen after looking is 3.02 seconds a kilometre, inside the range for sound through the air; two of its three station-to-station steps are outside that range. Every place the study gives it now says both.
+- **The nearest station asked for, 13.5 km, returned no record**, though the archive's listing spans the date. So one of the study's own controls could not be run.
+- **One control day is not clean by the study's own rule:** another flight left the base 10.4 hours before it.
+- **Every figure is a ratio to a station's own noise in raw counts.** Nothing is in physical units, so "stands out most between 2 and 8 Hz" says where the launch is easiest to see, not where its power is.
+- The summary's "far busier" control days at the 181 km station is true before the sound window and not inside it.
+
+### What this does not prove
+
+- **How often a launch is seen.** There is one launch, and it is one the network itself had written up. The plan's row V2 asks for "a predictable lag, at more than one distance": for this launch the signal is at four distances, and the lag's measure was chosen after looking. V2 is supported for one case and is not settled.
+- **How often a quiet day looks like a launch.** Two control days cannot say.
+- **What made the signal.** The measure sees power in a band at a time. What ties it to the pad is its timing across four stations, by a measure chosen after looking.
+- **That a detector would find it.** No detector was run.
+- **The digitiser's width.** Samples wider than 16 bits are MEASURED. What the converter's width is stays BELIEVED.
+
+### What this means for the design
+
+D0's row D1 proposes 16-bit samples on one channel. These records are three components, and two of 25 files need 17 bits. The definition already carries a second profile of 24 bits and three channels, which the foundation was built not to hard-wire either. Whether row D1 changes is Logan's to say; the lead puts it to him at the round's close with this evidence.
+
+### The lead's slips, and the parcel's
+
+- **A package index's terms limit who may use it, and the parcel installed from it without that going to Logan.** The terms exclude a person on a sanctions list. The parcel read the page, searched it for a few words, missed the sentence, wrote that nothing limited who may download, and installed nine packages into a virtual environment in its scratch folder. The verifier found the sentence. The parcel says so plainly in its own report. The row now quotes the terms, and the lead has put it to Logan.
+- **The install wrote outside the parcel's folder.** pip, run inside the virtual environment, wrote the nine packages it downloaded (36.7 MB) into the desktop's own pip cache. The parcel reported it and did not purge the cache, which holds entries it did not make. The desktop's shared Python is unchanged, by its measurement. The brief said to install into a virtual environment and said nothing of the cache; that was the lead's omission.
+- **The brief expected a station service to name the digitiser.** It gives a gain and no width.
+- **The brief assumed the nearest station could be fetched.**
+
+### Not done, and why
+
+- **No wider look.** A second launch with every definition fixed first, more control days, the nearest station's other channels, the infrasound stations: the study lists these, and none was run. That is a decision for the next round's plan.
+- **Distant large earthquakes in the three windows were not checked.** The national catalogue's policy pages answered 403, so its terms could not be read, and it was not queried.
+- **Nothing pushed.**
