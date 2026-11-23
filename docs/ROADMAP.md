@@ -72,6 +72,17 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 
 *The lead's reading:* the round starts, with the plan's questions 1 to 5 and 7 as recommended; bookings on the TimeSheet are allowed; the licence is MIT. The lead's fuller reading closes the plan of record. Because the word to push is read from "go ahead", the lead asks again before the push at the round's close.
 
+**2026-11-23, on data services, downloads and two services' terms.** The lead had told him that a study agent queried two station-metadata services before reading that using them accepts their terms, that rows from both were being held out of committed files, and that the study proposed a download for his approval.
+
+> If a public data service exists to query it may to determine if it would be useful here. Downloads are also permitted. Allow EarthScope and I'll look into Raspberry Shake
+
+*The lead's reading:*
+
+1. An agent of this project may query a public data service to find out whether it would be useful.
+2. Downloads are permitted. The lead reads this as covering what this project's work needs, the launch-data study's proposed download first: not as leave to fetch anything unrelated to it. It replaces, for this project, the rule carried from cft-fp256 that each file be approved.
+3. EarthScope's service may be used, and rows from it committed, with the acknowledgement its terms ask for.
+4. Raspberry Shake stays held until he has looked: no request to it, and no row from it in a committed file.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
@@ -82,7 +93,8 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 - Agents test what they can quickly, hand long runs back to the lead, and ask before any run longer than ten minutes.
 - No personal path in a committed line. Here this is a gate: the `paths` stage of `verify/run.sh`.
 - This file and CLAUDE.md are the lead's.
-- No real keys. No git or system configuration changes by agents. Downloads need approval for each file.
+- No real keys. No git or system configuration changes by agents.
+- **Downloads are permitted, by Logan's word of 2026-11-23** (above), where cft-fp256's rule asked approval for each file. The lead's practice under it: each fetched file is logged with its source, its size and its hash; no fetched file is committed; a service's terms are read before its first request; and a service whose terms limit who may use its data waits for Logan.
 - Every brief carries a scope ceiling, a time box by the clock, and "no helper agents".
 - Long jobs run through the tool that reports their end, never as a detached background process.
 - Each agent gets a scratch folder of its own and writes nothing outside it and its deliverables. Line endings are LF.
