@@ -50,9 +50,47 @@ def test_p0_the_definition_holds_the_designs_figures():
     assert len(as_proposed) == 1, "exactly one profile is D0 row D1 as proposed"
 
 
-def test_p0_refusal_names_are_exactly_the_declared_ten():
-    assert C.REFUSALS == ("PROFILE_UNKNOWN", "CHANNELS", "SAMPLE_RANGE", "SHAPE_FILTERS", "SHAPE_TAPS",
-                          "RESERVED_BITS", "BLOB_HASH", "SWAP_PENDING", "RECORD_KIND", "RECORD_FIELD")
+P0_REFUSALS = ("PROFILE_UNKNOWN", "CHANNELS", "SAMPLE_RANGE", "SHAPE_FILTERS", "SHAPE_TAPS",
+               "RESERVED_BITS", "BLOB_HASH", "SWAP_PENDING", "RECORD_KIND", "RECORD_FIELD")
+# As asked for in each parcel's design, in the round ledger, and typed here from those lists.
+MOD_B_REFUSALS = ("SHAPE_CHANNEL", "SHAPE_ROWS", "SHAPE_RECTIFIER", "SHAPE_POOL", "SHAPE_SHIFT",
+                  "WEIGHT_COUNT", "WEIGHT_RANGE", "BLOB_FORMAT", "SWAP_SHAPE", "SWAP_INDEX", "SWAP_EPOCH",
+                  "SCORER_THRESHOLD", "SCORER_WINDOW", "SCORER_BINS", "RECORD_ORDER", "QUANTISE_INPUT")
+MOD_A_REFUSALS = ("SEED_RANGE", "NOISE_SIGMA", "NOISE_RANGE", "STREAM_LENGTH", "PULSE_UNKNOWN",
+                  "INJECT_OVERLAP", "INJECT_PAST_END", "INJECT_RANGE", "REPLAY_FORMAT", "REPLAY_PROFILE",
+                  "REPLAY_HASH")
+
+
+def test_p0_refusal_names_are_exactly_the_declared_thirty_seven():
+    assert (len(P0_REFUSALS), len(MOD_B_REFUSALS), len(MOD_A_REFUSALS)) == (10, 16, 11)
+    assert C.REFUSALS == P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS
+    assert len(set(C.REFUSALS)) == 37
+
+
+def test_p0_the_bounds_the_lead_decided_on_2026_11_23_are_the_ones_generated():
+    """These four are not D0's figures. They are the values MOD-B's width argument is worked at;
+    a change to one is a change to that argument, so it is pinned here to be made on purpose."""
+    assert (C.MAX_ROWS, C.MAX_POOL, C.MAX_SCORE_SHIFT, C.MAX_HIST_BINS) == (16, 65536, 31, 4096)
+    assert C.MAX_POOL == 2 ** 16 and C.MAX_SCORE_SHIFT == 2 ** 5 - 1
+
+
+def test_p0_rectifier_codes_are_the_two_declared_and_fit_a_byte():
+    assert C.RECTIFIERS == {"pass": 0, "abs": 1}
+    assert len(set(C.RECTIFIERS.values())) == len(C.RECTIFIERS)
+    assert all(type(v) is int and 0 <= v <= 255 for v in C.RECTIFIERS.values())
+
+
+def test_p0_an_injected_sample_is_rounded_by_the_rule_the_coefficients_are():
+    assert C.INJECT_ROUNDING == "half_to_even" == C.QUANTISE_ROUNDING
+
+
+def test_p0_every_pulse_has_one_id_that_fits_the_truth_records_field():
+    assert C.PULSE_IDS == {"e0": 0}
+    assert set(C.PULSE_IDS) == set(C.PULSES)
+    assert len(set(C.PULSE_IDS.values())) == len(C.PULSE_IDS)
+    width = dict((f[0], (f[1], f[2])) for f in C.RECORDS["truth"])["pulse_id"]
+    assert width == (16, "unsigned")
+    assert all(type(v) is int and 0 <= v <= 65535 for v in C.PULSE_IDS.values())
 
 
 @pytest.mark.parametrize("name", sorted(C.PROFILES))

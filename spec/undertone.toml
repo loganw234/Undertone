@@ -26,10 +26,32 @@ channels = 3
 
 # D0 row D3 proposes "a first bank" of 16 filters of 128 taps. Taking those
 # two figures as the maxima a shape may have is the lead's reading.
+#
+# The other three bounds here, and the scorer's one further down, are the
+# lead's DECISIONS of 2026-11-23, taken from parcel MOD-B's design: they are
+# the values its width argument is worked at, and D0 states none of them.
+#   A row is one channel's coefficients for one filter. A shape's rows, summed
+#   over its filters, are bounded apart from its filters: the two counts are
+#   two facts that share a value today.
+#   The pool is a moving sum over this many rectified values at most.
+#   The score shift is how far the head's sum is shifted right into a score.
 [core]
 coeff_bits = 18     # D0 row D2
 max_filters = 16    # D0 row D3
 max_taps = 128      # D0 row D3
+max_rows = 16
+max_pool = 65536
+max_score_shift = 31
+
+# The rectifier's modes, each by the code a weight blob carries for it. A code
+# fits one byte.
+[rectifier]
+pass = 0    # the filter's sum goes on unchanged
+abs = 1     # its magnitude goes on
+
+# The most bins a scorer's histogram of scores may have.
+[scorer]
+max_hist_bins = 4096
 
 # How a real coefficient set becomes an integer one. This is the rule only:
 # model/ and stats/ each implement it, and share no code.
@@ -38,6 +60,12 @@ max_taps = 128      # D0 row D3
 #   rounding = "half_to_even"
 [quantise]
 scale = "peak_to_max"
+rounding = "half_to_even"
+
+# How an injected sample becomes an integer. The injector adds
+# pulse[j] * amplitude_num / amplitude_den to the stream, and that quotient is
+# rounded by this rule. Anything that rebuilds an injected stream uses it.
+[inject]
 rounding = "half_to_even"
 
 # Record formats: [name, bits, "signed" | "unsigned"], in order.
@@ -67,8 +95,43 @@ names = [
     "SWAP_PENDING",
     "RECORD_KIND",
     "RECORD_FIELD",
+    # The detector core, its weight store and its scorer (parcel MOD-B).
+    "SHAPE_CHANNEL",
+    "SHAPE_ROWS",
+    "SHAPE_RECTIFIER",
+    "SHAPE_POOL",
+    "SHAPE_SHIFT",
+    "WEIGHT_COUNT",
+    "WEIGHT_RANGE",
+    "BLOB_FORMAT",
+    "SWAP_SHAPE",
+    "SWAP_INDEX",
+    "SWAP_EPOCH",
+    "SCORER_THRESHOLD",
+    "SCORER_WINDOW",
+    "SCORER_BINS",
+    "RECORD_ORDER",
+    "QUANTISE_INPUT",
+    # The source, the injector and the replay file (parcel MOD-A).
+    "SEED_RANGE",
+    "NOISE_SIGMA",
+    "NOISE_RANGE",
+    "STREAM_LENGTH",
+    "PULSE_UNKNOWN",
+    "INJECT_OVERLAP",
+    "INJECT_PAST_END",
+    "INJECT_RANGE",
+    "REPLAY_FORMAT",
+    "REPLAY_PROFILE",
+    "REPLAY_HASH",
 ]
 
 # Reference pulses, as integer data, by path under spec/.
 [pulses]
 e0 = "pulses/e0.toml"
+
+# The number a truth record's pulse_id field carries for each pulse. Declared,
+# never "position in sorted order": adding a pulse must not renumber the rest.
+# Every pulse has one, and no two share one.
+[pulse_ids]
+e0 = 0

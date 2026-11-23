@@ -11,27 +11,36 @@ here; today there is one output, the Python constants model/ and stats/ import.
 The definition is checked before anything is written, and one that does not
 make sense is REFUSED by name. What is checked, exactly:
 
-  - the top-level sections are the eight this generator knows, no more, no fewer;
+  - the top-level sections are the twelve this generator knows (TOP below), no
+    more, no fewer;
   - every section's keys are the ones listed in KEYS below, no more, no fewer;
   - a number is an int (never a bool, a float or a string) inside its range;
-  - a profile, field, flag or pulse name is lower case letters, digits and
-    underscores; a refusal name is upper case letters, digits and underscores;
+  - a profile, field, flag, rectifier or pulse name is lower case letters,
+    digits and underscores; a refusal name is upper case letters, digits and
+    underscores;
   - the records are exactly score, truth and event, each field [name, bits,
     "signed" | "unsigned"] with bits a whole number of bytes from 8 to 64, no
-    field named twice, and the score record has an unsigned flags field;
+    field named twice, the score record has an unsigned flags field and the
+    truth record an unsigned pulse_id field;
   - no flag bit is used twice or lies outside the flags field;
+  - a rectifier code is an int from 0 to 255, and no code is used twice;
+  - the quantising rule and the injection's rounding are the one rule each
+    that this generator knows;
   - no refusal name is listed twice;
   - a pulse's file is under spec/pulses/, names itself as the definition names
-    it, and holds ints that fit the NARROWEST profile.
+    it, and holds ints that fit the NARROWEST profile;
+  - the pulse ids name exactly the pulses, each id fits the truth record's
+    pulse_id field, and no id is used twice.
 
 Anything else that goes wrong while reading the definition is refused as
 DEFINITION-MALFORMED, with what went wrong: never a traceback.
 
-What is NOT checked: whether a value is the one the design means, or whether
-a record has the fields the code reads. A definition that says 64 taps where
-the design says 128, or a truth record with no index, is accepted here. The
-tests hold the first for the figures they pin, and code that reads a missing
-field fails its own tests.
+What is NOT checked: whether a value is the one the design means, whether a
+record has the fields the code reads (beyond the two named above), or whether
+the bounds make sense together. A definition that says 64 taps where the
+design says 128, a truth record with no index, or fewer rows allowed than
+filters, is accepted here. The tests hold the first for the figures they pin,
+and code that reads a missing field fails its own tests.
 """
 import hashlib
 import os
@@ -43,14 +52,18 @@ OUT = "spec/constants.py"
 SRC = "spec/undertone.toml"
 KEYS = {
     "meta": {"spec_version"},
-    "core": {"coeff_bits", "max_filters", "max_taps"},
+    "core": {"coeff_bits", "max_filters", "max_taps", "max_rows", "max_pool", "max_score_shift"},
     "quantise": {"scale", "rounding"},
+    "inject": {"rounding"},
+    "scorer": {"max_hist_bins"},
     "records": {"score", "truth", "event"},
     "refusals": {"names"},
 }
-TOP = set(KEYS) | {"profile", "flags", "pulses"}
+TOP = set(KEYS) | {"profile", "flags", "rectifier", "pulses", "pulse_ids"}
 RANGE = {"spec_version": (1, 10 ** 6), "sample_bits": (2, 32), "channels": (1, 16),
-         "coeff_bits": (2, 32), "max_filters": (1, 1024), "max_taps": (1, 65536)}
+         "coeff_bits": (2, 32), "max_filters": (1, 1024), "max_taps": (1, 65536),
+         "max_rows": (1, 1024), "max_pool": (1, 2 ** 24), "max_score_shift": (0, 63),
+         "max_hist_bins": (1, 65536)}
 LOWER = re.compile(r"[a-z][a-z0-9_]*\Z")
 UPPER = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 
@@ -94,10 +107,21 @@ def validate(d, root):
         keys("profile.%s" % name, p, {"sample_bits", "channels"})
         number("profile.%s" % name, "sample_bits", p["sample_bits"])
         number("profile.%s" % name, "channels", p["channels"])
-    for key in KEYS["core"]:
+    for key in sorted(KEYS["core"]):
         number("core", key, d["core"][key])
+    number("scorer", "max_hist_bins", d["scorer"]["max_hist_bins"])
     if d["quantise"] != {"scale": "peak_to_max", "rounding": "half_to_even"}:
         raise Refused("QUANTISE: this generator knows one rule, peak_to_max with half_to_even")
+    if d["inject"] != {"rounding": "half_to_even"}:
+        raise Refused("INJECT: this generator knows one rounding for an injected sample, half_to_even")
+    if not isinstance(d["rectifier"], dict) or not d["rectifier"]:
+        raise Refused("RECTIFIER: there is no mode")
+    codes = set()
+    for name, code in d["rectifier"].items():
+        lower("rectifier", name)
+        if type(code) is not int or not 0 <= code <= 255 or code in codes:
+            raise Refused("RECTIFIER: %s = %r is used twice or is not an int from 0 to 255" % (name, code))
+        codes.add(code)
     for rec, fields in d["records"].items():
         if not isinstance(fields, list) or not fields:
             raise Refused("RECORD: %s has no fields" % rec)
@@ -116,6 +140,9 @@ def validate(d, root):
     flag_field = [f for f in d["records"]["score"] if f[0] == "flags"]
     if not flag_field or flag_field[0][2] != "unsigned":
         raise Refused("RECORD: score has no unsigned flags field")
+    id_field = [f for f in d["records"]["truth"] if f[0] == "pulse_id"]
+    if not id_field or id_field[0][2] != "unsigned":
+        raise Refused("RECORD: truth has no unsigned pulse_id field")
     if not isinstance(d["flags"], dict) or not d["flags"]:
         raise Refused("FLAGS: there is no flag")
     used = set()
@@ -152,6 +179,16 @@ def validate(d, root):
         if min(s) < lo or max(s) > hi:
             raise Refused("PULSES: %s has a sample outside the narrowest profile, %d bits" % (name, narrowest))
         pulses[name] = list(s)
+    ids = d["pulse_ids"]
+    if not isinstance(ids, dict) or set(ids) != set(pulses):
+        raise Refused("PULSE_IDS: the ids name %s and the pulses are %s"
+                      % (sorted(ids) if isinstance(ids, dict) else ids, sorted(pulses)))
+    taken = set()
+    for name, ident in ids.items():
+        if type(ident) is not int or not 0 <= ident < 2 ** id_field[0][1] or ident in taken:
+            raise Refused("PULSE_IDS: %s = %r is used twice or does not fit the %d-bit pulse_id field"
+                          % (name, ident, id_field[0][1]))
+        taken.add(ident)
     return pulses
 
 
@@ -192,9 +229,19 @@ def render(d, pulses, digest):
           "COEFF_MAX = %d" % (2 ** (c["coeff_bits"] - 1) - 1),
           "MAX_FILTERS = %d" % c["max_filters"],
           "MAX_TAPS = %d" % c["max_taps"],
+          "MAX_ROWS = %d" % c["max_rows"],
+          "MAX_POOL = %d" % c["max_pool"],
+          "MAX_SCORE_SHIFT = %d" % c["max_score_shift"],
+          "MAX_HIST_BINS = %d" % d["scorer"]["max_hist_bins"],
+          "",
+          "RECTIFIERS = {"]
+    for name in sorted(d["rectifier"], key=lambda n: d["rectifier"][n]):
+        L.append('    "%s": %d,' % (name, d["rectifier"][name]))
+    L += ["}",
           "",
           'QUANTISE_SCALE = "%s"' % d["quantise"]["scale"],
           'QUANTISE_ROUNDING = "%s"' % d["quantise"]["rounding"],
+          'INJECT_ROUNDING = "%s"' % d["inject"]["rounding"],
           "",
           "RECORDS = {"]
     for rec in sorted(d["records"]):
@@ -219,6 +266,9 @@ def render(d, pulses, digest):
         for i in range(0, len(s), 8):
             L.append("        " + ", ".join(str(v) for v in s[i:i + 8]) + ",")
         L.append("    ),")
+    L += ["}", "", "PULSE_IDS = {"]
+    for name in sorted(d["pulse_ids"], key=lambda n: d["pulse_ids"][n]):
+        L.append('    "%s": %d,' % (name, d["pulse_ids"][name]))
     L += ["}", ""]
     return "\n".join(L)
 

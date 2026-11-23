@@ -43,7 +43,11 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                 stage of the runner and the test is not; it does not check
                 that the two are about the same thing.
   control       plants the faults listed in plants() and no others. A check
-                broken some other way passes its control. Nothing guards
+                broken some other way passes its control. The model-tests
+                control's copies keep only the tests named test_p0_*, so it
+                shows the stage sees a failing test, an unimportable one and
+                an empty folder among those, and says nothing about a parcel's
+                tests: see drop_tests(). Nothing guards
                 control() itself: one rewritten to always answer DETECTED
                 would pass.
 """
@@ -256,6 +260,24 @@ def write(root, name, text, mode="w"):
         f.write(text)
 
 
+def drop_tests(copy, keep):
+    """Remove every test file under the copy's tests/ whose name does not start with `keep`
+    (every one, when keep is None). Returns how many were removed.
+
+    The model-tests control keeps P0's tests only. With the parcels' suites in its copies the
+    gate ran every test twice, once for real and once to watch one planted test fail. What
+    that gives up: "nothing else was reported" is now a statement about P0's tests and the
+    planted one, not about the whole suite. The real stage still runs the whole suite."""
+    gone = 0
+    for folder, _dirs, files in os.walk(os.path.join(copy, "tests")):
+        for f in files:
+            is_test = f.endswith(".py") and (f.startswith("test_") or f.endswith("_test.py"))
+            if is_test and not (keep and f.startswith(keep)):
+                os.remove(os.path.join(folder, f))
+                gone += 1
+    return gone
+
+
 def plants(kind, root, scratch):
     """A list of (copy of the tree with faults planted, the set of `where` that must be reported,
     or the string "REFUSED" when the check must refuse the copy)."""
@@ -271,14 +293,14 @@ def plants(kind, root, scratch):
         return [(a, {"spec/constants.py", "vectors/p0/sample_range.json", "vectors/p0/deeper/unlisted.json"})]
     if kind == "model-tests":
         a = copy_tree(root, scratch, "a")
+        drop_tests(a, keep="test_p0_")
         write(a, "tests/test_planted_fail.py", "def test_planted_must_fail():\n    assert 1 == 2\n")
         b = copy_tree(root, scratch, "b")
-        for f in os.listdir(os.path.join(b, "tests")):
-            if f.startswith("test_") and f.endswith(".py"):
-                os.remove(os.path.join(b, "tests", f))
+        drop_tests(b, keep=None)
         # A test file that cannot be imported. It gets a copy of its own: pytest stops at a
         # collection error and runs nothing, so a failing test beside it would never be seen.
         c = copy_tree(root, scratch, "c")
+        drop_tests(c, keep="test_p0_")
         write(c, "tests/test_planted_broken.py", "import no_such_module_anywhere\n\n\ndef test_never_runs():\n    pass\n")
         return [(a, {"tests.test_planted_fail::test_planted_must_fail"}), (b, "REFUSED"),
                 (c, {"::tests.test_planted_broken"})]

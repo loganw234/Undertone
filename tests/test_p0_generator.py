@@ -65,6 +65,30 @@ BAD = [
     ("a pulse path that climbs out", [("e0 = \"pulses/e0.toml\"", "e0 = \"../pulses/e0.toml\"")], "PULSES"),
     ("a pulse file that is missing", [("e0 = \"pulses/e0.toml\"", "e0 = \"pulses/absent.toml\"")], "DEFINITION-MALFORMED"),
     ("an upper-case profile name", [("[profile.s16x1]", "[profile.S16X1]")], "NAME"),
+    ("a row bound that is a string", [("max_rows = 16", "max_rows = \"16\"")], "NUMBER"),
+    ("a pool bound of zero", [("max_pool = 65536", "max_pool = 0")], "NUMBER"),
+    ("a pool bound past the generator's range", [("max_pool = 65536", "max_pool = 16777217")], "NUMBER"),
+    ("a shift bound of sixty-four", [("max_score_shift = 31", "max_score_shift = 64")], "NUMBER"),
+    ("a negative shift bound", [("max_score_shift = 31", "max_score_shift = -1")], "NUMBER"),
+    ("a histogram bound of zero", [("max_hist_bins = 4096", "max_hist_bins = 0")], "NUMBER"),
+    ("a histogram bound that is a float", [("max_hist_bins = 4096", "max_hist_bins = 4096.0")], "NUMBER"),
+    ("an unknown key in scorer", [("max_hist_bins = 4096", "max_hist_bins = 4096\nextra = 1")], "KEYS"),
+    ("a core with no pool bound", [("max_pool = 65536\n", "")], "KEYS"),
+    ("another rounding for an injected sample", [("[inject]\nrounding = \"half_to_even\"", "[inject]\nrounding = \"half_up\"")], "INJECT"),
+    ("an unknown key in inject", [("[inject]\nrounding = \"half_to_even\"", "[inject]\nrounding = \"half_to_even\"\nextra = 1")], "KEYS"),
+    ("a rectifier code used twice", [("abs = 1 ", "abs = 0 ")], "RECTIFIER"),
+    ("a rectifier code of 256", [("abs = 1 ", "abs = 256 ")], "RECTIFIER"),
+    ("a negative rectifier code", [("abs = 1 ", "abs = -1 ")], "RECTIFIER"),
+    ("a rectifier code that is a bool", [("abs = 1 ", "abs = true ")], "RECTIFIER"),
+    ("an upper-case rectifier name", [("abs = 1 ", "ABS = 1 ")], "NAME"),
+    ("a rectifier section with no mode", [("pass = 0    # the filter's sum goes on unchanged\nabs = 1     # its magnitude goes on\n", "")], "RECTIFIER"),
+    ("a pulse with no id", [("[pulse_ids]\ne0 = 0", "[pulse_ids]")], "PULSE_IDS"),
+    ("an id for a pulse that is not declared", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = 0\ne1 = 1")], "PULSE_IDS"),
+    ("a pulse id too large for the truth record's field", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = 65536")], "PULSE_IDS"),
+    ("a negative pulse id", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = -1")], "PULSE_IDS"),
+    ("a pulse id that is a string", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = \"0\"")], "PULSE_IDS"),
+    ("a truth record with no pulse_id field", [("[\"pulse_id\", 16, \"unsigned\"], ", "")], "RECORD"),
+    ("a signed pulse_id field", [("[\"pulse_id\", 16, \"unsigned\"], ", "[\"pulse_id\", 16, \"signed\"], ")], "RECORD"),
 ]
 
 
@@ -105,6 +129,35 @@ def test_p0_a_pulse_sample_at_either_end_of_the_narrowest_profile_is_accepted(tm
         with pytest.raises(gen_spec.Refused) as e:
             gen_spec.load(root)
         assert str(e.value).split(":")[0] == "PULSES"
+
+
+def second_pulse(tmp_path, tag, second_id):
+    root = tree(tmp_path / tag, [("e0 = \"pulses/e0.toml\"", "e0 = \"pulses/e0.toml\"\ne1 = \"pulses/e1.toml\""),
+                                 ("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = 0\ne1 = %s" % second_id)])
+    with open(os.path.join(root, "spec", "pulses", "e1.toml"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("name = \"e1\"\nsamples = [0, 5, -5, 0]\n")
+    return root
+
+
+def test_p0_two_pulses_get_two_ids_and_cannot_share_one(tmp_path):
+    d, pulses, _digest = gen_spec.load(second_pulse(tmp_path, "apart", "7"))
+    assert d["pulse_ids"] == {"e0": 0, "e1": 7} and pulses["e1"] == [0, 5, -5, 0]
+    text = gen_spec.render(d, pulses, _digest)
+    assert "PULSE_IDS = {\n    \"e0\": 0,\n    \"e1\": 7,\n}" in text
+    assert gen_spec.load(second_pulse(tmp_path, "top", "65535"))[0]["pulse_ids"]["e1"] == 65535
+    with pytest.raises(gen_spec.Refused) as e:
+        gen_spec.load(second_pulse(tmp_path, "shared", "0"))
+    assert str(e.value).split(":")[0] == "PULSE_IDS"
+
+
+def test_p0_a_bound_at_either_end_of_its_range_is_accepted(tmp_path):
+    for tag, old, new in (("shift0", "max_score_shift = 31", "max_score_shift = 0"),
+                          ("shift63", "max_score_shift = 31", "max_score_shift = 63"),
+                          ("pool1", "max_pool = 65536", "max_pool = 1"),
+                          ("pooltop", "max_pool = 65536", "max_pool = 16777216"),
+                          ("rect255", "abs = 1 ", "abs = 255 ")):
+        d, _pulses, _digest = gen_spec.load(tree(tmp_path / tag, [(old, new)]))
+        assert new.strip() in ("%s = %d" % (k, v) for sec in ("core", "rectifier") for k, v in d[sec].items())
 
 
 def test_p0_a_stale_copy_is_reported_with_the_line_that_differs(tmp_path):

@@ -5,7 +5,7 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "6678d0e43c260f4b5e753510327f7394ac605a2cf5a5f6887784771418c46db0"
+SPEC_SHA256 = "209d3009cd0ba3db510d2a102a05d45c862ac1ee9008aadc612daf2ab4ee066f"
 
 PROFILES = {
     "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
@@ -17,9 +17,19 @@ COEFF_MIN = -131072
 COEFF_MAX = 131071
 MAX_FILTERS = 16
 MAX_TAPS = 128
+MAX_ROWS = 16
+MAX_POOL = 65536
+MAX_SCORE_SHIFT = 31
+MAX_HIST_BINS = 4096
+
+RECTIFIERS = {
+    "pass": 0,
+    "abs": 1,
+}
 
 QUANTISE_SCALE = "peak_to_max"
 QUANTISE_ROUNDING = "half_to_even"
+INJECT_ROUNDING = "half_to_even"
 
 RECORDS = {
     "event": (
@@ -60,6 +70,33 @@ REFUSALS = (
     "SWAP_PENDING",
     "RECORD_KIND",
     "RECORD_FIELD",
+    "SHAPE_CHANNEL",
+    "SHAPE_ROWS",
+    "SHAPE_RECTIFIER",
+    "SHAPE_POOL",
+    "SHAPE_SHIFT",
+    "WEIGHT_COUNT",
+    "WEIGHT_RANGE",
+    "BLOB_FORMAT",
+    "SWAP_SHAPE",
+    "SWAP_INDEX",
+    "SWAP_EPOCH",
+    "SCORER_THRESHOLD",
+    "SCORER_WINDOW",
+    "SCORER_BINS",
+    "RECORD_ORDER",
+    "QUANTISE_INPUT",
+    "SEED_RANGE",
+    "NOISE_SIGMA",
+    "NOISE_RANGE",
+    "STREAM_LENGTH",
+    "PULSE_UNKNOWN",
+    "INJECT_OVERLAP",
+    "INJECT_PAST_END",
+    "INJECT_RANGE",
+    "REPLAY_FORMAT",
+    "REPLAY_PROFILE",
+    "REPLAY_HASH",
 )
 
 PULSES = {
@@ -73,4 +110,8 @@ PULSES = {
         0, 158, 258, 293, 272, 211, 133, 58,
         0, -33, -43, -36, -22, -9, -2, 0,
     ),
+}
+
+PULSE_IDS = {
+    "e0": 0,
 }
