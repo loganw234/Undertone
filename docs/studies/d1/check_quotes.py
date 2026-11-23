@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Holds every quotation of study D1 against the page it came from.
+"""Holds every quotation of studies D1 and D1b against the page it came from.
 
     python docs/studies/d1/check_quotes.py --saved DIR
     python docs/studies/d1/check_quotes.py --study-only
@@ -7,7 +7,8 @@
 WHAT IT READS
   quotes.tsv, beside this file: the register row, the saved file, the URL
       and the quotation.
-  ../D1-launch-data.md: the study.
+  ../D1-launch-data.md and ../D1b-first-look.md: the two studies. Their
+      register rows must not share an id.
   ../../../PROVENANCE.md: the sources and their terms.
   DIR: the folder the pages and responses were saved under on the day they
       were read. They are not committed. Without them, --study-only runs the
@@ -44,7 +45,8 @@ import re
 import sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-STUDY = os.path.join(os.path.dirname(HERE), "D1-launch-data.md")
+STUDIES = [os.path.join(os.path.dirname(HERE), "D1-launch-data.md"),
+           os.path.join(os.path.dirname(HERE), "D1b-first-look.md")]
 PROVENANCE = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(HERE))),
                           "PROVENANCE.md")
 MAX_WORDS = 25
@@ -84,22 +86,31 @@ def read_quotes():
 
 
 def register_rows():
-    """{row id: (line number, basis, whole line)} for tables with a basis column."""
-    rows, header = {}, None
-    with open(STUDY, encoding="utf-8") as f:
-        for n, line in enumerate(f, 1):
-            if not line.lstrip().startswith("|"):
-                header = None
-                continue
-            cells = [c.strip() for c in line.strip().strip("|").split("|")]
-            if header is None:
-                header = [c.lower() for c in cells]
-                continue
-            if "basis" not in header or all(re.fullmatch(r":?-+:?", c) for c in cells):
-                continue
-            if len(cells) != len(header):
-                continue
-            rows[cells[0]] = (n, cells[header.index("basis")], line)
+    """{row id: (file name and line number, basis, whole line)} for the register
+    tables of both studies. A row id used twice is refused: a quotation is
+    tied to its row by that id."""
+    rows = {}
+    for path in STUDIES:
+        if not os.path.isfile(path):
+            continue
+        name, header = os.path.basename(path), None
+        with open(path, encoding="utf-8") as f:
+            for n, line in enumerate(f, 1):
+                if not line.lstrip().startswith("|"):
+                    header = None
+                    continue
+                cells = [c.strip() for c in line.strip().strip("|").split("|")]
+                if header is None:
+                    header = [c.lower() for c in cells]
+                    continue
+                if "basis" not in header or all(re.fullmatch(r":?-+:?", c) for c in cells):
+                    continue
+                if len(cells) != len(header):
+                    continue
+                if cells[0] in rows:
+                    raise SystemExit("REFUSED ROW-ID-TWICE: %s in %s and at %s"
+                                     % (cells[0], rows[cells[0]][0], name))
+                rows[cells[0]] = ("%s:%d" % (name, n), cells[header.index("basis")], line)
     return rows
 
 
@@ -155,11 +166,10 @@ def main():
         listed = [squeeze(q) for q, _u in by_row.get(rid, [])]
         for found in re.findall(r'"([^"]+)"', line):
             if squeeze(found) not in listed:
-                findings.append("D1-launch-data.md:%d: row %s quotes text that quotes.tsv "
+                findings.append("%s: row %s quotes text that quotes.tsv "
                                 "does not list: %r" % (n, rid, found))
         if not by_row.get(rid):
-            findings.append("D1-launch-data.md:%d: READ row %s has no quotation in quotes.tsv"
-                            % (n, rid))
+            findings.append("%s: READ row %s has no quotation in quotes.tsv" % (n, rid))
     for f in findings:
         print("FINDING quotes %s" % f)
     if findings:
