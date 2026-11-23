@@ -690,3 +690,64 @@ VSEAM was resumed on a clone of `r1` at the fix commit `e467ba8`, with nothing p
 ### Not done, and why
 
 - **Nothing pushed, and `main` has not moved.** The lead asks Logan.
+
+## 2026-11-23 - the draft plan for round 2: three drafts, and a verifier's three passes
+
+Logan asked for a plan for round 2 ("Yes draft the plan"). It is [plans/R2-fabric-in-simulation-and-the-learner.md](plans/R2-fabric-in-simulation-and-the-learner.md), on the local branch `r2-plan`, cut from `main` at `06bdf80`. **It is a draft. Nothing of round 2 has started, no Docker image is built, and nothing is pushed.** It ends with six questions for him.
+
+### What changed
+
+- The draft: three shapes for round 2 and a recommendation; a four-part test for his word "hidden layer from the start if simple enough"; a wave 0, four or five parcels and the lead's seam, each with its controls; what the round is for, with what would falsify each; how it would be held; six questions.
+- CLAUDE.md's trap 3, which said RTL simulation runs in the WSL environment. It does not.
+- The roadmap: his word asking for the plan, his word on Docker, and the lead's reading of each.
+
+### What ran
+
+- **VP2**, one verifier on Sonnet, three passes: the first draft, on a sealed clone with **five planted faults** in the plan's own file (27 tool calls, 4 min 38 s, as the harness reported, of a 45-minute box); a re-check of the second (5 tool calls, 2 min 35 s); a short pass on the changes of the third (5 tool calls, 47 s). Its reports and the key are under the round's `reports/`, which are not committed.
+
+### Measured
+
+- **Plants: 4 of 5 marked as wrong answers.** The fifth, a MEASURED claim wider than its own command ("the whole filesystem", where the command stops at five levels), the verifier saw and wrote in its table and did not mark. Model: Sonnet. From its transcript, no tool input reaches for the work before the faults.
+- **First pass, beyond the plants: three wrong answers of the lead's.** A model speed "measured by its verifier" cited to a row that does not carry it; "two tracks that share no file", false of the gate registry, with "conflicts at every merge after the first" where round 1's record is two of five; and two of round 1's lessons stated otherwise than this ledger has them.
+- **Second pass: two wrong answers new in the second draft**, both from the lead's rewrite. The test said the model already has a clamp at zero; its rectifier has pass and absolute value. And one question's alternative had the head synthesised "before the head is settled", against the draft's own order.
+- **Third pass: no wrong answer in the changed lines.** Each quotation of the new row on cocotb found in the page it is cited to; the paragraph on D0's gates counted against D0's section 9, sixteen of sixteen, each once.
+- **The WSL environment has no RTL simulator.** A script run there under a login shell found no `iverilog`, `verilator` or `vvp`, its Python cannot import `cocotb`, and a search five levels deep found neither simulator. The design's fourth answer, and this project's CLAUDE.md since 2026-11-21, said simulation runs there. The sibling project runs its benches in a Docker image.
+- **What a base image offers, and what works with it.** A throwaway container of `ubuntu:24.04`: Icarus Verilog 12.0, Verilator 5.020, Python 3.12.3. cocotb's own pages, fetched and read by the lead: its stable line supports Icarus 11.0 and later and Verilator 5.036 and later; release 1.9.2, Verilator 5.022 and later. So that image's Verilator is older than cocotb supports, and the draft's wave 0 starts on Icarus. The verifier raised this from memory on its second pass; the lead then read it.
+- **The noise's table at sigma 1000** has 9,156 entries, and its last is 2^63 itself, which 63 bits do not hold. Parcel MOD-A's document speaks of 9,156 entries of 63 bits, in a row marked ESTIMATE. A fact for the RTL of the source.
+- **The gate**, `bash verify/run.sh`, with each draft's changes in the tree and the commit made only on the verdict line: VERDICT: PASS, 16 of 16, 707 tests, each of three times; `OK claims: 284 register rows in 19 tables in 13 files under docs/, 0 unlabelled` at the third.
+
+### Logan's words while it was drafted
+
+- "Yes draft the plan". Read as: draft it for his approval; not leave to start the round.
+- "You may install anything needed to the docker environment, or create a new one for this project if needed". Read as: an image of this project's own may be made; that answered one of the first draft's seven questions. The lead built no image, and ran one throwaway container of a base image already on the desktop to read its versions.
+
+### Changed after the last pass, and not seen by the verifier
+
+The header's account of what was checked; row W3's falsifier, which named three parts where the design stop rules on one and on intent for two; "statistics" moved from "advanced" to "built on and not changed" in the paragraph on gates; row N20's wording of which page says what; the roadmap's row for this draft; this entry.
+
+### Left as they were, of the verifier's smaller points
+
+- The gate's 85 seconds in row N1 is one run's, and the verifier's own run took 106 on a shared desktop.
+- Row N14, an ESTIMATE of fabric cost, treats every head multiplier as 57 or 66 bits wide. It drives nothing in the draft.
+- Row N12's "9.7 times" is the source's own truncation of 9.77.
+- Row N18's "2 to 22 minutes" rests on per-pass times that this ledger gives for some verifiers and sums for others.
+
+### What this does not prove
+
+- **That the plan is a good one.** A verifier checked its figures, its quotations, its counts and its consistency. Whether round 2 should be this is Logan's to say.
+- **That the four-part test is the right test.** It is a proposal. Its third part is a proxy the lead chose; the fabric's cost is not measured by it.
+- **That the simulators work.** Nothing was built. The draft's own first bench is what would show it.
+- **That the time boxes are right.** They are estimates from round 1, and RTL is new ground here.
+
+### The lead's slips
+
+- **A trap in CLAUDE.md was false for two days.** "RTL simulation runs in `cft2204`" was READ from the sibling project's notes on 2026-11-21 and never measured. It was measured when the plan needed it.
+- **Two wrong answers were written into the second draft while answering the first pass**: new work between passes, as in round 1's foundation.
+- **The first draft proposed "pinned versions" of two simulators and cocotb without having read whether they work together.** They do not, under Verilator.
+- **Three counts of the lead's own work were wrong in the first draft**: the parcels under the recommended shape, the verifiers that stopped early, the merges that conflicted.
+
+### Not done, and why
+
+- **No part of round 2.** It waits for his answers.
+- **No Docker image.** His word allows it; the lead builds it as the round's first piece, once the round is approved.
+- **Nothing pushed.** The branch `r2-plan` is local, three commits and this one ahead of `main`.

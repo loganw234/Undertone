@@ -153,6 +153,6 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 | round | what | state |
 |---|---|---|
-| `2026-11-23-r2-plan` | the draft plan for round 2, a verifier pass over it | drafted 2026-11-23 on the local branch `r2-plan`; awaits Logan's answers; not pushed |
+| `2026-11-23-r2-plan` | the draft plan for round 2, and a verifier's three passes over its three drafts | drafted 2026-11-23 on the local branch `r2-plan`; awaits Logan's answers to its six questions; nothing of round 2 started; not pushed. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | run on 2026-11-23, on `r1`: five merges of four parcels (LCH twice, MOD-A, MOD-B, STAT), each past a verifier of its own before it merged, and the lead's two pieces, the foundation and the seam, each past a verifier too; pushed on Logan's word of 2026-11-23. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-21-d0-design` | the rough design D0, a verifier pass over it and one re-check | approved by Logan on 2026-11-21; the record is in [VALIDATION.md](VALIDATION.md) |
