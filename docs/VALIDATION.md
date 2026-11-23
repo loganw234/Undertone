@@ -276,3 +276,55 @@ One sentence of `model/records.py`'s docstring, restated to what the code does w
 
 - **No push.** `r1` is local. `main` moves, and is pushed, at the round's close, and the lead asks Logan first.
 - **No cost in tokens processed.** The harness gave 200,919, 276,877 and 300,778 tokens after the verifier's three passes; what those figures count is not established here.
+
+## 2026-11-23 - round 1, parcel LCH, part A: the launch-data study, read and checked, measuring nothing
+
+Parcel LCH's first phase is merged into `r1` as `1d06600` (the parcel's commits `8440b4d`, `d0d8bf3` and `4247b73`). It is a study of what public pages and public station services say: [studies/D1-launch-data.md](studies/D1-launch-data.md), with the scripts that rebuild its tables under `docs/studies/d1/` and the sources' terms in `PROVENANCE.md`. **It measured nothing.** Whether a launch can be seen in a real record is part B, which is running and is not merged.
+
+### What changed
+
+- The study: what the pages behind the plan's rows L1 to L7 say about rocket launches in seismic and infrasound records; the public stations near three launch sites with their distances, worked from the services' own coordinates; the launch catalogue's fields and terms; controls for an experiment (the plan's nine and more of its own) and a hit rule; and the smallest download that could show a ladder of distances.
+- `docs/studies/d1/`: the quotations as data with a checker, the station tables' generator with a self-test, the figures' arithmetic, and the download list as a script that prints requests and fetches nothing.
+- `PROVENANCE.md`: each source, its terms, and the acknowledgement it asks for.
+- The claims register grew from 44 rows to 131.
+
+### What ran
+
+- **LCH**, on the lead's model: phase 1 (187 tool calls, 41 min 1 s, as the harness reported), then the send-back after its verifier's first pass.
+- **VLCH**, one verifier on Sonnet, two passes: the study as first committed, in a clone holding **five planted faults** in the study's own claim-and-source format (49 tool calls, 8 min 25 s); then a re-check scoped to the fix commit `4247b73`, on a clone with nothing planted (18 tool calls, 3 min 2 s). Both reports are filed verbatim from its transcript under the round's `reports/`.
+
+### Measured
+
+- **Plants: 5 of 5 reported.** Model: Sonnet.
+- **First pass, beyond the plants: two wrong answers of the parcel's own.** A row said a published study "examined" 1,001 launches, where its page says the period included that many. And "no scrubs" was stated of the launch catalogue in three places, where what had been read was that the column descriptions name no scrub code; the same page lists a code for "not a launch" that the study had not mentioned, and no catalogue file had been opened. Nine smaller findings: an inference stated as read, estimates labelled as computed, controls and a hit rule two people could not have scored alike, and a download list whose first request could not settle what it was listed for.
+- **Second pass: "no (a) regression and no (b) wrong answer."** The verifier ran the study's quotation checker against the saved pages: 90 quotations for 55 READ rows, 0 findings. It checked four of the new station rows (M1, M3, M10, M11) against the saved responses, two of them with its own geodesic, and agreed with each. It searched every tracked file for the held network's 75 station codes and their coordinates: none.
+- **The gate on the staged merge**, `bash verify/run.sh` on the Windows desktop: VERDICT: PASS, 16 of 16; `OK claims: 131 register rows in 10 tables in 6 files under docs/, 0 unlabelled`; `OK paths: 7272 lines in 53 committable files, 0 personal paths`. The merge added eleven files and touched none that `r1` had.
+- **What the study reports, each a READ row there and none checked by this project against a record:** a regional network's stations from 13.5 km out to 275 km from the Vandenberg pad, three components at 100 samples a second; one launch that network's own page says it "most likely" detected at a station 32.6 km away; a published range for how fast the sound crosses the ground.
+
+### Merged with these stated limits
+
+Each is the verifier's, and each is the parcel's to answer in part B.
+
+- The hit rule does not say whether a second with a missing frame counts as "not up". It leaves the false-alarm fraction its thresholds are set to out of the study.
+- With one launch and two control windows, the second control's test can never reject. A first look can report it only as not run.
+- The sixth control has no numeric criterion.
+- The digitiser's width is an inference. The gain it rests on, 419,430 counts per volt, fits 24 bits over 40 volts and also 22 over 10, 21 over 5 and 20 over 2.5. D0's row D1 turns on that width, and it stays BELIEVED until a record is read.
+
+### What this does not prove
+
+- **That a launch is visible in any public record.** Nothing was fetched but pages and station lists. The plan's row V2 is exactly as BELIEVED as before.
+- **That every READ row is right.** The verifier checked the quotations against the saved pages and a sample of them against the live ones; two sites it could not open in either pass.
+- **That every station row is right.** Four were recomputed.
+- **That the hit rule is fit for an experiment.** It is closer to exact than it was. The limits above are open.
+
+### The lead's slips, and one of the parcel's
+
+- **Two data services were queried before their terms were read.** The parcel made six requests to one station service and three to another before reading that using each accepts its terms. It reported this itself. The lead held both services' rows out of every committed file and put it to Logan, who allowed the first on 2026-11-23 and is looking into the second. No request has gone to the second since, and none of its rows is committed. The brief should have said "read a service's terms before its first request"; it does now.
+- **The lead's ruling on what the study may say about the held network was fuller in its message to the parcel than in the ledger**, and the verifier, reading the ledger, judged the study's prose against the shorter one. The lead corrected that in the ledger. A ruling goes in the ledger whole, then in the message.
+- **The parcel's first report was written out by the lead** from the completion notice, because its transcript file was empty. The filed copy's header says so.
+
+### Not done, and why
+
+- **The quotation checker was not rerun on `r1`.** It needs the saved pages, which are in the parcel's scratch folder and are not committed. The verifier ran it on the merged commit in its clone.
+- **No waveform, no catalogue file.** That is part B, under Logan's word of 2026-11-23 on downloads.
+- **Nothing pushed.**
