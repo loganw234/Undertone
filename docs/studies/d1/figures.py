@@ -3,7 +3,7 @@
 
     python docs/studies/d1/figures.py
 
-It reads nothing. Every input is written in this file beside the row of the
+It reads nothing, and imports stations.py beside it for one distance. Every input is written in this file beside the row of the
 study it comes from. It prints one labelled line per figure; a COMPUTED row
 of the study cites the label. It cannot see whether an input is true: each
 input is a READ, MEASURED, ESTIMATE or BELIEVED row of the study, named in
@@ -145,5 +145,28 @@ for sta, d, end in (("LOC", 16.5, 502), ("LCP", 32.6, 511), ("SYN", 49.9, 481), 
     close = d / 0.240 + 185
     line("F26", "CI.%s: window closes at %.0f s; the stretch's last up second is %d, %+.0f s"
          % (sta, close, end, end - close))
+
+# F27: the steps between neighbouring stations' onsets (D1b row Q3b): seconds
+# over km, for 45, 100, 211 and 224 s at 16.5, 32.6, 49.9 and 78.5 km.
+pts = [(16.5, 45), (32.6, 100), (49.9, 211), (78.5, 224)]
+line("F27", "; ".join("%d s / %.1f km = %.2f s per km" % (t2 - t1, d2 - d1, (t2 - t1) / (d2 - d1))
+                       for (d1, t1), (d2, t2) in zip(pts, pts[1:])))
+
+# F28: the magnitude 0.70 earthquake of 2021-09-15 04:18:15.26 at 34.01217,
+# -116.3260 (the day's earthquake listing) against CI.SRN's stretch of that
+# day, 1329 s to 1375 s after 03:55:50 (D1b row Q2e). CI.SRN is at 33.8285,
+# -117.7894 (D1's block for 2021-09-14). 6.5 km/s is the fastest ground speed
+# of D1's row W2. The distance is stations.py's, the same formula as the study's.
+import os  # noqa: E402
+import sys  # noqa: E402
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import stations  # noqa: E402
+origin = (4 * 3600 + 18 * 60 + 15.26) - (3 * 3600 + 55 * 60 + 50)
+km = stations.vincenty_km(34.01217, -116.3260, 33.8285, -117.7894)
+first = origin + km / 6.5
+line("F28", "origin %.0f s after the stand-in time, %.0f s after the stretch's first up "
+     "second (1329); %.1f km / 6.5 km/s = %.0f s, so no wave before %.0f s, %.0f s "
+     "before the stretch's last up second (1375)"
+     % (origin, origin - 1329, km, km / 6.5, first, 1375 - first))
 
 print("\n".join(out))
