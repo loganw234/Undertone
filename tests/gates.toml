@@ -66,3 +66,11 @@ kind = "pytest"
 name = "scorer"
 d0 = "scorer"
 kind = "pytest"
+
+# STAT. The measured efficiency of a correct matched filter is inside the stated
+# tolerance of D8; a filter wrong by a stated margin, a rectified detector, and a
+# tolerance of the wrong width are each reported. docs/model/stat.md has the limits.
+[[gate]]
+name = "statistics"
+d0 = "statistics"
+kind = "pytest"
