@@ -205,6 +205,11 @@ def table(profile):
     other_last = C.PROFILES[other_profile]["channels"] - 1
     foreign = S.forge(other_profile, **dict(good, filters=[{other_last: (1, 2)}]))
     case("SWAP_SHAPE", "write_shadow: a blob for another profile", after(0, lambda core: core.write_shadow(foreign)))
+    # the same again where the profile is the ONLY difference: both blobs are one filter of two taps on channel 0
+    on_zero = dict(good, filters=[{0: (1, 2)}])
+    assert weights.shape(weights.unpack(S.forge(profile, **on_zero)))[1:] == weights.shape(weights.unpack(S.forge(other_profile, **on_zero)))[1:]
+    case("SWAP_SHAPE", "write_shadow: a blob that differs in its profile and in nothing else",
+         after(0, lambda core: core.write_shadow(S.forge(other_profile, **on_zero)), blob=S.forge(profile, **on_zero)))
     for label, changed in other_shapes:
         case("SWAP_SHAPE", "write_shadow: " + label,
              after(2, lambda core, changed=changed: core.write_shadow(good_blob(**changed))))
@@ -351,9 +356,9 @@ def test_gate_refusal__a_refused_call_changes_nothing(profile):
     assert S.compare("after refusals", got, plain) == []
 
 
-def test_gate_refusal__the_order_of_checks_is_the_documented_one():
+@pytest.mark.parametrize("profile", PROFILES)
+def test_gate_refusal__the_order_of_checks_is_the_documented_one(profile):
     """Two things wrong at once: the name is the one the documented order reaches first."""
-    profile = PROFILES[0]
     last = C.PROFILES[profile]["channels"] - 1
     good = {"filters": [{last: (1, 2)}], "head": (1,), "rectifier": 0, "pool": 1, "score_shift": 0}
 

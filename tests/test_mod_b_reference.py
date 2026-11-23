@@ -129,7 +129,7 @@ def test_gate_reference_model__seeded_shapes_and_streams_equal_the_definition_wr
 
 
 @pytest.mark.parametrize("profile", PROFILES)
-@pytest.mark.parametrize("rectifier,pool,shift", [(0, 1, 0), (1, 3, 7)])
+@pytest.mark.parametrize("rectifier,pool,shift", [(0, 1, 0), (1, 3, 7), (0, 2, C.MAX_SCORE_SHIFT)])
 def test_gate_reference_model__the_largest_shape_with_every_coefficient_different_equals_the_definition(profile, rectifier, pool, shift):
     """MAX_ROWS rows of MAX_TAPS taps, no two coefficients alike in a row: a fault at one tap or one row cannot hide behind equal values."""
     channels = C.PROFILES[profile]["channels"]
