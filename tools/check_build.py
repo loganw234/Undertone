@@ -272,13 +272,16 @@ def plants(kind, root, scratch):
     if kind == "model-tests":
         a = copy_tree(root, scratch, "a")
         write(a, "tests/test_planted_fail.py", "def test_planted_must_fail():\n    assert 1 == 2\n")
-        write(a, "tests/test_planted_broken.py", "import no_such_module_anywhere\n\n\ndef test_never_runs():\n    pass\n")
         b = copy_tree(root, scratch, "b")
         for f in os.listdir(os.path.join(b, "tests")):
             if f.startswith("test_") and f.endswith(".py"):
                 os.remove(os.path.join(b, "tests", f))
-        return [(a, {"tests.test_planted_fail::test_planted_must_fail", "::tests.test_planted_broken"}),
-                (b, "REFUSED")]
+        # A test file that cannot be imported. It gets a copy of its own: pytest stops at a
+        # collection error and runs nothing, so a failing test beside it would never be seen.
+        c = copy_tree(root, scratch, "c")
+        write(c, "tests/test_planted_broken.py", "import no_such_module_anywhere\n\n\ndef test_never_runs():\n    pass\n")
+        return [(a, {"tests.test_planted_fail::test_planted_must_fail"}), (b, "REFUSED"),
+                (c, {"::tests.test_planted_broken"})]
     if kind == "independence":
         a = copy_tree(root, scratch, "a")
         write(a, "model/planted_cross.py", "import stats\n")
