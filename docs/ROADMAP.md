@@ -5,7 +5,7 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 ## Where the project stands (2026-11-23)
 
 - **Design:** [D0, the rough design](studies/D0-rough-design.md), approved by Logan on 2026-11-21 with all six of its questions answered as recommended.
-- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work is done on the branch `r1`, which is local; what remains is its closing verifier's pass and Logan's word before `main` moves.
+- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work is done and verified on the branch `r1`, which is local; what remains is Logan's word before `main` moves and anything is pushed.
 - **Licence:** MIT, by Logan's test of 2026-11-23: the easiest option for others to reuse the work.
 - **Built, in software only:** the reference model (`model/`), the statistics that judge sensitivity (`stats/`), and the eleven gates of D0 that need no hardware. As a matched filter the model reproduces the textbook curve at five amplitudes. **Nothing of the system is built**: no RTL, no host library, nothing on the card. Five of D0's sixteen gates wait for those.
 - **Looked at, once:** one rocket launch in public seismic records. By the rule fixed before the data was fetched it is seen at three stations, 16.5, 49.9 and 78.5 km from the pad, and not at 181 or 275 km. At a fourth, 32.6 km, the launch-day figure is as large as at the others, and the rule reads "cannot tell" because one control day has a ten-second stretch in the window. One launch and two control days; not a rate. [D1b](studies/D1b-first-look.md).

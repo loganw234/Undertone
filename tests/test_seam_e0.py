@@ -250,7 +250,8 @@ def stated_parts():
     for k in range(len(AMPLITUDES)):
         f = facts(k)
         parts.append({"part": k, "amplitude": f["amplitude"], "n": FULL_N, "seed": FULL_SEED + k, "profile": PROFILE,
-                      "sigma": list(SIGMA), "pfa": PFA, "spacing": SPACING, "d": f["d"], "threshold": f["threshold"],
+                      "sigma": list(SIGMA), "pfa": PFA, "spacing": SPACING, "length": SPACING * (FULL_N + 1),
+                      "d": f["d"], "threshold": f["threshold"],
                       "found": round(f["expected"] * FULL_N), "noise_crossings": round(PFA * FULL_N), "flags": 0,
                       "scores_identical_to_stats": True, "real_found": round(f["expected"] * FULL_N), "model_only": 0,
                       "real_only": 0, "stream_sha256": "%064x" % k, "spec_sha256": C.SPEC_SHA256})
@@ -301,7 +302,18 @@ def test_control_statistics__seam_the_judge_fails_parts_that_are_not_the_stated_
     def other_definition(parts):
         parts[2]["spec_sha256"] = "0" * 64
 
-    for change in (one_seed, one_stream, threshold_up, other_d, short_run, missing_part, two_of_one, other_definition):
+    def other_length(parts):
+        parts[3]["length"] -= SPACING
+
+    def counts_that_do_not_add_up(parts):
+        parts[1]["real_only"] = 50000
+
+    def a_count_that_is_not_a_count(parts):
+        parts[0]["model_only"] = -1
+        parts[0]["real_only"] = -1
+
+    for change in (one_seed, one_stream, threshold_up, other_d, short_run, missing_part, two_of_one, other_definition,
+                   other_length, counts_that_do_not_add_up, a_count_that_is_not_a_count):
         parts = stated_parts()
         change(parts)
         assert not_as_stated(parts), change.__name__
@@ -311,6 +323,7 @@ def test_control_statistics__seam_the_judge_fails_parts_that_are_not_the_stated_
     # and a count outside the tolerance still fails on its own, with the parts otherwise as stated
     parts = stated_parts()
     parts[2]["found"] -= 2000
+    parts[2]["real_found"] -= 2000          # the counts still add up: it is the count that is low
     assert not_as_stated(parts) == []
     (tmp_path / "low").mkdir()
     code, out = judged(parts, tmp_path / "low", capsys)
@@ -358,6 +371,12 @@ def not_as_stated(parts):
     threshold or a deflection that is not this experiment's. So each part is held to what `facts`
     gives for its amplitude now, and the set is held to one part an amplitude, each under its own
     seed, each of the full length. The round's closing verifier asked for this.
+
+    What it still takes on trust, stated: the counts themselves. Nothing here recomputes a part's
+    count from its stream; it checks that the counts a part gives are consistent with one another,
+    and no more. A part file edited to a count inside the tolerance would be judged as that count.
+    Reproducing a part by running it again is the check for that, and the closing verifier did it
+    for one part.
     """
     reasons = []
     if sorted(p["part"] for p in parts) != list(range(len(AMPLITUDES))):
@@ -370,11 +389,17 @@ def not_as_stated(parts):
         f = facts(k)
         for name, want in (("seed", FULL_SEED + k), ("n", FULL_N), ("amplitude", f["amplitude"]),
                            ("threshold", f["threshold"]), ("profile", PROFILE), ("sigma", list(SIGMA)),
-                           ("pfa", PFA), ("spacing", SPACING), ("spec_sha256", C.SPEC_SHA256)):
+                           ("pfa", PFA), ("spacing", SPACING), ("spec_sha256", C.SPEC_SHA256),
+                           ("length", SPACING * (FULL_N + 1))):
             if p.get(name) != want:
                 reasons.append("part %d: %s is %r, the experiment's is %r" % (k, name, p.get(name), want))
         if abs(p.get("d", 0.0) - f["d"]) > 1e-12:
             reasons.append("part %d: d is %r, the experiment's is %r" % (k, p.get("d"), f["d"]))
+        # found by the model = found by the real set, less those only it found, plus those only the model found
+        counts = [p.get(name) for name in ("found", "real_found", "real_only", "model_only")]
+        if not all(type(c) is int and c >= 0 for c in counts) or counts[0] != counts[1] - counts[2] + counts[3]:
+            reasons.append("part %d: its counts do not add up: found %r, with real coefficients %r, "
+                           "by the real set only %r, by the model only %r" % ((k,) + tuple(counts)))
     if len({p["stream_sha256"] for p in parts}) != len(parts):
         reasons.append("two parts were run on the same stream")
     return reasons

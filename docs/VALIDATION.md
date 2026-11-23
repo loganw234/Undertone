@@ -653,3 +653,40 @@ In [ROADMAP.md](ROADMAP.md): the push; the detector's head; D0's row D1; a packa
 
 - **`main` has not moved and nothing is pushed.** The lead asks first.
 - **The parcels' worktrees and branches are kept**, under the ignored `Data/worktrees/`, until Logan has seen the round.
+
+## 2026-11-23 - round 1, after the close: the verifier's re-check of the lead's fixes, and five corrections
+
+VSEAM was resumed on a clone of `r1` at the fix commit `e467ba8`, with nothing planted (21 tool calls, 5 min 17 s, as the harness reported). **It found no regression and no wrong answer.** Its smaller points are answered in this commit, which no verifier has seen.
+
+### Measured, by the re-check
+
+- **The two false sentences are now true**, in the roadmap and the plan, and it found the same two claims nowhere else in the tree but in an earlier entry of this ledger, which the closing entry corrects.
+- **The isolation gate.** Its leak keyed on an amplitude's denominator of 3, which passed before, is now reported, through the scores and through a refusal. Its leaks keyed on a second pulse id, and on a denominator or a numerator of 7, still pass: no schedule in the test carries those, and the file says so. The new refusal handling, broken two ways in a copy, fails the new control each time.
+- **The judge of the full run.** Each of the eight changes in its control is judged FAIL for the reason named. The lead's five recorded parts are judged PASS and the trial file FAIL.
+- **The closing entry's figures.** Tool calls and times for VP0, VLCH, VMODB, VSTAT, VMODA, VSEAM, MOD-A and LCH summed from the earlier entries and reports, and equal the table. The tally of planted faults, 40 planted and 39 reported across nine passes, agrees with each earlier entry's own line.
+- **The lead's edit to MOD-A's test.** An injector that hands its input frame on unchanged fails 2 tests at the parcel's own commit and passes all 33 on the tip. So the comment the lead added, that the edit gave this up, is exactly true.
+- **The gate** in its clone: VERDICT: PASS, 16 of 16; `OK model-tests: 707 tests ran, 0 failed, 0 errored, 0 skipped`; `OK registry: 11 gate row(s), each with its test and its control; 104 gate-claiming test(s), each with a row`.
+
+### Corrections to the closing entry
+
+1. **"The verifier found two that way."** From its transcript it diffed the seam's commit against its clone's tip over all four files, so the tip commit's diff showed it all **four** of the plants placed in files that commit did not otherwise touch. Its checks for each are real. Only the fifth, the count inside a new ledger entry, was found cold. For the other four the pass measured whether a verifier shown a suspicious change can say why it is wrong.
+2. **"The first eighteen lines of the output are the recorded ones."** The first nineteen are. The stricter judge adds one line before the verdict. The recorded output's SHA-256, `3bf1c6f3...5479e`, is of the output of the judge as it stood at `29ab2a0`; the same five parts under the judge as it stands now give `21e3bb9b...7600`, kept under the round's `reports/e0/`.
+3. **"About three and a half hours."** From the round's opening at 07:06 to the closing entry's commit at 10:27 is three hours and twenty-one minutes.
+4. **The cost table's times** are the harness's figure for each pass. For VMODA that was 8 min 54 s, where its own clock read about 27 minutes; the two are not the same measure, and the table used the first throughout. **Two of its tool-call figures are from completion notices that no entry or report carried:** MOD-B's send-back, 25 calls in 9 min 0 s, and STAT's, 23 calls in 7 min 36 s. The verifier could not check them, nor any token figure.
+5. **"Eight ways of not being the stated experiment."** There are eleven now, below.
+
+### What changed after the re-check, and not seen by the verifier
+
+- The judge also holds a part's length to the stated one, and its four counts to adding up; before, it checked the number of injections and printed the paired counts without judging them. Three more ways of not being the stated experiment are judged FAIL. Its docstring says what it still takes on trust: the counts themselves, which nothing recomputes from a stream.
+- The isolation test's docstring, which said the verifier's two leaks "both passed"; one is reported now.
+- The roadmap's line that the closing verifier's pass remained. CLAUDE.md's trap 8, which said "twice".
+- This entry.
+
+### Merged with these stated limits
+
+- **The judge trusts a part file's counts.** A part edited to a count inside the tolerance, with the rest consistent, would be judged as that count. Running the part again is the check, and one of the five was run again.
+- **The round's last changes have been past no verifier**: the ones in the list above.
+
+### Not done, and why
+
+- **Nothing pushed, and `main` has not moved.** The lead asks Logan.

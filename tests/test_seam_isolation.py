@@ -15,8 +15,10 @@ What this gate cannot see, stated:
     record, its index, and its amplitude's denominator. They cannot vary the pulse id, because
     one pulse is declared, and every one of them adds nothing to the samples; so a detector
     that changed a record only for a second pulse, or only for a non-zero amplitude it had not
-    seen in the samples, would pass. The round's closing verifier built two such leaks and both
-    passed;
+    seen in the samples, would pass. The round's closing verifier built such leaks. One, keyed
+    on a denominator of 3, passed at first and is reported now that a schedule here carries
+    that denominator. The others still pass: keyed on a second pulse id, and on a denominator
+    or a numerator of 7, which no schedule here carries;
   - anything about a detector other than the shipped core run through `model.run`.
 """
 import pytest
