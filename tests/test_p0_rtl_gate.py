@@ -7,6 +7,7 @@ first size of the gate, which needs no Docker, still sees a judge that passes wh
 
 What they cannot see: anything a simulator or a compiler does. The `rtl-*` stages are that.
 """
+import ast
 import json
 import os
 import re
@@ -486,80 +487,165 @@ def the_gates_own_bash():
 
 # Put together from pieces, so that this file does not carry what it looks for.
 THE_NAME = "ba" + "sh"
-# The name inside quotes: bare, with .exe, or at the end of a path; then the closing quote or white space. Any case.
-QUOTED_NAME = re.compile(r"""["'](?:[^"']*[\\/])?""" + THE_NAME + r"""(?:\.exe)?["'\s]""", re.I)
-THE_ONE_CALL = "shutil.which(\"" + THE_NAME + "\")"
-A_SHELL = re.compile("shell" + r"\s*=\s*True")
+# The name as a word of its own, with or without .exe, in any case: not inside a longer word.
+THE_WORD = re.compile(r"(?<![A-Za-z0-9_])" + THE_NAME + r"(?:\.exe)?(?![A-Za-z0-9_])", re.I)
+SKIPPED_FOLDERS = (".git", "Data", "__pycache__", ".pytest_cache", "state")
 
 
-def lines_that_start_a_shell(text):
-    """The numbers of the lines of a Python source that carry the name in quotes anywhere but in the one
-    call that looks it up on the PATH, or that ask subprocess for a shell."""
-    return [n for n, line in enumerate(text.split("\n"), 1)
-            if QUOTED_NAME.search(line.replace(THE_ONE_CALL, "")) or A_SHELL.search(line)]
+def shell_starts(source):
+    """What in a Python source could start that shell by name, or any shell: [(line, what)].
+
+    The source is parsed, not matched line by line. Reported: a string or bytes literal that holds the
+    name as a word, in any case, with or without .exe, bare or at the end of a path or anywhere in a
+    command; a keyword argument `shell` given anything but the constant False; and a dict literal with
+    the key "shell". NOT reported: a docstring; a comment; and the argument of the one call that looks
+    the name up on the PATH.
+    """
+    tree = ast.parse(source)
+    spared = set()
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Module, ast.ClassDef, ast.FunctionDef, ast.AsyncFunctionDef)) and node.body:
+            first = node.body[0]
+            if isinstance(first, ast.Expr) and isinstance(first.value, ast.Constant) and isinstance(first.value.value, str):
+                spared.add(id(first.value))                                   # a docstring
+        if isinstance(node, ast.Call) and isinstance(node.func, ast.Attribute) and node.func.attr == "which" \
+                and isinstance(node.func.value, ast.Name) and node.func.value.id == "shutil" and len(node.args) == 1 \
+                and isinstance(node.args[0], ast.Constant) and node.args[0].value == THE_NAME:
+            spared.add(id(node.args[0]))                                      # the one call
+    found = set()
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Constant) and id(node) not in spared:
+            text = node.value.decode("latin-1") if isinstance(node.value, bytes) else node.value
+            if isinstance(text, str) and THE_WORD.search(text):
+                found.add((node.lineno, "the name, in a literal"))
+        if isinstance(node, ast.keyword) and node.arg == "shell" \
+                and not (isinstance(node.value, ast.Constant) and node.value.value is False):
+            found.add((node.value.lineno, "a shell asked for"))
+        if isinstance(node, ast.Dict):
+            for key in node.keys:
+                if isinstance(key, ast.Constant) and key.value == "shell":
+                    found.add((key.lineno, "a shell asked for, by a dict"))
+    return sorted(found)
 
 
-def shell_starts_under(root, tops=("tests", "tools", "rtl")):
-    """Every line of every Python file under those folders of a tree, subfolders among them, that
-    `lines_that_start_a_shell` reports: a list of "<path from the root>:<line number>"."""
+def shell_starts_under(root):
+    """Every Python file of a tree, in every folder but the ones no commit holds (SKIPPED_FOLDERS), through
+    `shell_starts`: a list of "<path from the root>:<line>: <what>". A file Python cannot parse is listed too."""
     found = []
-    for top in tops:
-        for folder, dirs, files in os.walk(os.path.join(root, top)):
-            dirs[:] = sorted(d for d in dirs if d != "__pycache__")
-            for name in sorted(files):
-                if name.endswith(".py"):
-                    with open(os.path.join(folder, name), encoding="utf-8") as f:
-                        where = os.path.relpath(os.path.join(folder, name), root).replace("\\", "/")
-                        found += ["%s:%d" % (where, n) for n in lines_that_start_a_shell(f.read())]
+    for folder, dirs, files in os.walk(root):
+        dirs[:] = sorted(d for d in dirs if d not in SKIPPED_FOLDERS)
+        for name in sorted(files):
+            if name.endswith(".py"):
+                where = os.path.relpath(os.path.join(folder, name), root).replace("\\", "/")
+                with open(os.path.join(folder, name), encoding="utf-8") as f:
+                    try:
+                        found += ["%s:%d: %s" % (where, line, what) for line, what in shell_starts(f.read())]
+                    except SyntaxError as e:
+                        found.append("%s:%s: cannot be parsed" % (where, e.lineno))
     return found
 
 
-def test_p0_no_test_or_tool_carries_the_bare_name_or_asks_for_a_shell():
-    """The slip above, held, as far as reading source can hold it: no line of a Python file under tests/,
-    tools/ or rtl/, subfolders among them, carries the name in quotes outside the one call, or asks for a
-    shell. What it cannot see: a name put together at run time, as this file's own is, and a name that
-    reaches Python from outside the file (an environment variable, a configuration file)."""
+def test_p0_no_python_file_of_the_tree_names_that_shell_or_asks_for_one():
+    """The slip above, held, as far as reading source can hold it. What it cannot see: a name put together
+    at run time, as this file's own is; a name that reaches Python from outside the file (an environment
+    variable, a configuration file, a command line); a docstring handed to something as data; a program
+    started by another name that starts that shell itself; and anything that is not a Python file."""
     assert shell_starts_under(ROOT) == []
 
 
-def test_p0_the_guard_reads_each_folder_and_its_subfolders(tmp_path):
-    for rel in ("tests/a.py", "tools/deep/er/b.py", "rtl/tb/c.py", "rtl/core/tb/d.py", "docs/e.py", "tools/f.txt"):
+# Each is a Python statement. {n} is the name, {u} the name in upper case; the braces of a dict are doubled.
+STARTS = [
+    ("a list", "subprocess.run(['{n}', '-c', 'true'])"),
+    ("a tuple", "subprocess.run(('{n}', '-c', 'true'))"),
+    ("a command string", "subprocess.run('{n} -c true'.split())"),
+    ("with .exe", "subprocess.run(['{n}.exe', '-c', 'true'])"),
+    ("in upper case", "subprocess.run(['{u}.EXE', '-c', 'true'])"),
+    ("at the end of a path", "subprocess.run(['C:/Windows/System32/{n}.exe', '-c', 'true'])"),
+    ("at the end of a path with backslashes", "subprocess.run([r'C:\\Windows\\System32\\{n}.exe'])"),
+    ("before a tab", "subprocess.run('{n}\\t-c true')"),
+    ("after other words of a command", "os.system('cd x && {n} run.sh')"),
+    ("after a pipe", "os.popen('echo | {n}')"),
+    ("after env", "subprocess.run('env {n} -c true'.split())"),
+    ("as bytes", "subprocess.run([b'{n}', b'-c', b'true'])"),
+    ("in an f-string", "subprocess.run(f'{n} {{x}}')"),
+    ("a shell asked for", "subprocess.run('echo', shell=True)"),
+    ("a shell asked for, with spaces", "subprocess.run('echo', shell = True)"),
+    ("a shell asked for, as a number", "subprocess.run('echo', shell=1)"),
+    ("a shell asked for, in brackets", "subprocess.run('echo', shell=(True))"),
+    ("a shell asked for, on the next line", "subprocess.run('echo',\n               shell=True)"),
+    ("a shell asked for, by a name", "subprocess.run('echo', shell=wanted)"),
+    ("a shell asked for, by a dict", "subprocess.run('echo', **{{'shell': True}})"),
+]
+
+
+@pytest.mark.parametrize("what, statement", STARTS, ids=[s[0] for s in STARTS])
+def test_p0_each_way_of_starting_that_shell_is_seen(what, statement):
+    """Every form four verifiers tried or named. The first guard looked for a list on one line and missed
+    a tuple and a command string; the second did not look for a shell asked of subprocess, nor the name
+    with .exe; the third missed the name after other words of a command, a shell asked for in any way but
+    one, and had a case for upper letters that did not hold them."""
+    source = "import os\nimport subprocess\nx = wanted = 1\n" + statement.format(n=THE_NAME, u=THE_NAME.upper()) + "\n"
+    assert THE_NAME in source.lower() or "shell" in source
+    assert [line for line, _what in shell_starts(source)] in ([4], [5]), shell_starts(source)
+
+
+def test_p0_the_form_in_upper_case_really_is_in_upper_case():
+    """The case the third guard's test could not fail on: its line was rewritten in lower case before it
+    was read. Here the statement is looked at before the guard is."""
+    statement = dict(STARTS)["in upper case"].format(n=THE_NAME, u=THE_NAME.upper())
+    assert THE_NAME.upper() + ".EXE" in statement and THE_NAME not in statement
+    assert shell_starts(statement + "\n") == [(1, "the name, in a literal")]
+
+
+SPARED = [
+    ("the one call", "path = shutil.which('{n}')"),
+    ("a docstring", "def f():\n    \"\"\"Run under {n}, the first on the PATH.\"\"\"\n    return 1"),
+    ("a comment", "x = 1  # not {n}"),
+    ("a longer word", "x = '{n}ful'"),
+    ("a word that ends in it", "x = 'un{n}'"),
+    ("a word with it in the middle", "x = 'a_{n}_b'"),
+    ("a shell refused", "subprocess.run(['echo'], shell=False)"),
+    ("an identifier", "the_gates_own_{n} = 1"),
+]
+
+
+@pytest.mark.parametrize("what, statement", SPARED, ids=[s[0] for s in SPARED])
+def test_p0_what_cannot_start_that_shell_is_not_reported(what, statement):
+    assert shell_starts("import shutil\nimport subprocess\n" + statement.format(n=THE_NAME) + "\n") == []
+
+
+def test_p0_only_the_one_call_spares_its_argument():
+    """`shutil.which` and nothing else: another object's `which`, or the name handed to it by keyword or
+    with a second argument, is the name in a literal like any other."""
+    for call in ("other.which('%s')", "which('%s')", "shutil.which(cmd='%s')", "shutil.which('%s', mode)",
+                 "shutil.where('%s')", "shutil.which('%s.exe')"):
+        source = "import shutil\nother = mode = 1\npath = " + call % THE_NAME + "\n"
+        assert shell_starts(source) == [(3, "the name, in a literal")], call
+
+
+def test_p0_a_modules_docstring_is_spared_and_a_string_that_only_looks_like_one_is_not():
+    assert shell_starts("\"\"\"How %s is found.\"\"\"\nx = 1\n" % THE_NAME) == []
+    assert shell_starts("x = 1\n\"\"\"How %s is found.\"\"\"\n" % THE_NAME) == [(2, "the name, in a literal")]
+
+
+def test_p0_a_sentence_about_the_name_in_a_string_is_reported_and_that_is_meant():
+    """A message that says the word is taken for the word: the guard cannot tell a sentence from a command,
+    so no string of this tree may say it. That is why this file's own messages do not."""
+    assert shell_starts("print('the first %s on the PATH')\n" % THE_NAME) == [(1, "the name, in a literal")]
+
+
+def test_p0_the_guard_reads_every_folder_of_a_tree_but_the_ones_no_commit_holds(tmp_path):
+    line = "import subprocess\nsubprocess.run(['%s', '-c', 'true'])\n" % THE_NAME
+    for rel in ("conftest.py", "tests/a.py", "tools/deep/er/b.py", "rtl/tb/c.py", "model/d.py", "docs/studies/d9/e.py",
+                "Data/runs/f.py", "verify/state/run/g.py", "tools/h.txt"):
         (tmp_path / rel).parent.mkdir(parents=True, exist_ok=True)
-        (tmp_path / rel).write_text("import subprocess\nsubprocess.run(['%s', '-c', 'true'])\n" % THE_NAME, encoding="utf-8")
-    assert shell_starts_under(str(tmp_path)) == ["tests/a.py:2", "tools/deep/er/b.py:2", "rtl/core/tb/d.py:2", "rtl/tb/c.py:2"]
-
-
-@pytest.mark.parametrize("line", [
-    "subprocess.run([NAME, '-c', 'true'])",
-    "subprocess.run((NAME, '-c', 'true'))",
-    "subprocess.run(NAME + ' -c true', SHELL)",
-    "subprocess.Popen(args=[ NAME ])",
-    "os.system('echo hello', SHELL)",
-    "subprocess.run('echo', SPACED)",
-    "r = subprocess.run(SENTENCE.split())",
-    "subprocess.run([EXE, '-c', 'true'])",
-    "subprocess.run([UPPER, '-c', 'true'])",
-    "subprocess.run([FULLPATH, '-c', 'true'])",
-    "subprocess.run(TABBED)",
-])
-def test_p0_each_way_of_starting_the_bare_name_is_seen(line):
-    """Each form two verifiers tried. The guard first looked for a list alone, and missed a tuple and a
-    command string; then it did not look for a shell asked of subprocess, nor for the name with .exe,
-    which finds the same launcher."""
-    forms = {"NAME": "'%s'" % THE_NAME, "EXE": "'%s.exe'" % THE_NAME, "UPPER": "'%s.EXE'" % THE_NAME.upper(),
-             "FULLPATH": "'C:/Windows/System32/%s.exe'" % THE_NAME, "SENTENCE": "'%s -c true'" % THE_NAME,
-             "TABBED": "'%s\t-c true'" % THE_NAME, "SHELL": "shell" + "=True", "SPACED": "shell" + " = True"}
-    text = line
-    for word in sorted(forms, key=len, reverse=True):
-        text = text.replace(word, forms[word])
-    assert text != line
-    assert lines_that_start_a_shell("import subprocess\n" + text + "\n") == [2]
-
-
-def test_p0_the_one_call_and_a_sentence_about_the_name_are_not_taken_for_it():
-    assert lines_that_start_a_shell("path = " + THE_ONE_CALL + "\n") == []
-    assert lines_that_start_a_shell("print('the first %s on the PATH')\n" % THE_NAME) == []
-    assert lines_that_start_a_shell("x = '%sful'\n" % THE_NAME) == []
+        (tmp_path / rel).write_text(line, encoding="utf-8")
+    (tmp_path / "tools" / "broken.py").write_text("def (:\n", encoding="utf-8")
+    assert shell_starts_under(str(tmp_path)) == [
+        "conftest.py:2: the name, in a literal", "docs/studies/d9/e.py:2: the name, in a literal",
+        "model/d.py:2: the name, in a literal", "rtl/tb/c.py:2: the name, in a literal",
+        "tests/a.py:2: the name, in a literal", "tools/broken.py:1: cannot be parsed",
+        "tools/deep/er/b.py:2: the name, in a literal"]
 
 
 def runner(*args):
@@ -580,6 +666,11 @@ def test_p0_naming_an_rtl_stage_without_its_size_is_refused_and_so_is_an_unknown
     assert code == 2 and "add --with rtl" in out
     code, out = runner("--list", "--only", "rtl-spec")           # the list refuses what the run would refuse
     assert code == 2 and "add --with rtl" in out
+    for args in (("--list", "--only", "nosuch"), ("--list", "--skip", "nosuch"), ("--with", "rtl", "--list", "--only", "nosuch")):
+        code, out = runner(*args)
+        assert code == 2 and "unknown stage 'nosuch'" in out, args
+    code, out = runner("--only", "nosuch")
+    assert code == 2 and "unknown stage 'nosuch'" in out
 
 
 def test_p0_the_list_shows_a_skipped_stage_as_one_that_would_not_run():

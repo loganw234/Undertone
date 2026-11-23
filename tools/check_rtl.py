@@ -82,14 +82,15 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                The rtl-spec control changes EVERY number in each copy, the
                hash among them, and takes one name out of the header: every
                one must be reported, so a check that skipped any name, or any
-               kind of name, fails it. Each change is one added: a check that
+               kind of name, fails it. Each integer has one added to it and
+               the hash is changed in one digit of each copy: a check that
                saw only some other kind of change (one that compared whether
                a number is odd, say) would pass this control.
                The rtl-image control plants three trees: one whose Dockerfile
-               changed, one whose package list changed, one that lost its
-               package list. Each change is a comment line added, which
-               changes the file's bytes and nothing an image is built from.
-               It plants no image.
+               has a comment line added, one whose package list has one
+               added, and one that has lost its package list. An added
+               comment line changes the file's bytes and nothing an image is
+               built from. It plants no image.
                An unreadable evidence line is a finding in a bench's own run
                and in a mutant's.
 """
@@ -544,8 +545,7 @@ def plants(kind, root, scratch):
                 (c, ("REFUSED", "IMAGE-MISSING"))]
     if kind == "rtl-spec":
         a = copy_tree(root, scratch, "a")
-        # The package and the header each changed in one number, consistently with nothing; and the header short of
-        # one name. `generated` would see the text; this check must see the numbers.
+        # `generated` would see the text; this check must see the numbers.
         # EVERY number of each copy is changed, by the names the copy itself declares: one is added to it.
         sv, c, unreadable = declared(a)
         if unreadable or sorted(sv) != sorted(c):

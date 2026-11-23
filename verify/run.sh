@@ -80,29 +80,6 @@ SELF="${BASH_SOURCE[0]}"
 STAGELIST=$(grep -E '^stage [a-z0-9-]+ "' "$SELF" | awk '{print $2}' | tr '\n' ' ')
 STAGELIST="${STAGELIST% }"
 
-if [ "$LIST" = 1 ]; then
-  # A list of what would run refuses what a run would refuse.
-  for _n in $(echo "$ONLY" | tr ',' ' '); do
-    if is_rtl "$_n" && [ "$WITH_RTL" != 1 ]; then
-      echo "ERROR: --only names the rtl stage '$_n'; add --with rtl" >&2
-      exit 2
-    fi
-  done
-  while IFS=$'\t' read -r _nm _ds; do
-    if [ -z "$ONLY" ] || in_list "$_nm" "$ONLY"; then _mk="*"; else _mk=" "; fi
-    if is_rtl "$_nm" && [ "$WITH_RTL" != 1 ]; then _mk=" "; fi
-    if [ "$_mk" = "*" ] && in_list "$_nm" "$SKIP"; then _mk="-"; fi
-    printf '%s %-17s%s\n' "$_mk" "$_nm" "$_ds"
-  done < <(grep -E '^stage [a-z0-9-]+ "' "$SELF" \
-      | sed -E 's/^stage ([a-z0-9-]+) +"([^"]*)".*/\1\t\2/')
-  echo
-  if [ -n "$SKIP" ]; then echo "- = named by --skip: it would NOT run, and the verdict line would say so."; fi
-  if [ -n "$ONLY" ]; then echo "* = would run. Unmarked stages are NOT in this selection."
-  elif [ "$WITH_RTL" = 1 ]; then echo "* = would run: every stage (--with rtl, no --only)."
-  else echo "* = would run: the first size. The rtl stages are NOT in it; --with rtl adds them."; fi
-  exit 0
-fi
-
 check_names() {  # <flagname> <comma-list>
   local n
   for n in $(echo "$2" | tr ',' ' '); do
@@ -129,6 +106,24 @@ done
 # list. Refuse it now, before any stage has run.
 BADSTAGE=$(grep -E '^stage ' "$SELF" | grep -v -E '^stage [a-z0-9-]+ "' | head -n 1)
 [ -z "$BADSTAGE" ] || die "a stage line is not of the form: stage <lower case, digits, hyphens> \"description\": $BADSTAGE"
+
+# The list of what would run. It comes after every refusal above, so that it refuses what a run refuses:
+# an unknown name, an rtl stage named without its size, a stage line this file cannot read.
+if [ "$LIST" = 1 ]; then
+  while IFS=$'\t' read -r _nm _ds; do
+    if [ -z "$ONLY" ] || in_list "$_nm" "$ONLY"; then _mk="*"; else _mk=" "; fi
+    if is_rtl "$_nm" && [ "$WITH_RTL" != 1 ]; then _mk=" "; fi
+    if [ "$_mk" = "*" ] && in_list "$_nm" "$SKIP"; then _mk="-"; fi
+    printf '%s %-17s%s\n' "$_mk" "$_nm" "$_ds"
+  done < <(grep -E '^stage [a-z0-9-]+ "' "$SELF" \
+      | sed -E 's/^stage ([a-z0-9-]+) +"([^"]*)".*/\1\t\2/')
+  echo
+  if [ -n "$SKIP" ]; then echo "- = named by --skip: it would NOT run, and the verdict line would say so."; fi
+  if [ -n "$ONLY" ]; then echo "* = would run. Unmarked stages are NOT in this selection."
+  elif [ "$WITH_RTL" = 1 ]; then echo "* = would run: every stage (--with rtl, no --only)."
+  else echo "* = would run: the first size. The rtl stages are NOT in it; --with rtl adds them."; fi
+  exit 0
+fi
 
 COMMIT=$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo nocommit)
 DIRTY=$(git -C "$ROOT" status --porcelain 2>/dev/null | grep -c .)

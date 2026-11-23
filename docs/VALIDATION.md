@@ -992,3 +992,61 @@ Two limits the verifier raised are added to the study as the lead's: no file in 
 - **RTL-A and RTL-B are not dispatched.** They wait for the foundation's fourth pass.
 - **A second pass on the launch experiment** is out: on the lead's commit and on what its first verifier did not reach.
 - **Parcel LRN-A** is building; nothing of it is in this entry.
+
+## 2026-11-23 - round 2: the launch experiment's second pass; the foundation's fourth; a guard written a third time
+
+The launch experiment stands after a second verifier. The foundation's fourth verifier found two more things that were the lead's, both at its edge: a test that could not fail, and a sentence the runner contradicted. They are answered here and a fifth pass follows. **Nothing is pushed, and RTL-A and RTL-B are not dispatched.**
+
+From this entry on, the gate's verdict for a state is in the commit that carries the entry, which is made only on that line: an entry no longer quotes a run made before it was written.
+
+### What ran
+
+- **VLCH3-2**, a fresh verifier on Opus, on a sealed clone of the round branch's tip after the lead's additions to the launch study: 14:38:25 to 14:49:33 by its own clock; 61 tool calls in 716 seconds, as the harness reported. Three faults planted, each a figure in a line the lead had added.
+- **VP0-4**, a fresh verifier on Opus, on a sealed clone of the tip after the third pass's answers: 14:48:06 to 14:56:37; 50 tool calls in 549 seconds. Two faults planted.
+
+### Measured
+
+- **Plants: 3 of 3, and 2 of 2.** In this round so far, 30 of 30. Neither verifier's commands reached for a key, the round's ledger, a commit without the faults or an earlier verifier's folder.
+- **VLCH3-2 found no wall down and nothing wrong beyond the plants.** By its own script the tip hashes to the freeze hash and the seven frozen files are byte for byte what they were at the freeze commit. All twenty cells of the study's table of what the experiment could show, by exact arithmetic. Twenty-eight one-place changes to the parcel's scripts: twenty-four failed a test. The pages of terms were fetched at 13:22, before the first data request at 13:25.
+- **VP0-4, on what the third pass's answers claimed:** the limit on late words is now what the code does. Its own mutants of the filter of one tap, under both sample formats: an extra record 4, 7, 8 and 9 clocks after the last expected one, caught; 10, 11 and 12, passed. The gate's lines as the lead recorded them: 22 of 22 stages, 978 tests, the controls' 3, 345 and 12. HL13's case, by arithmetic and by running the model: the flag first rises at index 16,384.
+- **The lead's faults against its own answers, this time one for every clause**: twenty-three, each alone in a copy. Nineteen failed a test at once. Two showed gaps, a word that ends in the shell's name and a call to some other `which`, and each has a test now. Two were the lead's own mistakes in writing a fault: one changed nothing, and one changed the test's own assertion, which no test can see.
+
+### What VP0-4 found that was the lead's, beyond the plants, and the answers
+
+- **A test that could not fail.** The case for the shell's name in upper case was rewritten in lower case by the test's own string replacement before the guard read it. With the guard made blind to case, it passed. The guard read upper case; nothing held that it did.
+- **"A list of what would run refuses what a run would refuse"**, a comment the lead had just written in the runner, was false of an unknown stage name: `--list --only nosuch` exited 0 where a run exits 2. The list now comes after every refusal a run makes before it starts.
+- **The guard missed forms that no stated limit covered**: the name after other words of a command (`cd x && ...`, after a pipe, after `env`), `shell=1`, `shell=(True)`, a dict with the key, and files outside three folders, the root's `conftest.py` among them.
+
+**The guard is written a third time, and differently.** It no longer matches lines. It parses every Python file of the tree and reports a string or bytes literal that holds the name as a word, in any case, with `.exe` or without, anywhere in it; a keyword argument `shell` given anything but the constant False; and a dict with that key. A docstring, a comment and the one call that looks the name up on the PATH are spared. So no string in this tree's Python may say the word, a message among them, and the tree as it stands has none. Twenty forms are tests, each a statement that is looked at before the guard is. What it cannot see is said in its docstring and in CLAUDE.md's trap 13: a name put together at run time, one from outside the file, a program started under another name that starts that shell itself.
+
+Smaller: a stale comment above the `rtl-spec` control's plants; and two descriptions of what the controls change, each now said as the code is.
+
+### The launch experiment, after its second pass
+
+The result stands as the last entry has it, and "within 50 km the launch is loud, not faint" stands beside it wherever it is stated. The second verifier's smaller points, answered by the lead:
+
+- **The test that holds the freeze read two lines of the committed output.** With one row of the output's results table changed, it passed. It now holds the whole output by its SHA-256.
+- **The constants were first set at 13:29:59, while scored launches' records were still arriving in the same folder, to 13:33:35.** In those minutes what kept a scored record out of the constants was the code's own refusal of a scored launch and nothing else. Added to the study's sixteenth limit.
+- **Two numbers of the hit rule are held by no test of the study's**: the least number of noise frames, and the window handed to the statistic. For the one run they are held by the first verifier's own scorer agreeing on all 548 windows. The study's eighteenth limit.
+- A quotation in the section the lead added to D1 was not D1's words. It is now.
+- Not held by anything, and said in the freeze test's own docstring: a new file beside the frozen scripts that shadows a module they import.
+
+### What this does not prove
+
+- **That the foundation is READY.** Four passes have each found something that was the lead's. What they found has moved outward each time: from the harness and the judge, in the first two, to a limit's wording in the third, to a guard test and the runner's list in the fourth. The fourth found nothing wrong in the harness, the judge, the generated copies or the controls' counts. That is a description of four reports, not a verdict: a fifth pass is the verdict.
+- **That no shell is ever started by name.** The guard reads source.
+
+### The lead's slips
+
+- **A test that could not fail, in a guard written to answer a verifier who had just found a guard too narrow.** The lead's faults against it did not include the one clause it did not hold. This time there is one for every clause.
+- **A comment that promised more than the code beneath it did**, for the second time in the runner.
+- **A figure stated before its run, again, in the last entry's draft**: avoided here by not quoting a gate run in the entry at all.
+
+### Changed after the last pass, and not seen by a verifier
+
+Everything under the launch experiment's second pass above. They are answers to smaller points; no pass follows them.
+
+### Not done, and why
+
+- **RTL-A and RTL-B**: they wait for the foundation's fifth pass.
+- **Parcel LRN-A has reported** and is not in this entry: its verifier is next.
