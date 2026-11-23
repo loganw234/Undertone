@@ -2,9 +2,6 @@
 """Writes the generated tables into study D1, between its markers.
 
     python docs/studies/d1/splice.py --responses DIR            the committed form
-    python docs/studies/d1/splice.py --responses DIR --unhold es
-                                    the form with EarthScope's rows, for the
-                                    day the owner has accepted its terms
     python docs/studies/d1/splice.py --responses DIR --check    change nothing;
                                     fail if the study's tables differ from
                                     what the scripts print
@@ -18,6 +15,10 @@ blocks of ../D1-launch-data.md:
         Vandenberg only, channel epochs open on 2021-09-14
     <!-- d1:download:begin --> ... <!-- d1:download:end -->
         the proposed waveform requests
+
+--unhold PREFIX is passed on to stations.py. It was how EarthScope's rows
+were to be added; since the owner allowed that service on 2026-11-23 its
+answers are marked "used" in queries.tsv and the option has nothing to do.
 
 It makes no request. It reads what stations.py reads, and the study.
 It cannot see whether the prose around a block still agrees with the block.

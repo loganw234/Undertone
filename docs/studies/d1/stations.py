@@ -13,9 +13,11 @@ WHAT IT READS
       the request asked about, whether the response is "used" or "held",
       and the URL. Only requests about the --as-of date are read (default
       2026-11-23, the day of the study). A held response is
-      never opened, unless --unhold names its file-name prefix. --unhold is
-      for the day the owner has accepted that service's terms; only "es"
-      (EarthScope) can be unheld, and network AM stays out either way.
+      never opened, unless --unhold names its file-name prefix. Since the
+      owner allowed EarthScope on 2026-11-23 its responses are marked "used"
+      and --unhold has nothing left to unhold: the only held responses are
+      Raspberry Shake's, whose prefix it refuses, and whose network, AM,
+      stays out by name either way.
   DIR: the folder holding the saved responses. They are the "text" format
       of an FDSN station service at level=channel, one channel epoch per
       line, fields separated by "|":
@@ -27,8 +29,8 @@ WHAT IT READS
       still answer the same.
 
 WHAT IT WRITES
-  Markdown on standard output, per site: the stations nearer than --near-km,
-  a count by distance band, the stations with a pressure channel, a ladder
+  Markdown on standard output, per site: the stations nearer than --near-km
+  (and never fewer than --at-least of the nearest), a count by distance band, the stations with a pressure channel, a ladder
   of stations of one network at growing distances, and the predicted arrival
   windows for that ladder. Every number is computed here from the inputs
   above and the parameters below.
@@ -308,6 +310,8 @@ def main():
                     help="read the requests made about this date (default %s)" % AS_OF)
     ap.add_argument("--near-km", type=float, default=60.0,
                     help="list every station nearer than this (default 60)")
+    ap.add_argument("--at-least", type=int, default=6,
+                    help="and never fewer than this many of the nearest (default 6)")
     ap.add_argument("--site", help="print this site only (an id from sites.tsv)")
     a = ap.parse_args()
     if a.self_test:
@@ -359,7 +363,10 @@ def main():
         print("| station | lat | lon | km | bearing from site | seismic channels @ samples/s "
               "| pressure channels @ samples/s | metadata served by |")
         print("|---|---|---|---|---|---|---|---|")
-        for d, net, sta, s, seis, pres in [r for r in rows if r[0] <= a.near_km]:
+        listed = [r for r in rows if r[0] <= a.near_km]
+        if len(listed) < a.at_least:
+            listed = rows[:a.at_least]
+        for d, net, sta, s, seis, pres in listed:
             print("| %s.%s | %.4f | %.4f | %.1f | %03.0f | %s | %s | %s |" % (
                 net, sta, s["lat"], s["lon"], d,
                 bearing_deg(slat, slon, s["lat"], s["lon"]), seis or "none",
@@ -389,6 +396,11 @@ def main():
                     net, sta, d, pres, seis or "none", ", ".join(sorted(s["centres"]))))
             print()
         lad = ladder(rows)
+        if not lad:
+            print("No ladder: no %s station with %s is listed within %d km of this site."
+                  % (LADDER_NET, ", ".join(LADDER_CHANNELS), LADDER_MAX_KM))
+            print()
+            continue
         print("The ladder: %s stations with %s out to %d km. The first rung is the nearest; "
               "each next rung is the nearest station at least %.1f times farther than the "
               "rung before. Windows are seconds after the catalogue's launch time."

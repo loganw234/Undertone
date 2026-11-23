@@ -94,4 +94,12 @@ for d in (13.5, 275.0):
     a, b = d / 0.345 - 5, d / 0.240 + 180 + 5
     line("F15", "sound window at %.1f km: %.0f to %.0f s, %.0f s long" % (d, a, b, b - a))
 
+# F16: what a 24-bit converter spanning 40 volts gives in counts a volt, and
+# how the gain of the study's row M9, 419430 counts a volt, sits against it.
+line("F16", "2^24 / 40 = %.1f counts a volt; 419430 x 40 / 2^24 = %.6f"
+     % (2 ** 24 / 40, 419430 * 40 / 2 ** 24))
+
+# F17: a day-long file of the cloud bucket (row T8) against a 50-minute request.
+line("F17", "86400 s / 3000 s = %.1f" % (86400 / 3000))
+
 print("\n".join(out))

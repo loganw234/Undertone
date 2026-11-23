@@ -23,6 +23,7 @@ L5c	pages/gcat-lcols.html	https://planet4589.org/space/gcat/web/launch/lcols.htm
 L5d	pages/gcat-vague.html	https://planet4589.org/space/gcat/web/intro/vague.html	In the General Catalog we only allow 1 second precision
 L5d	pages/gcat-vague.html	https://planet4589.org/space/gcat/web/intro/vague.html	We provide the ability to encode greater uncertainty by allowing rightmost fields to be omitted, and optionally a question mark symbol to be appended.
 L5e	pages/gcat-lcols.html	https://planet4589.org/space/gcat/web/launch/lcols.html	A for pad abort (ignition but no launch, and no explosion; included only for human spaceflight launch attempts.
+L5e	pages/gcat-lcols.html	https://planet4589.org/space/gcat/web/launch/lcols.html	Z means the entry is not a launch; for example launch tags used for satellites whose launch is unknown.
 L5f	pages/gcat-count.html	https://planet4589.org/space/gcat/web/launch/count.html	O Orbital Launches 7001
 L5f	pages/gcat-count.html	https://planet4589.org/space/gcat/web/launch/count.html	Total 76034
 L5g	pages/gcat-launch-index.html	https://planet4589.org/space/gcat/web/launch/index.html	For each launch a citation (LTCite) is given for the existence of the launch and the source of the launch time.
@@ -34,6 +35,7 @@ A1	pages/osti-1891700.html	https://www.osti.gov/biblio/1891700	Ground-coupled ai
 A2	pages/osti-1891700.html	https://www.osti.gov/biblio/1891700	rocket motor fuel elimination events at the Utah Test and Training Range (UTTR) as well as a 2020 rocket launch in Southern California
 A2	pages/osti-1891700.html	https://www.osti.gov/biblio/1891700	from 50-100 km and up to 400 km
 A3	pages/agu-1001.html	https://news.agu.org/press-release/scientists-identify-distinctive-deep-infrasound-rumbles-of-space-launches-audio/	They examined 7,637 infrasound signatures recorded at IMS stations from 2009 to mid-2020, a period that included 1,001 rocket launches.
+A3	pages/agu-1001.html	https://news.agu.org/press-release/scientists-identify-distinctive-deep-infrasound-rumbles-of-space-launches-audio/	The team only examined rocket launches that occurred up to 5,000 kilometers from an IMS station
 A4	pages/agu-1001.html	https://news.agu.org/press-release/scientists-identify-distinctive-deep-infrasound-rumbles-of-space-launches-audio/	The researchers found infrasonic signatures for up to 73% of these rockets, or 733.
 A5	pages/pmc6736795.html	https://pmc.ncbi.nlm.nih.gov/articles/PMC6736795	three separate acoustic phases with celerities of 332, 292, and 250 m/s
 A6	pages/pmc6736795.html	https://pmc.ncbi.nlm.nih.gov/articles/PMC6736795	The infrasound signal is detectable on seismic stations within 10–350 km from the source
@@ -52,6 +54,7 @@ K3	pages/fdsn-ms3-encodings.html	https://docs.fdsn.org/projects/miniseed3/en/lat
 K3	pages/fdsn-ms3-encodings.html	https://docs.fdsn.org/projects/miniseed3/en/latest/data-encodings.html	11 Steim-2 integer compression, big endian byte order
 T1	pages/scedc-citation.html	https://scedc.caltech.edu/about/citation.html	Please use the following citation to cite data downloaded from SCEDC: SCEDC (2013): Southern California Earthquake Center. Caltech.Dataset. doi: 10.7909/C3WD3xH1
 T2	pages/scedc-service-home.html	https://service.scedc.caltech.edu/	please be limit your downloads to 3 concurrent sessions
+T2	pages/scedc-service-home.html	https://service.scedc.caltech.edu/	please consider first using our AWS Open Dataset
 T3	pages/scedc-waveform.html	https://scedc.caltech.edu/data/waveform.html	Archival of continuous waveforms 80 sps and greater began in 2008 and by 2010, all continuous waveforms have been archived at the SCEDC.
 T4	pages/scedc-seed.html	https://scedc.caltech.edu/station/seed.html	HH[ZNE] Triggered High Broadband (80 or 100 sps); Seismic data: High gain
 T4	pages/scedc-seed.html	https://scedc.caltech.edu/station/seed.html	BH[ZNE] Continuous Broadband (20 or 40 sps); Seismic data: High gain
@@ -88,5 +91,6 @@ PV	pages/scedc-citation.html	https://scedc.caltech.edu/about/citation.html	Calif
 PV	pages/rs-data-home.html	https://data.raspberryshake.org/	For publication purposes, please use DOI:10.7914/SN/AM
 PV	pages/es-terms.html	https://www.earthscope.org/terms-of-service/	User must acknowledge EarthScope Consortium and our sponsors
 PV	pages/es-terms.html	https://www.earthscope.org/terms-of-service/	Non-Human Visitors are restricted from taxing the resources of the Website beyond what would be typical of a human visitor.
+PV	pages/es-how-to-cite.html	https://www.earthscope.org/how-to-cite/	Data were accessed from the NSF NGF data archive operated by EarthScope Consortium (NSF award 2435260).
 PV	pages/scedc-service-home.html	https://service.scedc.caltech.edu/	Excessive downloads will result in your IP(s) being blacklisted.
 PV	pages/rs-company-license.html	https://raspberryshake.org/license/	For commercial enterprises, access to the data archive needs to be negotiated
