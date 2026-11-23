@@ -373,6 +373,10 @@ def test_mod_a_an_injection_past_the_end_is_refused_by_name_before_any_frame():
     refused("PULSE_UNKNOWN", lambda: inject.schedule([rec(10), rec(40, pulse_id=9)], 80))
     refused("INJECT_OVERLAP", lambda: inject.schedule([rec(10), rec(40)], 80))
     refused("INJECT_PAST_END", lambda: inject.schedule([rec(10), rec(74)], 80))
+    # and before any record: the profile, then the length
+    refused("STREAM_LENGTH", lambda: inject.schedule([rec(0, den=0)], -1))
+    refused("STREAM_LENGTH", lambda: inject.inject("s16x1", untouchable(), [rec(0, den=0)], -1))
+    refused("PROFILE_UNKNOWN", lambda: inject.inject("no-such", untouchable(), [rec(0, den=0)], -1))
 
 
 def test_mod_a_a_sum_outside_the_range_is_refused_by_name_and_never_clipped():
@@ -439,6 +443,19 @@ def test_mod_a_a_stream_not_of_its_declared_length_is_refused_by_name():
     assert len(got) == 70
     stream, _ = inject.inject(name, [], [], 0)
     assert list(stream) == []
+    # the order while a stream runs: its length, then the input frame, then the sum.
+    # A frame past the declared length is named for the length even when it is malformed too.
+    stream, _ = inject.inject(name, silence(name, 70) + [(0, 0)], [rec(2)], 70)
+    got = []
+    refused("STREAM_LENGTH", lambda: got.extend(stream))
+    assert len(got) == 70
+    # An input sample already out of range, under an injection, is named for the input, not for the sum.
+    hi = C.PROFILES[name]["sample_max"]
+    frames = silence(name, 3) + [(0, hi + 1, 0)] + silence(name, 66)
+    stream, _ = inject.inject(name, frames, [rec(2)], 70)
+    got = []
+    refused("SAMPLE_RANGE", lambda: got.extend(stream))
+    assert len(got) == 3
 
 
 def test_mod_a_a_bad_input_frame_is_refused_by_the_names_p0_declared():

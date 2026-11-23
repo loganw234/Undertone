@@ -68,7 +68,7 @@ Every integer is little-endian and unsigned but the samples. The payload is fram
 
 ## 2. Refusals
 
-Each is `model.refusal.Refusal` with a name the definition declares. Where one call can fail more than one way, the order below is the order checked, and the tests hold it.
+Each is `model.refusal.Refusal` with a name the definition declares. Where one call can fail in more than one way the order is fixed, and the tests hold it: for the noise and for the injector it is the order of the rows below, and for a recording it is the sentence under the table.
 
 | name | when | raised by |
 |---|---|---|
@@ -81,7 +81,7 @@ Each is `model.refusal.Refusal` with a name the definition declares. Where one c
 | PULSE_UNKNOWN | a pulse_id that names no declared pulse | `pulse`, `schedule`, `inject`, `scaled_pulse` |
 | INJECT_OVERLAP | an injection starts before the one before it has ended: overlapping, or out of order | `schedule`, `inject` |
 | INJECT_PAST_END | an injection would end past the stream's last frame | `schedule`, `inject` |
-| CHANNELS, SAMPLE_RANGE | an input frame of the wrong width or with a sample out of range; a recorded sample out of range | the stream from `inject`, `stream_bytes`, `parse_recording` |
+| CHANNELS, SAMPLE_RANGE | an input frame of the wrong width or with a sample out of range; a recorded sample out of range | the stream from `inject`; `stream_bytes`, and `recording` and `record`, which are built on it; `parse_recording` and `Replay` |
 | INJECT_RANGE | a sample plus what is injected leaves the sample range | the stream from `inject` |
 | REPLAY_FORMAT | not a recording: fewer than 56 bytes, wrong first eight, a version that is not 1, or a payload of the wrong length | `parse_recording`, `Replay` |
 | RESERVED_BITS | a recording's reserved field is not zero | `parse_recording`, `Replay` |
@@ -176,12 +176,17 @@ Each is stated by the behaviour it concedes.
 20. **A recording is read into memory whole,** and the format has one version.
 21. **No declared profile has a width that is not whole bytes.** The rounding up of a sample's bytes and the range check on a replayed sample are tested with a 12-bit profile declared inside a test.
 
+**What the tests reach.**
+
+22. **Everything is tested at the seeds, sigmas, lengths and schedules the tests name.** A fault that shows only elsewhere passes: at a sigma no test builds, or on a seed no test draws.
+23. **No test runs a stream of more than about a million frames.** The noise is checked far into a long source, past frame 2^32 and 2^40 and at a source's last frames, because any frame is worked directly. The injector and a recording are not: a fault that shows only at a frame index a test cannot reach, such as an injector that kept 32 bits of an index, passes every gate.
+
 **The second implementation.**
 
-22. **It was written by the author of the model,** from the same reading of the same design. It uses other tools (numpy's 64-bit integers, `decimal`, `fractions`, `struct`) and imports nothing of `model/`, which a test holds; but a shared misunderstanding of what the law or the rounding should be would pass both. The published answers for the words are the only check that comes from outside the project, and their source is a wiki page, not the generator's author (A1).
-23. **The frozen noise vector for s24x3 is not recomputed in the gate.** `vectors/mod-a/noise.json` was written by the second implementation for both profiles; the gate recomputes the s16x1 half and compares the model with both halves.
+24. **It was written by the author of the model,** from the same reading of the same design. It uses other tools (numpy's 64-bit integers, `decimal`, `fractions`, `struct`) and imports nothing of `model/`, which a test holds; but a shared misunderstanding of what the law or the rounding should be would pass both. The published answers for the words are the only check that comes from outside the project, and their source is a wiki page, not the generator's author (A1).
+25. **The frozen noise vector for s24x3 is not recomputed in the gate.** `vectors/mod-a/noise.json` was written by the second implementation for both profiles; the gate recomputes the s16x1 half and compares the model with both halves.
 
-**Cost** (not a limit of correctness). The shipped iterator draws at about 1.4 microseconds a draw (A10). MOD-A's 139 tests take 13 to 17 s (A25), of which the two sampled runs are about 6 s.
+**Cost** (not a limit of correctness). The shipped iterator draws at about 1.4 microseconds a draw (A10). MOD-A's 141 tests take 13 to 17 s (A25), of which the two sampled runs are about 6 s.
 
 **For the RTL round** (ESTIMATE, A26): a word costs two 64-bit constant multiplies; the lookup is a search of a ROM of 9,156 entries of 63 bits at sigma = 1000, about 577 kbit. The table is data the model produces, so sigma is a load-time parameter. An injected sample needs a product of up to 47 bits divided by a 32-bit denominator.
 
@@ -213,7 +218,7 @@ Each is stated by the behaviour it concedes.
 | A22 | A source holds at most 2^64 words: 2^64 frames of one channel, 2^64 / 3 rounded down of three | MEASURED | `python -m pytest -q tests/test_mod_a_source.py -k cannot_hold`, 2026-11-23 | a rerun |
 | A23 | One seed at sigma 100 and at sigma 1000 gives the same signs and the same order of magnitudes over 3,000 samples | MEASURED | `python -m pytest -q tests/test_mod_a_source.py -k two_sigmas`, 2026-11-23 | a rerun |
 | A24 | Near sigma = 916,000 a table would take about 15 s and several hundred megabytes | ESTIMATE | A20's 1.6 s scaled by 9.16; 8.4 million Python ints of 63 bits | building one |
-| A25 | MOD-A's 139 tests take 13 to 17 s on the lead's desktop, which other parcels' runs were sharing | MEASURED | `python -m pytest -q -p no:cacheprovider tests/test_mod_a_inject.py tests/test_mod_a_reference.py tests/test_mod_a_source.py tests/test_mod_a_tails.py`, twice on 2026-11-23: 139 passed in 17.37 s, and in 13.30 s | a rerun |
+| A25 | MOD-A's 141 tests take 13 to 17 s on the lead's desktop, which other parcels' runs were sharing | MEASURED | `python -m pytest -q -p no:cacheprovider tests/test_mod_a_inject.py tests/test_mod_a_reference.py tests/test_mod_a_source.py tests/test_mod_a_tails.py`, on 2026-11-23: 139 passed in 17.37 s and in 13.30 s, and with two tests more, 141 passed in 14.23 s | a rerun |
 | A26 | In fabric a word costs two 64-bit constant multiplies, the lookup at sigma = 1000 a ROM of about 577 kbit, and an injected sample a product of up to 47 bits divided by 32 | ESTIMATE | 9,156 * 63; 16 bits of pulse times 32 of amplitude; nothing synthesised | the RTL round |
 | A27 | The largest whole sigma s16x1 accepts is 3579; 3580 needs a magnitude of 32,776 | MEASURED | `python -m pytest -q tests/test_mod_a_source.py -k tail_does_not_fit`, 2026-11-23 | a rerun |
 | A28 | The table's last index is above 8 sigma at sigma = 1, 101/100, 3/2, 2, 7/3, 10, 37, 38, 39, 100, 1000 and 3579; for every other sigma of at least 1 it is argued, not tested: the two-sided tail at 8 sigma is about 1.2e-15, and the table runs until it is below 2^-64 | BELIEVED | `python -m pytest -q tests/test_mod_a_source.py -k past_eight_sigma` for the twelve; the argument for the rest | a sigma of at least 1 whose table ends at or before 8 sigma |

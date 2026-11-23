@@ -64,6 +64,7 @@ def test_mod_a_a_seed_or_an_index_out_of_range_is_refused_by_name(bad):
     refused("SEED_RANGE", lambda: source.word(bad, 0))
     refused("STREAM_LENGTH", lambda: source.word(0, bad))
     refused("SEED_RANGE", lambda: source.Noise("s16x1", bad, 100, 1, 4))
+    refused("SEED_RANGE", lambda: source.word(bad, bad))          # the seed is looked at first
     for good in (0, 2 ** 64 - 1):
         assert 0 <= source.word(good, good) < 2 ** 64
         assert source.Noise("s16x1", good, 100, 1, 4).frames == 4
@@ -158,6 +159,21 @@ def test_mod_a_noise_is_the_same_each_time_and_from_any_frame(name):
     assert list(source.Noise(name, 42, 50, 1, 400))[:300] == first
     refused("STREAM_LENGTH", lambda: list(noise.from_frame(301)))
     refused("STREAM_LENGTH", lambda: list(noise.from_frame(-1)))
+
+
+@pytest.mark.parametrize("name", PROFILES)
+def test_mod_a_noise_far_into_a_long_source_equals_the_second_implementation(name):
+    # No test can run a stream of 2^40 frames, but any frame is worked directly from the seed: frames past
+    # 2^32, past 2^40, and the last frames a source of every word can hold. An index kept in 32 bits,
+    # or a word index that wrapped early, would show here.
+    channels = C.PROFILES[name]["channels"]
+    last = 2 ** 64 // channels
+    for start, frames in ((2 ** 32 - 2, 2 ** 32 + 6), (2 ** 40 + 7, 2 ** 40 + 15), (last - 5, last)):
+        noise = source.Noise(name, 20261123, 100, 1, frames)
+        got = list(noise.from_frame(start))
+        want = [tuple(f) for f in ref.ref_noise(name, 20261123, 100, 1, start, frames - start).tolist()]
+        assert got == want and len(got) == frames - start
+    assert len({f for f in got}) > 1
 
 
 @pytest.mark.parametrize("name", PROFILES)
