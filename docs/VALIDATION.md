@@ -328,3 +328,50 @@ Each is the verifier's, and each is the parcel's to answer in part B.
 - **The quotation checker was not rerun on `r1`.** It needs the saved pages, which are in the parcel's scratch folder and are not committed. The verifier ran it on the merged commit in its clone.
 - **No waveform, no catalogue file.** That is part B, under Logan's word of 2026-11-23 on downloads.
 - **Nothing pushed.**
+
+## 2026-11-23 - round 1: the definition gains the model parcels' facts, and the seam conventions are written down
+
+Two of the lead's own changes on `r1`, made while the wave's parcels were at or just past their design stop. The first went past a verifier with planted faults. The second has not been past one yet.
+
+### What changed
+
+- **`adb10d1`, the definition.** `spec/undertone.toml` gained what parcels MOD-B and MOD-A asked for in their designs, as the lead's decisions: the bounds `max_rows = 16`, `max_pool = 65536`, `max_score_shift = 31` and `max_hist_bins = 4096`; the rectifier codes `pass = 0` and `abs = 1`; the rounding of an injected sample; a declared id for each pulse; and 27 refusal names, 37 in all. `tools/gen_spec.py` checks each addition and refuses by name. The `model-tests` control's copies now keep only the tests named `test_p0_*`, so a parcel's suite runs once in the gate.
+- **`d742aee`, [model/conventions.md](model/conventions.md).** The four conventions the lead ruled while three parcels each needed the same answer: where a truth record says a pulse is, which way round coefficients are written, what a crossing is, and how a filter reads several channels. One answer worked by hand.
+- **This commit**, after the verifier's pass: in `tests/test_p0_generator.py`, three more bad definitions that must be refused, four more range ends that must be accepted, and a new test of nine cases that each generated fact follows its own key and no other; `drop_tests()` compares names in lower case; one sentence in CLAUDE.md.
+
+### What ran
+
+- **VP0**, the foundation's verifier on Sonnet, a third pass scoped to `adb10d1`, on a clone whose tip held that commit with **four planted faults** (17 tool calls, 6 min 43 s, as the harness reported). Its report is filed verbatim under the round's `reports/`, with the key beside it.
+
+### Measured
+
+- **Plants: 4 of 4 reported.** A bound one short of the decided value and a misspelled refusal name, each found against the round's ledger and the parcel's own request; a rectifier code accepted twice and a pulse id accepted one past its field, each found by probing the generator at its edges. Model: Sonnet.
+- **In the real commit: "no (a) regression", and no wrong answer.** Every constant, code and name, and the order of the 37, matches the decisions and the two parcels' requests.
+- **Its findings on the lead's own work, all smaller:** three mutants of the generator survived the tests, among them `MAX_ROWS` rendered from `max_filters`, which is the "two facts that share a value today" the definition's own comment warns of; the ranges of two new bounds were untested at their ends; `drop_tests()` compared names by case, where pytest on Windows does not; and the rule that a parcel's test is not named `test_p0_*` was in the round's ledger and not in the tree.
+- **After the fixes**, in throwaway copies: the mutant reading `MAX_ROWS` from the wrong key fails 2 tests; `MAX_HIST_BINS` written as a constant fails 1; each of the two widened ranges fails 2. A test file named in upper case is dropped from the control's copies.
+- **The gate**, `bash verify/run.sh`, Windows desktop, `python` 3.12.15: at `adb10d1` on a clean tree, VERDICT: PASS, 16 of 16, `OK model-tests: 124 tests ran, 0 failed, 0 errored, 0 skipped`; with this commit's changes in the tree and this entry not yet appended, VERDICT: PASS, 16 of 16, `OK model-tests: 136 tests ran, 0 failed, 0 errored, 0 skipped`. The commit itself was made only on a second run's verdict line.
+- **The conventions page's worked answer** was written by hand and then run by machine by the lead: coefficients 1, 2, 3 on the stream 0, 0, 1, 2, 3, 0, 0 give 0, 0, 3, 8, 14, 8, 3, and reversed they give 0, 0, 1, 4, 10, 12, 9.
+- **A source outside the project for the noise generator's known answers**, for parcel MOD-A's row: the lead fetched one public wiki page (397,045 bytes, SHA-256 `760ef27b...4f14`, 2026-11-23 08:24 -0700) and found in its bytes the five words for seed 1234567, the five counts for seed 987654321, and the generator's three constants.
+
+### Changed after the verifier's pass, and not seen by it
+
+The cases and the test added to `tests/test_p0_generator.py`; the lower-case comparison in `drop_tests()` and two sentences of that file's docstrings; the sentence in CLAUDE.md; this entry. No constant and no check of the generator changed.
+
+### What this does not prove
+
+- **That the bounds are right.** They are the values one parcel's width argument is worked at. That argument is checked when its parcel is.
+- **That anything holds the conventions.** The page says so in its third paragraph. The seam tests of the second wave are to hold them, and the page goes past a verifier with those tests.
+- **That a generator writes `INJECT_ROUNDING` from the definition.** One value is accepted, so a generator that wrote it as fixed text passes every test there can be. The same is true of the two quantising constants. The test's docstring says so.
+- **That the blinding held**, beyond what the next section measured.
+
+### The lead's slips
+
+- **The verifier's clone kept its remote and its reflog.** The earlier clones had neither. In this one `git reflog` shows the unplanted commit, and one `git diff` would have shown all four plants. Measured afterwards from the verifier's transcript: none of its tool inputs mentions the reflog, the remote or the unplanted commit's id, and none names a path in the lead's checkout; its report gives the probe or the comparison that found each plant. So the count of 4 of 4 rests on that transcript, not on the clone having made the shortcut impossible.
+- **CLAUDE.md's trap 7, two hours after writing it.** The script that planted the clone was first written through a shell heredoc and lost a level of backslashes. Its own count check stopped it before it committed anything; the half-made clone was removed and the script rewritten as a file.
+- **A sentence in the definition's first draft counted "four bounds below"** where three were below and one further down. Caught on rereading, before the commit.
+
+### Not done, and why
+
+- **No verifier has seen the conventions page.** It is a statement of decisions already in the ledger, and it is checked with the tests that will hold it.
+- **`spec_version` was not raised.** Nothing built has carried version 1 out of this tree, and `SPEC_SHA256` names the definition exactly.
+- **Nothing pushed.**

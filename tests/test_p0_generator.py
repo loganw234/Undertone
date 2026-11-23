@@ -66,6 +66,9 @@ BAD = [
     ("a pulse file that is missing", [("e0 = \"pulses/e0.toml\"", "e0 = \"pulses/absent.toml\"")], "DEFINITION-MALFORMED"),
     ("an upper-case profile name", [("[profile.s16x1]", "[profile.S16X1]")], "NAME"),
     ("a row bound that is a string", [("max_rows = 16", "max_rows = \"16\"")], "NUMBER"),
+    ("a row bound of zero", [("max_rows = 16", "max_rows = 0")], "NUMBER"),
+    ("a row bound past the generator's range", [("max_rows = 16", "max_rows = 1025")], "NUMBER"),
+    ("a histogram bound past the generator's range", [("max_hist_bins = 4096", "max_hist_bins = 65537")], "NUMBER"),
     ("a pool bound of zero", [("max_pool = 65536", "max_pool = 0")], "NUMBER"),
     ("a pool bound past the generator's range", [("max_pool = 65536", "max_pool = 16777217")], "NUMBER"),
     ("a shift bound of sixty-four", [("max_score_shift = 31", "max_score_shift = 64")], "NUMBER"),
@@ -155,9 +158,41 @@ def test_p0_a_bound_at_either_end_of_its_range_is_accepted(tmp_path):
                           ("shift63", "max_score_shift = 31", "max_score_shift = 63"),
                           ("pool1", "max_pool = 65536", "max_pool = 1"),
                           ("pooltop", "max_pool = 65536", "max_pool = 16777216"),
+                          ("rows1", "max_rows = 16", "max_rows = 1"),
+                          ("rowstop", "max_rows = 16", "max_rows = 1024"),
+                          ("bins1", "max_hist_bins = 4096", "max_hist_bins = 1"),
+                          ("binstop", "max_hist_bins = 4096", "max_hist_bins = 65536"),
                           ("rect255", "abs = 1 ", "abs = 255 ")):
         d, _pulses, _digest = gen_spec.load(tree(tmp_path / tag, [(old, new)]))
-        assert new.strip() in ("%s = %d" % (k, v) for sec in ("core", "rectifier") for k, v in d[sec].items())
+        assert new.strip() in ("%s = %d" % (k, v) for sec in ("core", "rectifier", "scorer")
+                               for k, v in d[sec].items())
+
+
+FOLLOWS = [
+    # (the edit to the definition, the line the generated copy must then carry, lines that must not move)
+    ("max_filters = 16", "max_filters = 5", "MAX_FILTERS = 5", ["MAX_ROWS = 16", "MAX_TAPS = 128"]),
+    ("max_rows = 16", "max_rows = 7", "MAX_ROWS = 7", ["MAX_FILTERS = 16", "MAX_TAPS = 128"]),
+    ("max_taps = 128", "max_taps = 96", "MAX_TAPS = 96", ["MAX_FILTERS = 16", "MAX_ROWS = 16"]),
+    ("max_pool = 65536", "max_pool = 1024", "MAX_POOL = 1024", ["MAX_HIST_BINS = 4096", "MAX_SCORE_SHIFT = 31"]),
+    ("max_score_shift = 31", "max_score_shift = 21", "MAX_SCORE_SHIFT = 21", ["MAX_POOL = 65536"]),
+    ("max_hist_bins = 4096", "max_hist_bins = 512", "MAX_HIST_BINS = 512", ["MAX_POOL = 65536"]),
+    ("abs = 1 ", "abs = 9 ", "    \"abs\": 9,", ["    \"pass\": 0,"]),
+    ("pass = 0 ", "pass = 4 ", "    \"pass\": 4,", ["    \"abs\": 1,"]),
+    ("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = 300", "    \"e0\": 300,", ["MAX_ROWS = 16"]),
+]
+
+
+@pytest.mark.parametrize("old,new,line,still", FOLLOWS, ids=[f[1].strip().split("\n")[-1] for f in FOLLOWS])
+def test_p0_each_generated_fact_follows_its_own_key_and_no_other(tmp_path, old, new, line, still):
+    """Two facts that share a value today (16 filters, 16 rows) must not share a key in the generator.
+    Each case changes one value and reads the generated text: its own line moves, its neighbours do not.
+
+    What this cannot see: INJECT_ROUNDING and the two quantising constants. The generator accepts one
+    value for each, so a generator that wrote them as fixed text would pass every test there can be."""
+    lines = gen_spec.render(*gen_spec.load(tree(tmp_path, [(old, new)]))).split("\n")
+    assert lines.count(line) == 1, "the generated copy does not carry %r exactly once" % line
+    for other in still:
+        assert lines.count(other) == 1, "%r moved when %r was edited" % (other, new)
 
 
 def test_p0_a_stale_copy_is_reported_with_the_line_that_differs(tmp_path):

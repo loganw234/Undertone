@@ -47,7 +47,9 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                 control's copies keep only the tests named test_p0_*, so it
                 shows the stage sees a failing test, an unimportable one and
                 an empty folder among those, and says nothing about a parcel's
-                tests: see drop_tests(). Nothing guards
+                tests: see drop_tests(). A test file that is not named
+                test_*.py or *_test.py in some case is kept in the copies; the
+                real stage does not run such a file either. Nothing guards
                 control() itself: one rewritten to always answer DETECTED
                 would pass.
 """
@@ -267,13 +269,18 @@ def drop_tests(copy, keep):
     The model-tests control keeps P0's tests only. With the parcels' suites in its copies the
     gate ran every test twice, once for real and once to watch one planted test fail. What
     that gives up: "nothing else was reported" is now a statement about P0's tests and the
-    planted one, not about the whole suite. The real stage still runs the whole suite."""
+    planted one, not about the whole suite. The real stage still runs the whole suite.
+
+    Names are compared in lower case: on Windows pytest collects tests/Test_Upper.py, so a
+    comparison that kept case would leave that file in every copy. So a parcel's test file
+    must not be named test_p0_* in any case, or the gate runs it again in the control."""
     gone = 0
     for folder, _dirs, files in os.walk(os.path.join(copy, "tests")):
-        for f in files:
+        for name in files:
+            f = name.lower()
             is_test = f.endswith(".py") and (f.startswith("test_") or f.endswith("_test.py"))
             if is_test and not (keep and f.startswith(keep)):
-                os.remove(os.path.join(folder, f))
+                os.remove(os.path.join(folder, name))
                 gone += 1
     return gone
 
