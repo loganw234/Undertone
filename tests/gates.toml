@@ -39,3 +39,30 @@ kind = "pytest"
 name = "noise-tails"
 d0 = "noise tails"
 kind = "pytest"
+
+# MOD-B: the detector core, the weight store and the scorer (model/detector.py, model/weights.py, model/scorer.py).
+
+[[gate]]
+name = "reference-model"
+d0 = "reference model"
+kind = "pytest"
+
+[[gate]]
+name = "swap"
+d0 = "swap"
+kind = "pytest"
+
+[[gate]]
+name = "refusal"
+d0 = "refusal"
+kind = "pytest"
+
+[[gate]]
+name = "overflow"
+d0 = "overflow"
+kind = "pytest"
+
+[[gate]]
+name = "scorer"
+d0 = "scorer"
+kind = "pytest"

@@ -1,0 +1,88 @@
+{
+  "what": "The quantising rule of spec/undertone.toml on small sets: scale the set so its largest magnitude maps to 2^17 - 1 = 131071, then round half to even. Every expected value in 'cases' was worked BY HAND, and the working is in each case's 'worked' lines. The reference pulse's 64 coefficients, in 'e0', were worked by a function that uses nothing of model/ (independent_e0 in tests/test_mod_b_reference.py recomputes them the same way at every run: round half up by integers, which equals round half to even because the set has no exact tie, and the function asserts that it has none; the FILE that function sits in does import the model, to test it), and four of them by hand.",
+  "format": "A value is an integer, or [numerator, denominator] for a fraction.",
+  "cases": [
+    {
+      "name": "peaks",
+      "values": [1, -1, 0],
+      "worked": ["the largest magnitude is 1, so each value is multiplied by 131071: 131071, -131071, 0. The rule never gives -131072."],
+      "expected": [131071, -131071, 0]
+    },
+    {
+      "name": "halves",
+      "values": [262142, 1, 3, 5, -1, -3, -5, 131071, -262142],
+      "worked": [
+        "the largest magnitude is 262142 = 2 * 131071, so each value v scales to v / 2",
+        "262142 -> 131071;  -262142 -> -131071",
+        "1 -> 0.5, a tie between 0 and 1: the even one is 0",
+        "3 -> 1.5, a tie between 1 and 2: 2",
+        "5 -> 2.5, a tie between 2 and 3: 2",
+        "-1 -> -0.5: 0;  -3 -> -1.5: -2;  -5 -> -2.5: -2",
+        "131071 -> 65535.5, a tie between 65535 and 65536: 65536",
+        "half away from zero would give 1, 2, 3, -1, -2, -3 for the six small values; half up would give 1, 2, 3, 0, -1, -2"
+      ],
+      "expected": [131071, 0, 2, 2, 0, -2, -2, 65536, -131071]
+    },
+    {
+      "name": "ties-far-from-zero",
+      "values": [262142, 131073, 131069, 131075, -131073],
+      "worked": [
+        "each value v scales to v / 2",
+        "131073 -> 65536.5, a tie between 65536 and 65537: 65536",
+        "131069 -> 65534.5, a tie between 65534 and 65535: 65534",
+        "131075 -> 65537.5, a tie between 65537 and 65538: 65538",
+        "-131073 -> -65536.5: -65536"
+      ],
+      "expected": [131071, 65536, 65534, 65538, -65536]
+    },
+    {
+      "name": "quarters",
+      "values": [4, 1, 2, 3, -2],
+      "worked": [
+        "the largest magnitude is 4, so each value v scales to v * 131071 / 4",
+        "1 -> 32767.75: 32768",
+        "2 -> 65535.5, a tie: 65536",
+        "3 -> 393213 / 4 = 98303.25: 98303",
+        "-2 -> -65535.5, a tie: -65536"
+      ],
+      "expected": [131071, 32768, 65536, 98303, -65536]
+    },
+    {
+      "name": "fractions",
+      "values": [[1, 3], [-1, 6], [1, 4]],
+      "worked": [
+        "the largest magnitude is 1/3, so each value v scales to 3 * v * 131071",
+        "1/3 -> 131071",
+        "-1/6 -> -131071 / 2 = -65535.5, a tie: -65536",
+        "1/4 -> 3 * 131071 / 4 = 98303.25: 98303"
+      ],
+      "expected": [131071, -65536, 98303]
+    },
+    {
+      "name": "four-samples-of-the-reference-pulse",
+      "values": [970, 1, 7, 950, -970],
+      "worked": [
+        "the largest magnitude is 970, the reference pulse's own",
+        "1 -> 131071 / 970: 970 * 135 = 130950, remainder 121, and 2 * 121 < 970: 135",
+        "7 -> 917497 / 970: 970 * 945 = 916650, remainder 847, and 2 * 847 > 970: 946",
+        "950 -> 124517450 / 970: 970 * 128368 = 124516960, remainder 490, and 2 * 490 = 980 > 970: 128369 (close to a tie, and not one)",
+        "-970 -> -131071"
+      ],
+      "expected": [131071, 135, 946, 128369, -131071]
+    }
+  ],
+  "e0": {
+    "worked": "v * 131071 / 970 for each of spec.constants.PULSES['e0'], in order, to the nearest integer. No value is an exact tie: 131071 is prime, so a tie needs a sample of 485 or -485, and the pulse has none.",
+    "by_hand": {"1": 135, "2": 946, "28": -131071, "36": 128369},
+    "expected": [
+      0, 135, 946, 2838, 5270, 7567, 8243, 6081,
+      0, -9729, -21890, -33916, -42835, -45537, -39456, -23917,
+      0, 29052, 58374, 82291, 95398, 93641, 75670, 42970,
+      0, -46483, -88507, -118640, -131071, -122964, -94993, -51618,
+      0, 51483, 94047, 121072, 128369, 115667, 85804, 44861,
+      0, -40943, -71616, -88101, -89047, -76345, -53780, -26484,
+      0, 21350, 34862, 39592, 36754, 28511, 17972, 7837,
+      0, -4459, -5810, -4864, -2973, -1216, -270, 0
+    ]
+  }
+}

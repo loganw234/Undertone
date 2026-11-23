@@ -1,0 +1,191 @@
+{
+  "what": "Score records of the detector core on small cases. Every expected score was worked BY HAND from the definition in model/detector.py's docstring, and the sums are written out in each case's 'worked' lines. Nothing here was produced by the model.",
+  "definition": "y_k[i] = sum over the channels c the filter reads and j = 0..T-1 of w[k][c][j] * x_c[i-(T-1)+j], samples before the stream taken as zero; r = y (rectifier 0, pass) or |y| (rectifier 1, abs); z_k[i] = sum of the last P values of r_k; a[i] = sum over k of h[k] * z_k[i]; score[i] = floor(a[i] / 2^shift).",
+  "format": "config.filters is a list of filters; a filter maps a channel number (a string here, since this is JSON) to that channel's row of coefficients, OLDEST SAMPLE FIRST. frames[i] is frame i, one value per channel. records[i] is the score record expected for frame i.",
+  "cases": [
+    {
+      "name": "s16x1-pulse-in-order",
+      "why": "The tap order. Coefficients (1, 2, 3) are the pulse (1, 2, 3) in order; the pulse's first sample is at j = 1, so the peak is at j + T - 1 = 3. Coefficients reversed would give 3*1 + 2*2 + 1*3 = 10 at i = 3; a filter one sample late would give 8 there.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, 2, 3]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[0], [1], [2], [3], [0], [0]],
+      "worked": [
+        "score[i] = 1*x[i-2] + 2*x[i-1] + 3*x[i]",
+        "i=0: 1*0 + 2*0 + 3*0 = 0",
+        "i=1: 1*0 + 2*0 + 3*1 = 3",
+        "i=2: 1*0 + 2*1 + 3*2 = 8",
+        "i=3: 1*1 + 2*2 + 3*3 = 14",
+        "i=4: 1*2 + 2*3 + 3*0 = 8",
+        "i=5: 1*3 + 2*0 + 3*0 = 3"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 0},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 3},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 8},
+        {"index": 3, "epoch": 0, "flags": 0, "score": 14},
+        {"index": 4, "epoch": 0, "flags": 0, "score": 8},
+        {"index": 5, "epoch": 0, "flags": 0, "score": 3}
+      ]
+    },
+    {
+      "name": "s16x1-impulse",
+      "why": "An impulse reads the coefficients out newest first: the sample at index 1 meets coefficient 2 at i = 1, coefficient 1 at i = 2 and coefficient 0 at i = 3.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, 2, 3]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[0], [1], [0], [0], [0]],
+      "worked": [
+        "i=0: 3*0 = 0",
+        "i=1: 1*0 + 2*0 + 3*1 = 3",
+        "i=2: 1*0 + 2*1 + 3*0 = 2",
+        "i=3: 1*1 + 2*0 + 3*0 = 1",
+        "i=4: 1*0 + 2*0 + 3*0 = 0"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 0},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 3},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 2},
+        {"index": 3, "epoch": 0, "flags": 0, "score": 1},
+        {"index": 4, "epoch": 0, "flags": 0, "score": 0}
+      ]
+    },
+    {
+      "name": "s16x1-extreme-values",
+      "why": "The largest coefficients against the largest 16-bit samples, both signs. 2^17 = 131072, 2^15 = 32768, 2^32 = 4294967296, 2^33 = 8589934592.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [-131072, 131071]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[32767], [-32768], [1]],
+      "worked": [
+        "score[i] = -131072*x[i-1] + 131071*x[i]",
+        "i=0: 0 + 131071*32767 = (2^17 - 1)(2^15 - 1) = 2^32 - 2^17 - 2^15 + 1 = 4294967296 - 131072 - 32768 + 1 = 4294803457",
+        "i=1: -131072*32767 + 131071*(-32768) = -(2^32 - 2^17) - (2^32 - 2^15) = -2^33 + 131072 + 32768 = -8589770752",
+        "i=2: -131072*(-32768) + 131071*1 = 2^32 + 131071 = 4295098367"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 4294803457},
+        {"index": 1, "epoch": 0, "flags": 0, "score": -8589770752},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 4295098367}
+      ]
+    },
+    {
+      "name": "s16x1-abs-pool-head-shift",
+      "why": "Every stage at once: two filters, the absolute value, a pool of 3, a head of (1, -3) and a shift of 1. The head sums are negative, and four of them are odd, so the shift's rounding shows: floor(-13/2) = -7, where rounding toward zero would give -6.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, -2]}, {"0": [3, 1]}], "head": [1, -3], "rectifier": 1, "pool": 3, "score_shift": 1},
+      "frames": [[2], [-1], [4], [0], [-3], [5]],
+      "worked": [
+        "y0[i] = 1*x[i-1] - 2*x[i]:  i=0: 0 - 4 = -4;  i=1: 2 + 2 = 4;  i=2: -1 - 8 = -9;  i=3: 4 - 0 = 4;  i=4: 0 + 6 = 6;  i=5: -3 - 10 = -13",
+        "y1[i] = 3*x[i-1] + 1*x[i]:  i=0: 0 + 2 = 2;  i=1: 6 - 1 = 5;  i=2: -3 + 4 = 1;  i=3: 12 + 0 = 12;  i=4: 0 - 3 = -3;  i=5: -9 + 5 = -4",
+        "r0 = |y0| = 4, 4, 9, 4, 6, 13;  r1 = |y1| = 2, 5, 1, 12, 3, 4",
+        "z0 (last 3 of r0): 4;  4+4 = 8;  4+4+9 = 17;  4+9+4 = 17;  9+4+6 = 19;  4+6+13 = 23",
+        "z1 (last 3 of r1): 2;  2+5 = 7;  2+5+1 = 8;  5+1+12 = 18;  1+12+3 = 16;  12+3+4 = 19",
+        "a = z0 - 3*z1:  4 - 6 = -2;  8 - 21 = -13;  17 - 24 = -7;  17 - 54 = -37;  19 - 48 = -29;  23 - 57 = -34",
+        "score = floor(a / 2):  -1;  -7;  -4;  -19;  -15;  -17"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": -1},
+        {"index": 1, "epoch": 0, "flags": 0, "score": -7},
+        {"index": 2, "epoch": 0, "flags": 0, "score": -4},
+        {"index": 3, "epoch": 0, "flags": 0, "score": -19},
+        {"index": 4, "epoch": 0, "flags": 0, "score": -15},
+        {"index": 5, "epoch": 0, "flags": 0, "score": -17}
+      ]
+    },
+    {
+      "name": "s16x1-pass-pool-head-shift",
+      "why": "The same two filters with the rectifier passing, a pool of 2, a head of (-1, 3) and a shift of 1. Three head sums are positive and odd: floor(21/2) = 10, where rounding to nearest would give 11.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, -2]}, {"0": [3, 1]}], "head": [-1, 3], "rectifier": 0, "pool": 2, "score_shift": 1},
+      "frames": [[2], [-1], [4], [0], [-3], [5]],
+      "worked": [
+        "y0 = -4, 4, -9, 4, 6, -13 and y1 = 2, 5, 1, 12, -3, -4, as worked in the case above; r = y",
+        "z0 (last 2 of y0): -4;  -4+4 = 0;  4-9 = -5;  -9+4 = -5;  4+6 = 10;  6-13 = -7",
+        "z1 (last 2 of y1): 2;  2+5 = 7;  5+1 = 6;  1+12 = 13;  12-3 = 9;  -3-4 = -7",
+        "a = -z0 + 3*z1:  4 + 6 = 10;  0 + 21 = 21;  5 + 18 = 23;  5 + 39 = 44;  -10 + 27 = 17;  7 - 21 = -14",
+        "score = floor(a / 2):  5;  10;  11;  22;  8;  -7"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 5},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 10},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 11},
+        {"index": 3, "epoch": 0, "flags": 0, "score": 22},
+        {"index": 4, "epoch": 0, "flags": 0, "score": 8},
+        {"index": 5, "epoch": 0, "flags": 0, "score": -7}
+      ]
+    },
+    {
+      "name": "s24x3-pulse-in-order-on-channel-1",
+      "why": "The tap order again, on the middle channel of three. Channels 0 and 2 carry other values, which a filter that reads only channel 1 must not see.",
+      "profile": "s24x3",
+      "config": {"filters": [{"1": [1, 2, 3]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[7, 0, -7], [7, 1, -7], [9, 2, 5], [-4, 3, 6], [1, 0, 2], [3, 0, -3]],
+      "worked": [
+        "score[i] = 1*x1[i-2] + 2*x1[i-1] + 3*x1[i], and x1 = 0, 1, 2, 3, 0, 0",
+        "0;  3;  2 + 6 = 8;  1 + 4 + 9 = 14;  2 + 6 + 0 = 8;  3 + 0 + 0 = 3"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 0},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 3},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 8},
+        {"index": 3, "epoch": 0, "flags": 0, "score": 14},
+        {"index": 4, "epoch": 0, "flags": 0, "score": 8},
+        {"index": 5, "epoch": 0, "flags": 0, "score": 3}
+      ]
+    },
+    {
+      "name": "s24x3-a-filter-across-channels",
+      "why": "Filter 0 reads channels 0 and 2 and sums them; filter 1 reads channel 1. The three channels carry values of different sizes, so a row applied to the wrong channel gives another answer. The last frame holds the 24-bit extremes 8388607 and -8388608.",
+      "profile": "s24x3",
+      "config": {"filters": [{"0": [1, 2], "2": [-1, 3]}, {"1": [5, -4]}], "head": [2, -1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[1, 10, 100], [2, 20, 200], [-3, 30, -300], [8388607, -8388608, 0]],
+      "worked": [
+        "y0[i] = 1*x0[i-1] + 2*x0[i] - 1*x2[i-1] + 3*x2[i]",
+        "y0: i=0: 0 + 2 - 0 + 300 = 302;  i=1: 1 + 4 - 100 + 600 = 505;  i=2: 2 - 6 - 200 - 900 = -1104;  i=3: -3 + 16777214 + 300 + 0 = 16777511",
+        "y1[i] = 5*x1[i-1] - 4*x1[i]",
+        "y1: i=0: 0 - 40 = -40;  i=1: 50 - 80 = -30;  i=2: 100 - 120 = -20;  i=3: 150 + 33554432 = 33554582",
+        "a = 2*y0 - y1:  604 + 40 = 644;  1010 + 30 = 1040;  -2208 + 20 = -2188;  33555022 - 33554582 = 440"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 644},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 1040},
+        {"index": 2, "epoch": 0, "flags": 0, "score": -2188},
+        {"index": 3, "epoch": 0, "flags": 0, "score": 440}
+      ]
+    },
+    {
+      "name": "s24x3-extreme-values",
+      "why": "The largest positive coefficient against the 24-bit extremes on channel 2: products past 2^40. 2^40 = 1099511627776, 2^23 = 8388608, 2^17 = 131072.",
+      "profile": "s24x3",
+      "config": {"filters": [{"2": [131071]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+      "frames": [[5, -7, 8388607], [-9, 11, -8388608]],
+      "worked": [
+        "i=0: 131071*8388607 = (2^17 - 1)(2^23 - 1) = 2^40 - 2^23 - 2^17 + 1 = 1099511627776 - 8388608 - 131072 + 1 = 1099503108097",
+        "i=1: 131071*(-8388608) = -(2^40 - 2^23) = -(1099511627776 - 8388608) = -1099503239168"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 1099503108097},
+        {"index": 1, "epoch": 0, "flags": 0, "score": -1099503239168}
+      ]
+    },
+    {
+      "name": "s24x3-abs-pool-head-shift",
+      "why": "Every stage at once under three channels: filter 0 across channels 0 and 1, filter 1 on channel 2, the absolute value, a pool of 2, a head of (1, -3), a shift of 1. floor(-3/2) = -2 and floor(-23/2) = -12.",
+      "profile": "s24x3",
+      "config": {"filters": [{"0": [1, -2], "1": [1, 1]}, {"2": [3, 1]}], "head": [1, -3], "rectifier": 1, "pool": 2, "score_shift": 1},
+      "frames": [[2, 1, 2], [-1, 0, -1], [4, -2, 4], [0, 3, 0]],
+      "worked": [
+        "y0[i] = 1*x0[i-1] - 2*x0[i] + 1*x1[i-1] + 1*x1[i]:  i=0: 0 - 4 + 0 + 1 = -3;  i=1: 2 + 2 + 1 + 0 = 5;  i=2: -1 - 8 + 0 - 2 = -11;  i=3: 4 - 0 - 2 + 3 = 5",
+        "y1[i] = 3*x2[i-1] + 1*x2[i]:  i=0: 0 + 2 = 2;  i=1: 6 - 1 = 5;  i=2: -3 + 4 = 1;  i=3: 12 + 0 = 12",
+        "r0 = 3, 5, 11, 5;  r1 = 2, 5, 1, 12",
+        "z0 (last 2): 3;  8;  16;  16.   z1 (last 2): 2;  7;  6;  13",
+        "a = z0 - 3*z1:  3 - 6 = -3;  8 - 21 = -13;  16 - 18 = -2;  16 - 39 = -23",
+        "score = floor(a / 2):  -2;  -7;  -1;  -12"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": -2},
+        {"index": 1, "epoch": 0, "flags": 0, "score": -7},
+        {"index": 2, "epoch": 0, "flags": 0, "score": -1},
+        {"index": 3, "epoch": 0, "flags": 0, "score": -12}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,31 @@
+{
+  "what": "The width of every stage of the detector core, in signed bits, worked BY HAND from the definition's maxima in the shape of D0 row D4: the extreme inputs, the worst value, the bits it needs. A signed width of W bits holds -2^(W-1) to 2^(W-1) - 1. The maxima used: 18-bit coefficients (largest magnitude 2^17, at COEFF_MIN), 128 taps, a pool of 65536 = 2^16, 16 rows in a shape, and as many rows in one filter as the profile has channels.",
+  "profiles": {
+    "s16x1": {
+      "worked": [
+        "one product: sample_min * COEFF_MIN = (-2^15)(-2^17) = +2^32. 33 signed bits stop at 2^32 - 1: 34 bits",
+        "filter (one row of 128 taps): 128 * 2^32 = 2^39. 40 signed bits stop at 2^39 - 1: 41 bits. This is D0 row D4",
+        "rectifier: the most negative filter sum is 128 * (-2^15)(2^17 - 1) = -(2^39 - 2^22), smaller in magnitude than 2^39, so its absolute value fits too: 41 bits",
+        "pool: 2^16 * 2^39 = 2^55: 57 bits",
+        "head: 16 rows, each head weight at COEFF_MIN = -2^17: 16 * (-2^17) * 2^55 = -2^76, which 77 signed bits hold exactly and 76 do not: 77 bits",
+        "score: the record's field, 64 bits; 77 - 64 = 13 is the shift that makes overflow impossible"
+      ],
+      "bits": {"product": 34, "filter": 41, "rectifier": 41, "pool": 57, "head": 77, "score": 64},
+      "extremes": {"filter": "2^39", "pool": "2^55", "head": "-2^76"},
+      "shift_that_rules_overflow_out": 13
+    },
+    "s24x3": {
+      "worked": [
+        "one product: (-2^23)(-2^17) = +2^40: 42 bits",
+        "one row of 128 taps: 2^47, which needs 49 bits. A filter across the three channels: 3 * 2^47, between 2^48 and 2^49: 50 bits",
+        "rectifier: 50 bits, as above",
+        "pool: 2^16 * 3 * 2^47 = 3 * 2^63, between 2^64 and 2^65: 66 bits",
+        "head: 16 rows (not 16 three-row filters): 16 * (-2^17) * 2^16 * 2^47 = -2^84: 85 bits",
+        "score: 64 bits; 85 - 64 = 21 is the shift that makes overflow impossible"
+      ],
+      "bits": {"product": 42, "filter": 50, "rectifier": 50, "pool": 66, "head": 85, "score": 64},
+      "extremes": {"filter": "3 * 2^47", "pool": "3 * 2^63", "head": "-2^84"},
+      "shift_that_rules_overflow_out": 21
+    }
+  }
+}
