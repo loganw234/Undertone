@@ -10,7 +10,7 @@
 #   5  a real stage passes on a line only success prints ("OK <name>: <n> ..."),
 #      not on its exit code. Skips print by name with a reason; --require-all
 #      makes a skip a failure; an unknown stage name is refused.
-#   5  a test skipped INSIDE a stage that passed is named and counted on the
+#      A test skipped INSIDE a stage that passed is named and counted on the
 #      verdict line, on a fresh run and on a resumed one, and fails the run
 #      under --require-all.
 #   6  a run id of timestamp + commit. Each run records whether its tree was
@@ -89,6 +89,11 @@ check_names() {  # <flagname> <comma-list>
 check_names --only "$ONLY"
 check_names --skip "$SKIP"
 
+# A `stage` line the derivation above cannot read would run and be missing from the
+# list. Refuse it now, before any stage has run.
+BADSTAGE=$(grep -E '^stage ' "$SELF" | grep -v -E '^stage [a-z0-9-]+ "' | head -n 1)
+[ -z "$BADSTAGE" ] || die "a stage line is not of the form: stage <lower case, digits, hyphens> \"description\": $BADSTAGE"
+
 COMMIT=$(git -C "$ROOT" rev-parse --short HEAD 2>/dev/null || echo nocommit)
 DIRTY=$(git -C "$ROOT" status --porcelain 2>/dev/null | grep -c .)
 if [ -n "$RESUME" ] && [ "$FRESH" = 1 ]; then
@@ -163,7 +168,9 @@ stage() {
     CACHED=$((CACHED+1))
     note "$(printf '%-17s %-5s %s' "$name" "ok" "(passed earlier in this run)")"
     # Its inner skips are still skips: count them from the log the stage kept.
-    local was; was=$(grep -c '^SKIPPED ' "$RUNDIR/$name.log" 2>/dev/null)
+    local was=0
+    # A control's log holds the skips of the copies it planted in; they are not this tree's.
+    [ "$expect_fail" = 1 ] || was=$(grep -c '^SKIPPED ' "$RUNDIR/$name.log" 2>/dev/null)
     if [ "${was:-0}" -ne 0 ]; then
       INNER=$((INNER+was))
       grep '^SKIPPED ' "$RUNDIR/$name.log" | head -n 20 | sed "s/^/      $name: /"

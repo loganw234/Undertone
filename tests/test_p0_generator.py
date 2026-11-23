@@ -54,6 +54,7 @@ BAD = [
     ("a field of 65 bits", [("[\"flags\", 8, \"unsigned\"], [\"score\", 64, \"signed\"]", "[\"flags\", 8, \"unsigned\"], [\"score\", 65, \"signed\"]")], "RECORD"),
     ("a field of one bit", [("[\"flags\", 8, \"unsigned\"], [\"score\", 64, \"signed\"]", "[\"flags\", 8, \"unsigned\"], [\"score\", 1, \"signed\"]")], "RECORD"),
     ("a score record with no flags field", [("[\"flags\", 8, \"unsigned\"], ", "")], "RECORD"),
+    ("a signed flags field", [("[\"flags\", 8, \"unsigned\"], ", "[\"flags\", 8, \"signed\"], ")], "RECORD"),
     ("a field name with a quote in it", [("[\"pre\", 16, \"unsigned\"]", "[\"pr\\\"e\", 16, \"unsigned\"]")], "NAME"),
     ("a flag bit used twice", [("overflow = 1", "overflow = 0")], "FLAGS"),
     ("a flag bit outside the field", [("overflow = 1", "overflow = 8")], "FLAGS"),
@@ -92,6 +93,18 @@ def test_p0_a_pulse_that_makes_no_sense_is_refused_by_name(tmp_path, why, pulse_
     with pytest.raises(gen_spec.Refused) as e:
         gen_spec.load(root)
     assert str(e.value).split(":")[0] == "PULSES", "%s was refused as %r" % (why, str(e.value))
+
+
+def test_p0_a_pulse_sample_at_either_end_of_the_narrowest_profile_is_accepted(tmp_path):
+    for value in ("-32768", " 32767"):
+        root = tree(tmp_path / value.strip(), pulse_edits=[("name = \"e0\"\nsamples = [\n        0,", "name = \"e0\"\nsamples = [\n   %s," % value)])
+        d, pulses, _digest = gen_spec.load(root)
+        assert pulses["e0"][0] == int(value)
+    for value in ("-32769", " 32768"):
+        root = tree(tmp_path / value.strip(), pulse_edits=[("name = \"e0\"\nsamples = [\n        0,", "name = \"e0\"\nsamples = [\n   %s," % value)])
+        with pytest.raises(gen_spec.Refused) as e:
+            gen_spec.load(root)
+        assert str(e.value).split(":")[0] == "PULSES"
 
 
 def test_p0_a_stale_copy_is_reported_with_the_line_that_differs(tmp_path):

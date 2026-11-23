@@ -20,7 +20,7 @@ To change a shared fact: edit `spec/undertone.toml`, run `python tools/gen_spec.
 
 ## The authority
 
-The reference model **is the authority** (README, and D0 section 2). Round 1 is writing it: only the skeleton exists (the definition in `spec/`, `model/refusal.py`, `model/stream.py`). Until the model is whole, nothing about the system can be held against anything, so nothing about the system is claimed.
+The reference model **is the authority** (README, and D0 section 2). Round 1 is writing it: only the skeleton exists (the definition in `spec/`, `model/refusal.py`, `model/stream.py`, `model/records.py`). Until the model is whole, nothing about the system can be held against anything, so nothing about the system is claimed.
 
 A known answer in a frozen vector is worked by hand or by independent code, never produced by the model it then judges.
 

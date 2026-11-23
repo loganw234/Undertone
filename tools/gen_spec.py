@@ -18,7 +18,7 @@ make sense is REFUSED by name. What is checked, exactly:
     underscores; a refusal name is upper case letters, digits and underscores;
   - the records are exactly score, truth and event, each field [name, bits,
     "signed" | "unsigned"] with bits a whole number of bytes from 8 to 64, no
-    field named twice, and the score record has a flags field;
+    field named twice, and the score record has an unsigned flags field;
   - no flag bit is used twice or lies outside the flags field;
   - no refusal name is listed twice;
   - a pulse's file is under spec/pulses/, names itself as the definition names
@@ -27,8 +27,11 @@ make sense is REFUSED by name. What is checked, exactly:
 Anything else that goes wrong while reading the definition is refused as
 DEFINITION-MALFORMED, with what went wrong: never a traceback.
 
-What is NOT checked: whether a value is the one the design means. A definition
-that says 64 taps where the design says 128 is accepted; tests hold that.
+What is NOT checked: whether a value is the one the design means, or whether
+a record has the fields the code reads. A definition that says 64 taps where
+the design says 128, or a truth record with no index, is accepted here. The
+tests hold the first for the figures they pin, and code that reads a missing
+field fails its own tests.
 """
 import hashlib
 import os
@@ -111,8 +114,8 @@ def validate(d, root):
             if f[2] not in ("signed", "unsigned"):
                 raise Refused("RECORD: %s.%s is %r, not signed or unsigned" % (rec, f[0], f[2]))
     flag_field = [f for f in d["records"]["score"] if f[0] == "flags"]
-    if not flag_field:
-        raise Refused("RECORD: score has no flags field")
+    if not flag_field or flag_field[0][2] != "unsigned":
+        raise Refused("RECORD: score has no unsigned flags field")
     if not isinstance(d["flags"], dict) or not d["flags"]:
         raise Refused("FLAGS: there is no flag")
     used = set()
@@ -133,7 +136,7 @@ def validate(d, root):
     if not isinstance(d["pulses"], dict) or not d["pulses"]:
         raise Refused("PULSES: there is no pulse")
     narrowest = min(p["sample_bits"] for p in d["profile"].values())
-    limit = 2 ** (narrowest - 1) - 1
+    lo, hi = -2 ** (narrowest - 1), 2 ** (narrowest - 1) - 1
     pulses = {}
     for name, rel in d["pulses"].items():
         lower("pulse", name)
@@ -146,7 +149,7 @@ def validate(d, root):
         s = p["samples"]
         if not isinstance(s, list) or not s or not all(type(v) is int for v in s):
             raise Refused("PULSES: %s's samples are not a list of ints" % rel)
-        if max(abs(v) for v in s) > limit:
+        if min(s) < lo or max(s) > hi:
             raise Refused("PULSES: %s has a sample outside the narrowest profile, %d bits" % (name, narrowest))
         pulses[name] = list(s)
     return pulses
