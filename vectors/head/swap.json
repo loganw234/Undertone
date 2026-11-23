@@ -1,0 +1,49 @@
+{
+  "what": "Score records around a weight swap, with a hidden layer. Every expected record was worked BY HAND from the swap's definition in model/weights.py (class Store) and the hidden layer's in model/detector.py, and the sums are written out in each case's 'worked' lines. Nothing here was produced by the model. Every swap changes the coefficients, the hidden units' weights and the head weights.",
+  "definition": "As vectors/mod-b/swap.json: commit(at) makes the shadow active immediately before output `at`. Outputs before `at` use the old coefficients, the old hidden weights and the old head weights; outputs from `at` on use the new. The hidden layer remembers nothing, so only the pool mixes: outputs at .. at+P-2 carry the settling flag (value 1).",
+  "format": "As vectors/head/datapath.json, plus swaps as in vectors/mod-b/swap.json. `write` names what the shadow blob changes: filters, hidden and head.",
+  "cases": [
+    {
+      "name": "s16x1-swap-hidden-and-head-pool-2",
+      "why": "A pool of 2, so output 2 mixes one value made under each coefficient set and carries the settling flag; its hidden sums and its output sum are all of the new set. A head whose head weights changed one output after its hidden weights would give 1*24 + 2*8 = 40 at i = 2; one whose hidden weights changed late, -8 + 8 = 0.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1]}], "hidden": [[1], [-1]], "hidden_shift": 0, "between": 1, "head": [1, 2],
+                 "rectifier": 0, "pool": 2, "score_shift": 0},
+      "frames": [[1], [2], [3], [4], [5]],
+      "swaps": [{"after": 0, "write": {"filters": [{"0": [2]}], "hidden": [[3], [1]], "head": [-1, 1]}, "at": 2}],
+      "worked": [
+        "old: y[i] = x[i] = 1, 2 for i = 0, 1.     new: y[i] = 2*x[i] = 6, 8, 10 for i = 2, 3, 4",
+        "z (last 2 of y):  i=0: 1;  i=1: 1 + 2 = 3;  i=2: 2 + 6 = 8;  i=3: 6 + 8 = 14;  i=4: 8 + 10 = 18",
+        "old head, i < 2: u0 = z, u1 = -z; abs: b0 = b1 = z; a = 1*z + 2*z = 3*z:  3;  9",
+        "new head, i >= 2: u0 = 3*z, u1 = z; abs leaves both, z being positive; a = -1*3*z + 1*z = -2*z:  -16;  -28;  -36",
+        "settling at i = 2 only (at .. at + P - 2 = 2 .. 2): flags = 1"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 3},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 9},
+        {"index": 2, "epoch": 1, "flags": 1, "score": -16},
+        {"index": 3, "epoch": 1, "flags": 0, "score": -28},
+        {"index": 4, "epoch": 1, "flags": 0, "score": -36}
+      ]
+    },
+    {
+      "name": "s24x3-swap-hidden-and-head-pool-1",
+      "why": "Two filters, on channels 0 and 2, with other values on channel 1; no pool, so no output mixes. Output 2 is the first under the new coefficients, the new hidden weights and the new head weights.",
+      "profile": "s24x3",
+      "config": {"filters": [{"0": [1]}, {"2": [1]}], "hidden": [[1, 1], [1, -1]], "hidden_shift": 0, "between": 1, "head": [1, 1],
+                 "rectifier": 0, "pool": 1, "score_shift": 1},
+      "frames": [[1, 50, 4], [2, 60, -3], [5, 70, 1], [-4, 80, 2]],
+      "swaps": [{"after": 0, "write": {"filters": [{"0": [2]}, {"2": [-1]}], "hidden": [[2, 1], [0, 3]], "head": [3, -1]}, "at": 2}],
+      "worked": [
+        "old, i = 0, 1: z0 = x0 = 1, 2.  z1 = x2 = 4, -3.  u0 = z0 + z1 = 5, -1.  u1 = z0 - z1 = -3, 5.  abs: b0 = 5, 1; b1 = 3, 5.  a = b0 + b1 = 8, 6.  score = floor(a / 2) = 4, 3",
+        "new, i = 2, 3: z0 = 2*x0 = 10, -8.  z1 = -1*x2 = -1, -2.  u0 = 2*z0 + z1 = 19, -18.  u1 = 0*z0 + 3*z1 = -3, -6.  abs: b0 = 19, 18; b1 = 3, 6.  a = 3*b0 - b1 = 54, 48.  score = 27, 24"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 4},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 3},
+        {"index": 2, "epoch": 1, "flags": 0, "score": 27},
+        {"index": 3, "epoch": 1, "flags": 0, "score": 24}
+      ]
+    }
+  ]
+}

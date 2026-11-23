@@ -1,0 +1,33 @@
+{
+  "what": "The width of every stage a hidden layer adds to the detector core, in signed bits, worked BY HAND from the definition's maxima in the shape of vectors/mod-b/widths.json: the extreme inputs, the worst value, the bits it needs. A signed width of W bits holds -2^(W-1) to 2^(W-1) - 1. The maxima used: 18-bit weights (largest magnitude 2^17, at COEFF_MIN), 12 hidden units, a score field of 64 bits, and the head sum's extremes from vectors/mod-b/widths.json: -2^76 under s16x1 and -2^84 under s24x3.",
+  "profiles": {
+    "s16x1": {
+      "worked": [
+        "hidden sum: one unit's sum is the head sum under the unit's weights: -2^76 at the extreme, 77 bits (vectors/mod-b/widths.json)",
+        "hidden value: the choice, the score field's width: 64 bits. -2^76 / 2^13 = -2^63, which 64 signed bits hold exactly: 13 is the hidden shift that makes overflow impossible. -2^76 / 2^12 = -2^64 does not fit",
+        "between: pass keeps -2^63 .. 2^63 - 1; abs turns -2^63 into +2^63, and 64 signed bits stop at 2^63 - 1: 65 bits",
+        "output sum: 12 units, each head weight at COEFF_MIN = -2^17. Under abs, 12 * (-2^17) * 2^63 = -12 * 2^80 = -3 * 2^82; under pass, 12 * (-2^17) * (-2^63) = +3 * 2^82. 3 * 2^82 lies between 2^83 and 2^84, and 84 signed bits stop at 2^83 - 1: 85 bits",
+        "score: 85 - 64 = 21 is the score shift that makes overflow impossible: 3 * 2^82 / 2^21 = 3 * 2^61, below 2^63. With 20 it is 3 * 2^62, above 2^63 - 1"
+      ],
+      "bits": {"hidden": 64, "between": 65, "output": 85},
+      "hidden_sum_bits": 77,
+      "extremes": {"hidden_sum": "-2^76", "hidden": "-2^63", "between": "2^63", "output": "3 * 2^82"},
+      "hidden_shift_that_rules_overflow_out": 13,
+      "score_shift_that_rules_overflow_out": 21
+    },
+    "s24x3": {
+      "worked": [
+        "hidden sum: -2^84 at the extreme, 85 bits (vectors/mod-b/widths.json)",
+        "hidden value: 64 bits. -2^84 / 2^21 = -2^63: 21 is the hidden shift that makes overflow impossible. -2^84 / 2^20 = -2^64 does not fit",
+        "between: 65 bits, as under s16x1: nothing after the hidden value depends on the sample format",
+        "output sum: +-3 * 2^82, 85 bits, as under s16x1",
+        "score: 85 - 64 = 21, as under s16x1"
+      ],
+      "bits": {"hidden": 64, "between": 65, "output": 85},
+      "hidden_sum_bits": 85,
+      "extremes": {"hidden_sum": "-2^84", "hidden": "-2^63", "between": "2^63", "output": "3 * 2^82"},
+      "hidden_shift_that_rules_overflow_out": 21,
+      "score_shift_that_rules_overflow_out": 21
+    }
+  }
+}

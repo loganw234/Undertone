@@ -20,7 +20,7 @@ Frame i is (x_0[i], ..., x_{C-1}[i]), and x_c[m] = 0 for m before the stream's s
 2. **Rectifier.** r_k[i] = y_k[i] in mode `pass`, the absolute value of y_k[i] in mode `abs`. Exact.
 3. **Pool.** z_k[i] = r_k[i] + r_k[i-1] + ... + r_k[i-P+1], with r_k[m] = 0 before the stream's start. A moving sum, one output per input. Exact.
 4. **Head.** a[i] = the sum over k of h[k] * z_k[i]. Exact.
-5. **Score.** v[i] = floor(a[i] / 2^s). **This is the one rounding in the datapath: toward minus infinity**, an arithmetic shift right. -13 shifted by 1 is -7, not -6.
+5. **Score.** v[i] = floor(a[i] / 2^s). **This is the one rounding in the datapath when the head has no hidden layer: toward minus infinity**, an arithmetic shift right. -13 shifted by 1 is -7, not -6. (Round 2 added a hidden layer, as blob version 2, and with one there is a second rounding of the same kind: [head.md](head.md).)
 
 The record is {index: i, epoch, flags, score}. Its index is the index of the newest sample it used.
 
@@ -30,7 +30,7 @@ Written as a convolution, y[i] = sum of c[j] * x[i-j], the same filter has its c
 
 **More than one channel** (convention (d)). A filter names the channels it reads and holds one row for each; its output is the sum over those channels. A channel it does not read is arithmetically a zero row. The same code runs under both profiles; under `s16x1` every filter reads channel 0.
 
-**Why it is shaped this way.** The pool is a moving sum because it is exact, forgets completely after P samples, and runs at one sample per clock with a delay line. The shift comes last, after every sum, so that there is one rounding and it is in one place. The head has no bias because the threshold does that job.
+**Why it is shaped this way.** The pool is a moving sum because it is exact, forgets completely after P samples, and runs at one sample per clock with a delay line. The shift comes last, after every sum, so that there is one rounding and it is in one place; a head with a hidden layer has two, and head.md says where. The head has no bias because the threshold does that job.
 
 ## 2. Widths
 
@@ -47,8 +47,8 @@ In the shape of D0 row D4: the extreme inputs, the worst value, the bits it need
 
 - **D0 row D4 is confirmed for 16 bits:** 128 products of at most 2^32 reach 2^39, and +2^39 needs 41 signed bits. For 24 bits one row reaches 2^47 and needs 49; a filter across the three channels reaches 3 * 2^47 and needs 50.
 - The head's bound counts rows, not filters: the sum over k of h[k] * z_k is at most M times (the rows in the shape) times one row's pooled extreme, and a shape has at most MAX_ROWS rows.
-- **The mechanism.** The model reduces five values to their declared widths, two's complement: the filter sum, the rectified value, the pool sum, the head sum and the score. A reduction that changes the value raises the `overflow` flag, which then stays set in every later record of that core, across swaps. For the first four the declared width is the table's, so in the shipped core the reduction never changes anything. A single product is not reduced on its own; its row is the width a multiplier's output needs. `detector.widths(profile)` derives the widths from `spec.constants`; nothing is typed in.
-- **The score is the one width that is a choice.** When v[i] does not fit 64 signed bits, the score field holds v[i] modulo 2^64 as two's complement, and the flag is set in that record and every later one. So the value under overflow is still defined bit for bit, and the fabric must match it. Once the true value is back in range the field is the true value again; the flag stays.
+- **The mechanism.** The model reduces five values to their declared widths, two's complement: the filter sum, the rectified value, the pool sum, the head sum and the score. A reduction that changes the value raises the `overflow` flag, which then stays set in every later record of that core, across swaps. For the first four the declared width is the table's, so in the shipped core the reduction never changes anything. A single product is not reduced on its own; its row is the width a multiplier's output needs. `detector.widths(profile)` derives the widths from `spec.constants`; nothing is typed in. A head with a hidden layer reduces three values more, by the same mechanism: head.md.
+- **The score is the one width that is a choice, when the head has no hidden layer.** With one, the hidden value's width is a second, and it is the score field's (head.md). When v[i] does not fit 64 signed bits, the score field holds v[i] modulo 2^64 as two's complement, and the flag is set in that record and every later one. So the value under overflow is still defined bit for bit, and the fabric must match it. Once the true value is back in range the field is the true value again; the flag stays.
 - **What a configuration can do about it.** With s = 13 under `s16x1`, or s = 21 under `s24x3`, no legal configuration can overflow the score. With s = 0 the matched-filter configuration cannot (41 or 50 bits).
 - The score field stays 64 bits. Nothing narrower is asked for.
 
@@ -80,7 +80,7 @@ On disk, blob version 1, every integer little-endian:
 
 `weights.Store` holds an active weight set, a shadow, and an epoch that starts at 0, or at a start epoch given at construction.
 
-- `write_shadow(blob)` replaces the whole shadow. The blob must have the running shape: profile, K, T, each filter's channels, rectifier, P and s.
+- `write_shadow(blob)` replaces the whole shadow. The blob must have the running shape: profile, K, T, each filter's channels, rectifier, P and s; and, where the head has a hidden layer, its unit count, its shift and what stands after it. A blob with a hidden layer and one without never have the same shape.
 - `commit(at)` schedules the swap **at output index `at`**: immediately before output `at` is computed, active and shadow exchange and the epoch rises by one. An index, and not "now", so that a replay swaps at the same sample. A commit for the next output is `commit(core.next_index)`.
 - **Which outputs use which weights.** Every output before `at` uses the old coefficients and the old head and carries the old epoch. Every output from `at` on uses the new coefficients and the new head, on the samples already in the delay lines, and carries the new epoch. No filter sum and no head sum mixes two sets.
 - **Which outputs mix.** The pool does. For `at` <= i <= `at` + P - 2, with `at` at least 1, the pooled sum holds rectified values made under the old coefficients and values made under the new. Those P - 1 outputs carry the new epoch **and the `settling` flag**. Their scores are still defined exactly and the fabric must match them. With P = 1, which includes the matched-filter configuration, no output mixes and the flag never rises.
@@ -108,11 +108,11 @@ On disk, blob version 1, every integer little-endian:
 
 ## 7. Refusals
 
-Each is `model.refusal.Refusal(name, detail)`. One row for each name, and beside it exactly what raises it.
+Each is `model.refusal.Refusal(name, detail)`. One row for each name round 1 declared for these modules, and beside it what raises it for a head with no hidden layer. A hidden layer brings three names more, and more ways to reach five of these: head.md, section 3.
 
 | name | what raises it |
 |---|---|
-| BLOB_FORMAT | `unpack`, and so `Core`, `Store` and `write_shadow`: something that is not `bytes`; too few bytes to hold the fixed fields and a hash; another magic or version; a name length, a count of channel masks or a whole length that disagrees with the bytes that are there |
+| BLOB_FORMAT | `unpack`, and so `Core`, `Store` and `write_shadow`: something that is not `bytes`; too few bytes to hold the fixed fields and a hash; another magic, or a version that is not 1 or 2; a name length, a count of channel masks or a whole length that disagrees with the bytes that are there |
 | BLOB_HASH | `unpack`: the last 32 bytes are not the SHA-256 of the rest. Checked before anything inside is read |
 | PROFILE_UNKNOWN | `pack`, `matched_filter` and `Scorer`: a profile name that is not declared. `unpack`: a name in the blob that is not ASCII or not declared |
 | RESERVED_BITS | `unpack`: any bit of the blob's reserved field. `Scorer.feed`: any reserved flag bit of the record it is fed |
@@ -142,7 +142,7 @@ Where a row says a list, a tuple is taken as well. A refused frame advances noth
 
 **The order of checks is part of the definition.** `test_gate_refusal__the_order_of_checks_is_the_documented_one` holds each neighbouring pair of the lists below, with a call that has both things wrong. SHAPE_ROWS's place is held under `s24x3` only, where it can be reached. The order inside `Scorer.feed` is not held by a test: a closed scorer refuses first, then the frame is checked, then the record, then its index.
 
-`pack` checks in this order: PROFILE_UNKNOWN, SHAPE_FILTERS, SHAPE_CHANNEL, SHAPE_ROWS, SHAPE_TAPS, WEIGHT_COUNT, SHAPE_RECTIFIER, SHAPE_SHIFT, SHAPE_POOL, WEIGHT_RANGE. `unpack`: BLOB_FORMAT (type and least length), BLOB_HASH, BLOB_FORMAT (magic, version, the name's length), PROFILE_UNKNOWN, RESERVED_BITS, SHAPE_FILTERS, SHAPE_TAPS, SHAPE_RECTIFIER, SHAPE_SHIFT, SHAPE_POOL, BLOB_FORMAT (channel masks that would run past the end), SHAPE_CHANNEL, SHAPE_ROWS, BLOB_FORMAT (the whole length), WEIGHT_RANGE. `commit`: SWAP_PENDING, SWAP_INDEX, SWAP_EPOCH. `write_shadow`: SWAP_PENDING, the blob's own, SWAP_SHAPE. `Scorer`: PROFILE_UNKNOWN, SCORER_THRESHOLD, SCORER_WINDOW, SCORER_BINS.
+These are the orders for a head with no hidden layer; head.md, section 3, has where the new checks stand. `pack` checks in this order: PROFILE_UNKNOWN, SHAPE_FILTERS, SHAPE_CHANNEL, SHAPE_ROWS, SHAPE_TAPS, WEIGHT_COUNT, SHAPE_RECTIFIER, SHAPE_SHIFT, SHAPE_POOL, WEIGHT_RANGE. `unpack`: BLOB_FORMAT (type and least length), BLOB_HASH, BLOB_FORMAT (magic, version, the name's length), PROFILE_UNKNOWN, RESERVED_BITS, SHAPE_FILTERS, SHAPE_TAPS, SHAPE_RECTIFIER, SHAPE_SHIFT, SHAPE_POOL, BLOB_FORMAT (channel masks that would run past the end), SHAPE_CHANNEL, SHAPE_ROWS, BLOB_FORMAT (the whole length), WEIGHT_RANGE. `commit`: SWAP_PENDING, SWAP_INDEX, SWAP_EPOCH. `write_shadow`: SWAP_PENDING, the blob's own, SWAP_SHAPE. `Scorer`: PROFILE_UNKNOWN, SCORER_THRESHOLD, SCORER_WINDOW, SCORER_BINS.
 
 ## 8. The gates, and what holds them
 
@@ -164,10 +164,10 @@ Three tests are there to show that a control's choice of fault matters: a flippe
 
 Each is stated by the behaviour it concedes.
 
-- **L1. One linear head, no bias.** This model cannot represent a detector that needs a hidden layer. A deeper head is a change to the datapath, to the blob's version and to every width after the pool. D0's words are "a small dense head"; this is the smallest one.
+- **L1. One linear head, no bias, in a version 1 blob.** Round 1's model could not represent a detector that needs a hidden layer. Round 2 added one, as blob version 2, with its own widths after the pool and its own limits: head.md. Neither head has a bias. D0's words are "a small dense head"; a version 1 head is the smallest one.
 - **L2. A run in which overflow rose is a marked run.** The scorer counts its records, and `overflow_at` says where the flag first rose. No efficiency or false-alarm figure from such a run may be reported as valid. The score field of a record that did not fit is the true value modulo 2^64: defined, and not a score.
 - **L3. Two rectifier modes, one for the whole bank.** No half-wave and no square. One filter cannot pass while another takes the absolute value.
-- **L4. A swap changes coefficients and head weights and nothing else.** The pool length, the shift, the rectifier, the tap count and which channels a filter reads belong to the shape; changing one is a new core, not a swap.
+- **L4. A swap changes weights and nothing else:** the coefficients and the head weights, and with a hidden layer its units' weights. The pool length, the shift, the rectifier, the tap count and which channels a filter reads belong to the shape, and so do a hidden layer's unit count, its shift and what stands after it; changing one is a new core, not a swap.
 - **L5. The shadow is written whole.** The model has no partly written shadow and says nothing about how long a write takes or how a host delivers one. A commit names its index in advance; a fabric that swaps "when the write lands" is not this model.
 - **L6. The settling flag says that an output mixes, not how much.** An output's flag says its pooled sum holds values made under two weight sets. It does not say how many of each, so the first mixed output, which holds one new value, is left out of the statistics exactly as the last one is.
 - **L7. The pool and the head are not narrowed in a whole core.** The overflow control narrows the filter and the score in cores run end to end. For the pool and the head it hands a narrowed core the stage values the full shipped run reached. A fault that exists only in how a narrowed pool or head behaves over a whole run, and not on its extreme value, is not planted.

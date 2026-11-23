@@ -32,14 +32,34 @@ every integer little-endian:
 A filter reads the channels its mask names and holds one row for each. The
 shape's cost is its rows, summed over the filters: at most MAX_ROWS.
 
+BLOB VERSION 2 is a head with a hidden layer (docs/model/head.md). It is
+version 1 with two differences. Where version 1 has its reserved field, the
+same four bytes hold the hidden layer's shape:
+
+    hidden H           u16, 1..MAX_HIDDEN
+    hidden_shift       u8, 0..MAX_HIDDEN_SHIFT
+    between            u8, a code of spec.constants.RECTIFIERS
+
+and where version 1 has its K head weights there are:
+
+    H hidden units     unit 0's K weights in filter order, then unit 1's, ...;
+                       i32 each
+    H head weights     i32 each: one for each hidden unit
+
+A head with no hidden layer has one blob, the version 1 one: version 2 with
+H = 0 is refused, BLOB_FORMAT. Version 2 has no reserved field.
+
 `unpack` refuses, in this order: BLOB_FORMAT (not bytes, or too short to be a
-blob), BLOB_HASH, BLOB_FORMAT (magic, version, a name that runs past the end),
-PROFILE_UNKNOWN, RESERVED_BITS, SHAPE_FILTERS, SHAPE_TAPS, SHAPE_RECTIFIER,
-SHAPE_SHIFT, SHAPE_POOL, BLOB_FORMAT (the masks run past the end),
-SHAPE_CHANNEL, SHAPE_ROWS, BLOB_FORMAT (a length that disagrees with the
+blob), BLOB_HASH, BLOB_FORMAT (magic, a version that is not 1 or 2, a name
+that runs past the end), PROFILE_UNKNOWN, RESERVED_BITS (version 1) or
+BLOB_FORMAT (version 2 with H = 0), SHAPE_FILTERS, SHAPE_TAPS,
+SHAPE_RECTIFIER, SHAPE_SHIFT, SHAPE_POOL, then for version 2 SHAPE_HIDDEN,
+SHAPE_HIDDEN_SHIFT, SHAPE_BETWEEN, then BLOB_FORMAT (the masks run past the
+end), SHAPE_CHANNEL, SHAPE_ROWS, BLOB_FORMAT (a length that disagrees with the
 header), WEIGHT_RANGE. `pack` refuses, in this order: PROFILE_UNKNOWN,
-SHAPE_FILTERS, SHAPE_CHANNEL, SHAPE_ROWS, SHAPE_TAPS, WEIGHT_COUNT,
-SHAPE_RECTIFIER, SHAPE_SHIFT, SHAPE_POOL, WEIGHT_RANGE.
+SHAPE_FILTERS, SHAPE_CHANNEL, SHAPE_ROWS, SHAPE_TAPS, SHAPE_HIDDEN,
+WEIGHT_COUNT, SHAPE_RECTIFIER, SHAPE_SHIFT, SHAPE_POOL, SHAPE_HIDDEN_SHIFT,
+SHAPE_BETWEEN, WEIGHT_RANGE.
 
 THE STORE (`Store`). An active weight set, a shadow, an epoch, and the swap,
 defined per output sample: see the class.
@@ -59,12 +79,17 @@ PASS = C.RECTIFIERS["pass"]
 ABS = C.RECTIFIERS["abs"]
 
 MAGIC = b"UNDTBLOB"
-VERSION = 1
+VERSION = 1                            # a head with no hidden layer
+VERSION_HIDDEN = 2                     # a head with one
 HASH_BYTES = 32
 MASK_BITS = 16
 # The fixed fields after the profile name: (name, bytes), in order.
 FIXED = (("filters", 2), ("taps", 2), ("rectifier", 1), ("score_shift", 1), ("pool", 4), ("reserved", 4))
 FIXED_BYTES = sum(n for _name, n in FIXED)
+# Version 2: the hidden layer's shape, in the four bytes that version 1 reserves.
+FIXED_HIDDEN = FIXED[:-1] + (("hidden", 2), ("hidden_shift", 1), ("between", 1))
+if sum(n for _name, n in FIXED_HIDDEN) != FIXED_BYTES:
+    raise ImportError("model/weights.py: the two versions' fixed fields must be one length")
 NAME_AT = len(MAGIC) + 2 + 1           # where the profile name starts
 WEIGHT_BYTES = 4                       # a coefficient or a head weight on disk
 SMALLEST = NAME_AT + FIXED_BYTES + HASH_BYTES   # no blob is shorter than this
@@ -137,24 +162,41 @@ def _check_scalars(rectifier, score_shift, pool):
         raise Refusal("SHAPE_POOL", "pool %r outside 1..%d" % (pool, C.MAX_POOL))
 
 
-def _check_weights(filters, head):
+def _check_hidden(hidden_shift, between):
+    if not _is_int(hidden_shift, 0, C.MAX_HIDDEN_SHIFT):
+        raise Refusal("SHAPE_HIDDEN_SHIFT", "hidden_shift %r outside 0..%d" % (hidden_shift, C.MAX_HIDDEN_SHIFT))
+    if type(between) is not int or between not in C.RECTIFIERS.values():
+        raise Refusal("SHAPE_BETWEEN", "between code %r; declared: %s" % (between, sorted(C.RECTIFIERS.items())))
+
+
+def _check_weights(filters, head, hidden=()):
     for k, rows in enumerate(filters):
         for c in sorted(rows):
             for v in rows[c]:
                 if not _is_int(v, C.COEFF_MIN, C.COEFF_MAX):
                     raise Refusal("WEIGHT_RANGE", "filter %d, channel %d: coefficient %r outside %d..%d"
                                   % (k, c, v, C.COEFF_MIN, C.COEFF_MAX))
+    for j, unit in enumerate(hidden):
+        for v in unit:
+            if not _is_int(v, C.COEFF_MIN, C.COEFF_MAX):
+                raise Refusal("WEIGHT_RANGE", "hidden unit %d: weight %r outside %d..%d" % (j, v, C.COEFF_MIN, C.COEFF_MAX))
     for k, v in enumerate(head):
         if not _is_int(v, C.COEFF_MIN, C.COEFF_MAX):
             raise Refusal("WEIGHT_RANGE", "head weight %d: %r outside %d..%d" % (k, v, C.COEFF_MIN, C.COEFF_MAX))
 
 
-def pack(profile, filters, head, rectifier, pool, score_shift):
+def pack(profile, filters, head, rectifier, pool, score_shift, hidden=None, hidden_shift=None, between=None):
     """The blob for a configuration, or a refusal by name.
 
     `filters` is a list of K dicts; each maps a channel index to that
-    channel's row of T coefficients, oldest sample first. `head` is K head
-    weights. K, T and the channels each filter reads are taken from them.
+    channel's row of T coefficients, oldest sample first. K, T and the
+    channels each filter reads are taken from them.
+
+    With `hidden` None the head has no hidden layer: `head` is K head weights,
+    and the blob is version 1. Otherwise `hidden` is a list of H units, each K
+    weights in filter order; `hidden_shift` and `between` are the layer's
+    shift and the code of what stands after it; `head` is H head weights, one
+    for each unit; and the blob is version 2.
     """
     prof = stream.profile(profile)
     if not isinstance(filters, (list, tuple)) or not 1 <= len(filters) <= C.MAX_FILTERS:
@@ -173,18 +215,37 @@ def pack(profile, filters, head, rectifier, pool, score_shift):
     if not isinstance(first, (list, tuple)) or not 1 <= len(first) <= C.MAX_TAPS:
         raise Refusal("SHAPE_TAPS", "a filter has 1..%d taps" % C.MAX_TAPS)
     taps = len(first)
+    if hidden is None:
+        if hidden_shift is not None or between is not None:
+            raise Refusal("SHAPE_HIDDEN", "a hidden shift or a between, and no hidden layer for it")
+    elif not isinstance(hidden, (list, tuple)) or not 1 <= len(hidden) <= C.MAX_HIDDEN:
+        raise Refusal("SHAPE_HIDDEN", "a hidden layer has 1..%d units" % C.MAX_HIDDEN)
     for k, rows in enumerate(filters):
         for c in sorted(rows):
             if not isinstance(rows[c], (list, tuple)) or len(rows[c]) != taps:
                 raise Refusal("WEIGHT_COUNT", "filter %d, channel %d: a row is %d coefficients" % (k, c, taps))
-    if not isinstance(head, (list, tuple)) or len(head) != len(filters):
-        raise Refusal("WEIGHT_COUNT", "the head has one weight for each of the %d filters" % len(filters))
+    if hidden is None:
+        if not isinstance(head, (list, tuple)) or len(head) != len(filters):
+            raise Refusal("WEIGHT_COUNT", "the head has one weight for each of the %d filters" % len(filters))
+    else:
+        for j, unit in enumerate(hidden):
+            if not isinstance(unit, (list, tuple)) or len(unit) != len(filters):
+                raise Refusal("WEIGHT_COUNT", "hidden unit %d has one weight for each of the %d filters" % (j, len(filters)))
+        if not isinstance(head, (list, tuple)) or len(head) != len(hidden):
+            raise Refusal("WEIGHT_COUNT", "the head has one weight for each of the %d hidden units" % len(hidden))
     _check_scalars(rectifier, score_shift, pool)
-    _check_weights(filters, head)
+    if hidden is not None:
+        _check_hidden(hidden_shift, between)
+    _check_weights(filters, head, hidden or ())
 
     name = profile.encode("ascii")
-    out = MAGIC + VERSION.to_bytes(2, "little") + len(name).to_bytes(1, "little") + name
-    for value, (_field, nbytes) in zip((len(filters), taps, rectifier, score_shift, pool, 0), FIXED):
+    if hidden is None:
+        version, fields = VERSION, zip((len(filters), taps, rectifier, score_shift, pool, 0), FIXED)
+    else:
+        version = VERSION_HIDDEN
+        fields = zip((len(filters), taps, rectifier, score_shift, pool, len(hidden), hidden_shift, between), FIXED_HIDDEN)
+    out = MAGIC + version.to_bytes(2, "little") + len(name).to_bytes(1, "little") + name
+    for value, (_field, nbytes) in fields:
         out += value.to_bytes(nbytes, "little")
     for rows in filters:
         mask = 0
@@ -195,6 +256,9 @@ def pack(profile, filters, head, rectifier, pool, score_shift):
         for c in sorted(rows):
             for v in rows[c]:
                 out += v.to_bytes(WEIGHT_BYTES, "little", signed=True)
+    for unit in hidden or ():
+        for v in unit:
+            out += v.to_bytes(WEIGHT_BYTES, "little", signed=True)
     for v in head:
         out += v.to_bytes(WEIGHT_BYTES, "little", signed=True)
     return out + hashlib.sha256(out).digest()
@@ -203,17 +267,21 @@ def pack(profile, filters, head, rectifier, pool, score_shift):
 def unpack(blob):
     """The blob's parts, or a refusal by name.
 
-    Returns a dict with exactly: profile, filters (a tuple of K dicts, channel
-    to a tuple of T coefficients), head, rectifier, pool, score_shift, sha256
-    (the blob's hash, in hex). The first six are `pack`'s arguments.
+    For a version 1 blob, returns a dict with exactly: profile, filters (a
+    tuple of K dicts, channel to a tuple of T coefficients), head, rectifier,
+    pool, score_shift, sha256 (the blob's hash, in hex). The first six are
+    `pack`'s arguments. For a version 2 blob the dict has three keys more,
+    `pack`'s other three arguments: hidden (a tuple of H tuples of K weights),
+    hidden_shift and between; and head is the H head weights.
     """
     if not isinstance(blob, bytes) or len(blob) < SMALLEST:
         raise Refusal("BLOB_FORMAT", "a blob is bytes, at least %d of them" % SMALLEST)
     body, said = blob[:-HASH_BYTES], blob[-HASH_BYTES:]
     if hashlib.sha256(body).digest() != said:
         raise Refusal("BLOB_HASH", "the last %d bytes are not the SHA-256 of the rest" % HASH_BYTES)
-    if body[:len(MAGIC)] != MAGIC or int.from_bytes(body[len(MAGIC):len(MAGIC) + 2], "little") != VERSION:
-        raise Refusal("BLOB_FORMAT", "not a version %d blob" % VERSION)
+    version = int.from_bytes(body[len(MAGIC):len(MAGIC) + 2], "little")
+    if body[:len(MAGIC)] != MAGIC or version not in (VERSION, VERSION_HIDDEN):
+        raise Refusal("BLOB_FORMAT", "not a version %d or a version %d blob" % (VERSION, VERSION_HIDDEN))
     at = NAME_AT + body[NAME_AT - 1]
     if at + FIXED_BYTES > len(body):
         raise Refusal("BLOB_FORMAT", "the profile name runs past the end")
@@ -223,17 +291,28 @@ def unpack(blob):
         raise Refusal("PROFILE_UNKNOWN", repr(body[NAME_AT:at]))
     prof = stream.profile(profile)
     fixed = {}
-    for field, nbytes in FIXED:
+    for field, nbytes in (FIXED if version == VERSION else FIXED_HIDDEN):
         fixed[field] = int.from_bytes(body[at:at + nbytes], "little")
         at += nbytes
-    if fixed["reserved"] != 0:
-        raise Refusal("RESERVED_BITS", "blob reserved field = 0x%08X" % fixed["reserved"])
+    if version == VERSION:
+        if fixed["reserved"] != 0:
+            raise Refusal("RESERVED_BITS", "blob reserved field = 0x%08X" % fixed["reserved"])
+        nhidden = 0
+    else:
+        nhidden = fixed["hidden"]
+        if nhidden == 0:
+            raise Refusal("BLOB_FORMAT", "version %d with no hidden unit: a head with no hidden layer is a version %d blob"
+                          % (VERSION_HIDDEN, VERSION))
     nfilters, taps = fixed["filters"], fixed["taps"]
     if not 1 <= nfilters <= C.MAX_FILTERS:
         raise Refusal("SHAPE_FILTERS", "%d filters; a shape has 1..%d" % (nfilters, C.MAX_FILTERS))
     if not 1 <= taps <= C.MAX_TAPS:
         raise Refusal("SHAPE_TAPS", "%d taps; a filter has 1..%d" % (taps, C.MAX_TAPS))
     _check_scalars(fixed["rectifier"], fixed["score_shift"], fixed["pool"])
+    if nhidden:
+        if nhidden > C.MAX_HIDDEN:
+            raise Refusal("SHAPE_HIDDEN", "%d hidden units; a hidden layer has 1..%d" % (nhidden, C.MAX_HIDDEN))
+        _check_hidden(fixed["hidden_shift"], fixed["between"])
     mask_bytes = MASK_BITS // 8
     if at + nfilters * mask_bytes > len(body):
         raise Refusal("BLOB_FORMAT", "the channel masks run past the end")
@@ -248,7 +327,9 @@ def unpack(blob):
         rows_total += len(reads[-1])
     if rows_total > C.MAX_ROWS:
         raise Refusal("SHAPE_ROWS", "%d rows; a shape has at most %d" % (rows_total, C.MAX_ROWS))
-    if at + (rows_total * taps + nfilters) * WEIGHT_BYTES != len(body):
+    # After the rows: K head weights (version 1), or H units of K weights and then H head weights (version 2).
+    nhead = nhidden if nhidden else nfilters
+    if at + (rows_total * taps + nhidden * nfilters + nhead) * WEIGHT_BYTES != len(body):
         raise Refusal("BLOB_FORMAT", "the length disagrees with the header")
 
     def word():
@@ -257,17 +338,28 @@ def unpack(blob):
         return int.from_bytes(body[at - WEIGHT_BYTES:at], "little", signed=True)
 
     filters = tuple({c: tuple(word() for _ in range(taps)) for c in channels} for channels in reads)
-    head = tuple(word() for _ in range(nfilters))
-    _check_weights(filters, head)
-    return {"profile": profile, "filters": filters, "head": head, "rectifier": fixed["rectifier"],
-            "pool": fixed["pool"], "score_shift": fixed["score_shift"], "sha256": said.hex()}
+    hidden = tuple(tuple(word() for _ in range(nfilters)) for _ in range(nhidden))
+    head = tuple(word() for _ in range(nhead))
+    _check_weights(filters, head, hidden)
+    config = {"profile": profile, "filters": filters, "head": head, "rectifier": fixed["rectifier"],
+              "pool": fixed["pool"], "score_shift": fixed["score_shift"], "sha256": said.hex()}
+    if nhidden:
+        config.update(hidden=hidden, hidden_shift=fixed["hidden_shift"], between=fixed["between"])
+    return config
 
 
 def shape(config):
-    """What a swap may not change: everything in a configuration but the weights."""
-    return (config["profile"], len(config["filters"]), len(config["filters"][0][min(config["filters"][0])]),
+    """What a swap may not change: everything in a configuration but the weights.
+
+    With a hidden layer that includes how many units it has, its shift and what stands after it; a
+    configuration with a hidden layer and one without never have the same shape.
+    """
+    base = (config["profile"], len(config["filters"]), len(config["filters"][0][min(config["filters"][0])]),
             tuple(tuple(sorted(rows)) for rows in config["filters"]),
             config["rectifier"], config["pool"], config["score_shift"])
+    if "hidden" in config:
+        return base + (len(config["hidden"]), config["hidden_shift"], config["between"])
+    return base
 
 
 def matched_filter(profile, pulse, gains):
@@ -305,7 +397,9 @@ class Store:
       before output `at`, active and shadow exchange and the epoch rises by
       one. Every output before `at` uses the old coefficients and the old
       head; every output from `at` on uses the new ones. No filter sum and no
-      head sum mixes two sets.
+      head sum mixes two sets. With a hidden layer the head's weights are the
+      hidden units' and the head weights, and they exchange with the
+      coefficients, whole: no hidden sum and no output sum mixes two sets.
     - The pool does mix them: with a pool of P, the outputs `at` to
       `at + P - 2` sum rectified values made under the old coefficients with
       values made under the new. `step()` reports those as settling. When
@@ -333,7 +427,11 @@ class Store:
 
     @staticmethod
     def _weights(config):
-        return (tuple(tuple((c, rows[c]) for c in sorted(rows)) for rows in config["filters"]), config["head"])
+        """(coefficient rows, head). With a hidden layer the head is the pair (hidden units, head weights)."""
+        rows = tuple(tuple((c, rows[c]) for c in sorted(rows)) for rows in config["filters"])
+        if "hidden" in config:
+            return (rows, (config["hidden"], config["head"]))
+        return (rows, config["head"])
 
     def pending(self):
         return self._at is not None or self.next_index <= self._mixed_until

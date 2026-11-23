@@ -1,0 +1,102 @@
+{
+  "what": "Score records of the detector core with a hidden layer, on small cases. Every expected score was worked BY HAND from the definition in model/detector.py's docstring, steps 4a to 4d, and the sums are written out in each case's 'worked' lines. Nothing here was produced by the model.",
+  "definition": "y, r and z as in vectors/mod-b/datapath.json. u_j[i] = sum over k of hidden[j][k] * z_k[i]; t_j[i] = floor(u_j[i] / 2^hidden_shift); b_j = t_j (between 0, pass) or |t_j| (between 1, abs); a[i] = sum over j of head[j] * b_j[i]; score[i] = floor(a[i] / 2^score_shift). floor is toward minus infinity: floor(-11 / 2) = -6.",
+  "format": "As vectors/mod-b/datapath.json, and in config: hidden is a list of units, each one weight for each filter, in filter order; hidden_shift; between; head is one weight for each hidden unit.",
+  "cases": [
+    {
+      "name": "s16x1-two-units-abs-both-shifts",
+      "why": "Two filters, two units, abs between, and a shift at each place, with an odd negative value at each so that the two floors show: at i = 1 the first unit's sum is -11, and at i = 3 the output sum is -13. A hidden shift that rounded toward zero would give t_0 = -5 at i = 1 and a score of 3 there; a between that passed would give 3*(-6) - 8 = -26 and a score of -13 there; a score shift that rounded toward zero would give -6 at i = 3.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, 2]}, {"0": [-3, 1]}], "hidden": [[2, 1], [1, -4]], "hidden_shift": 1, "between": 1,
+                 "head": [3, -1], "rectifier": 0, "pool": 1, "score_shift": 1},
+      "frames": [[1], [-2], [3], [0]],
+      "worked": [
+        "y0[i] = 1*x[i-1] + 2*x[i]:  i=0: 0 + 2 = 2;  i=1: 1 - 4 = -3;  i=2: -2 + 6 = 4;  i=3: 3 + 0 = 3",
+        "y1[i] = -3*x[i-1] + 1*x[i]:  i=0: 0 + 1 = 1;  i=1: -3 - 2 = -5;  i=2: 6 + 3 = 9;  i=3: -9 + 0 = -9",
+        "rectifier pass, pool 1: z = y",
+        "u0 = 2*z0 + 1*z1:  4 + 1 = 5;  -6 - 5 = -11;  8 + 9 = 17;  6 - 9 = -3",
+        "u1 = 1*z0 - 4*z1:  2 - 4 = -2;  -3 + 20 = 17;  4 - 36 = -32;  3 + 36 = 39",
+        "t0 = floor(u0 / 2):  2;  -6;  8;  -2.     t1 = floor(u1 / 2):  -1;  8;  -16;  19",
+        "abs:  b0 = 2, 6, 8, 2.     b1 = 1, 8, 16, 19",
+        "a = 3*b0 - 1*b1:  6 - 1 = 5;  18 - 8 = 10;  24 - 16 = 8;  6 - 19 = -13",
+        "score = floor(a / 2):  2;  5;  4;  -7"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": 2},
+        {"index": 1, "epoch": 0, "flags": 0, "score": 5},
+        {"index": 2, "epoch": 0, "flags": 0, "score": 4},
+        {"index": 3, "epoch": 0, "flags": 0, "score": -7}
+      ]
+    },
+    {
+      "name": "s16x1-two-units-pass-after-an-abs-bank-and-a-pool",
+      "why": "The same filters and frames behind an abs rectifier and a pool of 2, with pass between and no shift: the bank's rectifier and the layer's are two settings. A between that took the absolute value would give 5*1 + 3*3 = 14 at i = 0.",
+      "profile": "s16x1",
+      "config": {"filters": [{"0": [1, 2]}, {"0": [-3, 1]}], "hidden": [[1, -1], [-2, 1]], "hidden_shift": 0, "between": 0,
+                 "head": [5, 3], "rectifier": 1, "pool": 2, "score_shift": 0},
+      "frames": [[1], [-2], [3], [0]],
+      "worked": [
+        "y0 = 2, -3, 4, 3 and y1 = 1, -5, 9, -9, as in the case above",
+        "rectifier abs:  r0 = 2, 3, 4, 3.     r1 = 1, 5, 9, 9",
+        "pool 2:  z0 = 2;  2 + 3 = 5;  3 + 4 = 7;  4 + 3 = 7.     z1 = 1;  1 + 5 = 6;  5 + 9 = 14;  9 + 9 = 18",
+        "u0 = 1*z0 - 1*z1:  1;  -1;  -7;  -11.     u1 = -2*z0 + 1*z1:  -4 + 1 = -3;  -10 + 6 = -4;  -14 + 14 = 0;  -14 + 18 = 4",
+        "hidden_shift 0 and pass: b = u",
+        "a = 5*b0 + 3*b1:  5 - 9 = -4;  -5 - 12 = -17;  -35 + 0 = -35;  -55 + 12 = -43",
+        "score_shift 0: score = a"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": -4},
+        {"index": 1, "epoch": 0, "flags": 0, "score": -17},
+        {"index": 2, "epoch": 0, "flags": 0, "score": -35},
+        {"index": 3, "epoch": 0, "flags": 0, "score": -43}
+      ]
+    },
+    {
+      "name": "s24x3-two-units-abs-channels-differ",
+      "why": "Three channels with different values, a filter across channels 0 and 2 and one on channel 1, a pool of 2, abs between, a hidden shift of 2 and a score shift of 1. Six of the eight hidden sums are negative, and five of those are not multiples of 4: -25, -29, -2, -9 and -17. The first two output sums are -1, whose floor by 2 is -1, not 0.",
+      "profile": "s24x3",
+      "config": {"filters": [{"0": [1, -1], "2": [2, 1]}, {"1": [3, -2]}], "hidden": [[1, 2], [-3, 1]], "hidden_shift": 2, "between": 1,
+                 "head": [2, -5], "rectifier": 0, "pool": 2, "score_shift": 1},
+      "frames": [[1, -2, 3], [4, 5, -6], [-7, 8, 9], [2, -1, -3]],
+      "worked": [
+        "x0 = 1, 4, -7, 2.     x1 = -2, 5, 8, -1.     x2 = 3, -6, 9, -3",
+        "y0[i] = 1*x0[i-1] - 1*x0[i] + 2*x2[i-1] + 1*x2[i]:  i=0: 0 - 1 + 0 + 3 = 2;  i=1: 1 - 4 + 6 - 6 = -3;  i=2: 4 + 7 - 12 + 9 = 8;  i=3: -7 - 2 + 18 - 3 = 6",
+        "y1[i] = 3*x1[i-1] - 2*x1[i]:  i=0: 0 + 4 = 4;  i=1: -6 - 10 = -16;  i=2: 15 - 16 = -1;  i=3: 24 + 2 = 26",
+        "rectifier pass, pool 2:  z0 = 2;  2 - 3 = -1;  -3 + 8 = 5;  8 + 6 = 14.     z1 = 4;  4 - 16 = -12;  -16 - 1 = -17;  -1 + 26 = 25",
+        "u0 = 1*z0 + 2*z1:  2 + 8 = 10;  -1 - 24 = -25;  5 - 34 = -29;  14 + 50 = 64",
+        "u1 = -3*z0 + 1*z1:  -6 + 4 = -2;  3 - 12 = -9;  -15 - 17 = -32;  -42 + 25 = -17",
+        "t0 = floor(u0 / 4):  2;  -7;  -8;  16.     t1 = floor(u1 / 4):  -1;  -3;  -8;  -5",
+        "abs:  b0 = 2, 7, 8, 16.     b1 = 1, 3, 8, 5",
+        "a = 2*b0 - 5*b1:  4 - 5 = -1;  14 - 15 = -1;  16 - 40 = -24;  32 - 25 = 7",
+        "score = floor(a / 2):  -1;  -1;  -12;  3"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": -1},
+        {"index": 1, "epoch": 0, "flags": 0, "score": -1},
+        {"index": 2, "epoch": 0, "flags": 0, "score": -12},
+        {"index": 3, "epoch": 0, "flags": 0, "score": 3}
+      ]
+    },
+    {
+      "name": "s24x3-three-units-pass-on-channel-1",
+      "why": "Three units on one filter, on the middle channel, pass between: the units' signs survive. With abs between the first score would be 4 + 9 - 13 = 0. More units than filters, so a head that took its count from the filters would be wrong.",
+      "profile": "s24x3",
+      "config": {"filters": [{"1": [3]}], "hidden": [[1], [-2], [3]], "hidden_shift": 1, "between": 0,
+                 "head": [1, 1, -1], "rectifier": 1, "pool": 1, "score_shift": 0},
+      "frames": [[9, 3, -9], [8, -5, -8], [7, 4, -7]],
+      "worked": [
+        "y = 3*x1:  9;  -15;  12.     rectifier abs, pool 1:  z = 9, 15, 12",
+        "u0 = z:  9, 15, 12.     u1 = -2*z:  -18, -30, -24.     u2 = 3*z:  27, 45, 36",
+        "t = floor(u / 2):  t0 = 4, 7, 6.     t1 = -9, -15, -12.     t2 = 13, 22, 18",
+        "pass: b = t",
+        "a = b0 + b1 - b2:  4 - 9 - 13 = -18;  7 - 15 - 22 = -30;  6 - 12 - 18 = -24",
+        "score_shift 0: score = a"
+      ],
+      "records": [
+        {"index": 0, "epoch": 0, "flags": 0, "score": -18},
+        {"index": 1, "epoch": 0, "flags": 0, "score": -30},
+        {"index": 2, "epoch": 0, "flags": 0, "score": -24}
+      ]
+    }
+  ]
+}
