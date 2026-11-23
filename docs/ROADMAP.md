@@ -2,13 +2,25 @@
 
 The lead's file. It holds Logan's decisions as he gave them, the plan of record, and how rounds are held. A parcel does not edit it.
 
-## Where the project stands (2026-11-21)
+## Where the project stands (2026-11-23)
 
 - **Design:** [D0, the rough design](studies/D0-rough-design.md), approved by Logan on 2026-11-21 with all six of its questions answered as recommended.
-- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. The round is running, on the branch `r1`.
+- **Plan of record:** [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work is done on the branch `r1`, which is local; what remains is its closing verifier's pass and Logan's word before `main` moves.
 - **Licence:** MIT, by Logan's test of 2026-11-23: the easiest option for others to reuse the work.
-- **Built:** nothing of the system. The repository holds the survey, the draft, and the front door (`bash verify/run.sh`).
-- **Committed and pushed** under Logan's word of 2026-11-21 (question 6 of D0, and his leave to create a remote). The remote is the public repository `loganw234/Undertone` on GitHub.
+- **Built, in software only:** the reference model (`model/`), the statistics that judge sensitivity (`stats/`), and the eleven gates of D0 that need no hardware. As a matched filter the model reproduces the textbook curve at five amplitudes. **Nothing of the system is built**: no RTL, no host library, nothing on the card. Five of D0's sixteen gates wait for those.
+- **Looked at, once:** one rocket launch in public seismic records, plain at four stations out to 78.5 km and absent on two control days. One launch; not a rate. [D1b](studies/D1b-first-look.md).
+- **Committed and pushed** under Logan's word of 2026-11-21 (question 6 of D0, and his leave to create a remote): the setup, up to `d13281f`. The remote is the public repository `loganw234/Undertone` on GitHub. **Nothing of round 1 is pushed.**
+
+### Open with Logan (2026-11-23)
+
+Each is his to decide. None blocked the round.
+
+1. **The push.** `main` moves to `r1`'s tip, and is pushed, only on his word. The lead asks at the round's close.
+2. **The detector's head.** D0 says "a small dense head"; the model's is one linear layer with no bias, which cannot represent a detector that needs a hidden layer. Accepted by the lead for round 1 as a stated limit.
+3. **D0's row D1, 16-bit samples on one channel.** The real records are three components, and two of 25 files hold samples that need 17 bits. The model already runs under a 24-bit, three-channel profile.
+4. **A package index's terms.** They exclude a person on a sanctions list. A parcel installed nine packages from it, into a virtual environment, before that was put to him.
+5. **Raspberry Shake's licence**, which he said he would look into. Held: no request, and no row of its data in any committed file.
+6. **What round 2 is.** The plan of record ends with round 1.
 
 ## Logan's words, as given
 
@@ -113,5 +125,5 @@ Beyond the six: the lead may create a remote with `gh` and push. The name was me
 
 | round | what | state |
 |---|---|---|
-| `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | running from 2026-11-23, on `r1` |
-| `2026-11-21-d0-design` | the rough design D0, a verifier pass over it and one re-check | the draft awaits Logan's answers; the record is in [VALIDATION.md](VALIDATION.md) |
+| `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | run on 2026-11-23, on `r1`: six parcels merged, each past a verifier; the closing pass and the push are open. The record is in [VALIDATION.md](VALIDATION.md) |
+| `2026-11-21-d0-design` | the rough design D0, a verifier pass over it and one re-check | approved by Logan on 2026-11-21; the record is in [VALIDATION.md](VALIDATION.md) |

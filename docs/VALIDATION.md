@@ -506,3 +506,72 @@ Each parcel's document lists its own: 25, 19 and 17. Beside them:
 
 - **No hidden layer, no per-channel amplitude, no second pulse.** Each is a stated limit and a decision for the next plan.
 - **Nothing pushed.**
+
+## 2026-11-23 - round 1, wave 2: the seam, truth isolation, and stage E0 in software
+
+The lead's own parcel. The parts of the reference model are joined in one place and run together for the first time, the eleventh and last gate the round builds is in the registry, and the run the plan's row V1 turns on has been made. **This entry is written before any verifier has seen the seam.** That pass is the next entry's.
+
+### What changed
+
+- `model/run.py` (`29ab2a0`): the one place the parts meet. Frames go to the injector, the injected stream to the detector core, the truth records to the caller and to nothing else. The profile is the blob's own.
+- `tests/test_seam_conventions.py` and `vectors/seam/`: [model/conventions.md](model/conventions.md) held on the parts run together, against answers worked by hand; one pulse giving the same coefficients in `model/` and in `stats/`; and, on one stream, the integer core and the floating-point matched filter giving every score equal.
+- `tests/test_seam_isolation.py`: the truth-isolation gate, and tests of the runner itself (`2be71da`).
+- `tests/test_seam_e0.py`: stage E0 in software, a short form in the gate and the full run as a script.
+- `model/stream.py`: a frame is now exactly a tuple. One test of parcel MOD-A's and one sentence of parcel MOD-B's document leaned on the old behaviour; the lead changed both, after their merges.
+- D0's rows D8 and D11 restated, with what each said before kept at the end of that file; the plan gains what the round found against its value statements.
+
+### What ran
+
+- The lead, in a scratch clone of `r1` with the three parcels merged, before they were merged for real; then on `r1`.
+- **Eleven faults planted by the lead in copies of the tree, one at a time**, each a convention or a property of the runner broken on purpose: the core reading its coefficients newest first; the scorer counting a score equal to its threshold; the injector a frame late; the statistics filter not reversed for numpy's convolution; the core dropping a channel's row; the frame check taking a subclass again; the runner handing the injector no schedule; the runner dropping its start epoch; the runner checking the schedule before the blob; the runner handing on the input frame in place of the injected one; a tie rounded upward in the model's quantiser.
+- **The full run of stage E0**, booked on the TimeSheet: five processes, one an amplitude, from a scratch clone detached at `29ab2a0`.
+
+### Measured
+
+- **Each of the eleven planted faults was reported by a seam test**, by 1 to 15 failures.
+- **The seam tests of the conventions passed at their first run** on the three parcels' code as merged. That is the plan's row V3 at its sharpest: the parcels did not see one another's code. Of the hand-worked answers, the conventions page's was written before any parcel reported; the two-channel case was worked by the lead afterwards, on paper and without running the code; the tie set is one that parcel MOD-B's own vectors use too. Two of the lead's other tests did fail at first, each on the lead's own expectation: which scores a pulse moves (123 a pulse, not 125, because the filter's first and last coefficients are zero as the pulse's first and last samples are), and the tagged frame before the frame check was tightened.
+- **Bit for bit, between two implementations that share no code.** On one stream of 4,000 frames with seven injections, under each profile, every score of the integer core equals the score of `stats/`'s floating-point matched filter with the same integer coefficients. In the full run the same holds for all 2,000,000 scores read.
+- **Truth isolation.** The same samples under four other sets of truth records (none; the real indexes at amplitude zero; other indexes at amplitude zero; one record too faint to add a sample) give score records with one digest, and a scorer's events with one digest, under both profiles. A runner made in the test, which sets the lowest bit of the score on the frame where a truth record says a pulse begins, is reported.
+- **Stage E0 in software, the full run.** Profile `s16x1`; the model's own noise at sigma 1477; the reference pulse every 128 frames; the score read at the truth index + 63; D8's own threshold for a false-alarm probability of 0.01, from the noise law's exact variance; 200,000 injections an amplitude, a seed for each, named in the round's ledger before any run. `python tests/test_seam_e0.py --judge` printed:
+
+  | amplitude | seed | d | D8 | found | efficiency | from D8 | tolerance | |
+  |---|---|---|---|---|---|---|---|---|
+  | 1/2 | 2026112300 | 1.1634 | 0.1224 | 24,442 | 0.12221 | -0.30 se | 0.00293 | INSIDE |
+  | 3/4 | 2026112301 | 1.7450 | 0.2805 | 55,857 | 0.27929 | -1.22 se | 0.00402 | INSIDE |
+  | 1 | 2026112302 | 2.3269 | 0.5002 | 99,743 | 0.49872 | -1.33 se | 0.00447 | INSIDE |
+  | 5/4 | 2026112303 | 2.9087 | 0.7198 | 144,075 | 0.72037 | +0.53 se | 0.00402 | INSIDE |
+  | 3/2 | 2026112304 | 3.4903 | 0.8778 | 175,622 | 0.87811 | +0.46 se | 0.00293 | INSIDE |
+
+  Noise alone, at the same threshold, one signal-free score a trial: 1,929, 1,974, 2,008, 2,041 and 1,987 of 200,000 cross, which is -1.60, -0.58, +0.18, +0.92 and -0.29 standard errors from 0.01. Its last line: `== E0 SOFTWARE VERDICT: PASS, every amplitude inside D8's tolerance`. SHA-256 of that output: `3bf1c6f3...5479e`. The parts and the output are kept under the round's `reports/e0/`.
+- **The cost of quantisation, measured on the same streams:** with the pulse itself as the coefficients, never rounded, the floating-point filter finds exactly the injections the model finds, at every amplitude. No injection in 1,000,000 is found by one and not the other.
+- **No record of the run carries a flag.** Nothing overflowed and nothing settled.
+- **The gate**, `bash verify/run.sh`, Windows desktop, `python` 3.12.15, each time with the commit's changes in the tree and the commit made only on the verdict line. For `29ab2a0`: VERDICT: PASS, 16 of 16; `OK model-tests: 699 tests ran, 0 failed, 0 errored, 0 skipped`; `OK registry: 11 gate row(s), each with its test and its control; 102 gate-claiming test(s), each with a row`; 75 s by the wall clock. For `2be71da`: VERDICT: PASS; `OK model-tests: 703 tests ran, 0 failed, 0 errored, 0 skipped`.
+- **The gate's short form of E0**, 4,000 injections at amplitude 1: 1,999 found, -0.06 standard errors from 0.5002, inside a tolerance of 0.0316; noise alone 30 of 4,000. On the same samples, the coefficients reversed find 0, and the score read one sample late finds 1,697, which is 9.6 standard errors low: each beyond the catch margin.
+
+### Which authority this rests on
+
+**Sensitivity**, by D8 and the statistics package's tolerance. The plan's row V1 said the round was worth running if the model, as a matched filter, reproduces D8's curve at the injected index within D9's tolerance plus the measured cost of quantisation. It does.
+
+It is **not** evidence that any fabric is correct. Nothing here is bit identity against hardware: there is no hardware side. The exact agreement between the core and the floating-point filter is agreement between two pieces of software.
+
+### What this does not prove
+
+- **Anything about learning.** The coefficients were set, not learned.
+- **Anything about real records, coloured noise, a second pulse, the three-channel profile, or a filter longer than its pulse.** One pulse, one noise level, one profile.
+- **That the threshold would hold if it were measured.** It was known, from the noise law's variance. The statistics package's tolerance for a measured threshold is wider, and this run did not use it.
+- **Isolation against a detector that goes looking.** The injected stream is a Python generator, and code written to look inside it can find what is about to be added. The gate shows that a runner which lets truth reach the output is caught, and no more.
+- **The conventions beyond the cases run**, which are small or are the reference pulse.
+- **That the seam is right.** It is the lead's own work and no verifier had seen it when this was written.
+
+### The lead's slips
+
+- **The first commit of the seam had no test of the runner's own arguments.** A runner that dropped its start epoch, or checked the schedule before the blob, passed every test in `29ab2a0`. The lead found that while choosing faults for the seam's verifier, and `2be71da` adds the tests.
+- **One result was seen before the full run:** a trial of 20,000 injections at amplitude 1 with a seed that is not one of the experiment's, made to check that the script ran. No seed and nothing else about the experiment was changed after it.
+- **The seeds first named for E0 were replaced before any run**, on a fact from parcel MOD-A: one seed under five amplitudes puts the same noise under each, and the seed first named is the stream the noise-tails gate counts.
+- **The lead edited two parcels' files** in the seam's commit. Disclosed there and here.
+
+### Not done, and why
+
+- **No verifier's pass yet.** It follows, on the round's tip, with planted faults.
+- **The integration verifier has not re-made the merges.** The same pass.
+- **Nothing pushed.**
