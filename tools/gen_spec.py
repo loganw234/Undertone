@@ -8,66 +8,160 @@
 One definition, generated copies. Round 2 adds the SystemVerilog and C outputs
 here; today there is one output, the Python constants model/ and stats/ import.
 
-The definition is checked before anything is written, and a definition that
-does not make sense is REFUSED by name: an unknown key, a width out of range,
-a duplicate name, a flag bit used twice, a pulse that does not fit a profile.
+The definition is checked before anything is written, and one that does not
+make sense is REFUSED by name. What is checked, exactly:
+
+  - the top-level sections are the eight this generator knows, no more, no fewer;
+  - every section's keys are the ones listed in KEYS below, no more, no fewer;
+  - a number is an int (never a bool, a float or a string) inside its range;
+  - a profile, field, flag or pulse name is lower case letters, digits and
+    underscores; a refusal name is upper case letters, digits and underscores;
+  - the records are exactly score, truth and event, each field [name, bits,
+    "signed" | "unsigned"] with bits a whole number of bytes from 8 to 64, no
+    field named twice, and the score record has a flags field;
+  - no flag bit is used twice or lies outside the flags field;
+  - no refusal name is listed twice;
+  - a pulse's file is under spec/pulses/, names itself as the definition names
+    it, and holds ints that fit the NARROWEST profile.
+
+Anything else that goes wrong while reading the definition is refused as
+DEFINITION-MALFORMED, with what went wrong: never a traceback.
+
+What is NOT checked: whether a value is the one the design means. A definition
+that says 64 taps where the design says 128 is accepted; tests hold that.
 """
 import hashlib
 import os
+import re
 import sys
 import tomllib
 
 OUT = "spec/constants.py"
 SRC = "spec/undertone.toml"
-TOP = {"meta", "profile", "core", "quantise", "records", "flags", "refusals", "pulses"}
+KEYS = {
+    "meta": {"spec_version"},
+    "core": {"coeff_bits", "max_filters", "max_taps"},
+    "quantise": {"scale", "rounding"},
+    "records": {"score", "truth", "event"},
+    "refusals": {"names"},
+}
+TOP = set(KEYS) | {"profile", "flags", "pulses"}
+RANGE = {"spec_version": (1, 10 ** 6), "sample_bits": (2, 32), "channels": (1, 16),
+         "coeff_bits": (2, 32), "max_filters": (1, 1024), "max_taps": (1, 65536)}
+LOWER = re.compile(r"[a-z][a-z0-9_]*\Z")
+UPPER = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 
 
 class Refused(Exception):
     pass
 
 
-def load(root):
-    with open(os.path.join(root, SRC), "rb") as f:
-        raw = f.read()
-    d = tomllib.loads(raw.decode("utf-8"))
-    if set(d) != TOP:
-        raise Refused("UNKNOWN-OR-MISSING-SECTION: %s" % sorted(set(d) ^ TOP))
+def number(section, key, value):
+    lo, hi = RANGE[key]
+    if type(value) is not int or not lo <= value <= hi:
+        raise Refused("NUMBER: %s.%s = %r is not an int from %d to %d" % (section, key, value, lo, hi))
+    return value
+
+
+def lower(what, name):
+    if type(name) is not str or not LOWER.match(name):
+        raise Refused("NAME: %s %r is not lower case letters, digits and underscores" % (what, name))
+    return name
+
+
+def keys(section, have, want):
+    if set(have) != set(want):
+        raise Refused("KEYS: [%s] has %s, expected %s" % (section, sorted(have), sorted(want)))
+
+
+def validate(d, root):
+    if not isinstance(d, dict) or set(d) != TOP:
+        raise Refused("SECTIONS: has %s, expected %s" % (sorted(d), sorted(TOP)))
+    for section, want in KEYS.items():
+        if not isinstance(d[section], dict):
+            raise Refused("SECTIONS: [%s] is not a table" % section)
+        keys(section, d[section], want)
+    number("meta", "spec_version", d["meta"]["spec_version"])
+    if not isinstance(d["profile"], dict) or not d["profile"]:
+        raise Refused("PROFILE: there is no profile")
     for name, p in d["profile"].items():
-        if set(p) != {"sample_bits", "channels"}:
-            raise Refused("PROFILE-KEYS: %s" % name)
-        if not (2 <= p["sample_bits"] <= 32 and 1 <= p["channels"] <= 16):
-            raise Refused("PROFILE-RANGE: %s" % name)
-    c = d["core"]
-    if set(c) != {"coeff_bits", "max_filters", "max_taps"} or min(c.values()) < 1:
-        raise Refused("CORE-KEYS-OR-RANGE")
+        lower("profile", name)
+        if not isinstance(p, dict):
+            raise Refused("PROFILE: %s is not a table" % name)
+        keys("profile.%s" % name, p, {"sample_bits", "channels"})
+        number("profile.%s" % name, "sample_bits", p["sample_bits"])
+        number("profile.%s" % name, "channels", p["channels"])
+    for key in KEYS["core"]:
+        number("core", key, d["core"][key])
     if d["quantise"] != {"scale": "peak_to_max", "rounding": "half_to_even"}:
-        raise Refused("QUANTISE-RULE-UNKNOWN: this generator knows one rule")
+        raise Refused("QUANTISE: this generator knows one rule, peak_to_max with half_to_even")
     for rec, fields in d["records"].items():
-        names = [f[0] for f in fields]
-        if len(set(names)) != len(names):
-            raise Refused("RECORD-DUPLICATE-FIELD: %s" % rec)
+        if not isinstance(fields, list) or not fields:
+            raise Refused("RECORD: %s has no fields" % rec)
+        seen = set()
         for f in fields:
-            if len(f) != 3 or f[2] not in ("signed", "unsigned") or not 1 <= f[1] <= 64:
-                raise Refused("RECORD-FIELD: %s.%s" % (rec, f[0]))
-    flag_bits = dict(d["records"]["score"] and [(f[0], f[1]) for f in d["records"]["score"]])["flags"]
-    if len(set(d["flags"].values())) != len(d["flags"]) or \
-            not all(0 <= b < flag_bits for b in d["flags"].values()):
-        raise Refused("FLAG-BITS: a bit is used twice or lies outside the flags field")
+            if not isinstance(f, list) or len(f) != 3:
+                raise Refused("RECORD: a field of %s is not [name, bits, sign]" % rec)
+            lower("field of %s" % rec, f[0])
+            if f[0] in seen:
+                raise Refused("RECORD: %s names the field %s twice" % (rec, f[0]))
+            seen.add(f[0])
+            if type(f[1]) is not int or f[1] not in (8, 16, 24, 32, 40, 48, 56, 64):
+                raise Refused("RECORD: %s.%s is %r bits, not a whole number of bytes from 8 to 64" % (rec, f[0], f[1]))
+            if f[2] not in ("signed", "unsigned"):
+                raise Refused("RECORD: %s.%s is %r, not signed or unsigned" % (rec, f[0], f[2]))
+    flag_field = [f for f in d["records"]["score"] if f[0] == "flags"]
+    if not flag_field:
+        raise Refused("RECORD: score has no flags field")
+    if not isinstance(d["flags"], dict) or not d["flags"]:
+        raise Refused("FLAGS: there is no flag")
+    used = set()
+    for name, bit in d["flags"].items():
+        lower("flag", name)
+        if type(bit) is not int or not 0 <= bit < flag_field[0][1] or bit in used:
+            raise Refused("FLAGS: %s = %r is used twice or lies outside the %d-bit flags field"
+                          % (name, bit, flag_field[0][1]))
+        used.add(bit)
     names = d["refusals"]["names"]
-    if len(set(names)) != len(names) or not all(n.isupper() or "_" in n for n in names):
-        raise Refused("REFUSAL-NAMES")
+    if not isinstance(names, list) or not names:
+        raise Refused("REFUSALS: there is no name")
+    for n in names:
+        if type(n) is not str or not UPPER.match(n):
+            raise Refused("NAME: refusal %r is not upper case letters, digits and underscores" % (n,))
+    if len(set(names)) != len(names):
+        raise Refused("REFUSALS: a name is listed twice")
+    if not isinstance(d["pulses"], dict) or not d["pulses"]:
+        raise Refused("PULSES: there is no pulse")
+    narrowest = min(p["sample_bits"] for p in d["profile"].values())
+    limit = 2 ** (narrowest - 1) - 1
     pulses = {}
     for name, rel in d["pulses"].items():
+        lower("pulse", name)
+        if type(rel) is not str or not re.match(r"pulses/[a-z0-9_]+\.toml\Z", rel):
+            raise Refused("PULSES: %s's path %r is not pulses/<name>.toml" % (name, rel))
         with open(os.path.join(root, "spec", rel), "rb") as f:
             p = tomllib.loads(f.read().decode("utf-8"))
-        if p.get("name") != name or not p.get("samples") or \
-                not all(isinstance(v, int) for v in p["samples"]):
-            raise Refused("PULSE-FILE: %s" % rel)
-        pulses[name] = list(p["samples"])
-    lo = min(d["profile"].values(), key=lambda p: p["sample_bits"])["sample_bits"]
-    for name, s in pulses.items():
-        if max(abs(v) for v in s) > 2 ** (lo - 1) - 1:
-            raise Refused("PULSE-RANGE: %s does not fit the narrowest profile" % name)
+        if set(p) != {"name", "samples"} or p["name"] != name:
+            raise Refused("PULSES: %s does not name itself %r, or has other keys" % (rel, name))
+        s = p["samples"]
+        if not isinstance(s, list) or not s or not all(type(v) is int for v in s):
+            raise Refused("PULSES: %s's samples are not a list of ints" % rel)
+        if max(abs(v) for v in s) > limit:
+            raise Refused("PULSES: %s has a sample outside the narrowest profile, %d bits" % (name, narrowest))
+        pulses[name] = list(s)
+    return pulses
+
+
+def load(root):
+    try:
+        with open(os.path.join(root, SRC), "rb") as f:
+            raw = f.read()
+        d = tomllib.loads(raw.decode("utf-8"))
+        pulses = validate(d, root)
+    except Refused:
+        raise
+    except Exception as e:  # a definition this generator did not foresee is refused, not crashed on
+        raise Refused("DEFINITION-MALFORMED: %s: %s" % (type(e).__name__, e))
     return d, pulses, hashlib.sha256(raw.replace(b"\r\n", b"\n")).hexdigest()
 
 

@@ -61,6 +61,7 @@ def check(root):
         with open(path, "rb") as f:
             have = f.read().decode("utf-8").replace("\r\n", "\n")
         if have != want:
+            before = len(findings)
             old = dict(l.split("  ", 1)[::-1] for l in have.split("\n") if "  " in l)
             new = dict(l.split("  ", 1)[::-1] for l in want.split("\n") if "  " in l)
             for name in sorted(set(old) | set(new)):
@@ -70,6 +71,9 @@ def check(root):
                                      if name in old and name in new else
                                      "is not in %s" % NAME if name in new else
                                      "is in %s and not in the folder" % NAME))
+            if len(findings) == before:
+                # Same files, same digests, different text: a repeated line, a comment, a missing newline.
+                findings.append((rel, "is not exactly what the generator writes"))
     return findings, len(names), nfiles
 
 

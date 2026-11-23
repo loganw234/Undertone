@@ -12,17 +12,22 @@ from model.refusal import Refusal
 
 
 def profile(name):
-    """The profile's facts, or a refusal by name."""
-    if name not in C.PROFILES:
+    """A copy of the profile's facts, or a refusal by name.
+
+    Anything that is not the name of a declared profile is refused, whatever
+    its type. The copy is the caller's: changing it changes nothing shared.
+    """
+    if type(name) is not str or name not in C.PROFILES:
         raise Refusal("PROFILE_UNKNOWN", repr(name))
-    return C.PROFILES[name]
+    return dict(C.PROFILES[name])
 
 
 def check_frame(prof, frame):
     """Return the frame unchanged, or refuse it by name.
 
-    `prof` is what `profile()` returned. A bool is refused: it is an int in
-    Python, and a True in a sample stream is a bug upstream.
+    `prof` is what `profile()` returned. Every channel is checked. A bool is
+    refused: it is an int in Python, and a True in a sample stream is a bug
+    upstream.
     """
     if not isinstance(frame, tuple) or len(frame) != prof["channels"]:
         raise Refusal("CHANNELS", "frame %r, profile has %d channel(s)" % (frame, prof["channels"]))

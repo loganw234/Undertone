@@ -13,26 +13,39 @@ A check prints "OK <kind>: <counts>" and exits 0, or prints each finding as
 "FINDING <kind> <where>: <what>" and exits 1. What it cannot do exactly is
 REFUSED by name with exit 2. verify/run.sh asserts on the OK line.
 
-`control` exits 1 only when every planted fault was reported and nothing else
-was, and then prints "CONTROL-DETECTED <kind> ...". Every other outcome exits 0.
+`control` prints "CONTROL-DETECTED <kind> ..." and exits 1 only when every
+planted fault was reported and nothing else was. When it runs to its end
+without that, it exits 0. If it crashes it exits non-zero with a traceback and
+no CONTROL-DETECTED line; the runner needs the line, so it fails that too.
 
 WHAT THESE CHECKS CANNOT SEE (stated limits):
   generated     compares spec/constants.py with what the definition gives, and
-                each vectors/<folder>/SHA256SUMS with its folder. It does not
-                know whether a vector's expected answer is right.
+                each vectors/<folder>/SHA256SUMS with its folder, subfolders
+                included. It does not know whether a vector's expected answer
+                is right, nor whether the definition says what the design means.
   model-tests   reads the results file pytest writes, not its exit code alone.
-                It runs the tests there are. A property no test asserts is not
-                held by this stage.
-  independence  catches an import of the other package made when a module is
+                It runs the tests pytest selects under tests/. A conftest.py
+                or a pytest.ini can deselect tests, and this stage would run
+                what is left: it prints how many ran, and that number is read
+                at each merge. Only the lead adds a conftest.py. A test file
+                outside tests/, or not named test_*.py, is not run. A property
+                no test asserts is not held by this stage.
+  independence  catches an import of the other package made while a module is
                 imported. It does not see an import inside a function that no
                 import runs, a module loaded by path, a copied file, or an
                 ImportError the importing module swallows. Both packages read
-                spec/: shared facts by design, not shared code.
+                spec/: shared facts by design. Code that both import from some
+                third place is shared code this stage does not see.
   registry      matches a gate's row to tests by NAME: test_gate_<gate>__*
                 and test_control_<gate>__*. It does not read what a test
                 asserts, so a test can carry a gate's name and test nothing.
+                For a stage row it checks that the control is a MUST_FAIL
+                stage of the runner and the test is not; it does not check
+                that the two are about the same thing.
   control       plants the faults listed in plants() and no others. A check
-                broken some other way passes its control.
+                broken some other way passes its control. Nothing guards
+                control() itself: one rewritten to always answer DETECTED
+                would pass.
 """
 import argparse
 import os
@@ -137,8 +150,11 @@ def d0_gates(root):
 
 
 def stage_names(root):
+    """(every stage of the runner, the ones that are MUST_FAIL controls)."""
     with open(os.path.join(root, "verify", "run.sh"), encoding="utf-8") as f:
-        return set(re.findall(r'^stage ([a-z0-9-]+) "', f.read(), re.M))
+        text = f.read()
+    return (set(re.findall(r'^stage ([a-z0-9-]+) "', text, re.M)),
+            set(re.findall(r'^MUST_FAIL=1\nstage ([a-z0-9-]+) "', text, re.M)))
 
 
 def collected(root):
@@ -151,23 +167,32 @@ def collected(root):
 
 def check_registry(root, state):
     with open(os.path.join(root, "tests", "gates.toml"), "rb") as f:
-        rows = tomllib.loads(f.read().decode("utf-8")).get("gate", [])
-    if not rows:
-        raise Refusal("NOTHING-SELECTED: tests/gates.toml has no gate row")
-    known, stages, tests = d0_gates(root), stage_names(root), collected(root)
+        doc = tomllib.loads(f.read().decode("utf-8"))
+    rows = doc.get("gate", [])
+    if not isinstance(rows, list) or not rows:
+        raise Refusal("NOTHING-SELECTED: tests/gates.toml has no [[gate]] row")
+    known, (stages, controls), tests = d0_gates(root), stage_names(root), collected(root)
     findings, slugs, seen = [], set(), set()
+    for key in sorted(set(doc) - {"gate"}):
+        findings.append(("tests/gates.toml", "has a table named %r; only [[gate]] is read" % key))
     for row in rows:
         name = row.get("name", "?")
         where = "gate %s" % name
         if name in seen:
             findings.append((where, "has two rows"))
         seen.add(name)
+        want = {"name", "d0", "kind"} | ({"test", "control"} if row.get("kind") == "stage" else set())
+        if set(row) != want:
+            findings.append((where, "has the keys %s, expected %s" % (sorted(row), sorted(want))))
         if row.get("d0") not in known:
             findings.append((where, "names %r, which is not a gate of D0's section 9" % (row.get("d0"),)))
         if row.get("kind") == "stage":
-            for key in ("test", "control"):
-                if row.get(key) not in stages:
-                    findings.append((where, "its %s, %r, is not a stage of verify/run.sh" % (key, row.get(key))))
+            if row.get("test") not in stages - controls:
+                findings.append((where, "its test, %r, is not a stage of verify/run.sh that must pass"
+                                 % (row.get("test"),)))
+            if row.get("control") not in controls:
+                findings.append((where, "its control, %r, is not a MUST_FAIL stage of verify/run.sh"
+                                 % (row.get("control"),)))
         elif row.get("kind") == "pytest":
             slug = name.replace("-", "_")
             slugs.add(slug)
@@ -241,28 +266,39 @@ def plants(kind, root, scratch):
         with open(vec, encoding="utf-8") as f:
             text = f.read()
         write(a, "vectors/p0/sample_range.json", text.replace("32767", "32768", 1))
-        return [(a, {"spec/constants.py", "vectors/p0/sample_range.json"})]
+        # A vector in a subfolder, never listed: the first verifier's finding on this check.
+        write(a, "vectors/p0/deeper/unlisted.json", "{}\n")
+        return [(a, {"spec/constants.py", "vectors/p0/sample_range.json", "vectors/p0/deeper/unlisted.json"})]
     if kind == "model-tests":
         a = copy_tree(root, scratch, "a")
         write(a, "tests/test_planted_fail.py", "def test_planted_must_fail():\n    assert 1 == 2\n")
+        write(a, "tests/test_planted_broken.py", "import no_such_module_anywhere\n\n\ndef test_never_runs():\n    pass\n")
         b = copy_tree(root, scratch, "b")
         for f in os.listdir(os.path.join(b, "tests")):
             if f.startswith("test_") and f.endswith(".py"):
                 os.remove(os.path.join(b, "tests", f))
-        return [(a, {"tests.test_planted_fail::test_planted_must_fail"}), (b, "REFUSED")]
+        return [(a, {"tests.test_planted_fail::test_planted_must_fail", "::tests.test_planted_broken"}),
+                (b, "REFUSED")]
     if kind == "independence":
         a = copy_tree(root, scratch, "a")
         write(a, "model/planted_cross.py", "import stats\n")
         write(a, "stats/planted_cross.py", "from model import stream\n")
-        return [(a, {"model.planted_cross", "stats.planted_cross"})]
+        # A module in a folder with no __init__.py: the first verifier's finding on this check.
+        write(a, "model/no_init_here/planted_deep.py", "import stats\n")
+        return [(a, {"model.planted_cross", "stats.planted_cross", "model.no_init_here.planted_deep"})]
     if kind == "registry":
         a = copy_tree(root, scratch, "a")
         write(a, "tests/gates.toml",
               '\n[[gate]]\nname = "noise-tails"\nd0 = "noise tails"\nkind = "pytest"\n'
               '\n[[gate]]\nname = "made-up"\nd0 = "a gate D0 does not have"\nkind = "stage"\n'
-              'test = "generated"\ncontrol = "ctl-generated"\n', "a")
-        write(a, "tests/test_planted_claim.py", "def test_gate_no_such_gate__anything():\n    pass\n")
-        return [(a, {"gate noise-tails", "gate made-up", "test_gate_no_such_gate__anything"})]
+              'test = "generated"\ncontrol = "ctl-generated"\n'
+              '\n[[gate]]\nname = "control-is-no-control"\nd0 = "replay"\nkind = "stage"\n'
+              'test = "generated"\ncontrol = "links"\n', "a")
+        write(a, "tests/test_planted_claim.py",
+              "def test_gate_no_such_gate__anything():\n    pass\n\n\n"
+              "def test_control_no_such_gate__anything():\n    pass\n")
+        return [(a, {"gate noise-tails", "gate made-up", "gate control-is-no-control",
+                     "test_gate_no_such_gate__anything", "test_control_no_such_gate__anything"})]
     raise SystemExit("no plants for %r" % kind)
 
 

@@ -13,14 +13,19 @@ spec_version = 1
 # A profile is a complete sample format. Row D1 of the design D0 (16-bit, one
 # channel) is NOT fixed in round 1, so nothing may assume one profile: code
 # takes a profile by name, and tests run under at least two.
-[profile.e0]
+# A profile's name says what it is: sample bits, then channels. The first is
+# D0 row D1 as proposed. The second is a guess at a seismic record, there so
+# that nothing is hard-wired to the first.
+[profile.s16x1]
 sample_bits = 16
 channels = 1
 
-[profile.wide3]
+[profile.s24x3]
 sample_bits = 24
 channels = 3
 
+# D0 row D3 proposes "a first bank" of 16 filters of 128 taps. Taking those
+# two figures as the maxima a shape may have is the lead's reading.
 [core]
 coeff_bits = 18     # D0 row D2
 max_filters = 16    # D0 row D3
@@ -60,6 +65,8 @@ names = [
     "RESERVED_BITS",
     "BLOB_HASH",
     "SWAP_PENDING",
+    "RECORD_KIND",
+    "RECORD_FIELD",
 ]
 
 # Reference pulses, as integer data, by path under spec/.

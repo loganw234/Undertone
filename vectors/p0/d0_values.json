@@ -1,0 +1,8 @@
+{
+  "what": "Figures copied by hand from the approved design, docs/studies/D0-rough-design.md, so that a test can hold the definition to them. A second, independent statement on purpose: the definition is the fact the code reads, and this is what the design says it should be.",
+  "rows": {
+    "D1": {"sample_bits": 16, "channels": 1, "said": "Samples are 16-bit signed, one channel to start"},
+    "D2": {"coeff_bits": 18, "said": "Coefficients are 18-bit signed"},
+    "D3": {"filters": 16, "taps": 128, "said": "A first bank of K = 16 filters of T = 128 taps"}
+  }
+}

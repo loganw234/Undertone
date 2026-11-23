@@ -44,4 +44,4 @@ if __name__ == "__main__":
             f.write(text())
         print("wrote", path)
     else:
-        sys.stdout.write(text())
+        sys.stdout.buffer.write(text().encode("utf-8"))  # bytes: no CR is added on Windows

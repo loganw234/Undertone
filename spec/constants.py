@@ -5,11 +5,11 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "6087848776b6bf6770b3aab8a306721a52b2712d38cc99297e1508b8b102de0a"
+SPEC_SHA256 = "6678d0e43c260f4b5e753510327f7394ac605a2cf5a5f6887784771418c46db0"
 
 PROFILES = {
-    "e0": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
-    "wide3": {"sample_bits": 24, "channels": 3, "sample_min": -8388608, "sample_max": 8388607},
+    "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
+    "s24x3": {"sample_bits": 24, "channels": 3, "sample_min": -8388608, "sample_max": 8388607},
 }
 
 COEFF_BITS = 18
@@ -58,6 +58,8 @@ REFUSALS = (
     "RESERVED_BITS",
     "BLOB_HASH",
     "SWAP_PENDING",
+    "RECORD_KIND",
+    "RECORD_FIELD",
 )
 
 PULSES = {

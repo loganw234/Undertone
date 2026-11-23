@@ -11,7 +11,7 @@ The name is the thing it listens for: a faint signal under the noise. The projec
     bash verify/run.sh        # every stage with its negative controls; seconds; no cache
     make verify               # the same
 
-Eight checks run today, each with a control that plants a list of faults and must see every one reported. Four hold the documents: relative links resolve, no committable file carries a personal path, every row of a claims register names its basis, no text file carries a CR byte. Four hold the build: generated copies equal the one definition, the tests pass, the model and the statistics import nothing from each other, and every gate has its test and its negative control. `bash verify/run.sh --list` shows the stages.
+Eight checks run today, each with a control that plants a list of faults and must see every one reported. Four hold the documents: relative links resolve, no committable file carries a personal path, every row of a claims register names its basis, no text file carries a CR byte. Four hold the build: generated copies equal the one definition, the tests pass, the model and the statistics import nothing from each other, and every gate has a test and a negative control that carry its name. The last two are held as far as an import and a name can show; `tools/check_build.py` states what they cannot see. `bash verify/run.sh --list` shows the stages.
 
 ## The authority
 

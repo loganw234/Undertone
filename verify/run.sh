@@ -10,8 +10,12 @@
 #   5  a real stage passes on a line only success prints ("OK <name>: <n> ..."),
 #      not on its exit code. Skips print by name with a reason; --require-all
 #      makes a skip a failure; an unknown stage name is refused.
-#   6  a run id of timestamp + commit; --resume refuses to cross commits, and
-#      refuses a tree with uncommitted changes.
+#   5  a test skipped INSIDE a stage that passed is named and counted on the
+#      verdict line, on a fresh run and on a resumed one, and fails the run
+#      under --require-all.
+#   6  a run id of timestamp + commit. Each run records whether its tree was
+#      clean. --resume refuses to cross commits, refuses a tree with
+#      uncommitted changes, and refuses a run that BEGAN on such a tree.
 #   7  an append-only JSONL record of every stage verdict.
 #
 # USAGE
@@ -43,7 +47,7 @@ while [ $# -gt 0 ]; do
     --resume)      if [ $# -gt 1 ] && [[ ${2:-} != --* ]]; then RESUME=$2; shift 2
                    else RESUME=last; shift; fi;;
     --fresh)       FRESH=1; shift;;
-    -h|--help)     sed -n '2,27p' "$0"; exit 0;;
+    -h|--help)     sed -n '2,/^set -uo pipefail/p' "$0" | sed '$d'; exit 0;;
     *)             die "unknown option $1";;
   esac
 done
@@ -111,7 +115,17 @@ else
   RUNID="$(date +%Y%m%d-%H%M%S)-$COMMIT"
 fi
 RUNDIR="$STATEROOT/$RUNID"
-mkdir -p "$RUNDIR"
+if [ -n "$RESUME" ]; then
+  # The run being resumed must itself have begun on a clean tree at this
+  # commit. A pass earned on a tree with uncommitted changes says nothing
+  # about the committed one.
+  if [ ! -f "$RUNDIR/tree" ] || [ "$(cat "$RUNDIR/tree")" != "$COMMIT 0" ]; then
+    die "REFUSED: run $RUNID did not begin on a clean tree at $COMMIT (or kept no record of its tree). Run without --resume."
+  fi
+else
+  mkdir -p "$RUNDIR"
+  echo "$COMMIT $DIRTY" > "$RUNDIR/tree"
+fi
 JSONL="$RUNDIR/stages.jsonl"
 
 # The interpreter. Named, with its version, because "which python ran this"
@@ -135,6 +149,9 @@ else echo "   python: NONE FOUND"; fi
 # must carry a CONTROL-DETECTED line, or the run fails.
 stage() {
   local name=$1 desc=$2; shift 3
+  # The stage list is derived from lines of the form: stage <lower-case, digits, hyphens> "...".
+  # A name outside that form would run and be missing from the list.
+  case "$name" in ""|*[!a-z0-9-]*) die "stage name '$name' is not lower case letters, digits and hyphens";; esac
   local t0 t1 rc verdict="" reason="" expect_fail="${MUST_FAIL:-0}"
   MUST_FAIL=0
 
@@ -145,6 +162,12 @@ stage() {
   if [ -f "$RUNDIR/$name.ok" ]; then
     CACHED=$((CACHED+1))
     note "$(printf '%-17s %-5s %s' "$name" "ok" "(passed earlier in this run)")"
+    # Its inner skips are still skips: count them from the log the stage kept.
+    local was; was=$(grep -c '^SKIPPED ' "$RUNDIR/$name.log" 2>/dev/null)
+    if [ "${was:-0}" -ne 0 ]; then
+      INNER=$((INNER+was))
+      grep '^SKIPPED ' "$RUNDIR/$name.log" | head -n 20 | sed "s/^/      $name: /"
+    fi
     echo "{\"stage\":\"$name\",\"verdict\":\"ok-cached\"}" >> "$JSONL"
     return 0
   fi

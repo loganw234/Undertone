@@ -1,0 +1,29 @@
+{
+  "what": "Records and their canonical bytes, worked by hand: fields in declared order, each little-endian, two's complement where signed.",
+  "cases": [
+    {
+      "kind": "score",
+      "why": "index 1 in 8 bytes; epoch 2 in 4; flags 0x03 in 1; score -1 in 8, all FF",
+      "record": {"index": 1, "epoch": 2, "flags": 3, "score": -1},
+      "hex": "01000000000000000200000003ffffffffffffffff"
+    },
+    {
+      "kind": "score",
+      "why": "index 258 = 0x0102, low byte first: 02 01; epoch 0; flags 0; score 256 = 0x0100: 00 01",
+      "record": {"index": 258, "epoch": 0, "flags": 0, "score": 256},
+      "hex": "020100000000000000000000000001000000000000"
+    },
+    {
+      "kind": "truth",
+      "why": "index 5 in 8 bytes; pulse_id 1 in 2; amplitude_num -2 in 4: FE FF FF FF; amplitude_den 3 in 4",
+      "record": {"index": 5, "pulse_id": 1, "amplitude_num": -2, "amplitude_den": 3},
+      "hex": "05000000000000000100feffffff03000000"
+    },
+    {
+      "kind": "event",
+      "why": "index 16 = 0x10 in 8 bytes; epoch 1 in 4; score 2 in 8; pre 32 = 0x20 in 2; post 64 = 0x40 in 2",
+      "record": {"index": 16, "epoch": 1, "score": 2, "pre": 32, "post": 64},
+      "hex": "100000000000000001000000020000000000000020004000"
+    }
+  ]
+}
