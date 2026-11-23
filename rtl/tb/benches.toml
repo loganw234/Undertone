@@ -1,0 +1,92 @@
+# The benches the `rtl-benches` stage runs, and each bench's RTL mutants.
+#
+# A bench is one cocotb module run on one top-level design, once under each
+# profile it names: the runner builds the design with that profile's
+# SAMPLE_BITS and CHANNELS as parameters and sets UNDERTONE_PROFILE.
+#
+#   name      lower case letters, digits and hyphens
+#   toplevel  the design's top module, which keeps the stream contract of
+#             rtl/tb/harness.py and takes the parameters SAMPLE_BITS and CHANNELS
+#   sources   the design's files, in compile order, as paths from the root
+#   module    the cocotb module, a file rtl/tb/<module>.py
+#   profiles  the profiles to run under
+#   identity  the tests that hold the design against the model through
+#             harness.compare. Each must pass AND leave evidence of records
+#             compared; the stage adds the records up
+#
+# A mutant is a negative control on the RTL side: exact pieces of one source
+# file replaced, in a copy, and the bench run on the copy.
+#
+#   edits      [[old, new], ...], applied in order. Each `old` must occur in
+#              the file exactly once when its turn comes: a mutant that no
+#              longer applies fails the stage
+#   must_fail  the tests that must fail on the copy
+#   kind       WORD or COUNT: the harness must have left a MISMATCH of that
+#              kind for each of those tests. Empty: the failure alone is asked
+#
+# A mutant shows that the bench sees THAT fault. It says nothing of others.
+
+[[bench]]
+name = "p0-onetap"
+toplevel = "onetap"
+sources = ["spec/undertone_pkg.sv", "rtl/p0/onetap.sv"]
+module = "bench_p0_onetap"
+profiles = ["s16x1", "s24x3"]
+identity = ["bit_identity_random", "bit_identity_extremes"]
+
+# One flipped coefficient bit in the RTL: the lowest bit of every channel's coefficient.
+[[bench.mutant]]
+name = "coefficient-bit"
+file = "rtl/p0/onetap.sv"
+edits = [["$signed(cfg_coef[c*COEFF_BITS +: COEFF_BITS]);", "$signed(cfg_coef[c*COEFF_BITS +: COEFF_BITS] ^ 18'd1);"]]
+must_fail = ["bit_identity_random", "bit_identity_extremes"]
+kind = "WORD"
+
+# The classic: a logical shift where the model's is arithmetic.
+[[bench.mutant]]
+name = "shift-logical"
+file = "rtl/p0/onetap.sv"
+edits = [["score = a >>> cfg_shift;", "score = $signed({1'b0, a} >> cfg_shift);"]]
+must_fail = ["bit_identity_random", "bit_identity_extremes"]
+kind = "WORD"
+
+# The record's other fields: an index that starts at one, and a flag bit set.
+[[bench.mutant]]
+name = "index-from-one"
+file = "rtl/p0/onetap.sv"
+edits = [["index      <= '0;", "index      <= 64'd1;"]]
+must_fail = ["bit_identity_random", "bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "flag-set"
+file = "rtl/p0/onetap.sv"
+edits = [["<= cfg_epoch;", "<= cfg_epoch; out_record[SCORE_FLAGS_LSB] <= 1'b1;"]]
+must_fail = ["bit_identity_random", "bit_identity_extremes"]
+kind = "WORD"
+
+# A design that stops putting records out: every word it gave is right, and there are too few.
+[[bench.mutant]]
+name = "stops-after-four"
+file = "rtl/p0/onetap.sv"
+edits = [["out_valid <= in_valid;", "out_valid <= in_valid && (index < 4);"]]
+must_fail = ["bit_identity_random", "bit_identity_extremes"]
+kind = "COUNT"
+
+# A design one clock later than it says: every record goes through one more register. The harness
+# does not check latency, so this mutant is NOT asked to fail the identity tests; the test that
+# states the latency must fail.
+[[bench.mutant]]
+name = "one-clock-late"
+file = "rtl/p0/onetap.sv"
+edits = [
+    ["    logic        [SCORE_INDEX_BITS-1:0] index;", "    logic        [SCORE_INDEX_BITS-1:0] index;\n    logic late_valid;\n    logic [SCORE_RECORD_BITS-1:0] late_record;"],
+    ["out_valid  <= 1'b0;", "out_valid  <= 1'b0; late_valid <= 1'b0;"],
+    ["out_valid <= in_valid;", "late_valid <= in_valid; out_valid <= late_valid; out_record <= late_record;"],
+    ["out_record                                            <= '0;", "late_record <= '0;"],
+    ["out_record[SCORE_INDEX_LSB +: SCORE_INDEX_BITS]       <= index;", "late_record[SCORE_INDEX_LSB +: SCORE_INDEX_BITS] <= index;"],
+    ["out_record[SCORE_EPOCH_LSB +: SCORE_EPOCH_BITS]       <= cfg_epoch;", "late_record[SCORE_EPOCH_LSB +: SCORE_EPOCH_BITS] <= cfg_epoch;"],
+    ["out_record[SCORE_SCORE_LSB +: SCORE_SCORE_BITS]       <= score;", "late_record[SCORE_SCORE_LSB +: SCORE_SCORE_BITS] <= score;"],
+]
+must_fail = ["latency_is_one_clock"]
+kind = ""

@@ -751,3 +751,55 @@ The header's account of what was checked; row W3's falsifier, which named three 
 - **No part of round 2.** It waits for his answers.
 - **No Docker image.** His word allows it; the lead builds it as the round's first piece, once the round is approved.
 - **Nothing pushed.** The branch `r2-plan` is local, three commits and this one ahead of `main`.
+
+## 2026-11-23 - round 2 opens: Logan's approval, the head's design stop, and the foundation for RTL
+
+Logan approved round 2's plan with one change: "Approved with recommendations except 5 do a synthesis to measure real cost". His words, the lead's reading and what his change adds are in [ROADMAP.md](ROADMAP.md) and at the end of [the plan](plans/R2-fabric-in-simulation-and-the-learner.md). The round runs on the local branch `r2`. **Nothing of it is pushed, and this entry is written before the foundation has been past its verifier**: what a verifier finds goes in a later entry.
+
+### What changed
+
+- **The definition**, twice. For parcel HEAD's design: two bounds, `max_hidden = 12` and `max_hidden_shift = 31`, and three refusal names. For the register map: its frame (`[bus]`), a read-only block of identity and capability registers (`[registers]`), and a number for each of the forty refusals (`[refusal_codes]`).
+- **Two more generated copies of the definition**: `spec/undertone_pkg.sv` and `spec/undertone.h`, the integers only, under the same names. `tools/gen_spec.py --check` names every stale copy; the `generated` stage counts three, and its control plants one edited constant in each.
+- **A simulation image of this project's own**: `docker/Dockerfile.sim`, `docker/requirements-sim.txt`, and `tools/sim_image.py`, which names the image from the files it is built from.
+- **A second size for the gate**: `bash verify/run.sh --with rtl` adds `rtl-image`, `rtl-spec` and `rtl-benches`, each with a control, in `tools/check_rtl.py`. A run of the first size now says on its verdict line that the rtl stages were not run.
+- **The bit-identity harness**, `rtl/tb/harness.py`; a filter of one tap written to prove it, `rtl/p0/onetap.sv`, with its bench and six mutants; the manifest and the runner.
+- `docs/rtl/README.md`; CLAUDE.md's front door, its third trap and two new ones; 70 more tests of the foundation's.
+
+### What ran
+
+- **Parcel HEAD's design stop.** Its design reached the ledger 11 minutes after it started. The lead ruled on its seven points and made the definition change it asked for, commit `dcc1f51`. HEAD is building as this is written; nothing of its build is in this entry.
+- **The lead's own piece, P0**, from 12:19 to this entry, on the lead's model, with no verifier yet.
+
+### Measured
+
+- **The gate at its second size**, `bash verify/run.sh --with rtl`, on the tree before this entry was written: `== VERDICT: PASS`, 22 of 22 stages, `OK model-tests: 777 tests ran, 0 failed, 0 errored, 0 skipped`. At `dcc1f51`, the first size: PASS, 16 of 16, 714 tests. Before round 2: 707.
+- **`OK rtl-benches: 12 test(s) passed in 2 run(s) of 1 bench(es); 8960 record(s) identical to the model's, word for word; 12 mutant run(s) each failed as named`.** The filter of one tap under both sample formats, on twelve random configurations and on every combination of extremes.
+- **`OK rtl-spec: 172 values, the definition's hash among them, each read back by Icarus Verilog from the package and by gcc from the header, all equal to spec/constants.py`.**
+- **`OK rtl-image`**: Icarus Verilog 12.0-2build2 and seven pip packages as pinned, cocotb 2.1.0 among them; Python 3.12.3 and gcc 13.3.0 from the base image. The image is 389 MB by `docker images`.
+- **The three new controls** reported every planted fault and nothing else: 2, 4 and 8. The last plants a bench whose simulator exits with code 0 before any test, under one sample format: its seven runs are each reported as having no results.
+- **Cocotb and Icarus work together**, which the plan's row N10 left open: the first bench is the evidence.
+- **The lead's faults against its own tests.** Thirty-seven tried, each alone in a copy of the tree, against the foundation's three test files. Thirty-four made a test fail. Of the three that did not: one was a fault of the lead's that changed nothing, replaced by two that do; two showed weak tests, a register off a word boundary that was also refused for overlapping its neighbour, and a list of a bench's tests that took any decorator named `test`. Both tests were tightened, and the five faults then tried were each caught.
+- **The first image did not work.** Every run stopped before any build: "Unable to find libpython". The base image's `python3` does not bring Python's shared library; the package `libpython3.12t64` does.
+- **HEAD's design, as the lead ruled on it**: the plan's third part passes as a count, (16 + 1) x 12 = 204 multipliers against a tenth of the bank, 204.8, and a foundation test now holds that count and that thirteen would not pass. Whether parts 1, 2 and 4 hold is HEAD's build and its verifier, not this entry.
+
+### What this does not prove
+
+- **Anything about a detector in RTL.** There is none. The filter of one tap is the model's core at one setting, written to prove the harness, with no weight store, no swap and no refusal.
+- **That the harness sees a fault other than the six planted.** A mutant shows the bench sees that fault.
+- **That the RTL here would synthesise.** One simulator has read it, Icarus Verilog 12.0.
+- **That the register map's frame fits this project's kernel.** It is read from the sibling project's kernel on this card; nothing of this project is built.
+- **That the image can be built again as it is.** The base image is pinned by digest and Icarus by package version; Python, gcc and the system libraries are what the archive serves on the day.
+
+### Not done, and why
+
+- **The register map's control block**: the shape, the shadow weights, the commit, the status, the latched refusal. The plan gives the whole map to the foundation. The lead wrote down the frame, the read-only block and the codes, and left the control block to the design stop of the detector core's RTL, because each of its registers turns on a question the plan gives that design: which refusals live in the fabric. The lead rules on that design and enters the block in the definition. This is a departure from the plan's wording, recorded here and in the round's ledger before it was built.
+- **No Verilator.** The base image's is older than cocotb supports (the plan's row N20). One is built in the image only if the benches prove slow.
+- **No row in the gate registry.** D0's bit-identity gate gets its row with the detector core's RTL.
+- **No verifier yet on the foundation.** It is next, before wave 1.
+
+### The lead's slips
+
+- **A patch through a shell heredoc, three times**, the third within minutes of writing the rule against it into CLAUDE.md. The first ended a script early. The second matched nothing, and an image was rebuilt and a bench run on a Dockerfile that had not changed. The third turned an escaped newline inside a test's string into a real one, and was caught by reading the line it wrote.
+- **Two figures were written into `docs/rtl/README.md` before they were measured**: the count of generated values, written as 127, and the image's size from an earlier build. Both were measured and corrected before the commit: 172, and 389 MB.
+- **A docstring promised a stage that did not exist yet.** `tools/gen_spec.py` named `rtl-spec` while the tree had no such stage; the sentence was taken out of commit `dcc1f51` and put back with the stage.
+- **One of the lead's thirty-seven faults changed nothing**, and was counted as a survivor until its text was read.

@@ -5,7 +5,7 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "9531804f7080d32b1608961dea8180fd444ea56137dac26f92ba208e03fff4c9"
+SPEC_SHA256 = "266db4114abf34e6d744a14bd81e4f892267db5768b3d2cc7ff2f0daf5696a7a"
 
 PROFILES = {
     "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
@@ -119,4 +119,67 @@ PULSES = {
 
 PULSE_IDS = {
     "e0": 0,
+}
+
+REFUSAL_CODES = {
+    "PROFILE_UNKNOWN": 1,
+    "CHANNELS": 2,
+    "SAMPLE_RANGE": 3,
+    "SHAPE_FILTERS": 4,
+    "SHAPE_TAPS": 5,
+    "RESERVED_BITS": 6,
+    "BLOB_HASH": 7,
+    "SWAP_PENDING": 8,
+    "RECORD_KIND": 9,
+    "RECORD_FIELD": 10,
+    "SHAPE_CHANNEL": 11,
+    "SHAPE_ROWS": 12,
+    "SHAPE_RECTIFIER": 13,
+    "SHAPE_POOL": 14,
+    "SHAPE_SHIFT": 15,
+    "WEIGHT_COUNT": 16,
+    "WEIGHT_RANGE": 17,
+    "BLOB_FORMAT": 18,
+    "SWAP_SHAPE": 19,
+    "SWAP_INDEX": 20,
+    "SWAP_EPOCH": 21,
+    "SCORER_THRESHOLD": 22,
+    "SCORER_WINDOW": 23,
+    "SCORER_BINS": 24,
+    "RECORD_ORDER": 25,
+    "QUANTISE_INPUT": 26,
+    "SEED_RANGE": 27,
+    "NOISE_SIGMA": 28,
+    "NOISE_RANGE": 29,
+    "STREAM_LENGTH": 30,
+    "PULSE_UNKNOWN": 31,
+    "INJECT_OVERLAP": 32,
+    "INJECT_PAST_END": 33,
+    "INJECT_RANGE": 34,
+    "REPLAY_FORMAT": 35,
+    "REPLAY_PROFILE": 36,
+    "REPLAY_HASH": 37,
+    "SHAPE_HIDDEN": 38,
+    "SHAPE_HIDDEN_SHIFT": 39,
+    "SHAPE_BETWEEN": 40,
+}
+
+BUS = {"word_bits": 32, "address_bits": 12, "first_offset": 16, "magic": 0x554E4454}
+
+REGISTERS = {
+    "id": (0x010, "ro", 1),
+    "spec_version": (0x014, "ro", 1),
+    "spec_hash": (0x018, "ro", 8),
+    "cap_sample_bits": (0x038, "ro", 1),
+    "cap_channels": (0x03C, "ro", 1),
+    "cap_coeff_bits": (0x040, "ro", 1),
+    "cap_filters": (0x044, "ro", 1),
+    "cap_taps": (0x048, "ro", 1),
+    "cap_rows": (0x04C, "ro", 1),
+    "cap_pool": (0x050, "ro", 1),
+    "cap_score_shift": (0x054, "ro", 1),
+    "cap_hidden": (0x058, "ro", 1),
+    "cap_hidden_shift": (0x05C, "ro", 1),
+    "cap_rectifiers": (0x060, "ro", 1),
+    "cap_blob_versions": (0x064, "ro", 1),
 }

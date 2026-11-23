@@ -1,0 +1,11 @@
+# Everything pip installs into the simulation image, at exact versions.
+# tools/sim_image.py check compares this list with what the image holds:
+# a package the image has and this list does not is a finding, and so is the reverse.
+# cocotb is the one asked for; the rest came with it on 2026-11-23.
+cocotb==2.1.0
+find_libpython==0.5.1
+iniconfig==2.3.1
+packaging==26.3
+pluggy==1.7.0
+Pygments==2.21.0
+pytest==9.2.0

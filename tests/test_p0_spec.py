@@ -213,3 +213,28 @@ def test_p0_reference_pulse_fits_the_narrowest_profile_and_is_not_silent():
     assert 900 <= max(abs(v) for v in pulse) <= 1000, "the pulse was made with a peak near 1000"
     assert pulse[0] == 0 and pulse[-1] == 0, "a Hann window is zero at both ends"
     assert sum(v * v for v in pulse) > 0
+
+
+def test_p0_every_refusal_has_a_code_of_its_own_that_fits_a_byte_and_none_is_zero():
+    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 40
+    assert len(set(C.REFUSAL_CODES.values())) == 40
+    assert all(type(v) is int and 1 <= v <= 255 for v in C.REFUSAL_CODES.values())
+    # Typed here from the definition as it was first written, so that a renumbering is made on purpose.
+    assert (C.REFUSAL_CODES["PROFILE_UNKNOWN"], C.REFUSAL_CODES["BLOB_HASH"], C.REFUSAL_CODES["SHAPE_BETWEEN"]) == (1, 7, 40)
+
+
+def test_p0_the_registers_lie_inside_the_frame_in_whole_words_and_do_not_overlap():
+    assert C.BUS == {"word_bits": 32, "address_bits": 12, "first_offset": 16,
+                     "magic": int.from_bytes(b"UNDT", "big")}
+    taken = set()
+    for name, (offset, access, words) in C.REGISTERS.items():
+        assert offset % 4 == 0 and offset >= C.BUS["first_offset"], name
+        assert offset + 4 * words <= 2 ** C.BUS["address_bits"] and access in ("ro", "rw", "wo"), name
+        span = set(range(offset, offset + 4 * words))
+        assert not span & taken, name
+        taken |= span
+    # The block P0 wrote down: identity and capabilities, read-only, below the control block's 0x80.
+    assert C.REGISTERS["id"] == (0x10, "ro", 1) and C.REGISTERS["spec_hash"] == (0x18, "ro", 8)
+    assert C.REGISTERS["cap_sample_bits"][0] == 0x18 + 4 * 8          # the hash's eight words, then this
+    assert all(access == "ro" and offset + 4 * words <= 0x80 for offset, access, words in C.REGISTERS.values())
+    assert 8 * 32 == 256                                                 # the hash is a SHA-256

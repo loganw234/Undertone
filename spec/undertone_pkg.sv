@@ -6,7 +6,7 @@
 package undertone_pkg;
 
   // the SHA-256 of the definition this package was generated from
-  localparam logic [255:0] SPEC_SHA256 = 256'h9531804f7080d32b1608961dea8180fd444ea56137dac26f92ba208e03fff4c9;
+  localparam logic [255:0] SPEC_SHA256 = 256'h266db4114abf34e6d744a14bd81e4f892267db5768b3d2cc7ff2f0daf5696a7a;
 
   // the definition
   localparam int SPEC_VERSION = 1;
@@ -91,5 +91,116 @@ package undertone_pkg;
   // the reference pulses: the id a truth record carries, and the length in samples
   localparam int PULSE_E0_ID = 0;
   localparam int PULSE_E0_LENGTH = 64;
+
+  // the number the fabric reports for each refusal; 0 is none
+  localparam int REFUSAL_NONE = 0;
+  localparam int REFUSAL_PROFILE_UNKNOWN = 1;
+  localparam int REFUSAL_CHANNELS = 2;
+  localparam int REFUSAL_SAMPLE_RANGE = 3;
+  localparam int REFUSAL_SHAPE_FILTERS = 4;
+  localparam int REFUSAL_SHAPE_TAPS = 5;
+  localparam int REFUSAL_RESERVED_BITS = 6;
+  localparam int REFUSAL_BLOB_HASH = 7;
+  localparam int REFUSAL_SWAP_PENDING = 8;
+  localparam int REFUSAL_RECORD_KIND = 9;
+  localparam int REFUSAL_RECORD_FIELD = 10;
+  localparam int REFUSAL_SHAPE_CHANNEL = 11;
+  localparam int REFUSAL_SHAPE_ROWS = 12;
+  localparam int REFUSAL_SHAPE_RECTIFIER = 13;
+  localparam int REFUSAL_SHAPE_POOL = 14;
+  localparam int REFUSAL_SHAPE_SHIFT = 15;
+  localparam int REFUSAL_WEIGHT_COUNT = 16;
+  localparam int REFUSAL_WEIGHT_RANGE = 17;
+  localparam int REFUSAL_BLOB_FORMAT = 18;
+  localparam int REFUSAL_SWAP_SHAPE = 19;
+  localparam int REFUSAL_SWAP_INDEX = 20;
+  localparam int REFUSAL_SWAP_EPOCH = 21;
+  localparam int REFUSAL_SCORER_THRESHOLD = 22;
+  localparam int REFUSAL_SCORER_WINDOW = 23;
+  localparam int REFUSAL_SCORER_BINS = 24;
+  localparam int REFUSAL_RECORD_ORDER = 25;
+  localparam int REFUSAL_QUANTISE_INPUT = 26;
+  localparam int REFUSAL_SEED_RANGE = 27;
+  localparam int REFUSAL_NOISE_SIGMA = 28;
+  localparam int REFUSAL_NOISE_RANGE = 29;
+  localparam int REFUSAL_STREAM_LENGTH = 30;
+  localparam int REFUSAL_PULSE_UNKNOWN = 31;
+  localparam int REFUSAL_INJECT_OVERLAP = 32;
+  localparam int REFUSAL_INJECT_PAST_END = 33;
+  localparam int REFUSAL_INJECT_RANGE = 34;
+  localparam int REFUSAL_REPLAY_FORMAT = 35;
+  localparam int REFUSAL_REPLAY_PROFILE = 36;
+  localparam int REFUSAL_REPLAY_HASH = 37;
+  localparam int REFUSAL_SHAPE_HIDDEN = 38;
+  localparam int REFUSAL_SHAPE_HIDDEN_SHIFT = 39;
+  localparam int REFUSAL_SHAPE_BETWEEN = 40;
+
+  // the register map's frame: one register is one word at a byte offset
+  localparam int BUS_WORD_BITS = 32;
+  localparam int BUS_ADDRESS_BITS = 12;
+  localparam int BUS_FIRST_OFFSET = 16;
+  localparam int BUS_MAGIC = 1431192660;
+
+  // the registers: each one's byte offset, its words, and whether the host may read and write it
+  localparam int REG_ID_OFFSET = 16;
+  localparam int REG_ID_WORDS = 1;
+  localparam int REG_ID_READABLE = 1;
+  localparam int REG_ID_WRITABLE = 0;
+  localparam int REG_SPEC_VERSION_OFFSET = 20;
+  localparam int REG_SPEC_VERSION_WORDS = 1;
+  localparam int REG_SPEC_VERSION_READABLE = 1;
+  localparam int REG_SPEC_VERSION_WRITABLE = 0;
+  localparam int REG_SPEC_HASH_OFFSET = 24;
+  localparam int REG_SPEC_HASH_WORDS = 8;
+  localparam int REG_SPEC_HASH_READABLE = 1;
+  localparam int REG_SPEC_HASH_WRITABLE = 0;
+  localparam int REG_CAP_SAMPLE_BITS_OFFSET = 56;
+  localparam int REG_CAP_SAMPLE_BITS_WORDS = 1;
+  localparam int REG_CAP_SAMPLE_BITS_READABLE = 1;
+  localparam int REG_CAP_SAMPLE_BITS_WRITABLE = 0;
+  localparam int REG_CAP_CHANNELS_OFFSET = 60;
+  localparam int REG_CAP_CHANNELS_WORDS = 1;
+  localparam int REG_CAP_CHANNELS_READABLE = 1;
+  localparam int REG_CAP_CHANNELS_WRITABLE = 0;
+  localparam int REG_CAP_COEFF_BITS_OFFSET = 64;
+  localparam int REG_CAP_COEFF_BITS_WORDS = 1;
+  localparam int REG_CAP_COEFF_BITS_READABLE = 1;
+  localparam int REG_CAP_COEFF_BITS_WRITABLE = 0;
+  localparam int REG_CAP_FILTERS_OFFSET = 68;
+  localparam int REG_CAP_FILTERS_WORDS = 1;
+  localparam int REG_CAP_FILTERS_READABLE = 1;
+  localparam int REG_CAP_FILTERS_WRITABLE = 0;
+  localparam int REG_CAP_TAPS_OFFSET = 72;
+  localparam int REG_CAP_TAPS_WORDS = 1;
+  localparam int REG_CAP_TAPS_READABLE = 1;
+  localparam int REG_CAP_TAPS_WRITABLE = 0;
+  localparam int REG_CAP_ROWS_OFFSET = 76;
+  localparam int REG_CAP_ROWS_WORDS = 1;
+  localparam int REG_CAP_ROWS_READABLE = 1;
+  localparam int REG_CAP_ROWS_WRITABLE = 0;
+  localparam int REG_CAP_POOL_OFFSET = 80;
+  localparam int REG_CAP_POOL_WORDS = 1;
+  localparam int REG_CAP_POOL_READABLE = 1;
+  localparam int REG_CAP_POOL_WRITABLE = 0;
+  localparam int REG_CAP_SCORE_SHIFT_OFFSET = 84;
+  localparam int REG_CAP_SCORE_SHIFT_WORDS = 1;
+  localparam int REG_CAP_SCORE_SHIFT_READABLE = 1;
+  localparam int REG_CAP_SCORE_SHIFT_WRITABLE = 0;
+  localparam int REG_CAP_HIDDEN_OFFSET = 88;
+  localparam int REG_CAP_HIDDEN_WORDS = 1;
+  localparam int REG_CAP_HIDDEN_READABLE = 1;
+  localparam int REG_CAP_HIDDEN_WRITABLE = 0;
+  localparam int REG_CAP_HIDDEN_SHIFT_OFFSET = 92;
+  localparam int REG_CAP_HIDDEN_SHIFT_WORDS = 1;
+  localparam int REG_CAP_HIDDEN_SHIFT_READABLE = 1;
+  localparam int REG_CAP_HIDDEN_SHIFT_WRITABLE = 0;
+  localparam int REG_CAP_RECTIFIERS_OFFSET = 96;
+  localparam int REG_CAP_RECTIFIERS_WORDS = 1;
+  localparam int REG_CAP_RECTIFIERS_READABLE = 1;
+  localparam int REG_CAP_RECTIFIERS_WRITABLE = 0;
+  localparam int REG_CAP_BLOB_VERSIONS_OFFSET = 100;
+  localparam int REG_CAP_BLOB_VERSIONS_WORDS = 1;
+  localparam int REG_CAP_BLOB_VERSIONS_READABLE = 1;
+  localparam int REG_CAP_BLOB_VERSIONS_WRITABLE = 0;
 
 endpackage

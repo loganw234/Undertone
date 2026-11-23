@@ -1,0 +1,50 @@
+# The simulation image for Undertone: Icarus Verilog, cocotb, and a C compiler.
+#
+# Build it and check it through the tool, never by hand, so that the image is
+# labelled with the hash of the files it was built from:
+#
+#     python tools/sim_image.py build
+#     python tools/sim_image.py check
+#
+# Round 2's plan, row N20, is why there is no Verilator here: the one this base
+# image packages, 5.020, is older than any cocotb release supports. Icarus 12.0
+# is supported. A newer Verilator would be built from source in this image, and
+# is added only if this project's benches are slow enough to need it.
+#
+# libpython3.12t64 is here because cocotb loads Python's shared library into
+# the simulator, and the base image's python3 does not bring it: without it
+# cocotb's runner stops with "Unable to find libpython" before any build.
+#
+# The C compiler is here for one job: spec/undertone.h is a generated copy of
+# the definition, and a header nothing has compiled is a copy nobody has read.
+#
+# This image is this project's own. The sibling project's image is not used.
+#
+# What is pinned: the base image, by digest; Icarus Verilog, by package
+# version; everything pip installs, in requirements-sim.txt. What is not:
+# Python, the C compiler and the system libraries come from the base image's
+# archive at whatever version it serves on the day of the build. The `rtl-image`
+# stage prints the versions the image actually holds.
+FROM ubuntu@sha256:33ceb71981b602c1a7443a53469e4dba065f7503eab3078a2d7a57a2ab987517
+
+ARG IVERILOG_VERSION=12.0-2build2
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends \
+        iverilog=${IVERILOG_VERSION} \
+        python3 \
+        python3-venv \
+        libpython3.12t64 \
+        gcc \
+        libc6-dev \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3 -m venv /opt/venv
+ENV PATH=/opt/venv/bin:$PATH
+ENV PYTHONDONTWRITEBYTECODE=1
+
+COPY requirements-sim.txt /tmp/requirements-sim.txt
+RUN pip install --no-cache-dir --only-binary=:all: -r /tmp/requirements-sim.txt
+
+WORKDIR /work

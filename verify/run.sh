@@ -18,8 +18,15 @@
 #      uncommitted changes, and refuses a run that BEGAN on such a tree.
 #   7  an append-only JSONL record of every stage verdict.
 #
+# TWO SIZES. The first needs Python and git and nothing else. The second adds
+# the stages named rtl-* and ctl-rtl-*, which run in the simulation image and
+# so need Docker and that image (python tools/sim_image.py build). A run of
+# the first size says on its verdict line that the rtl stages were NOT run:
+# the bare line "== VERDICT: PASS" is printed only when every stage ran.
+#
 # USAGE
-#   bash verify/run.sh                   every stage
+#   bash verify/run.sh                   the first size: every stage that needs no Docker
+#   bash verify/run.sh --with rtl        every stage
 #   bash verify/run.sh --only links      by name (refuses unknown names)
 #   bash verify/run.sh --skip claims
 #   bash verify/run.sh --require-all     a skipped stage FAILS the run
@@ -34,7 +41,7 @@ set -uo pipefail
 ROOT=$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)
 STATEROOT="${STATEROOT:-$ROOT/verify/state}"
 
-ONLY=""; SKIP=""; REQUIRE_ALL=0; LIST=0; RESUME=""; FRESH=0
+ONLY=""; SKIP=""; REQUIRE_ALL=0; LIST=0; RESUME=""; FRESH=0; WITH_RTL=0
 
 die () { echo "FATAL: $*" >&2; exit 2; }
 
@@ -42,6 +49,11 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --only)        [ $# -ge 2 ] || die "--only needs a list"; ONLY="$ONLY,$2"; shift 2;;
     --skip)        [ $# -ge 2 ] || die "--skip needs a list"; SKIP="$SKIP,$2"; shift 2;;
+    --with)        [ $# -ge 2 ] || die "--with needs a size (rtl)"
+                   case "$2" in
+                     rtl) WITH_RTL=1;;
+                     *) die "--with: unknown size '$2' (rtl)";;
+                   esac; shift 2;;
     --require-all) REQUIRE_ALL=1; shift;;
     --list)        LIST=1; shift;;
     --resume)      if [ $# -gt 1 ] && [[ ${2:-} != --* ]]; then RESUME=$2; shift 2
@@ -57,6 +69,12 @@ in_list() {  # name, comma-list
   return 1
 }
 
+# The second size's stages are told by their names, and by nothing else.
+is_rtl() {
+  case "$1" in rtl-*|ctl-rtl-*) return 0;; esac
+  return 1
+}
+
 # The only copy of the stage list is the `stage` calls themselves.
 SELF="${BASH_SOURCE[0]}"
 STAGELIST=$(grep -E '^stage [a-z0-9-]+ "' "$SELF" | awk '{print $2}' | tr '\n' ' ')
@@ -65,12 +83,14 @@ STAGELIST="${STAGELIST% }"
 if [ "$LIST" = 1 ]; then
   while IFS=$'\t' read -r _nm _ds; do
     if [ -z "$ONLY" ] || in_list "$_nm" "$ONLY"; then _mk="*"; else _mk=" "; fi
+    if is_rtl "$_nm" && [ "$WITH_RTL" != 1 ]; then _mk=" "; fi
     printf '%s %-17s%s\n' "$_mk" "$_nm" "$_ds"
   done < <(grep -E '^stage [a-z0-9-]+ "' "$SELF" \
       | sed -E 's/^stage ([a-z0-9-]+) +"([^"]*)".*/\1\t\2/')
   echo
   if [ -n "$ONLY" ]; then echo "* = would run. Unmarked stages are NOT in this selection."
-  else echo "* = would run: every stage (no --only)."; fi
+  elif [ "$WITH_RTL" = 1 ]; then echo "* = would run: every stage (--with rtl, no --only)."
+  else echo "* = would run: the first size. The rtl stages are NOT in it; --with rtl adds them."; fi
   exit 0
 fi
 
@@ -88,6 +108,13 @@ check_names() {  # <flagname> <comma-list>
 }
 check_names --only "$ONLY"
 check_names --skip "$SKIP"
+# Naming an rtl stage without asking for its size would run nothing and say so only in a count.
+for _n in $(echo "$ONLY" | tr ',' ' '); do
+  if is_rtl "$_n" && [ "$WITH_RTL" != 1 ]; then
+    echo "ERROR: --only names the rtl stage '$_n'; add --with rtl" >&2
+    exit 2
+  fi
+done
 
 # A `stage` line the derivation above cannot read would run and be missing from the
 # list. Refuse it now, before any stage has run.
@@ -141,7 +168,7 @@ if [ -z "$PY" ]; then
   elif command -v python >/dev/null 2>&1; then PY=python; fi
 fi
 
-PASSED=0; FAILED=0; SKIPPED=0; CACHED=0; SELECTED=0; INNER=0
+PASSED=0; FAILED=0; SKIPPED=0; CACHED=0; SELECTED=0; INNER=0; RTLNOTRUN=0
 note () { echo "   $*"; }
 
 echo "== run $RUNID"
@@ -160,6 +187,10 @@ stage() {
   local t0 t1 rc verdict="" reason="" expect_fail="${MUST_FAIL:-0}"
   MUST_FAIL=0
 
+  if is_rtl "$name" && [ "$WITH_RTL" != 1 ]; then
+    RTLNOTRUN=$((RTLNOTRUN+1))
+    return 0
+  fi
   if [ -n "$ONLY" ] && ! in_list "$name" "$ONLY"; then
     return 0
   fi
@@ -237,6 +268,9 @@ control () { "$PY" "$ROOT/tools/check_tree.py" control "$1" --scratch "$RUNDIR/c
 # The build checks: what the tree generates, runs and imports.
 build ()   { "$PY" "$ROOT/tools/check_build.py" "$1" --root "$ROOT" --state "$RUNDIR/$1"; }
 bcontrol () { "$PY" "$ROOT/tools/check_build.py" control "$1" --root "$ROOT" --scratch "$RUNDIR/control-$1"; }
+# The second size: what a simulator and a compiler make of the tree, in the simulation image.
+rtl ()     { "$PY" "$ROOT/tools/check_rtl.py" "$1" --root "$ROOT" --state "$RUNDIR/$1"; }
+rcontrol () { "$PY" "$ROOT/tools/check_rtl.py" control "$1" --root "$ROOT" --scratch "$RUNDIR/control-$1"; }
 
 # ======================================================================
 # THE STAGES. One `stage` line each, the description in double quotes on
@@ -272,6 +306,18 @@ stage ctl-independence "a planted import across model/ and stats/ MUST be report
 MUST_FAIL=1
 stage ctl-registry "a row nothing claims and a test with no row MUST each be reported" -- bcontrol registry
 
+# The second size (--with rtl). These six need Docker and the simulation image;
+# without --with rtl they are not run, and the verdict line says so.
+stage rtl-image "the simulation image this tree describes exists and holds what is pinned" -- rtl rtl-image
+stage rtl-spec "a simulator and a compiler read the generated copies as the definition's numbers" -- rtl rtl-spec
+stage rtl-benches "every RTL bench passes, read from its results file, and every RTL mutant fails as named" -- rtl rtl-benches
+MUST_FAIL=1
+stage ctl-rtl-image "a tree whose docker files changed, or lost one, MUST be refused by name" -- rcontrol rtl-image
+MUST_FAIL=1
+stage ctl-rtl-spec "an edited number in each copy and a missing name MUST each be reported" -- rcontrol rtl-spec
+MUST_FAIL=1
+stage ctl-rtl-benches "a bench with a wrong expectation MUST fail, and runs that wrote no results MUST be reported" -- rcontrol rtl-benches
+
 # ======================================================================
 
 echo "== summary"
@@ -294,7 +340,13 @@ if [ $((PASSED + CACHED)) -eq 0 ]; then
   exit 1
 fi
 SCOPE=""
-[ "$NOTRUN" -ne 0 ] && SCOPE=" for the selected stages only: $NOTRUN of $NSTAGES stage(s) were NOT run"
+if [ "$NOTRUN" -ne 0 ]; then
+  if [ -z "$ONLY" ] && [ "$NOTRUN" -eq "$RTLNOTRUN" ]; then
+    SCOPE=" for the first size: the $RTLNOTRUN rtl stage(s) of $NSTAGES were NOT run (--with rtl runs them)"
+  else
+    SCOPE=" for the selected stages only: $NOTRUN of $NSTAGES stage(s) were NOT run"
+  fi
+fi
 if [ "$SKIPPED" -ne 0 ] || [ "$INNER" -ne 0 ]; then
   echo "== VERDICT: PASS$SCOPE, with $SKIPPED stage(s) and $INNER inner check(s) skipped by name above (--require-all makes a skip a failure)"
   exit 0

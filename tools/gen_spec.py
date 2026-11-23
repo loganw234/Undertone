@@ -21,13 +21,13 @@ injection rules. A name that two entries of the list would share is REFUSED.
 
 `--check` compares text: each copy must equal what this generator renders
 today. It does not show that a simulator or a compiler reads those lines as
-the same numbers.
+the same numbers; the `rtl-spec` stage of `verify/run.sh --with rtl` does.
 
 The definition is checked before anything is written, and one that does not
 make sense is REFUSED by name. What is checked, exactly:
 
-  - the top-level sections are the twelve this generator knows (TOP below), no
-    more, no fewer;
+  - the top-level sections are the fifteen this generator knows (TOP below),
+    no more, no fewer;
   - every section's keys are the ones listed in KEYS below, no more, no fewer;
   - a number is an int (never a bool, a float or a string) inside its range;
   - a profile, field, flag, rectifier or pulse name is lower case letters,
@@ -41,7 +41,12 @@ make sense is REFUSED by name. What is checked, exactly:
   - a rectifier code is an int from 0 to 255, and no code is used twice;
   - the quantising rule and the injection's rounding are the one rule each
     that this generator knows;
-  - no refusal name is listed twice;
+  - no refusal name is listed twice; the refusal codes name exactly the
+    refusals, each code is an int from 1 to 255, and no code is used twice;
+  - the bus is 32-bit words, the one word this generator knows; a register is
+    [offset, "ro" | "rw" | "wo", words] with 1 to 64 words, at a multiple of the
+    word's bytes, not below the frame's first offset and not past its address
+    bits, and no two registers overlap;
   - a pulse's file is under spec/pulses/, names itself as the definition names
     it, and holds ints that fit the NARROWEST profile;
   - the pulse ids name exactly the pulses, each id fits the truth record's
@@ -77,12 +82,15 @@ KEYS = {
     "scorer": {"max_hist_bins"},
     "records": {"score", "truth", "event"},
     "refusals": {"names"},
+    "bus": {"word_bits", "address_bits", "first_offset", "magic"},
 }
-TOP = set(KEYS) | {"profile", "flags", "rectifier", "pulses", "pulse_ids"}
+TOP = set(KEYS) | {"profile", "flags", "rectifier", "pulses", "pulse_ids", "refusal_codes", "registers"}
+ACCESS = ("ro", "rw", "wo")
 RANGE = {"spec_version": (1, 10 ** 6), "sample_bits": (2, 32), "channels": (1, 16),
          "coeff_bits": (2, 32), "max_filters": (1, 1024), "max_taps": (1, 65536),
          "max_rows": (1, 1024), "max_pool": (1, 2 ** 24), "max_score_shift": (0, 63),
-         "max_hist_bins": (1, 65536), "max_hidden": (1, 1024), "max_hidden_shift": (0, 63)}
+         "max_hist_bins": (1, 65536), "max_hidden": (1, 1024), "max_hidden_shift": (0, 63),
+         "word_bits": (32, 32), "address_bits": (4, 16), "first_offset": (0, 65532), "magic": (1, 2 ** 31 - 1)}
 LOWER = re.compile(r"[a-z][a-z0-9_]*\Z")
 UPPER = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 
@@ -179,6 +187,39 @@ def validate(d, root):
             raise Refused("NAME: refusal %r is not upper case letters, digits and underscores" % (n,))
     if len(set(names)) != len(names):
         raise Refused("REFUSALS: a name is listed twice")
+    codes = d["refusal_codes"]
+    if not isinstance(codes, dict) or set(codes) != set(names):
+        raise Refused("REFUSAL_CODES: the codes do not name exactly the refusals: without a code %s, without a name %s"
+                      % (sorted(set(names) - set(codes)) if isinstance(codes, dict) else names,
+                         sorted(set(codes) - set(names)) if isinstance(codes, dict) else codes))
+    taken = set()
+    for n in names:
+        if type(codes[n]) is not int or not 1 <= codes[n] <= 255 or codes[n] in taken:
+            raise Refused("REFUSAL_CODES: %s = %r is used twice or is not an int from 1 to 255" % (n, codes[n]))
+        taken.add(codes[n])
+    for key in sorted(KEYS["bus"]):
+        number("bus", key, d["bus"][key])
+    step, limit = d["bus"]["word_bits"] // 8, 2 ** d["bus"]["address_bits"]
+    if d["bus"]["first_offset"] % step or d["bus"]["first_offset"] >= limit:
+        raise Refused("BUS: first_offset = %d is not a multiple of %d below %d" % (d["bus"]["first_offset"], step, limit))
+    if not isinstance(d["registers"], dict) or not d["registers"]:
+        raise Refused("REGISTERS: there is no register")
+    spans = []
+    for name, r in d["registers"].items():
+        lower("register", name)
+        if not isinstance(r, list) or len(r) != 3:
+            raise Refused("REGISTERS: %s is not [offset, access, words]" % name)
+        offset, access, words = r
+        if type(offset) is not int or type(words) is not int or not 1 <= words <= 64 or access not in ACCESS:
+            raise Refused("REGISTERS: %s = %r is not [an int, one of %s, 1 to 64]" % (name, r, ", ".join(ACCESS)))
+        if offset % step or offset < d["bus"]["first_offset"] or offset + step * words > limit:
+            raise Refused("REGISTERS: %s at %d for %d word(s) is not at a multiple of %d from %d to below %d"
+                          % (name, offset, words, step, d["bus"]["first_offset"], limit))
+        spans.append((offset, offset + step * words, name))
+    spans.sort()
+    for (_a0, a1, an), (b0, _b1, bn) in zip(spans, spans[1:]):
+        if b0 < a1:
+            raise Refused("REGISTERS: %s and %s overlap" % (an, bn))
     if not isinstance(d["pulses"], dict) or not d["pulses"]:
         raise Refused("PULSES: there is no pulse")
     narrowest = min(p["sample_bits"] for p in d["profile"].values())
@@ -290,6 +331,18 @@ def render(d, pulses, digest):
     L += ["}", "", "PULSE_IDS = {"]
     for name in sorted(d["pulse_ids"], key=lambda n: d["pulse_ids"][n]):
         L.append('    "%s": %d,' % (name, d["pulse_ids"][name]))
+    L += ["}", "", "REFUSAL_CODES = {"]
+    L += ['    "%s": %d,' % (n, d["refusal_codes"][n]) for n in d["refusals"]["names"]]
+    b = d["bus"]
+    L += ["}",
+          "",
+          'BUS = {"word_bits": %d, "address_bits": %d, "first_offset": %d, "magic": 0x%08X}'
+          % (b["word_bits"], b["address_bits"], b["first_offset"], b["magic"]),
+          "",
+          "REGISTERS = {"]
+    for name in sorted(d["registers"], key=lambda n: d["registers"][n][0]):
+        offset, access, words = d["registers"][name]
+        L.append('    "%s": (0x%03X, "%s", %d),' % (name, offset, access, words))
     L += ["}", ""]
     return "\n".join(L)
 
@@ -339,6 +392,20 @@ def numbers(d, pulses):
     for name in sorted(d["pulse_ids"], key=lambda n: d["pulse_ids"][n]):
         rows += [("PULSE_%s_ID" % name.upper(), d["pulse_ids"][name]), ("PULSE_%s_LENGTH" % name.upper(), len(pulses[name]))]
     groups.append(("the reference pulses: the id a truth record carries, and the length in samples", rows))
+    groups.append(("the number the fabric reports for each refusal; 0 is none",
+                   [("REFUSAL_NONE", 0)] + [("REFUSAL_%s" % n, d["refusal_codes"][n]) for n in d["refusals"]["names"]]))
+    b = d["bus"]
+    groups.append(("the register map's frame: one register is one word at a byte offset",
+                   [("BUS_WORD_BITS", b["word_bits"]), ("BUS_ADDRESS_BITS", b["address_bits"]),
+                    ("BUS_FIRST_OFFSET", b["first_offset"]), ("BUS_MAGIC", b["magic"])]))
+    rows = []
+    for name in sorted(d["registers"], key=lambda n: d["registers"][n][0]):
+        offset, access, words = d["registers"][name]
+        stem = "REG_%s" % name.upper()
+        rows += [(stem + "_OFFSET", offset), (stem + "_WORDS", words),
+                 (stem + "_READABLE", 1 if access in ("ro", "rw") else 0),
+                 (stem + "_WRITABLE", 1 if access in ("rw", "wo") else 0)]
+    groups.append(("the registers: each one's byte offset, its words, and whether the host may read and write it", rows))
     seen = set()
     for _heading, rows in groups:
         for name, value in rows:
