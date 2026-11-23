@@ -1212,6 +1212,25 @@ def test_gate_statistics__e1_the_learned_filter_reaches_the_matched_filters_effi
     assert holds(part, r)
 
 
+def test_control_statistics__e1_the_two_checks_on_the_instrument_can_each_fail():
+    """Two of the verdict's conditions are comparisons made inside `evaluate`. Each is shown to
+    report a difference: one score read one unit off, and a core holding another filter."""
+    got, part = short()
+    p = got["plan"]
+    extra = {name: part[name] for name in ("handover_refusal", "first_new_epoch_index", "flags", "scores_not_zero_while_blank",
+                                           "learner_counts", "injection_sha256", "stream_sha256")}
+    for g, off in ((0, 1), (len(got["reads"]) - 1, -1)):                # the first score read and the last, one unit each way
+        reads = [dict(r) for r in got["reads"]]
+        reads[g]["score"] += off
+        wrong = evaluate(p, reads, got["held"], got["blob"], extra)
+        assert part["scores_identical_to_stats"] and not wrong["scores_identical_to_stats"] and not holds(wrong)
+    learned_scores = stat_scores_at_reads(got["held"], part["coefficients"])
+    assert core_agrees(p, got["held"], got["blob"], learned_scores), "the core holding the learned blob gives the learned filter's scores"
+    assert not core_agrees(p, got["held"], facts()["blob"], learned_scores), "and the core holding the matched filter does not"
+    assert not core_agrees(p, got["held"], got["blob"], stat_scores_at_reads(got["held"], facts()["coeffs"]))
+    assert not holds(dict(part, core_equals_baseline_on_first_trials=False))
+
+
 def test_gate_statistics__e1_the_learned_filter_peaks_where_its_score_is_read():
     """conventions.md does not promise where a filter that is not an exact multiple of the pulse
     peaks. Measured: for the learned blob, a lone noise-free injection's largest score is at the

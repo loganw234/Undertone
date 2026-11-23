@@ -27,7 +27,8 @@ There is no step size and no stopping test: the caller says how many windows.
 
 WHAT THE LEARNER IS TOLD beyond its labels: the number of taps, and that a
 window starts at the truth index. It is not told the pulse. This file imports
-nothing of this project at all.
+the standard library, numpy and this package's own refusal, and nothing of
+`model/`, `stats/` or `spec/`.
 
 Limits, each by what it concedes:
   - It does not whiten. A difference of means does not see the noise's
