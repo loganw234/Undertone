@@ -243,6 +243,12 @@ def calibration(check, measured_threshold, seed):
     return out
 
 
+def show(label, c):
+    print("\n%s, %d experiments: outside 1 se %d (expected %.0f +/- %.0f), outside 2 se %d (expected %.0f +/- %.0f): %s"
+          % (label, c["replicates"], c["outside_1"], c["expected_1"], c["band_1"], c["outside_2"], c["expected_2"],
+             c["band_2"], "CALIBRATED" if c["calibrated"] else "NOT CALIBRATED"))
+
+
 def test_stat_the_exact_fractions_the_calibration_expects():
     # About 31.5% outside one standard error and 4.7% outside two: near the normal 31.7% and 4.6%,
     # and not equal, because a count moves in whole steps. By the normal curve with a half-count
@@ -256,6 +262,7 @@ def test_gate_statistics__the_tolerance_has_the_width_of_a_correct_detectors_spr
     """8,000 experiments of 2,000 injections. Chance a correct tolerance fails: about 1.3e-4 (two
     counts, each beyond 4 of its standard deviations)."""
     c = calibration(tolerance.check_efficiency, measured_threshold=False, seed=20261123)
+    show("the tolerance, known threshold", c)
     assert c["calibrated"], c
     assert abs(c["outside_1"] - c["expected_1"]) <= c["band_1"]
     assert abs(c["outside_2"] - c["expected_2"]) <= c["band_2"]
@@ -266,6 +273,7 @@ def test_gate_statistics__the_tolerance_has_the_width_of_a_correct_detectors_spr
     """2,000 experiments, each with its own threshold from 10,000 noise scores. The threshold term
     is then the larger part of the spread (0.0149 against 0.0112)."""
     c = calibration(tolerance.check_efficiency, measured_threshold=True, seed=20261124)
+    show("the tolerance, measured threshold", c)
     assert c["calibrated"], c
     assert 600 < c["expected_1"] < 670 and 80 < c["expected_2"] < 100
 
@@ -282,6 +290,7 @@ def wrong_trial_count(factor):
 def test_control_statistics__a_tolerance_for_a_quarter_of_the_trials_is_reported_as_too_wide():
     """Twice too wide: it would pass detectors a correct tolerance rejects."""
     c = calibration(wrong_trial_count(0.25), measured_threshold=False, seed=20261123)
+    show("CONTROL a tolerance for a quarter of the trials", c)
     assert not c["calibrated"], c
     assert c["outside_1"] < c["expected_1"] - c["band_1"], "too few experiments fall outside a tolerance that is too wide"
     assert c["outside_2"] < c["expected_2"] - c["band_2"]
@@ -290,6 +299,7 @@ def test_control_statistics__a_tolerance_for_a_quarter_of_the_trials_is_reported
 def test_control_statistics__a_tolerance_for_four_times_the_trials_is_reported_as_too_narrow():
     """Half as wide: it would fail correct detectors."""
     c = calibration(wrong_trial_count(4), measured_threshold=False, seed=20261123)
+    show("CONTROL a tolerance for four times the trials", c)
     assert not c["calibrated"], c
     assert c["outside_1"] > c["expected_1"] + c["band_1"]
     assert c["outside_2"] > c["expected_2"] + c["band_2"]
@@ -300,6 +310,7 @@ def test_control_statistics__a_tolerance_that_forgets_the_threshold_was_measured
     def binomial_only(found, n, pfa, d, m=None):
         return tolerance.check_efficiency(found, n, pfa, d, None)
     c = calibration(binomial_only, measured_threshold=True, seed=20261124)
+    show("CONTROL a tolerance that forgets the threshold was measured", c)
     assert not c["calibrated"], c
     assert c["outside_1"] > c["expected_1"] + c["band_1"]
     assert c["outside_2"] > c["expected_2"] + c["band_2"]
@@ -315,4 +326,5 @@ def test_control_statistics__a_tolerance_wrong_by_a_tenth_in_width_is_still_repo
         return check
     for factor in (1.1, 1 / 1.1):
         c = calibration(scaled(factor), measured_threshold=False, seed=20261123)
+        show("CONTROL a tolerance %.3f times as wide as it should be" % factor, c)
         assert not c["calibrated"], (factor, c)
