@@ -59,12 +59,25 @@ MOD_B_REFUSALS = ("SHAPE_CHANNEL", "SHAPE_ROWS", "SHAPE_RECTIFIER", "SHAPE_POOL"
 MOD_A_REFUSALS = ("SEED_RANGE", "NOISE_SIGMA", "NOISE_RANGE", "STREAM_LENGTH", "PULSE_UNKNOWN",
                   "INJECT_OVERLAP", "INJECT_PAST_END", "INJECT_RANGE", "REPLAY_FORMAT", "REPLAY_PROFILE",
                   "REPLAY_HASH")
+# Round 2, parcel HEAD: the head's hidden layer.
+HEAD_REFUSALS = ("SHAPE_HIDDEN", "SHAPE_HIDDEN_SHIFT", "SHAPE_BETWEEN")
 
 
-def test_p0_refusal_names_are_exactly_the_declared_thirty_seven():
-    assert (len(P0_REFUSALS), len(MOD_B_REFUSALS), len(MOD_A_REFUSALS)) == (10, 16, 11)
-    assert C.REFUSALS == P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS
-    assert len(set(C.REFUSALS)) == 37
+def test_p0_refusal_names_are_exactly_the_declared_forty():
+    assert (len(P0_REFUSALS), len(MOD_B_REFUSALS), len(MOD_A_REFUSALS), len(HEAD_REFUSALS)) == (10, 16, 11, 3)
+    assert C.REFUSALS == P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS + HEAD_REFUSALS
+    assert len(set(C.REFUSALS)) == 40
+
+
+def test_p0_the_hidden_layers_bounds_are_the_ones_generated_and_keep_the_head_small():
+    """Round 2's plan fixed "simple enough" before the hidden layer was designed. Its third part is a
+    count: at the maxima the whole head, as multipliers, is at most a tenth of the filter bank. Each
+    hidden unit takes one multiplier for each filter and one more on its way out."""
+    assert (C.MAX_HIDDEN, C.MAX_HIDDEN_SHIFT) == (12, 31)
+    assert (C.MAX_FILTERS + 1) * C.MAX_HIDDEN * 10 <= C.MAX_FILTERS * C.MAX_TAPS       # 2,040 <= 2,048
+    assert (C.MAX_FILTERS + 1) * (C.MAX_HIDDEN + 1) * 10 > C.MAX_FILTERS * C.MAX_TAPS  # thirteen would not pass
+    # Every old head has its setting of the new one only if the hidden shift reaches as far as the score's.
+    assert C.MAX_HIDDEN_SHIFT >= C.MAX_SCORE_SHIFT
 
 
 def test_p0_the_bounds_the_lead_decided_on_2026_11_23_are_the_ones_generated():

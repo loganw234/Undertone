@@ -5,7 +5,7 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "209d3009cd0ba3db510d2a102a05d45c862ac1ee9008aadc612daf2ab4ee066f"
+SPEC_SHA256 = "9531804f7080d32b1608961dea8180fd444ea56137dac26f92ba208e03fff4c9"
 
 PROFILES = {
     "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
@@ -20,6 +20,8 @@ MAX_TAPS = 128
 MAX_ROWS = 16
 MAX_POOL = 65536
 MAX_SCORE_SHIFT = 31
+MAX_HIDDEN = 12
+MAX_HIDDEN_SHIFT = 31
 MAX_HIST_BINS = 4096
 
 RECTIFIERS = {
@@ -97,6 +99,9 @@ REFUSALS = (
     "REPLAY_FORMAT",
     "REPLAY_PROFILE",
     "REPLAY_HASH",
+    "SHAPE_HIDDEN",
+    "SHAPE_HIDDEN_SHIFT",
+    "SHAPE_BETWEEN",
 )
 
 PULSES = {

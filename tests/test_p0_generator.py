@@ -73,6 +73,10 @@ BAD = [
     ("a pool bound past the generator's range", [("max_pool = 65536", "max_pool = 16777217")], "NUMBER"),
     ("a shift bound of sixty-four", [("max_score_shift = 31", "max_score_shift = 64")], "NUMBER"),
     ("a negative shift bound", [("max_score_shift = 31", "max_score_shift = -1")], "NUMBER"),
+    ("a hidden bound of zero", [("max_hidden = 12", "max_hidden = 0")], "NUMBER"),
+    ("a hidden bound past the generator's range", [("max_hidden = 12", "max_hidden = 1025")], "NUMBER"),
+    ("a hidden shift bound of sixty-four", [("max_hidden_shift = 31", "max_hidden_shift = 64")], "NUMBER"),
+    ("a core with no hidden bound", [("max_hidden = 12\n", "")], "KEYS"),
     ("a histogram bound of zero", [("max_hist_bins = 4096", "max_hist_bins = 0")], "NUMBER"),
     ("a histogram bound that is a float", [("max_hist_bins = 4096", "max_hist_bins = 4096.0")], "NUMBER"),
     ("an unknown key in scorer", [("max_hist_bins = 4096", "max_hist_bins = 4096\nextra = 1")], "KEYS"),
@@ -162,6 +166,10 @@ def test_p0_a_bound_at_either_end_of_its_range_is_accepted(tmp_path):
                           ("rowstop", "max_rows = 16", "max_rows = 1024"),
                           ("bins1", "max_hist_bins = 4096", "max_hist_bins = 1"),
                           ("binstop", "max_hist_bins = 4096", "max_hist_bins = 65536"),
+                          ("hidden1", "max_hidden = 12", "max_hidden = 1"),
+                          ("hiddentop", "max_hidden = 12", "max_hidden = 1024"),
+                          ("hshift0", "max_hidden_shift = 31", "max_hidden_shift = 0"),
+                          ("hshift63", "max_hidden_shift = 31", "max_hidden_shift = 63"),
                           ("rect255", "abs = 1 ", "abs = 255 ")):
         d, _pulses, _digest = gen_spec.load(tree(tmp_path / tag, [(old, new)]))
         assert new.strip() in ("%s = %d" % (k, v) for sec in ("core", "rectifier", "scorer")
@@ -174,7 +182,9 @@ FOLLOWS = [
     ("max_rows = 16", "max_rows = 7", "MAX_ROWS = 7", ["MAX_FILTERS = 16", "MAX_TAPS = 128"]),
     ("max_taps = 128", "max_taps = 96", "MAX_TAPS = 96", ["MAX_FILTERS = 16", "MAX_ROWS = 16"]),
     ("max_pool = 65536", "max_pool = 1024", "MAX_POOL = 1024", ["MAX_HIST_BINS = 4096", "MAX_SCORE_SHIFT = 31"]),
-    ("max_score_shift = 31", "max_score_shift = 21", "MAX_SCORE_SHIFT = 21", ["MAX_POOL = 65536"]),
+    ("max_score_shift = 31", "max_score_shift = 21", "MAX_SCORE_SHIFT = 21", ["MAX_POOL = 65536", "MAX_HIDDEN_SHIFT = 31"]),
+    ("max_hidden = 12", "max_hidden = 8", "MAX_HIDDEN = 8", ["MAX_HIDDEN_SHIFT = 31", "MAX_FILTERS = 16"]),
+    ("max_hidden_shift = 31", "max_hidden_shift = 21", "MAX_HIDDEN_SHIFT = 21", ["MAX_SCORE_SHIFT = 31", "MAX_HIDDEN = 12"]),
     ("max_hist_bins = 4096", "max_hist_bins = 512", "MAX_HIST_BINS = 512", ["MAX_POOL = 65536"]),
     ("abs = 1 ", "abs = 9 ", "    \"abs\": 9,", ["    \"pass\": 0,"]),
     ("pass = 0 ", "pass = 4 ", "    \"pass\": 4,", ["    \"abs\": 1,"]),
@@ -198,5 +208,6 @@ def test_p0_each_generated_fact_follows_its_own_key_and_no_other(tmp_path, old, 
 def test_p0_a_stale_copy_is_reported_with_the_line_that_differs(tmp_path):
     root = tree(tmp_path, [("max_taps = 128", "max_taps = 64")])
     findings = gen_spec.check(root)
-    assert len(findings) == 1
-    assert findings[0][0] == "spec/constants.py" and "differs from the definition at line" in findings[0][1]
+    # Every copy is stale, and each is named, with a line: the check does not stop at the first.
+    assert [f[0] for f in findings] == ["spec/constants.py", "spec/undertone_pkg.sv", "spec/undertone.h"]
+    assert all("differs from the definition at line" in f[1] for f in findings)

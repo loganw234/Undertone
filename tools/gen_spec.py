@@ -1,12 +1,27 @@
 #!/usr/bin/env python3
-"""Generate spec/constants.py from spec/undertone.toml, or check that it is current.
+"""Generate the copies of spec/undertone.toml, or check that each is current.
 
-    python tools/gen_spec.py            write spec/constants.py
-    python tools/gen_spec.py --check    exit 1, naming the first difference, if it is stale
+    python tools/gen_spec.py            write the three copies
+    python tools/gen_spec.py --check    exit 1, naming each stale copy's first difference
     --root DIR                          work on another copy of the tree
 
-One definition, generated copies. Round 2 adds the SystemVerilog and C outputs
-here; today there is one output, the Python constants model/ and stats/ import.
+One definition, generated copies. There are three:
+
+    spec/constants.py        the Python constants model/ and stats/ import
+    spec/undertone_pkg.sv    a SystemVerilog package, for the RTL
+    spec/undertone.h         a C header, for the host library
+
+The second and third carry the same names with the same values, from one list
+(`numbers` below): the header's names have the prefix UNDERTONE_. They hold
+the integers only. What the Python copy has and they do not: the refusal names
+(a refusal has no number yet; the register map gives it one), the pulses'
+samples (they carry each pulse's id and length), the profiles as a table (they
+carry each profile's two numbers), and the names of the quantising and
+injection rules. A name that two entries of the list would share is REFUSED.
+
+`--check` compares text: each copy must equal what this generator renders
+today. It does not show that a simulator or a compiler reads those lines as
+the same numbers.
 
 The definition is checked before anything is written, and one that does not
 make sense is REFUSED by name. What is checked, exactly:
@@ -49,10 +64,14 @@ import sys
 import tomllib
 
 OUT = "spec/constants.py"
+OUT_SV = "spec/undertone_pkg.sv"
+OUT_C = "spec/undertone.h"
 SRC = "spec/undertone.toml"
+C_PREFIX = "UNDERTONE_"
 KEYS = {
     "meta": {"spec_version"},
-    "core": {"coeff_bits", "max_filters", "max_taps", "max_rows", "max_pool", "max_score_shift"},
+    "core": {"coeff_bits", "max_filters", "max_taps", "max_rows", "max_pool", "max_score_shift",
+             "max_hidden", "max_hidden_shift"},
     "quantise": {"scale", "rounding"},
     "inject": {"rounding"},
     "scorer": {"max_hist_bins"},
@@ -63,7 +82,7 @@ TOP = set(KEYS) | {"profile", "flags", "rectifier", "pulses", "pulse_ids"}
 RANGE = {"spec_version": (1, 10 ** 6), "sample_bits": (2, 32), "channels": (1, 16),
          "coeff_bits": (2, 32), "max_filters": (1, 1024), "max_taps": (1, 65536),
          "max_rows": (1, 1024), "max_pool": (1, 2 ** 24), "max_score_shift": (0, 63),
-         "max_hist_bins": (1, 65536)}
+         "max_hist_bins": (1, 65536), "max_hidden": (1, 1024), "max_hidden_shift": (0, 63)}
 LOWER = re.compile(r"[a-z][a-z0-9_]*\Z")
 UPPER = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 
@@ -232,6 +251,8 @@ def render(d, pulses, digest):
           "MAX_ROWS = %d" % c["max_rows"],
           "MAX_POOL = %d" % c["max_pool"],
           "MAX_SCORE_SHIFT = %d" % c["max_score_shift"],
+          "MAX_HIDDEN = %d" % c["max_hidden"],
+          "MAX_HIDDEN_SHIFT = %d" % c["max_hidden_shift"],
           "MAX_HIST_BINS = %d" % d["scorer"]["max_hist_bins"],
           "",
           "RECTIFIERS = {"]
@@ -273,25 +294,124 @@ def render(d, pulses, digest):
     return "\n".join(L)
 
 
+def numbers(d, pulses):
+    """The integers the SystemVerilog package and the C header carry: a list of
+    (heading, [(NAME, value), ...]). Every value fits 32 signed bits, or the
+    definition is refused: both copies declare a plain int.
+    """
+    c = d["core"]
+    groups = [("the definition", [("SPEC_VERSION", d["meta"]["spec_version"])])]
+    rows = [("PROFILE_COUNT", len(d["profile"]))]
+    for name in sorted(d["profile"]):
+        rows += [("PROFILE_%s_SAMPLE_BITS" % name.upper(), d["profile"][name]["sample_bits"]),
+                 ("PROFILE_%s_CHANNELS" % name.upper(), d["profile"][name]["channels"])]
+    groups.append(("the profiles: a sample format each", rows))
+    groups.append(("the core's widths and maxima", [
+        ("COEFF_BITS", c["coeff_bits"]),
+        ("COEFF_MIN", -2 ** (c["coeff_bits"] - 1)),
+        ("COEFF_MAX", 2 ** (c["coeff_bits"] - 1) - 1),
+        ("MAX_FILTERS", c["max_filters"]),
+        ("MAX_TAPS", c["max_taps"]),
+        ("MAX_ROWS", c["max_rows"]),
+        ("MAX_POOL", c["max_pool"]),
+        ("MAX_SCORE_SHIFT", c["max_score_shift"]),
+        ("MAX_HIDDEN", c["max_hidden"]),
+        ("MAX_HIDDEN_SHIFT", c["max_hidden_shift"]),
+        ("MAX_HIST_BINS", d["scorer"]["max_hist_bins"])]))
+    groups.append(("the rectifier's codes", [
+        ("RECTIFIER_%s" % n.upper(), d["rectifier"][n])
+        for n in sorted(d["rectifier"], key=lambda n: d["rectifier"][n])]))
+    flag_bits = [f[1] for f in d["records"]["score"] if f[0] == "flags"][0]
+    used = sum(1 << b for b in d["flags"].values())
+    groups.append(("a score record's flags: the bit each has, and the bits that must be zero",
+                   [("FLAG_%s_BIT" % n.upper(), d["flags"][n]) for n in sorted(d["flags"], key=lambda n: d["flags"][n])]
+                   + [("FLAGS_RESERVED_MASK", ((1 << flag_bits) - 1) & ~used)]))
+    for rec in sorted(d["records"]):
+        rows, at = [], 0
+        for field, bits, sign in d["records"][rec]:
+            stem = "%s_%s" % (rec.upper(), field.upper())
+            rows += [(stem + "_LSB", at), (stem + "_BITS", bits), (stem + "_SIGNED", 1 if sign == "signed" else 0)]
+            at += bits
+        rows.append(("%s_RECORD_BITS" % rec.upper(), at))
+        groups.append(("the %s record: each field's lowest bit, its width, and whether it is signed. The canonical "
+                       "bytes are little-endian in declared order, so bit 0 is the lowest bit of the first byte" % rec, rows))
+    rows = []
+    for name in sorted(d["pulse_ids"], key=lambda n: d["pulse_ids"][n]):
+        rows += [("PULSE_%s_ID" % name.upper(), d["pulse_ids"][name]), ("PULSE_%s_LENGTH" % name.upper(), len(pulses[name]))]
+    groups.append(("the reference pulses: the id a truth record carries, and the length in samples", rows))
+    seen = set()
+    for _heading, rows in groups:
+        for name, value in rows:
+            if name in seen:
+                raise Refused("NAMES: two entries of the definition both give the generated name %s" % name)
+            seen.add(name)
+            if not -2 ** 31 <= value <= 2 ** 31 - 1:
+                raise Refused("NUMBER: the generated %s = %d does not fit 32 signed bits" % (name, value))
+    return groups
+
+
+def render_sv(d, pulses, digest):
+    L = ["// GENERATED by tools/gen_spec.py from spec/undertone.toml. Do not edit.",
+         "//",
+         "// Edit the definition, run the generator, commit both. The `generated` stage",
+         "// of verify/run.sh fails when this file and the definition disagree.",
+         "",
+         "package undertone_pkg;",
+         "",
+         "  // the SHA-256 of the definition this package was generated from",
+         "  localparam logic [255:0] SPEC_SHA256 = 256'h%s;" % digest]
+    for heading, rows in numbers(d, pulses):
+        L += ["", "  // %s" % heading]
+        L += ["  localparam int %s = %d;" % row for row in rows]
+    L += ["", "endpackage", ""]
+    return "\n".join(L)
+
+
+def render_c(d, pulses, digest):
+    L = ["/* GENERATED by tools/gen_spec.py from spec/undertone.toml. Do not edit.",
+         " *",
+         " * Edit the definition, run the generator, commit both. The `generated` stage",
+         " * of verify/run.sh fails when this file and the definition disagree.",
+         " */",
+         "#ifndef UNDERTONE_H",
+         "#define UNDERTONE_H",
+         "",
+         "/* the SHA-256 of the definition this header was generated from */",
+         '#define %sSPEC_SHA256 "%s"' % (C_PREFIX, digest)]
+    for heading, rows in numbers(d, pulses):
+        L += ["", "/* %s */" % heading]
+        L += ["#define %s%s %s" % (C_PREFIX, name, "(%d)" % value if value < 0 else "%d" % value) for name, value in rows]
+    L += ["", "#endif", ""]
+    return "\n".join(L)
+
+
+OUTPUTS = ((OUT, render), (OUT_SV, render_sv), (OUT_C, render_c))
+
+
 def check(root):
-    """Returns a list of findings, each (file, what). Empty means current."""
+    """Returns a list of findings, each (file, what). Empty means every copy is current."""
     try:
-        want = render(*load(root))
+        loaded = load(root)
+        wants = [(out, fn(*loaded)) for out, fn in OUTPUTS]
     except Refused as e:
         return [(SRC, "REFUSED %s" % e)]
-    path = os.path.join(root, OUT)
-    if not os.path.exists(path):
-        return [(OUT, "is missing")]
-    with open(path, "rb") as f:
-        have = f.read().decode("utf-8").replace("\r\n", "\n")
-    if have == want:
-        return []
-    a, b = have.split("\n"), want.split("\n")
-    for i in range(max(len(a), len(b))):
-        if i >= len(a) or i >= len(b) or a[i] != b[i]:
-            return [(OUT, "differs from the definition at line %d: has %r, the definition gives %r"
-                     % (i + 1, a[i] if i < len(a) else None, b[i] if i < len(b) else None))]
-    return [(OUT, "differs from the definition")]
+    findings = []
+    for out, want in wants:
+        path = os.path.join(root, out)
+        if not os.path.exists(path):
+            findings.append((out, "is missing"))
+            continue
+        with open(path, "rb") as f:
+            have = f.read().decode("utf-8").replace("\r\n", "\n")
+        if have == want:
+            continue
+        a, b = have.split("\n"), want.split("\n")
+        for i in range(max(len(a), len(b))):
+            if i >= len(a) or i >= len(b) or a[i] != b[i]:
+                findings.append((out, "differs from the definition at line %d: has %r, the definition gives %r"
+                                 % (i + 1, a[i] if i < len(a) else None, b[i] if i < len(b) else None)))
+                break
+    return findings
 
 
 def main(argv):
@@ -304,13 +424,15 @@ def main(argv):
             print("FINDING generated %s: %s" % (name, what))
         return 1 if findings else 0
     try:
-        text = render(*load(root))
+        loaded = load(root)
+        texts = [(out, fn(*loaded)) for out, fn in OUTPUTS]
     except Refused as e:
         print("REFUSED %s" % e)
         return 2
-    with open(os.path.join(root, OUT), "w", encoding="utf-8", newline="\n") as f:
-        f.write(text)
-    print("wrote %s" % OUT)
+    for out, text in texts:      # nothing is written unless every copy rendered
+        with open(os.path.join(root, out), "w", encoding="utf-8", newline="\n") as f:
+            f.write(text)
+        print("wrote %s" % out)
     return 0
 
 

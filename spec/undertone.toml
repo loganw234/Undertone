@@ -42,6 +42,14 @@ max_taps = 128      # D0 row D3
 max_rows = 16
 max_pool = 65536
 max_score_shift = 31
+# The head's hidden layer (parcel HEAD's design, round 2). Both are the lead's
+# DECISIONS of 2026-11-23, and D0 states neither.
+#   The most hidden units a shape may have. Twelve is the most that keeps the
+#   whole head, counted as multipliers at these maxima, within a tenth of the
+#   filter bank: (max_filters + 1) * 12 = 204 against 16 * 128 / 10 = 204.8.
+#   How far a hidden unit's sum may be shifted right into its value.
+max_hidden = 12
+max_hidden_shift = 31
 
 # The rectifier's modes, each by the code a weight blob carries for it. A code
 # fits one byte.
@@ -124,6 +132,10 @@ names = [
     "REPLAY_FORMAT",
     "REPLAY_PROFILE",
     "REPLAY_HASH",
+    # The head's hidden layer (parcel HEAD, round 2).
+    "SHAPE_HIDDEN",
+    "SHAPE_HIDDEN_SHIFT",
+    "SHAPE_BETWEEN",
 ]
 
 # Reference pulses, as integer data, by path under spec/.

@@ -19,10 +19,14 @@ without that, it exits 0. If it crashes it exits non-zero with a traceback and
 no CONTROL-DETECTED line; the runner needs the line, so it fails that too.
 
 WHAT THESE CHECKS CANNOT SEE (stated limits):
-  generated     compares spec/constants.py with what the definition gives, and
-                each vectors/<folder>/SHA256SUMS with its folder, subfolders
+  generated     compares each generated copy of the definition (the Python
+                constants, the SystemVerilog package, the C header) with what
+                the definition gives, as text, and each
+                vectors/<folder>/SHA256SUMS with its folder, subfolders
                 included. It does not know whether a vector's expected answer
-                is right, nor whether the definition says what the design means.
+                is right, whether the definition says what the design means,
+                nor whether a simulator or a compiler reads a copy's lines as
+                the numbers the Python copy holds.
   model-tests   reads the results file pytest writes, not its exit code alone.
                 It runs the tests pytest selects under tests/. A conftest.py
                 or a pytest.ini can deselect tests, and this stage would run
@@ -78,8 +82,9 @@ def check_generated(root, state):
     findings += sums
     if nfolders == 0:
         raise Refusal("NOTHING-SELECTED: no folder under vectors/")
-    return findings, 1 + nfolders, "1 generated file and %d checksum list(s) over %d vector file(s) match their sources" \
-        % (nfolders, nfiles)
+    ncopies = len(gen_spec.OUTPUTS)
+    return findings, ncopies + nfolders, "%d generated copies of the definition and %d checksum list(s) over %d vector " \
+        "file(s) match their sources" % (ncopies, nfolders, nfiles)
 
 
 def pytest_run(root, args):
@@ -291,13 +296,22 @@ def plants(kind, root, scratch):
     if kind == "generated":
         a = copy_tree(root, scratch, "a")
         write(a, "spec/constants.py", "PLANTED = 1\n", "a")
+        # One edited constant in each of the other two copies: a wider bound in the package, a narrower in the header.
+        for name, old, new in (("spec/undertone_pkg.sv", "localparam int MAX_TAPS = ", "localparam int MAX_TAPS = 1"),
+                               ("spec/undertone.h", "#define UNDERTONE_MAX_POOL ", "#define UNDERTONE_MAX_POOL 1")):
+            with open(os.path.join(a, name), encoding="utf-8") as f:
+                text = f.read()
+            if text.count(old) != 1:
+                raise Refusal("PLANT-DOES-NOT-APPLY: %r is in %s %d time(s), not once" % (old, name, text.count(old)))
+            write(a, name, text.replace(old, new))
         vec = os.path.join(a, "vectors", "p0", "sample_range.json")
         with open(vec, encoding="utf-8") as f:
             text = f.read()
         write(a, "vectors/p0/sample_range.json", text.replace("32767", "32768", 1))
         # A vector in a subfolder, never listed: the first verifier's finding on this check.
         write(a, "vectors/p0/deeper/unlisted.json", "{}\n")
-        return [(a, {"spec/constants.py", "vectors/p0/sample_range.json", "vectors/p0/deeper/unlisted.json"})]
+        return [(a, {"spec/constants.py", "spec/undertone_pkg.sv", "spec/undertone.h",
+                     "vectors/p0/sample_range.json", "vectors/p0/deeper/unlisted.json"})]
     if kind == "model-tests":
         a = copy_tree(root, scratch, "a")
         drop_tests(a, keep="test_p0_")
