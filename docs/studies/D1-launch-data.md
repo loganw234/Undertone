@@ -25,6 +25,7 @@ The labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECIS
 - **COMPUTED** rows cite a labelled line of [figures.py](d1/figures.py), or a table that stations.py prints.
 - The station tables and the request table in this file are written by [splice.py](d1/splice.py) from those scripts' output. `splice.py --check` fails if a table here differs from what the scripts print.
 - `<scratch>` is this parcel's scratch folder in the round's run folder, outside the repository: saved pages under `pages/`, station answers under `stations/`, availability answers under `availability/`, and `requests.log`, one request a line with its time.
+- `<data>` is this parcel's data folder in the same run folder, also outside the repository: the files phase 2 fetched, listed with their hashes in [manifest.tsv](d1/manifest.tsv). The rows restated after the first look read from it.
 
 Prose outside the registers is this parcel's reasoning. The gate does not check it.
 
