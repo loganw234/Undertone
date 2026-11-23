@@ -68,6 +68,21 @@ def test_stat_threshold_from_scores_by_hand():
     assert recovery.threshold_from_scores(scores, 0.2)["threshold"] == 800.0
 
 
+def test_stat_the_crossing_count_is_the_floor_of_the_floats_exact_value():
+    """k = floor(pfa * m) is worked on the exact value of the float it is handed. The float written
+    0.29 is a hair BELOW 0.29, so over 10,000 scores k is 2,899, one fewer than the decimal reads;
+    0.57 and 0.58 behave the same. 0.25 is exact in binary and gives 2,500. The scores are
+    0..9999, so the (k+1)-th largest is 9999 - k."""
+    scores = np.arange(10_000, dtype=float)
+    for pfa, k in ((0.29, 2899), (0.57, 5699), (0.58, 5799), (0.25, 2500), (0.01, 100)):
+        t = recovery.threshold_from_scores(scores, pfa)
+        assert (t["k"], t["above"], t["threshold"]) == (k, k, float(9999 - k)), pfa
+        # whatever k is, the figure handed on is worked from the k actually used
+        assert t["pfa_effective"] == (k + 1) / 10_001
+    # never MORE crossings than the float's value allows: k / m is at or below pfa
+    assert 2899 / 10_000 <= 0.29 and 5699 / 10_000 <= 0.57
+
+
 def test_stat_threshold_from_tied_scores_reports_how_few_cross():
     # 1000 scores: 850 zeros and 150 fives. k = 100; the 101st largest is 5; nothing is strictly above.
     scores = np.array([0.0] * 850 + [5.0] * 150)

@@ -77,9 +77,9 @@ def test_stat_the_prediction_sets_the_spread_not_the_measurement():
     # At Pd 0.2822 (pfa 0.01, d 1.75): se = sqrt(0.2822 * 0.7178 / 10000) = 0.0045007, whatever was found.
     for found in (2000, 2822, 4000):
         c = tolerance.check_efficiency(found, 10_000, PFA, 1.75)
-        assert c["se_total"] == pytest.approx(0.0045007, abs=2e-7)
+        assert c["se_total"] == pytest.approx(0.0045007, abs=5e-8)
         assert c["expected"] == pytest.approx(0.28219, abs=5e-6)
-    assert math.sqrt(0.28219 * 0.71781 / 10_000) == pytest.approx(0.0045007, abs=2e-7)
+    assert math.sqrt(0.28219 * 0.71781 / 10_000) == pytest.approx(0.0045007, abs=5e-8)
 
 
 def test_stat_roc_slope_is_the_derivative_of_d8_with_respect_to_pfa():
@@ -89,19 +89,23 @@ def test_stat_roc_slope_is_the_derivative_of_d8_with_respect_to_pfa():
         assert tolerance.roc_slope(pfa, d) == pytest.approx(numeric, rel=1e-5)
     # by hand at the gate's point: exp(d * z - d^2 / 2) with d = z is exp(z^2 / 2)
     assert tolerance.roc_slope(PFA, Z01) == pytest.approx(math.exp(Z01 * Z01 / 2.0), rel=1e-12)
-    assert math.exp(Z01 * Z01 / 2.0) == pytest.approx(14.968, abs=1e-3)
+    assert math.exp(Z01 * Z01 / 2.0) == pytest.approx(14.968, abs=5e-4)
     assert tolerance.roc_slope(PFA, 0.0) == 1.0, "with no pulse, Pd is Pfa and the slope is one"
 
 
 def test_stat_a_measured_threshold_widens_the_tolerance_by_hand():
     # n 2000 at Pd 1/2: binomial variance 0.25 / 2000 = 1.25e-4.
-    # m 10,000 noise scores at pfa 0.01: slope^2 * 0.01 * 0.99 / 10000 = 14.968^2 * 9.9e-7 = 2.2180e-4.
+    # m 10,000 noise scores at pfa 0.01: slope^2 * 0.01 * 0.99 / 10000 = 224.0556 * 9.9e-7 = 2.2182e-4,
+    # with slope^2 = exp(Z01^2) = 224.0556. (Squaring the ROUNDED slope 14.968 gives 2.2180e-4, which is
+    # wrong in its last digit; this comment said so until 2026-11-23 and the test was loose enough to pass.)
     t = tolerance.tolerance(PFA, Z01, 2000, m=10_000)
     assert t["se_binomial"] == pytest.approx(math.sqrt(1.25e-4), rel=1e-12)
     assert t["se_threshold"] == pytest.approx(math.sqrt(math.exp(Z01 * Z01) * 0.01 * 0.99 / 10_000), rel=1e-10)
-    assert t["se_threshold"] == pytest.approx(0.014893, abs=2e-6)
-    assert t["se_total"] == pytest.approx(math.sqrt(1.25e-4 + 2.2180e-4), abs=2e-6)
-    assert t["tolerance"] == pytest.approx(4 * 0.018623, abs=1e-5)
+    assert t["se_threshold"] == pytest.approx(0.014893, abs=5e-7)
+    assert math.exp(Z01 * Z01) * 0.01 * 0.99 / 10_000 == pytest.approx(2.2182e-4, abs=5e-9)
+    assert t["se_total"] == pytest.approx(math.sqrt(1.25e-4 + 2.2182e-4), abs=2e-7)
+    assert t["se_total"] == pytest.approx(0.018623, abs=5e-7)
+    assert t["tolerance"] == pytest.approx(4 * 0.018623, abs=2e-6)
     c = tolerance.check_efficiency(1000, 2000, PFA, Z01, m=10_000)
     assert c["se_threshold"] == t["se_threshold"] and c["se_total"] == t["se_total"]
     # the same count is judged more leniently when the threshold was measured, as it must be
@@ -113,9 +117,9 @@ def test_stat_what_the_check_can_and_cannot_see():
     n = 10_000
     # a correct detector is rejected at the false-rejection rate, 2 Q(4)
     assert tolerance.rejection_probability(0.5, PFA, Z01, n) == pytest.approx(2 * 0.5 * math.erfc(4 / math.sqrt(2)), rel=1e-9)
-    assert 2 * 0.5 * math.erfc(4 / math.sqrt(2)) == pytest.approx(6.334e-5, rel=1e-3)
+    assert 2 * 0.5 * math.erfc(4 / math.sqrt(2)) == pytest.approx(6.334e-5, abs=5e-9)
     # one wrong by exactly the tolerance is rejected about half the time: THE LIMIT
-    assert tolerance.rejection_probability(0.48, PFA, Z01, n) == pytest.approx(0.5, abs=1e-3)
+    assert tolerance.rejection_probability(0.48, PFA, Z01, n) == pytest.approx(0.5, abs=1e-9)
     # one wrong by half the tolerance is almost always passed
     assert tolerance.rejection_probability(0.49, PFA, Z01, n) < 0.03
     # one wrong by the catch margin is almost always rejected
@@ -127,6 +131,25 @@ def test_stat_what_the_check_can_and_cannot_see():
     assert seen[0] < 0.03 and 0.98 < seen[1] < 0.995 and seen[2] > 1 - 1e-12
 
 
+def test_stat_rejection_probability_uses_the_wrong_detectors_own_spread_by_hand():
+    """100 injections, D8 one half: the standard error is 0.05 and the tolerance 0.2, so a count is
+    inside from 30 to 70. A detector whose TRUE efficiency is 0.8 has its own spread,
+    sqrt(0.8 * 0.2 / 100) = 0.04, not the prediction's 0.05. It is rejected when its count is above 70:
+    Q((0.7 - 0.8) / 0.04) = Q(-2.5) = 0.99379, plus Q((0.8 - 0.3) / 0.04) = Q(12.5), which is nothing.
+    With the prediction's spread the answer would be Q(-2) = 0.97725. The exact binomial figure,
+    summed in integers below, is 0.98875: nearer the first."""
+    own = 0.5 * math.erfc(-2.5 / math.sqrt(2))
+    other = 0.5 * math.erfc(-2.0 / math.sqrt(2))
+    assert own == pytest.approx(0.99379, abs=5e-6) and other == pytest.approx(0.97725, abs=5e-6)
+    got = tolerance.rejection_probability(0.8, PFA, Z01, 100)
+    assert got == pytest.approx(own, abs=1e-9)
+    assert abs(got - other) > 0.016
+    exact = float(sum(Fraction(math.comb(100, k)) * Fraction(4, 5) ** k * Fraction(1, 5) ** (100 - k)
+                      for k in list(range(0, 30)) + list(range(71, 101))))
+    assert exact == pytest.approx(0.98875, abs=5e-6)
+    assert abs(got - exact) < abs(other - exact)
+
+
 def test_stat_the_exact_false_rejection_rate_against_an_independent_exact_sum():
     # n = 1,001 at Pd 1/2. The tolerance is 4 * sqrt(0.25 / 1001), which is 63.28 counts,
     # so a count is inside when |K - 500.5| <= 63.28: K from 438 to 563.
@@ -134,10 +157,12 @@ def test_stat_the_exact_false_rejection_rate_against_an_independent_exact_sum():
     assert 4 * math.sqrt(0.25 / n) * n == pytest.approx(63.28, abs=0.005)
     inside = sum(math.comb(n, k) for k in range(438, 564))
     exact = float(1 - Fraction(inside, 2 ** n))
-    assert exact == pytest.approx(6.5e-5, abs=1e-5)
+    assert exact == pytest.approx(6.679e-5, abs=5e-9)
     assert tolerance.false_rejection_probability(PFA, Z01, n) == pytest.approx(exact, rel=1e-8)
     # it is near the normal figure and not equal to it
-    assert tolerance.false_rejection_probability(PFA, Z01, 200_000) == pytest.approx(6.33e-5, abs=0.05e-5)
+    # 6.3249e-5 at 200,000; the normal figure is 6.3342e-5. (This line held 6.33e-5 to within 5e-7 until
+    # 2026-11-23: a figure wrong in its third digit, behind an allowance wide enough to pass it.)
+    assert tolerance.false_rejection_probability(PFA, Z01, 200_000) == pytest.approx(6.3249e-5, abs=5e-9)
 
 
 @pytest.mark.parametrize("call, name", [
@@ -250,12 +275,13 @@ def show(label, c):
 
 
 def test_stat_the_exact_fractions_the_calibration_expects():
-    # About 31.5% outside one standard error and 4.7% outside two: near the normal 31.7% and 4.6%,
-    # and not equal, because a count moves in whole steps. By the normal curve with a half-count
-    # correction: 2 Q(22.5 / 22.36) = 0.314 and 2 Q(44.5 / 22.36) = 0.0466.
-    assert exact_outside_fraction(978, 1022) == pytest.approx(0.3146, abs=5e-4)
-    assert exact_outside_fraction(956, 1044) == pytest.approx(0.0466, abs=5e-4)
-    assert math.sqrt(N_SMALL) / 2 == pytest.approx(22.36, abs=0.01)
+    # 31.43% outside one standard error and 4.66% outside two: near the normal 31.73% and 4.55%, and
+    # not equal, because a count moves in whole steps. The two figures are exact sums in integers,
+    # 1 - sum(comb(2000, k) for k in first..last) / 2^2000, and are held to half their last digit.
+    # (This test held 0.3146 to within 0.0005 until 2026-11-23. The figure was wrong: it is 0.314304.)
+    assert exact_outside_fraction(978, 1022) == pytest.approx(0.314304, abs=5e-7)
+    assert exact_outside_fraction(956, 1044) == pytest.approx(0.046553, abs=5e-7)
+    assert math.sqrt(N_SMALL) / 2 == pytest.approx(22.36, abs=0.005)
 
 
 def test_gate_statistics__the_tolerance_has_the_width_of_a_correct_detectors_spread__known_threshold():

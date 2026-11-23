@@ -25,7 +25,11 @@ result is the exact rule applied to the numbers passed in.
 Limits. The numbers passed in are the truth: a coefficient that was already
 rounded when it became a float is quantised as the float it is. `bits` is 2 to
 30; the error bound above is for that range. An integer beyond 2^53 is refused,
-not rounded into a float.
+not rounded into a float. The guard's WIDTH is argued above and held by no
+test: every input known to need the guard has its float exactly on a half-way
+point, so a guard of any width down to zero passes the tests. What the tests
+do hold is that the guard is there: switched off, six listed values come out
+wrong.
 
 Nothing here imports from `model/`.
 """

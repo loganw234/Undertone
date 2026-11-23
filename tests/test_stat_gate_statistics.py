@@ -310,11 +310,11 @@ def test_control_statistics__a_wrong_filter_falls_outside_with_a_measured_thresh
         wrong[2, :] = 0
         label, shortfall, width = "channel 2 zeroed", 0.14066, 0.0397
     predicted = theory.pd_matched(PFA, theory.deflection(wrong, data.rows, data.sigma))
-    assert 0.5 - predicted == pytest.approx(shortfall, abs=1e-5)
+    assert 0.5 - predicted == pytest.approx(shortfall, abs=5e-6)
     have = data.evaluate(label, wrong, measured=True)
     c = against_d8_measured(have)
     show("CONTROL %s %s, measured threshold (m = %d)" % (data.profile, label, have["threshold"]["m"]), c)
-    assert c["tolerance"] == pytest.approx(width, abs=2e-4)
+    assert c["tolerance"] == pytest.approx(width, abs=5e-5)
     assert not c["inside"]
     assert c["deviation"] < -c["tolerance"]
     # the limit, shown: the first control's small fault would be passed at this tolerance

@@ -116,6 +116,13 @@ def signal_free_scores(scores, taps, truth_indexes, pulse_len, stride=None):
 def threshold_from_scores(noise_scores, pfa):
     """A threshold for a target false-alarm probability, from m signal-free scores.
 
+    k = floor(pfa * m), and the floor is taken of the EXACT value of the float
+    `pfa`, not of the decimal it was written as. The float written 0.29 is a
+    hair below 0.29, so over 10,000 scores k is 2,899, one fewer than the
+    decimal reads (0.57 and 0.58 are others). So k / m never exceeds pfa; the
+    threshold can be one score higher than a reader of the decimal expects;
+    and `pfa_effective` below is worked from the k actually used.
+
     Returns a dict:
       threshold      the (k+1)-th largest score, k = floor(pfa * m)
       m, k           as above

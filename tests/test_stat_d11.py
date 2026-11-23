@@ -56,7 +56,7 @@ def test_gate_statistics__d11_the_matched_filter_reproduces_d8():
     # with a known threshold the tolerance is 4 * sqrt(0.2822 * 0.7178 / 400000) = 0.0028
     assert r["matched_known"]["tolerance"] == pytest.approx(0.0028, abs=5e-5)
     # with a measured one it is three times that, because the threshold term dominates
-    assert r["matched_measured"]["tolerance"] == pytest.approx(0.0085, abs=2e-4)
+    assert r["matched_measured"]["tolerance"] == pytest.approx(0.0085, abs=5e-5)
     assert r["matched_measured"]["se_threshold"] > 2 * r["matched_measured"]["se_binomial"]
 
 
@@ -80,9 +80,9 @@ def test_stat_d11_a_pulse_of_the_opposite_sign_is_what_tells_a_rectifier_from_a_
     filter finds it less often than noise, Q(Q^-1(0.01) + 1.75) = 2.3e-5, about 9 in 400,000."""
     r = the_run()
     lower_tail = 0.5 * math.erfc((2.5758293035489004 + 1.75) / SQRT2)
-    assert lower_tail == pytest.approx(7.6e-6, abs=1e-7)
+    assert lower_tail == pytest.approx(7.6e-6, abs=5e-8)
     assert r["negated_matched_exact"] == pytest.approx(0.5 * math.erfc((2.3263478740408408 + 1.75) / SQRT2), rel=1e-9)
-    assert r["negated_matched_exact"] * 400_000 == pytest.approx(9.1, abs=0.1)
+    assert r["negated_matched_exact"] * 400_000 == pytest.approx(9.15, abs=0.005)
     assert r["negated_matched_found"] <= 30, "the matched filter found a negated pulse it should not"
     assert r["negated_rectified_against_exact"]["inside"], r["negated_rectified_against_exact"]
     assert r["negated_rectified_found"] > 70_000
@@ -106,7 +106,7 @@ def test_control_statistics__d11_a_rectifier_that_is_not_an_absolute_value_is_ca
 def test_stat_d11_the_thresholds_give_the_false_alarm_rate_they_claim():
     r = the_run()
     # 400,000 noise-only trials at pfa 0.01: se = sqrt(0.01 * 0.99 / 400000) = 0.000157; 4 se = 0.00063.
-    assert math.sqrt(0.01 * 0.99 / 400_000) == pytest.approx(0.000157, abs=1e-6)
+    assert math.sqrt(0.01 * 0.99 / 400_000) == pytest.approx(0.000157, abs=5e-7)
     assert abs(r["false_alarm_matched_known"] - 0.01) <= 0.00063
     assert abs(r["false_alarm_rectified_known"] - 0.01) <= 0.00063
 
