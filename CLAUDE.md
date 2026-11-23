@@ -6,11 +6,11 @@ The project's first name was AOTPU. The folder on the lead's desktop and the rou
 
 ## Start here: one command answers "does it still hold?"
 
-    bash verify/run.sh           # every stage and its negative control; seconds
+    bash verify/run.sh           # every stage and its negative control; about 75 seconds
     bash verify/run.sh --list    # the stages, with * on what would run
     make verify                  # the same as the first line
 
-There is one size today, because the whole run takes well under a minute. **There is no cache.** A run id is timestamp + commit, each stage drops a marker, and `--resume` reruns only what has not passed in that run. `--resume` is refused on a tree with uncommitted changes, and on a run that began on one, because nothing then says what the earlier stages ran on. A fresh invocation runs everything.
+There is one size today. The whole run took 75 s on 2026-11-23, 56 of them the tests: two of those run the detector core at its true extreme inputs, about ten seconds each, and that is the overflow gate's claim, not waste. **There is no cache.** A run id is timestamp + commit, each stage drops a marker, and `--resume` reruns only what has not passed in that run. `--resume` is refused on a tree with uncommitted changes, and on a run that began on one, because nothing then says what the earlier stages ran on. A fresh invocation runs everything.
 
 A stage passes on the line only success prints (`OK <stage>: <count> ...`), not on its exit code. A control passes only when its check exits non-zero **and** its log carries `CONTROL-DETECTED`. Read the verdict line, then the log under `verify/state/<run id>/`. Under `--only` the verdict says how many stages were not run.
 
@@ -20,7 +20,13 @@ To change a shared fact: edit `spec/undertone.toml`, run `python tools/gen_spec.
 
 ## The authority
 
-The reference model **is the authority** (README, and D0 section 2). Round 1 is writing it: only the skeleton exists (the definition in `spec/`, `model/refusal.py`, `model/stream.py`, `model/records.py`). Until the model is whole, nothing about the system can be held against anything, so nothing about the system is claimed.
+The reference model **is the authority** (README, and D0 section 2). Round 1 wrote it, in plain integer Python under `model/`: the source and replay (`source.py`), the injector (`inject.py`), the detector core (`detector.py`), the weight store (`weights.py`), the scorer (`scorer.py`), and `run.py`, the one place they meet. How they meet is `docs/model/conventions.md`. **There is still no RTL, no host library and nothing on the card**, so nothing about the system is claimed: there is only the thing a system will be held against.
+
+Sensitivity has a second authority, which is deliberately not the model: `stats/`, a textbook formula and its own floating-point code. **`model/` and `stats/` never import each other**, and the `independence` stage holds that. A test under `tests/` may import both; that is what a seam test is.
+
+Two runs are too long for the gate and are scripts of their own, each with a short form inside the gate: `python tests/test_mod_a_tails.py --long ...` (the noise's tail, 2^30 draws) and `python tests/test_seam_e0.py --full ...` (stage E0 in software, 200,000 injections an amplitude). Each docstring has the command and how to split it across cores. They are the lead's to run, booked on the TimeSheet.
+
+Each parcel appends its rows to `tests/gates.toml`, so merging two parcels conflicts there and nowhere else. Keep every row.
 
 A known answer in a frozen vector is worked by hand or by independent code, never produced by the model it then judges.
 

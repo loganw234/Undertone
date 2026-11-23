@@ -138,7 +138,7 @@ Each is `model.refusal.Refusal(name, detail)`. One row for each name, and beside
 | RECORD_FIELD | `Scorer.feed`, through `records.check`: a record that is not a dict of exactly a score record's fields, each an int that fits |
 | QUANTISE_INPUT | `quantise`: a set that is not a non-empty list or tuple, an all-zero set, a value that is not an int or a Fraction. `matched_filter`: a gain or a pulse sample that is not an int or a Fraction; gains that are all zero |
 
-Where a row says a list, a tuple is taken as well. A refused frame advances nothing, in the core and in the scorer, and the records before it stand. What `stream.check_frame` checks is the lead's to say: today it takes any instance of `tuple`, a subclass included, of the right length whose values are ints in range. This page claims nothing about a frame beyond that.
+Where a row says a list, a tuple is taken as well. A refused frame advances nothing, in the core and in the scorer, and the records before it stand. What `stream.check_frame` checks is the lead's to say: since the seam (this sentence is the lead's, restated at the merge) it takes exactly a `tuple` of the right length whose values are exactly ints in range, and refuses a subclass of either, a subclass of `tuple` as CHANNELS. This page claims nothing about a frame beyond that.
 
 **The order of checks is part of the definition.** `test_gate_refusal__the_order_of_checks_is_the_documented_one` holds each neighbouring pair of the lists below, with a call that has both things wrong. SHAPE_ROWS's place is held under `s24x3` only, where it can be reached. The order inside `Scorer.feed` is not held by a test: a closed scorer refuses first, then the frame is checked, then the record, then its index.
 

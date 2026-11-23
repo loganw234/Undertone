@@ -28,8 +28,13 @@ def check_frame(prof, frame):
     `prof` is what `profile()` returned. Every channel is checked. A bool is
     refused: it is an int in Python, and a True in a sample stream is a bug
     upstream.
+
+    A frame is EXACTLY a tuple, and a sample exactly an int. An object of a
+    subclass of either can carry more than its samples, and what a detector
+    is handed must carry nothing else: so a subclass of tuple is refused as
+    not a frame (CHANNELS), as a subclass of int is refused as not a sample.
     """
-    if not isinstance(frame, tuple) or len(frame) != prof["channels"]:
+    if type(frame) is not tuple or len(frame) != prof["channels"]:
         raise Refusal("CHANNELS", "frame %r, profile has %d channel(s)" % (frame, prof["channels"]))
     for v in frame:
         if type(v) is not int or not prof["sample_min"] <= v <= prof["sample_max"]:

@@ -1,0 +1,64 @@
+{
+  "what": "The seam conventions' known answers, worked by hand by the lead on 2026-11-23, with the sums written out. Nothing here was produced by the model or by the statistics package. docs/model/conventions.md states the conventions; tests/test_seam_conventions.py holds the model and the statistics package to these answers.",
+  "one_channel": {
+    "note": "Convention (b): score[i] = c[0]*x[i-2] + c[1]*x[i-1] + c[2]*x[i], a sample before the stream's start taken as zero. A pulse 1, 2, 3 whose first sample is at index 2, in seven frames.",
+    "coefficients": [1, 2, 3],
+    "stream": [0, 0, 1, 2, 3, 0, 0],
+    "sums": [
+      "score[0] = 1*0 + 2*0 + 3*0 = 0",
+      "score[1] = 1*0 + 2*0 + 3*0 = 0",
+      "score[2] = 1*0 + 2*0 + 3*1 = 3",
+      "score[3] = 1*0 + 2*1 + 3*2 = 8",
+      "score[4] = 1*1 + 2*2 + 3*3 = 14",
+      "score[5] = 1*2 + 2*3 + 3*0 = 8",
+      "score[6] = 1*3 + 2*0 + 3*0 = 3"
+    ],
+    "scores": [0, 0, 3, 8, 14, 8, 3],
+    "peak_index": 4,
+    "peak_is": "index of the pulse's first sample, 2, plus taps - 1, 2: convention (a) with (b)",
+    "wrong_way_round": {
+      "note": "The same sums with the coefficients newest sample first, 3, 2, 1: the convolution form's reading of the same list. The answer convention (b) rules out.",
+      "sums": [
+        "score[2] = 3*0 + 2*0 + 1*1 = 1",
+        "score[3] = 3*0 + 2*1 + 1*2 = 4",
+        "score[4] = 3*1 + 2*2 + 1*3 = 10",
+        "score[5] = 3*2 + 2*3 + 1*0 = 12",
+        "score[6] = 3*3 + 2*0 + 1*0 = 9"
+      ],
+      "scores": [0, 0, 1, 4, 10, 12, 9]
+    }
+  },
+  "crossing": {
+    "note": "Convention (c): a crossing is a score strictly greater than the threshold. On the scores above.",
+    "cases": [
+      {"threshold": 14, "crossings": 0, "event_indexes": []},
+      {"threshold": 13, "crossings": 1, "event_indexes": [4]},
+      {"threshold": 7, "crossings": 3, "event_indexes": [3]},
+      {"threshold": 2, "crossings": 5, "event_indexes": [2]}
+    ],
+    "why": "Above 13: only 14, at index 4. Above 7: 8, 14, 8 at indexes 3, 4, 5, one run, so one rising crossing at 3. Above 2: 3, 8, 14, 8, 3 at indexes 2 to 6, one run, rising at 2."
+  },
+  "two_channels": {
+    "note": "Convention (d): a filter's output is the sum over the channels it reads. Channel a carries the one-channel case above under its row 1, 2, 3. Channel b carries 0, 5, 0, 0, 1, 0, 0 under the row 2, 0, 1.",
+    "rows": {"a": [1, 2, 3], "b": [2, 0, 1]},
+    "streams": {"a": [0, 0, 1, 2, 3, 0, 0], "b": [0, 5, 0, 0, 1, 0, 0]},
+    "sums_for_b": [
+      "b[0] = 2*0 + 0*0 + 1*0 = 0",
+      "b[1] = 2*0 + 0*0 + 1*5 = 5",
+      "b[2] = 2*0 + 0*5 + 1*0 = 0",
+      "b[3] = 2*5 + 0*0 + 1*0 = 10",
+      "b[4] = 2*0 + 0*0 + 1*1 = 1",
+      "b[5] = 2*0 + 0*1 + 1*0 = 0",
+      "b[6] = 2*1 + 0*0 + 1*0 = 2"
+    ],
+    "scores_b_alone": [0, 5, 0, 10, 1, 0, 2],
+    "scores": [0, 5, 3, 18, 15, 8, 5],
+    "scores_are": "the one-channel scores 0, 0, 3, 8, 14, 8, 3 plus b's, index by index"
+  },
+  "tie_set": {
+    "note": "The quantising rule, on a set where every value but the peak lands on a tie. The peak 262142 maps to 131071 = 2^17 - 1, so each value is halved: 1/2, 3/2, 5/2, -1/2, -3/2. Half to even gives 0, 2, 2, 0, -2. Half away from zero, the wrong rule, gives 1, 2, 3, -1, -2.",
+    "values": [262142, 1, 3, 5, -1, -3],
+    "coefficients": [131071, 0, 2, 2, 0, -2],
+    "half_away_from_zero": [131071, 1, 2, 3, -1, -2]
+  }
+}

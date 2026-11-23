@@ -125,6 +125,32 @@ def test_p0_frame_with_the_wrong_channel_count_is_refused_by_name(name):
         assert e.value.name == "CHANNELS"
 
 
+class _TaggedFrame(tuple):
+    """A tuple that carries something besides its samples."""
+    label = "more than samples"
+
+
+class _TaggedSample(int):
+    label = "more than a sample"
+
+
+@pytest.mark.parametrize("name", sorted(C.PROFILES))
+def test_p0_a_frame_is_exactly_a_tuple_and_a_sample_exactly_an_int(name):
+    """An object of a subclass can carry more than its samples, so neither is taken: a subclass of
+    tuple is not a frame (CHANNELS), and a subclass of int is not a sample (SAMPLE_RANGE).
+    Parcel MOD-A found, on 2026-11-23, that the first of these was let through."""
+    p = stream.profile(name)
+    plain = (0,) * p["channels"]
+    assert _TaggedFrame(plain) == plain, "equal as tuples, which is why equality is not the test"
+    with pytest.raises(Refusal) as e:
+        stream.check_frame(p, _TaggedFrame(plain))
+    assert e.value.name == "CHANNELS"
+    with pytest.raises(Refusal) as e:
+        stream.check_frame(p, (_TaggedSample(0),) * p["channels"])
+    assert e.value.name == "SAMPLE_RANGE"
+    assert stream.check_frame(p, plain) is plain
+
+
 def test_p0_a_bool_or_a_float_sample_is_refused():
     p = stream.profile("s16x1")
     for bad in (True, 1.0):

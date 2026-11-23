@@ -4,7 +4,9 @@ Four conventions decide how the parts of the reference model meet: where an inje
 
 They bind `model/` and `stats/` alike. A document of a parcel's that says otherwise is wrong, and this one wins.
 
-**What holds them today: nothing.** The seam tests of round 1's second wave are to hold each one, with a known answer worked by hand. Until those tests are merged, this page is a statement of intent, and a part that breaks a convention would pass the gate.
+**What holds them.** Until the seam was merged, nothing did: this page was a statement of intent. Now `tests/test_seam_conventions.py` holds each one, on the parts run together, against answers worked by hand in `vectors/seam/conventions.json`: the core and the statistics package must each give the worked scores below; a filter written the wrong way round must give the other sequence; a score equal to its threshold must not cross; a filter on two channels must be the sum of its rows; an injected pulse must change its span by exactly the pulse. Each convention was broken on purpose in a copy of the code, and a seam test reported each. `tests/test_seam_e0.py` holds (a) and (b) a second way: a count read one sample late, or made with the coefficients reversed, falls outside the tolerance.
+
+What still holds nothing: a convention is held for the cases those tests run, which are small or are the reference pulse. A part that kept every one of them there and broke one elsewhere would pass.
 
 ## The conventions
 

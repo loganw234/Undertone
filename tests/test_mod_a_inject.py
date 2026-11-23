@@ -493,8 +493,12 @@ class Tagged(tuple):
 @pytest.mark.parametrize("name", PROFILES)
 def test_mod_a_the_stream_carries_nothing_but_samples(name):
     channels = C.PROFILES[name]["channels"]
+    # A frame is exactly a tuple (model/stream.py, tightened at the seam): one that carries a label is
+    # refused as not a frame, at the first frame, before anything is handed on.
     tagged = [Tagged(f) for f in noise_frames(name)]
     stream, _truth = inject.inject(name, iter(tagged), SCHEDULE, FRAMES)
+    refused("CHANNELS", lambda: next(stream))
+    stream, _truth = inject.inject(name, iter(noise_frames(name)), SCHEDULE, FRAMES)
     assert not isinstance(stream, (list, tuple)) and not hasattr(stream, "truth")
     out = list(stream)
     assert len(out) == FRAMES

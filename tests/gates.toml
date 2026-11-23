@@ -74,3 +74,11 @@ kind = "pytest"
 name = "statistics"
 d0 = "statistics"
 kind = "pytest"
+
+# SEAM, the lead's: where the injector meets the detector (model/run.py). The same samples under
+# other truth records give the same score records; a runner that lets one bit of truth reach the
+# detector is reported. Tests in tests/test_seam_isolation.py.
+[[gate]]
+name = "truth-isolation"
+d0 = "truth isolation"
+kind = "pytest"
