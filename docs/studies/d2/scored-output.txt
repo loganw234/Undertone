@@ -1,0 +1,577 @@
+Study D2, the scoring run.
+Freeze hash dc7f28f172f8e201095a07a1a5b762a74407b4ca5c78d58a5d4b6815051f781f.
+23 launches: 2024-088, 2024-091, 2024-113, 2024-118, 2024-129, 2024-133, 2024-138, 2024-143, 2024-149, 2024-155, 2024-164, 2024-171, 2024-175, 2024-195, 2024-204, 2024-209, 2024-213, 2024-217, 2024-225, 2024-231, 2024-239, 2024-247, 2024-251.
+The constants M were set from: 2024-002, 2024-011, 2024-017, 2024-020, 2024-027, 2024-031, 2024-036, 2024-043, 2024-046, 2024-050, 2024-062, 2024-065.
+
+**The test, the scored launches.** Fisher's exact test, one-sided, at 0.0025 a station (0.01 over 4 stations).
+
+| station | km | M | launch windows that hit | control windows that hit | p | launch hits needed to reject | no record: launch, control | reading |
+|---|---|---|---|---|---|---|---|---|
+| CI.GATR | 13.5 | 10 | 7 of 7 | 0 of 21 | 8.45e-07 | 4 | 16, 47 | SEEN MORE OFTEN THAN A CONTROL WINDOW |
+| CI.LOC | 16.5 | 95 | 23 of 23 | 0 of 68 | 4.74e-22 | 5 | 0, 0 | SEEN MORE OFTEN THAN A CONTROL WINDOW |
+| CI.LCP | 32.6 | 96 | 23 of 23 | 0 of 68 | 4.74e-22 | 5 | 0, 0 | SEEN MORE OFTEN THAN A CONTROL WINDOW |
+| CI.SYN | 49.9 | 130 | 20 of 23 | 0 of 68 | 2.71e-17 | 5 | 0, 0 | SEEN MORE OFTEN THAN A CONTROL WINDOW |
+
+**The two controls on the same records.** Each against the same control windows, at 0.01 undivided. Neither may reject.
+
+| station | wrong windows that hit | p | windows an hour early that hit | p | reading |
+|---|---|---|---|---|---|
+| CI.GATR | 0 of 7 | 1 | 0 of 7 | 1 | neither rejects |
+| CI.LOC | 0 of 23 | 1 | 1 of 23 | 0.253 | neither rejects |
+| CI.LCP | 0 of 23 | 1 | 0 of 23 | 1 | neither rejects |
+| CI.SYN | 0 of 23 | 1 | 0 of 23 | 1 | neither rejects |
+
+**HEADLINE, the scored launches: YES: seen more often than a control window at CI.GATR, CI.LOC, CI.LCP, CI.SYN.**
+
+**Every window.**
+
+| launch | station | window | days from T0 | S | M | hit | no record because |
+|---|---|---|---|---|---|---|---|
+| 2024-088 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-088 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-088 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-088 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-088 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-088 | CI.GATR | control | +21 | - | 10 | - | no file |
+| 2024-088 | CI.LOC | launch | 0 | 209 | 95 | yes |  |
+| 2024-088 | CI.LOC | wrong | 0 | 2 | 95 | no |  |
+| 2024-088 | CI.LOC | shifted | 0 | 14 | 95 | no |  |
+| 2024-088 | CI.LOC | control | +7 | 28 | 95 | no |  |
+| 2024-088 | CI.LOC | control | +14 | 2 | 95 | no |  |
+| 2024-088 | CI.LOC | control | +21 | 21 | 95 | no |  |
+| 2024-088 | CI.LCP | launch | 0 | 224 | 96 | yes |  |
+| 2024-088 | CI.LCP | wrong | 0 | 5 | 96 | no |  |
+| 2024-088 | CI.LCP | shifted | 0 | 3 | 96 | no |  |
+| 2024-088 | CI.LCP | control | +7 | 7 | 96 | no |  |
+| 2024-088 | CI.LCP | control | +14 | 3 | 96 | no |  |
+| 2024-088 | CI.LCP | control | +21 | 15 | 96 | no |  |
+| 2024-088 | CI.SYN | launch | 0 | 171 | 130 | yes |  |
+| 2024-088 | CI.SYN | wrong | 0 | 0 | 130 | no |  |
+| 2024-088 | CI.SYN | shifted | 0 | 0 | 130 | no |  |
+| 2024-088 | CI.SYN | control | +7 | 2 | 130 | no |  |
+| 2024-088 | CI.SYN | control | +14 | 0 | 130 | no |  |
+| 2024-088 | CI.SYN | control | +21 | 0 | 130 | no |  |
+| 2024-091 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-091 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-091 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-091 | CI.GATR | control | +28 | - | 10 | - | no file |
+| 2024-091 | CI.GATR | control | +42 | - | 10 | - | no file |
+| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | yes |  |
+| 2024-091 | CI.LOC | wrong | 0 | 7 | 95 | no |  |
+| 2024-091 | CI.LOC | shifted | 0 | 22 | 95 | no |  |
+| 2024-091 | CI.LOC | control | +28 | 7 | 95 | no |  |
+| 2024-091 | CI.LOC | control | +42 | 13 | 95 | no |  |
+| 2024-091 | CI.LCP | launch | 0 | 149 | 96 | yes |  |
+| 2024-091 | CI.LCP | wrong | 0 | 1 | 96 | no |  |
+| 2024-091 | CI.LCP | shifted | 0 | 2 | 96 | no |  |
+| 2024-091 | CI.LCP | control | +28 | 13 | 96 | no |  |
+| 2024-091 | CI.LCP | control | +42 | 27 | 96 | no |  |
+| 2024-091 | CI.SYN | launch | 0 | 144 | 130 | yes |  |
+| 2024-091 | CI.SYN | wrong | 0 | 0 | 130 | no |  |
+| 2024-091 | CI.SYN | shifted | 0 | 3 | 130 | no |  |
+| 2024-091 | CI.SYN | control | +28 | 0 | 130 | no |  |
+| 2024-091 | CI.SYN | control | +42 | 7 | 130 | no |  |
+| 2024-113 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-113 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-113 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-113 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-113 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-113 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-113 | CI.LOC | launch | 0 | 208 | 95 | yes |  |
+| 2024-113 | CI.LOC | wrong | 0 | 22 | 95 | no |  |
+| 2024-113 | CI.LOC | shifted | 0 | 0 | 95 | no |  |
+| 2024-113 | CI.LOC | control | -7 | 4 | 95 | no |  |
+| 2024-113 | CI.LOC | control | +7 | 1 | 95 | no |  |
+| 2024-113 | CI.LOC | control | +14 | 5 | 95 | no |  |
+| 2024-113 | CI.LCP | launch | 0 | 227 | 96 | yes |  |
+| 2024-113 | CI.LCP | wrong | 0 | 1 | 96 | no |  |
+| 2024-113 | CI.LCP | shifted | 0 | 12 | 96 | no |  |
+| 2024-113 | CI.LCP | control | -7 | 4 | 96 | no |  |
+| 2024-113 | CI.LCP | control | +7 | 12 | 96 | no |  |
+| 2024-113 | CI.LCP | control | +14 | 28 | 96 | no |  |
+| 2024-113 | CI.SYN | launch | 0 | 186 | 130 | yes |  |
+| 2024-113 | CI.SYN | wrong | 0 | 3 | 130 | no |  |
+| 2024-113 | CI.SYN | shifted | 0 | 10 | 130 | no |  |
+| 2024-113 | CI.SYN | control | -7 | 4 | 130 | no |  |
+| 2024-113 | CI.SYN | control | +7 | 1 | 130 | no |  |
+| 2024-113 | CI.SYN | control | +14 | 0 | 130 | no |  |
+| 2024-118 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-118 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-118 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-118 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-118 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-118 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-118 | CI.LOC | launch | 0 | 209 | 95 | yes |  |
+| 2024-118 | CI.LOC | wrong | 0 | 3 | 95 | no |  |
+| 2024-118 | CI.LOC | shifted | 0 | 5 | 95 | no |  |
+| 2024-118 | CI.LOC | control | -7 | 3 | 95 | no |  |
+| 2024-118 | CI.LOC | control | +7 | 1 | 95 | no |  |
+| 2024-118 | CI.LOC | control | -14 | 2 | 95 | no |  |
+| 2024-118 | CI.LCP | launch | 0 | 229 | 96 | yes |  |
+| 2024-118 | CI.LCP | wrong | 0 | 10 | 96 | no |  |
+| 2024-118 | CI.LCP | shifted | 0 | 0 | 96 | no |  |
+| 2024-118 | CI.LCP | control | -7 | 9 | 96 | no |  |
+| 2024-118 | CI.LCP | control | +7 | 8 | 96 | no |  |
+| 2024-118 | CI.LCP | control | -14 | 4 | 96 | no |  |
+| 2024-118 | CI.SYN | launch | 0 | 175 | 130 | yes |  |
+| 2024-118 | CI.SYN | wrong | 0 | 1 | 130 | no |  |
+| 2024-118 | CI.SYN | shifted | 0 | 10 | 130 | no |  |
+| 2024-118 | CI.SYN | control | -7 | 6 | 130 | no |  |
+| 2024-118 | CI.SYN | control | +7 | 0 | 130 | no |  |
+| 2024-118 | CI.SYN | control | -14 | 2 | 130 | no |  |
+| 2024-129 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-129 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-129 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-129 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-129 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-129 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-129 | CI.LOC | launch | 0 | 209 | 95 | yes |  |
+| 2024-129 | CI.LOC | wrong | 0 | 4 | 95 | no |  |
+| 2024-129 | CI.LOC | shifted | 0 | 3 | 95 | no |  |
+| 2024-129 | CI.LOC | control | +7 | 1 | 95 | no |  |
+| 2024-129 | CI.LOC | control | -14 | 3 | 95 | no |  |
+| 2024-129 | CI.LOC | control | +14 | 1 | 95 | no |  |
+| 2024-129 | CI.LCP | launch | 0 | 231 | 96 | yes |  |
+| 2024-129 | CI.LCP | wrong | 0 | 5 | 96 | no |  |
+| 2024-129 | CI.LCP | shifted | 0 | 33 | 96 | no |  |
+| 2024-129 | CI.LCP | control | +7 | 61 | 96 | no |  |
+| 2024-129 | CI.LCP | control | -14 | 10 | 96 | no |  |
+| 2024-129 | CI.LCP | control | +14 | 1 | 96 | no |  |
+| 2024-129 | CI.SYN | launch | 0 | 155 | 130 | yes |  |
+| 2024-129 | CI.SYN | wrong | 0 | 1 | 130 | no |  |
+| 2024-129 | CI.SYN | shifted | 0 | 0 | 130 | no |  |
+| 2024-129 | CI.SYN | control | +7 | 0 | 130 | no |  |
+| 2024-129 | CI.SYN | control | -14 | 8 | 130 | no |  |
+| 2024-129 | CI.SYN | control | +14 | 29 | 130 | no |  |
+| 2024-133 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-133 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-133 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-133 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-133 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-133 | CI.GATR | control | -21 | - | 10 | - | no file |
+| 2024-133 | CI.LOC | launch | 0 | 212 | 95 | yes |  |
+| 2024-133 | CI.LOC | wrong | 0 | 9 | 95 | no |  |
+| 2024-133 | CI.LOC | shifted | 0 | 2 | 95 | no |  |
+| 2024-133 | CI.LOC | control | -7 | 7 | 95 | no |  |
+| 2024-133 | CI.LOC | control | -14 | 1 | 95 | no |  |
+| 2024-133 | CI.LOC | control | -21 | 10 | 95 | no |  |
+| 2024-133 | CI.LCP | launch | 0 | 232 | 96 | yes |  |
+| 2024-133 | CI.LCP | wrong | 0 | 8 | 96 | no |  |
+| 2024-133 | CI.LCP | shifted | 0 | 15 | 96 | no |  |
+| 2024-133 | CI.LCP | control | -7 | 32 | 96 | no |  |
+| 2024-133 | CI.LCP | control | -14 | 11 | 96 | no |  |
+| 2024-133 | CI.LCP | control | -21 | 5 | 96 | no |  |
+| 2024-133 | CI.SYN | launch | 0 | 249 | 130 | yes |  |
+| 2024-133 | CI.SYN | wrong | 0 | 8 | 130 | no |  |
+| 2024-133 | CI.SYN | shifted | 0 | 1 | 130 | no |  |
+| 2024-133 | CI.SYN | control | -7 | 0 | 130 | no |  |
+| 2024-133 | CI.SYN | control | -14 | 4 | 130 | no |  |
+| 2024-133 | CI.SYN | control | -21 | 0 | 130 | no |  |
+| 2024-138 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-138 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-138 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-138 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-138 | CI.GATR | control | +21 | - | 10 | - | no file |
+| 2024-138 | CI.GATR | control | -35 | - | 10 | - | no file |
+| 2024-138 | CI.LOC | launch | 0 | 212 | 95 | yes |  |
+| 2024-138 | CI.LOC | wrong | 0 | 1 | 95 | no |  |
+| 2024-138 | CI.LOC | shifted | 0 | 7 | 95 | no |  |
+| 2024-138 | CI.LOC | control | +14 | 5 | 95 | no |  |
+| 2024-138 | CI.LOC | control | +21 | 24 | 95 | no |  |
+| 2024-138 | CI.LOC | control | -35 | 4 | 95 | no |  |
+| 2024-138 | CI.LCP | launch | 0 | 231 | 96 | yes |  |
+| 2024-138 | CI.LCP | wrong | 0 | 7 | 96 | no |  |
+| 2024-138 | CI.LCP | shifted | 0 | 0 | 96 | no |  |
+| 2024-138 | CI.LCP | control | +14 | 28 | 96 | no |  |
+| 2024-138 | CI.LCP | control | +21 | 12 | 96 | no |  |
+| 2024-138 | CI.LCP | control | -35 | 13 | 96 | no |  |
+| 2024-138 | CI.SYN | launch | 0 | 182 | 130 | yes |  |
+| 2024-138 | CI.SYN | wrong | 0 | 0 | 130 | no |  |
+| 2024-138 | CI.SYN | shifted | 0 | 2 | 130 | no |  |
+| 2024-138 | CI.SYN | control | +14 | 5 | 130 | no |  |
+| 2024-138 | CI.SYN | control | +21 | 0 | 130 | no |  |
+| 2024-138 | CI.SYN | control | -35 | 1 | 130 | no |  |
+| 2024-143 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-143 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-143 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-143 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-143 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-143 | CI.GATR | control | -21 | - | 10 | - | no file |
+| 2024-143 | CI.LOC | launch | 0 | 166 | 95 | yes |  |
+| 2024-143 | CI.LOC | wrong | 0 | 4 | 95 | no |  |
+| 2024-143 | CI.LOC | shifted | 0 | 0 | 95 | no |  |
+| 2024-143 | CI.LOC | control | +7 | 1 | 95 | no |  |
+| 2024-143 | CI.LOC | control | +14 | 6 | 95 | no |  |
+| 2024-143 | CI.LOC | control | -21 | 59 | 95 | no |  |
+| 2024-143 | CI.LCP | launch | 0 | 135 | 96 | yes |  |
+| 2024-143 | CI.LCP | wrong | 0 | 3 | 96 | no |  |
+| 2024-143 | CI.LCP | shifted | 0 | 5 | 96 | no |  |
+| 2024-143 | CI.LCP | control | +7 | 12 | 96 | no |  |
+| 2024-143 | CI.LCP | control | +14 | 38 | 96 | no |  |
+| 2024-143 | CI.LCP | control | -21 | 75 | 96 | no |  |
+| 2024-143 | CI.SYN | launch | 0 | 139 | 130 | yes |  |
+| 2024-143 | CI.SYN | wrong | 0 | 4 | 130 | no |  |
+| 2024-143 | CI.SYN | shifted | 0 | 7 | 130 | no |  |
+| 2024-143 | CI.SYN | control | +7 | 3 | 130 | no |  |
+| 2024-143 | CI.SYN | control | +14 | 0 | 130 | no |  |
+| 2024-143 | CI.SYN | control | -21 | 52 | 130 | no |  |
+| 2024-149 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-149 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-149 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-149 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-149 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-149 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-149 | CI.LOC | launch | 0 | 208 | 95 | yes |  |
+| 2024-149 | CI.LOC | wrong | 0 | 5 | 95 | no |  |
+| 2024-149 | CI.LOC | shifted | 0 | 6 | 95 | no |  |
+| 2024-149 | CI.LOC | control | -7 | 0 | 95 | no |  |
+| 2024-149 | CI.LOC | control | +7 | 1 | 95 | no |  |
+| 2024-149 | CI.LOC | control | -14 | 4 | 95 | no |  |
+| 2024-149 | CI.LCP | launch | 0 | 179 | 96 | yes |  |
+| 2024-149 | CI.LCP | wrong | 0 | 22 | 96 | no |  |
+| 2024-149 | CI.LCP | shifted | 0 | 91 | 96 | no |  |
+| 2024-149 | CI.LCP | control | -7 | 16 | 96 | no |  |
+| 2024-149 | CI.LCP | control | +7 | 5 | 96 | no |  |
+| 2024-149 | CI.LCP | control | -14 | 0 | 96 | no |  |
+| 2024-149 | CI.SYN | launch | 0 | 14 | 130 | no |  |
+| 2024-149 | CI.SYN | wrong | 0 | 7 | 130 | no |  |
+| 2024-149 | CI.SYN | shifted | 0 | 2 | 130 | no |  |
+| 2024-149 | CI.SYN | control | -7 | 3 | 130 | no |  |
+| 2024-149 | CI.SYN | control | +7 | 6 | 130 | no |  |
+| 2024-149 | CI.SYN | control | -14 | 7 | 130 | no |  |
+| 2024-155 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-155 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-155 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-155 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-155 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-155 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-155 | CI.LOC | launch | 0 | 212 | 95 | yes |  |
+| 2024-155 | CI.LOC | wrong | 0 | 25 | 95 | no |  |
+| 2024-155 | CI.LOC | shifted | 0 | 11 | 95 | no |  |
+| 2024-155 | CI.LOC | control | -7 | 1 | 95 | no |  |
+| 2024-155 | CI.LOC | control | +7 | 21 | 95 | no |  |
+| 2024-155 | CI.LOC | control | +14 | 15 | 95 | no |  |
+| 2024-155 | CI.LCP | launch | 0 | 229 | 96 | yes |  |
+| 2024-155 | CI.LCP | wrong | 0 | 22 | 96 | no |  |
+| 2024-155 | CI.LCP | shifted | 0 | 3 | 96 | no |  |
+| 2024-155 | CI.LCP | control | -7 | 15 | 96 | no |  |
+| 2024-155 | CI.LCP | control | +7 | 5 | 96 | no |  |
+| 2024-155 | CI.LCP | control | +14 | 2 | 96 | no |  |
+| 2024-155 | CI.SYN | launch | 0 | 182 | 130 | yes |  |
+| 2024-155 | CI.SYN | wrong | 0 | 3 | 130 | no |  |
+| 2024-155 | CI.SYN | shifted | 0 | 4 | 130 | no |  |
+| 2024-155 | CI.SYN | control | -7 | 0 | 130 | no |  |
+| 2024-155 | CI.SYN | control | +7 | 3 | 130 | no |  |
+| 2024-155 | CI.SYN | control | +14 | 3 | 130 | no |  |
+| 2024-164 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-164 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-164 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-164 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-164 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-164 | CI.GATR | control | -21 | - | 10 | - | no file |
+| 2024-164 | CI.LOC | launch | 0 | 208 | 95 | yes |  |
+| 2024-164 | CI.LOC | wrong | 0 | 1 | 95 | no |  |
+| 2024-164 | CI.LOC | shifted | 0 | 0 | 95 | no |  |
+| 2024-164 | CI.LOC | control | -14 | 20 | 95 | no |  |
+| 2024-164 | CI.LOC | control | +14 | 1 | 95 | no |  |
+| 2024-164 | CI.LOC | control | -21 | 1 | 95 | no |  |
+| 2024-164 | CI.LCP | launch | 0 | 178 | 96 | yes |  |
+| 2024-164 | CI.LCP | wrong | 0 | 50 | 96 | no |  |
+| 2024-164 | CI.LCP | shifted | 0 | 12 | 96 | no |  |
+| 2024-164 | CI.LCP | control | -14 | 15 | 96 | no |  |
+| 2024-164 | CI.LCP | control | +14 | 4 | 96 | no |  |
+| 2024-164 | CI.LCP | control | -21 | 3 | 96 | no |  |
+| 2024-164 | CI.SYN | launch | 0 | 169 | 130 | yes |  |
+| 2024-164 | CI.SYN | wrong | 0 | 1 | 130 | no |  |
+| 2024-164 | CI.SYN | shifted | 0 | 1 | 130 | no |  |
+| 2024-164 | CI.SYN | control | -14 | 2 | 130 | no |  |
+| 2024-164 | CI.SYN | control | +14 | 2 | 130 | no |  |
+| 2024-164 | CI.SYN | control | -21 | 19 | 130 | no |  |
+| 2024-171 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-171 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-171 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-171 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-171 | CI.GATR | control | +14 | - | 10 | - | no file |
+| 2024-171 | CI.GATR | control | +21 | - | 10 | - | no file |
+| 2024-171 | CI.LOC | launch | 0 | 207 | 95 | yes |  |
+| 2024-171 | CI.LOC | wrong | 0 | 12 | 95 | no |  |
+| 2024-171 | CI.LOC | shifted | 0 | 113 | 95 | yes |  |
+| 2024-171 | CI.LOC | control | +7 | 18 | 95 | no |  |
+| 2024-171 | CI.LOC | control | +14 | 5 | 95 | no |  |
+| 2024-171 | CI.LOC | control | +21 | 13 | 95 | no |  |
+| 2024-171 | CI.LCP | launch | 0 | 161 | 96 | yes |  |
+| 2024-171 | CI.LCP | wrong | 0 | 10 | 96 | no |  |
+| 2024-171 | CI.LCP | shifted | 0 | 38 | 96 | no |  |
+| 2024-171 | CI.LCP | control | +7 | 7 | 96 | no |  |
+| 2024-171 | CI.LCP | control | +14 | 25 | 96 | no |  |
+| 2024-171 | CI.LCP | control | +21 | 26 | 96 | no |  |
+| 2024-171 | CI.SYN | launch | 0 | 14 | 130 | no |  |
+| 2024-171 | CI.SYN | wrong | 0 | 2 | 130 | no |  |
+| 2024-171 | CI.SYN | shifted | 0 | 4 | 130 | no |  |
+| 2024-171 | CI.SYN | control | +7 | 2 | 130 | no |  |
+| 2024-171 | CI.SYN | control | +14 | 9 | 130 | no |  |
+| 2024-171 | CI.SYN | control | +21 | 33 | 130 | no |  |
+| 2024-175 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-175 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-175 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-175 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-175 | CI.GATR | control | +7 | - | 10 | - | no file |
+| 2024-175 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-175 | CI.LOC | launch | 0 | 188 | 95 | yes |  |
+| 2024-175 | CI.LOC | wrong | 0 | 0 | 95 | no |  |
+| 2024-175 | CI.LOC | shifted | 0 | 7 | 95 | no |  |
+| 2024-175 | CI.LOC | control | -7 | 15 | 95 | no |  |
+| 2024-175 | CI.LOC | control | +7 | 0 | 95 | no |  |
+| 2024-175 | CI.LOC | control | -14 | 5 | 95 | no |  |
+| 2024-175 | CI.LCP | launch | 0 | 202 | 96 | yes |  |
+| 2024-175 | CI.LCP | wrong | 0 | 13 | 96 | no |  |
+| 2024-175 | CI.LCP | shifted | 0 | 4 | 96 | no |  |
+| 2024-175 | CI.LCP | control | -7 | 2 | 96 | no |  |
+| 2024-175 | CI.LCP | control | +7 | 2 | 96 | no |  |
+| 2024-175 | CI.LCP | control | -14 | 2 | 96 | no |  |
+| 2024-175 | CI.SYN | launch | 0 | 90 | 130 | no |  |
+| 2024-175 | CI.SYN | wrong | 0 | 2 | 130 | no |  |
+| 2024-175 | CI.SYN | shifted | 0 | 2 | 130 | no |  |
+| 2024-175 | CI.SYN | control | -7 | 3 | 130 | no |  |
+| 2024-175 | CI.SYN | control | +7 | 71 | 130 | no |  |
+| 2024-175 | CI.SYN | control | -14 | 13 | 130 | no |  |
+| 2024-195 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-195 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-195 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-195 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-195 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-195 | CI.GATR | control | -21 | - | 10 | - | no file |
+| 2024-195 | CI.LOC | launch | 0 | 207 | 95 | yes |  |
+| 2024-195 | CI.LOC | wrong | 0 | 2 | 95 | no |  |
+| 2024-195 | CI.LOC | shifted | 0 | 0 | 95 | no |  |
+| 2024-195 | CI.LOC | control | -7 | 0 | 95 | no |  |
+| 2024-195 | CI.LOC | control | -14 | 0 | 95 | no |  |
+| 2024-195 | CI.LOC | control | -21 | 0 | 95 | no |  |
+| 2024-195 | CI.LCP | launch | 0 | 227 | 96 | yes |  |
+| 2024-195 | CI.LCP | wrong | 0 | 10 | 96 | no |  |
+| 2024-195 | CI.LCP | shifted | 0 | 19 | 96 | no |  |
+| 2024-195 | CI.LCP | control | -7 | 26 | 96 | no |  |
+| 2024-195 | CI.LCP | control | -14 | 13 | 96 | no |  |
+| 2024-195 | CI.LCP | control | -21 | 9 | 96 | no |  |
+| 2024-195 | CI.SYN | launch | 0 | 239 | 130 | yes |  |
+| 2024-195 | CI.SYN | wrong | 0 | 7 | 130 | no |  |
+| 2024-195 | CI.SYN | shifted | 0 | 4 | 130 | no |  |
+| 2024-195 | CI.SYN | control | -7 | 27 | 130 | no |  |
+| 2024-195 | CI.SYN | control | -14 | 1 | 130 | no |  |
+| 2024-195 | CI.SYN | control | -21 | 24 | 130 | no |  |
+| 2024-204 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-204 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-204 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-204 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-204 | CI.GATR | control | +7 | 0 | 10 | no |  |
+| 2024-204 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-204 | CI.LOC | launch | 0 | 207 | 95 | yes |  |
+| 2024-204 | CI.LOC | wrong | 0 | 3 | 95 | no |  |
+| 2024-204 | CI.LOC | shifted | 0 | 6 | 95 | no |  |
+| 2024-204 | CI.LOC | control | -7 | 0 | 95 | no |  |
+| 2024-204 | CI.LOC | control | +7 | 65 | 95 | no |  |
+| 2024-204 | CI.LOC | control | -14 | 0 | 95 | no |  |
+| 2024-204 | CI.LCP | launch | 0 | 221 | 96 | yes |  |
+| 2024-204 | CI.LCP | wrong | 0 | 6 | 96 | no |  |
+| 2024-204 | CI.LCP | shifted | 0 | 8 | 96 | no |  |
+| 2024-204 | CI.LCP | control | -7 | 8 | 96 | no |  |
+| 2024-204 | CI.LCP | control | +7 | 14 | 96 | no |  |
+| 2024-204 | CI.LCP | control | -14 | 8 | 96 | no |  |
+| 2024-204 | CI.SYN | launch | 0 | 200 | 130 | yes |  |
+| 2024-204 | CI.SYN | wrong | 0 | 3 | 130 | no |  |
+| 2024-204 | CI.SYN | shifted | 0 | 5 | 130 | no |  |
+| 2024-204 | CI.SYN | control | -7 | 4 | 130 | no |  |
+| 2024-204 | CI.SYN | control | +7 | 13 | 130 | no |  |
+| 2024-204 | CI.SYN | control | -14 | 0 | 130 | no |  |
+| 2024-209 | CI.GATR | launch | 0 | - | 10 | - | no file |
+| 2024-209 | CI.GATR | wrong | 0 | - | 10 | - | no file |
+| 2024-209 | CI.GATR | shifted | 0 | - | 10 | - | no file |
+| 2024-209 | CI.GATR | control | +7 | 2 | 10 | no |  |
+| 2024-209 | CI.GATR | control | +14 | 0 | 10 | no |  |
+| 2024-209 | CI.GATR | control | -28 | - | 10 | - | no file |
+| 2024-209 | CI.LOC | launch | 0 | 197 | 95 | yes |  |
+| 2024-209 | CI.LOC | wrong | 0 | 7 | 95 | no |  |
+| 2024-209 | CI.LOC | shifted | 0 | 2 | 95 | no |  |
+| 2024-209 | CI.LOC | control | +7 | 0 | 95 | no |  |
+| 2024-209 | CI.LOC | control | +14 | 5 | 95 | no |  |
+| 2024-209 | CI.LOC | control | -28 | 0 | 95 | no |  |
+| 2024-209 | CI.LCP | launch | 0 | 218 | 96 | yes |  |
+| 2024-209 | CI.LCP | wrong | 0 | 21 | 96 | no |  |
+| 2024-209 | CI.LCP | shifted | 0 | 3 | 96 | no |  |
+| 2024-209 | CI.LCP | control | +7 | 8 | 96 | no |  |
+| 2024-209 | CI.LCP | control | +14 | 7 | 96 | no |  |
+| 2024-209 | CI.LCP | control | -28 | 11 | 96 | no |  |
+| 2024-209 | CI.SYN | launch | 0 | 239 | 130 | yes |  |
+| 2024-209 | CI.SYN | wrong | 0 | 4 | 130 | no |  |
+| 2024-209 | CI.SYN | shifted | 0 | 2 | 130 | no |  |
+| 2024-209 | CI.SYN | control | +7 | 45 | 130 | no |  |
+| 2024-209 | CI.SYN | control | +14 | 2 | 130 | no |  |
+| 2024-209 | CI.SYN | control | -28 | 0 | 130 | no |  |
+| 2024-213 | CI.GATR | launch | 0 | 176 | 10 | yes |  |
+| 2024-213 | CI.GATR | wrong | 0 | 1 | 10 | no |  |
+| 2024-213 | CI.GATR | shifted | 0 | 0 | 10 | no |  |
+| 2024-213 | CI.GATR | control | -7 | - | 10 | - | no file |
+| 2024-213 | CI.GATR | control | +7 | 0 | 10 | no |  |
+| 2024-213 | CI.GATR | control | -14 | - | 10 | - | no file |
+| 2024-213 | CI.LOC | launch | 0 | 176 | 95 | yes |  |
+| 2024-213 | CI.LOC | wrong | 0 | 15 | 95 | no |  |
+| 2024-213 | CI.LOC | shifted | 0 | 18 | 95 | no |  |
+| 2024-213 | CI.LOC | control | -7 | 15 | 95 | no |  |
+| 2024-213 | CI.LOC | control | +7 | 7 | 95 | no |  |
+| 2024-213 | CI.LOC | control | -14 | 0 | 95 | no |  |
+| 2024-213 | CI.LCP | launch | 0 | 195 | 96 | yes |  |
+| 2024-213 | CI.LCP | wrong | 0 | 20 | 96 | no |  |
+| 2024-213 | CI.LCP | shifted | 0 | 7 | 96 | no |  |
+| 2024-213 | CI.LCP | control | -7 | 0 | 96 | no |  |
+| 2024-213 | CI.LCP | control | +7 | 12 | 96 | no |  |
+| 2024-213 | CI.LCP | control | -14 | 0 | 96 | no |  |
+| 2024-213 | CI.SYN | launch | 0 | 218 | 130 | yes |  |
+| 2024-213 | CI.SYN | wrong | 0 | 3 | 130 | no |  |
+| 2024-213 | CI.SYN | shifted | 0 | 1 | 130 | no |  |
+| 2024-213 | CI.SYN | control | -7 | 0 | 130 | no |  |
+| 2024-213 | CI.SYN | control | +7 | 1 | 130 | no |  |
+| 2024-213 | CI.SYN | control | -14 | 1 | 130 | no |  |
+| 2024-217 | CI.GATR | launch | 0 | 208 | 10 | yes |  |
+| 2024-217 | CI.GATR | wrong | 0 | 0 | 10 | no |  |
+| 2024-217 | CI.GATR | shifted | 0 | 0 | 10 | no |  |
+| 2024-217 | CI.GATR | control | -7 | 3 | 10 | no |  |
+| 2024-217 | CI.GATR | control | +14 | 0 | 10 | no |  |
+| 2024-217 | CI.GATR | control | -21 | - | 10 | - | no file |
+| 2024-217 | CI.LOC | launch | 0 | 209 | 95 | yes |  |
+| 2024-217 | CI.LOC | wrong | 0 | 2 | 95 | no |  |
+| 2024-217 | CI.LOC | shifted | 0 | 4 | 95 | no |  |
+| 2024-217 | CI.LOC | control | -7 | 0 | 95 | no |  |
+| 2024-217 | CI.LOC | control | +14 | 9 | 95 | no |  |
+| 2024-217 | CI.LOC | control | -21 | 0 | 95 | no |  |
+| 2024-217 | CI.LCP | launch | 0 | 232 | 96 | yes |  |
+| 2024-217 | CI.LCP | wrong | 0 | 3 | 96 | no |  |
+| 2024-217 | CI.LCP | shifted | 0 | 2 | 96 | no |  |
+| 2024-217 | CI.LCP | control | -7 | 4 | 96 | no |  |
+| 2024-217 | CI.LCP | control | +14 | 5 | 96 | no |  |
+| 2024-217 | CI.LCP | control | -21 | 7 | 96 | no |  |
+| 2024-217 | CI.SYN | launch | 0 | 249 | 130 | yes |  |
+| 2024-217 | CI.SYN | wrong | 0 | 3 | 130 | no |  |
+| 2024-217 | CI.SYN | shifted | 0 | 7 | 130 | no |  |
+| 2024-217 | CI.SYN | control | -7 | 1 | 130 | no |  |
+| 2024-217 | CI.SYN | control | +14 | 7 | 130 | no |  |
+| 2024-217 | CI.SYN | control | -21 | 2 | 130 | no |  |
+| 2024-225 | CI.GATR | launch | 0 | 208 | 10 | yes |  |
+| 2024-225 | CI.GATR | wrong | 0 | 1 | 10 | no |  |
+| 2024-225 | CI.GATR | shifted | 0 | 0 | 10 | no |  |
+| 2024-225 | CI.GATR | control | +7 | 0 | 10 | no |  |
+| 2024-225 | CI.GATR | control | +35 | 0 | 10 | no |  |
+| 2024-225 | CI.GATR | control | +42 | 0 | 10 | no |  |
+| 2024-225 | CI.LOC | launch | 0 | 212 | 95 | yes |  |
+| 2024-225 | CI.LOC | wrong | 0 | 4 | 95 | no |  |
+| 2024-225 | CI.LOC | shifted | 0 | 0 | 95 | no |  |
+| 2024-225 | CI.LOC | control | +7 | 10 | 95 | no |  |
+| 2024-225 | CI.LOC | control | +35 | 2 | 95 | no |  |
+| 2024-225 | CI.LOC | control | +42 | 17 | 95 | no |  |
+| 2024-225 | CI.LCP | launch | 0 | 229 | 96 | yes |  |
+| 2024-225 | CI.LCP | wrong | 0 | 11 | 96 | no |  |
+| 2024-225 | CI.LCP | shifted | 0 | 7 | 96 | no |  |
+| 2024-225 | CI.LCP | control | +7 | 6 | 96 | no |  |
+| 2024-225 | CI.LCP | control | +35 | 1 | 96 | no |  |
+| 2024-225 | CI.LCP | control | +42 | 19 | 96 | no |  |
+| 2024-225 | CI.SYN | launch | 0 | 239 | 130 | yes |  |
+| 2024-225 | CI.SYN | wrong | 0 | 15 | 130 | no |  |
+| 2024-225 | CI.SYN | shifted | 0 | 1 | 130 | no |  |
+| 2024-225 | CI.SYN | control | +7 | 3 | 130 | no |  |
+| 2024-225 | CI.SYN | control | +35 | 48 | 130 | no |  |
+| 2024-225 | CI.SYN | control | +42 | 3 | 130 | no |  |
+| 2024-231 | CI.GATR | launch | 0 | 188 | 10 | yes |  |
+| 2024-231 | CI.GATR | wrong | 0 | 1 | 10 | no |  |
+| 2024-231 | CI.GATR | shifted | 0 | 0 | 10 | no |  |
+| 2024-231 | CI.GATR | control | -7 | 0 | 10 | no |  |
+| 2024-231 | CI.GATR | control | +7 | 1 | 10 | no |  |
+| 2024-231 | CI.GATR | control | -14 | 1 | 10 | no |  |
+| 2024-231 | CI.LOC | launch | 0 | 207 | 95 | yes |  |
+| 2024-231 | CI.LOC | wrong | 0 | 1 | 95 | no |  |
+| 2024-231 | CI.LOC | shifted | 0 | 1 | 95 | no |  |
+| 2024-231 | CI.LOC | control | -7 | 2 | 95 | no |  |
+| 2024-231 | CI.LOC | control | +7 | 2 | 95 | no |  |
+| 2024-231 | CI.LOC | control | -14 | 2 | 95 | no |  |
+| 2024-231 | CI.LCP | launch | 0 | 206 | 96 | yes |  |
+| 2024-231 | CI.LCP | wrong | 0 | 9 | 96 | no |  |
+| 2024-231 | CI.LCP | shifted | 0 | 1 | 96 | no |  |
+| 2024-231 | CI.LCP | control | -7 | 0 | 96 | no |  |
+| 2024-231 | CI.LCP | control | +7 | 51 | 96 | no |  |
+| 2024-231 | CI.LCP | control | -14 | 0 | 96 | no |  |
+| 2024-231 | CI.SYN | launch | 0 | 165 | 130 | yes |  |
+| 2024-231 | CI.SYN | wrong | 0 | 1 | 130 | no |  |
+| 2024-231 | CI.SYN | shifted | 0 | 5 | 130 | no |  |
+| 2024-231 | CI.SYN | control | -7 | 3 | 130 | no |  |
+| 2024-231 | CI.SYN | control | +7 | 8 | 130 | no |  |
+| 2024-231 | CI.SYN | control | -14 | 35 | 130 | no |  |
+| 2024-239 | CI.GATR | launch | 0 | 208 | 10 | yes |  |
+| 2024-239 | CI.GATR | wrong | 0 | 0 | 10 | no |  |
+| 2024-239 | CI.GATR | shifted | 0 | 0 | 10 | no |  |
+| 2024-239 | CI.GATR | control | -7 | 1 | 10 | no |  |
+| 2024-239 | CI.GATR | control | +14 | 2 | 10 | no |  |
+| 2024-239 | CI.GATR | control | -21 | 0 | 10 | no |  |
+| 2024-239 | CI.LOC | launch | 0 | 201 | 95 | yes |  |
+| 2024-239 | CI.LOC | wrong | 0 | 1 | 95 | no |  |
+| 2024-239 | CI.LOC | shifted | 0 | 3 | 95 | no |  |
+| 2024-239 | CI.LOC | control | -7 | 1 | 95 | no |  |
+| 2024-239 | CI.LOC | control | +14 | 31 | 95 | no |  |
+| 2024-239 | CI.LOC | control | -21 | 4 | 95 | no |  |
+| 2024-239 | CI.LCP | launch | 0 | 177 | 96 | yes |  |
+| 2024-239 | CI.LCP | wrong | 0 | 6 | 96 | no |  |
+| 2024-239 | CI.LCP | shifted | 0 | 18 | 96 | no |  |
+| 2024-239 | CI.LCP | control | -7 | 1 | 96 | no |  |
+| 2024-239 | CI.LCP | control | +14 | 4 | 96 | no |  |
+| 2024-239 | CI.LCP | control | -21 | 14 | 96 | no |  |
+| 2024-239 | CI.SYN | launch | 0 | 158 | 130 | yes |  |
+| 2024-239 | CI.SYN | wrong | 0 | 8 | 130 | no |  |
+| 2024-239 | CI.SYN | shifted | 0 | 6 | 130 | no |  |
+| 2024-239 | CI.SYN | control | -7 | 0 | 130 | no |  |
+| 2024-239 | CI.SYN | control | +14 | 2 | 130 | no |  |
+| 2024-239 | CI.SYN | control | -21 | 6 | 130 | no |  |
+| 2024-247 | CI.GATR | launch | 0 | 208 | 10 | yes |  |
+| 2024-247 | CI.GATR | wrong | 0 | 5 | 10 | no |  |
+| 2024-247 | CI.GATR | shifted | 0 | 0 | 10 | no |  |
+| 2024-247 | CI.GATR | control | -14 | 0 | 10 | no |  |
+| 2024-247 | CI.GATR | control | +14 | 6 | 10 | no |  |
+| 2024-247 | CI.GATR | control | +21 | 0 | 10 | no |  |
+| 2024-247 | CI.LOC | launch | 0 | 212 | 95 | yes |  |
+| 2024-247 | CI.LOC | wrong | 0 | 0 | 95 | no |  |
+| 2024-247 | CI.LOC | shifted | 0 | 59 | 95 | no |  |
+| 2024-247 | CI.LOC | control | -14 | 13 | 95 | no |  |
+| 2024-247 | CI.LOC | control | +14 | 7 | 95 | no |  |
+| 2024-247 | CI.LOC | control | +21 | 2 | 95 | no |  |
+| 2024-247 | CI.LCP | launch | 0 | 232 | 96 | yes |  |
+| 2024-247 | CI.LCP | wrong | 0 | 10 | 96 | no |  |
+| 2024-247 | CI.LCP | shifted | 0 | 11 | 96 | no |  |
+| 2024-247 | CI.LCP | control | -14 | 12 | 96 | no |  |
+| 2024-247 | CI.LCP | control | +14 | 14 | 96 | no |  |
+| 2024-247 | CI.LCP | control | +21 | 7 | 96 | no |  |
+| 2024-247 | CI.SYN | launch | 0 | 251 | 130 | yes |  |
+| 2024-247 | CI.SYN | wrong | 0 | 1 | 130 | no |  |
+| 2024-247 | CI.SYN | shifted | 0 | 7 | 130 | no |  |
+| 2024-247 | CI.SYN | control | -14 | 10 | 130 | no |  |
+| 2024-247 | CI.SYN | control | +14 | 40 | 130 | no |  |
+| 2024-247 | CI.SYN | control | +21 | 3 | 130 | no |  |
+| 2024-251 | CI.GATR | launch | 0 | 188 | 10 | yes |  |
+| 2024-251 | CI.GATR | wrong | 0 | 2 | 10 | no |  |
+| 2024-251 | CI.GATR | shifted | 0 | 4 | 10 | no |  |
+| 2024-251 | CI.GATR | control | +7 | 1 | 10 | no |  |
+| 2024-251 | CI.GATR | control | -14 | 1 | 10 | no |  |
+| 2024-251 | CI.GATR | control | +14 | 1 | 10 | no |  |
+| 2024-251 | CI.LOC | launch | 0 | 207 | 95 | yes |  |
+| 2024-251 | CI.LOC | wrong | 0 | 2 | 95 | no |  |
+| 2024-251 | CI.LOC | shifted | 0 | 1 | 95 | no |  |
+| 2024-251 | CI.LOC | control | +7 | 1 | 95 | no |  |
+| 2024-251 | CI.LOC | control | -14 | 0 | 95 | no |  |
+| 2024-251 | CI.LOC | control | +14 | 0 | 95 | no |  |
+| 2024-251 | CI.LCP | launch | 0 | 226 | 96 | yes |  |
+| 2024-251 | CI.LCP | wrong | 0 | 38 | 96 | no |  |
+| 2024-251 | CI.LCP | shifted | 0 | 0 | 96 | no |  |
+| 2024-251 | CI.LCP | control | +7 | 0 | 96 | no |  |
+| 2024-251 | CI.LCP | control | -14 | 29 | 96 | no |  |
+| 2024-251 | CI.LCP | control | +14 | 5 | 96 | no |  |
+| 2024-251 | CI.SYN | launch | 0 | 242 | 130 | yes |  |
+| 2024-251 | CI.SYN | wrong | 0 | 4 | 130 | no |  |
+| 2024-251 | CI.SYN | shifted | 0 | 0 | 130 | no |  |
+| 2024-251 | CI.SYN | control | +7 | 0 | 130 | no |  |
+| 2024-251 | CI.SYN | control | -14 | 3 | 130 | no |  |
+| 2024-251 | CI.SYN | control | +14 | 3 | 130 | no |  |

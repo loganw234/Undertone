@@ -3,6 +3,7 @@ scored, a scored launch never sets a constant, and the scoring script runs only
 on the frozen files. No fetched file is read, and no test here can score.
 """
 import os
+import shutil
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -130,30 +131,62 @@ def test_lch3_the_freeze_hash_moves_with_one_byte_of_one_file(tmp_path):
     assert before != after
 
 
-def run_score(*args):
-    return subprocess.run([sys.executable, "-B", os.path.join(D2, "score.py")] + list(args),
+def copy_of_the_study(tmp_path):
+    """(the copy's score.py, its output path, an empty data folder, its freeze hash).
+
+    The three tests below run the scoring script in a copy of the two study
+    folders, against an empty data folder: nothing here can score a real
+    record or touch the one run's output in the tree."""
+    studies = os.path.dirname(D2)
+    root = tmp_path / "tree"
+    for d in ("d1", "d2"):
+        shutil.copytree(os.path.join(studies, d), str(root / "docs" / "studies" / d),
+                        ignore=shutil.ignore_patterns("__pycache__", "fig"))
+    script = str(root / "docs" / "studies" / "d2" / "score.py")
+    output = root / "docs" / "studies" / "d2" / "scored-output.txt"
+    data = tmp_path / "no-data"
+    data.mkdir()
+    got = subprocess.run([sys.executable, "-B", script, "--freeze-hash"],
+                         capture_output=True, text=True)
+    freeze = got.stdout.strip().split("\n")[-1].split()[-1]
+    assert len(freeze) == 64, got.stdout + got.stderr
+    return script, output, str(data), freeze
+
+
+def run_score(script, *args):
+    return subprocess.run([sys.executable, "-B", script] + list(args),
                           capture_output=True, text=True)
 
 
 def test_lch3_the_scoring_script_refuses_files_that_are_not_the_frozen_ones(tmp_path):
-    out_path = os.path.join(D2, "scored-output.txt")
-    before = open(out_path, "rb").read() if os.path.exists(out_path) else None
-    got = run_score(str(tmp_path), "--freeze", "0" * 64)
+    script, output, data, freeze = copy_of_the_study(tmp_path)
+    if output.exists():
+        output.unlink()
+    # the wrong hash
+    got = run_score(script, data, "--freeze", "0" * 64)
     assert got.returncode != 0 and "REFUSED NOT-FROZEN" in got.stderr, got.stderr
-    after = open(out_path, "rb").read() if os.path.exists(out_path) else None
-    assert before == after
+    # the hash that was right, after one byte of the constants has changed
+    constants = output.parent / "constants.json"
+    constants.write_bytes(constants.read_bytes() + b" ")
+    got = run_score(script, data, "--freeze", freeze)
+    assert got.returncode != 0 and "REFUSED NOT-FROZEN" in got.stderr, got.stderr
+    assert not output.exists()
 
 
-def test_lch3_the_scoring_script_refuses_a_second_run_and_a_fetch_that_is_not_whole(tmp_path):
-    # With the right freeze hash and an empty data folder it must refuse either
-    # way, and open no record: ALREADY-SCORED once the one run's output exists,
-    # FETCH-NOT-COMPLETE before it does. It can never score from here.
-    out_path = os.path.join(D2, "scored-output.txt")
-    before = open(out_path, "rb").read() if os.path.exists(out_path) else None
-    _lines, freeze = score.freeze_lines()
-    got = run_score(str(tmp_path), "--freeze", freeze)
-    assert got.returncode != 0
-    want = "REFUSED ALREADY-SCORED" if before is not None else "REFUSED FETCH-NOT-COMPLETE"
-    assert want in got.stderr, got.stderr
-    after = open(out_path, "rb").read() if os.path.exists(out_path) else None
-    assert before == after
+def test_lch3_the_scoring_script_refuses_a_fetch_that_is_not_whole(tmp_path):
+    # the right freeze hash, no output yet, and a data folder that holds none of
+    # the files the manifest says came: it must not score part of the set, or any.
+    script, output, data, freeze = copy_of_the_study(tmp_path)
+    if output.exists():
+        output.unlink()
+    got = run_score(script, data, "--freeze", freeze)
+    assert got.returncode != 0 and "REFUSED FETCH-NOT-COMPLETE" in got.stderr, got.stderr
+    assert not output.exists()
+
+
+def test_lch3_the_scoring_script_refuses_a_second_run(tmp_path):
+    script, output, data, freeze = copy_of_the_study(tmp_path)
+    output.write_bytes(b"the one run's output\n")
+    got = run_score(script, data, "--freeze", freeze)
+    assert got.returncode != 0 and "REFUSED ALREADY-SCORED" in got.stderr, got.stderr
+    assert output.read_bytes() == b"the one run's output\n"
