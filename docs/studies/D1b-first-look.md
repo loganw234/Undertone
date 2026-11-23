@@ -503,3 +503,10 @@ The verifier confirmed the headline by a measure of its own and found the tables
 | 6. A gain of 419,430 fits 24 bits over 40 V, and also 22 over 10 V, 21 over 5 V, 20 over 2.5 V | Conceded and stated in D1's rows M6 and M9. The records settle D0's question and not the converter's width: samples needing 17 bits are in two files (Q5c) |
 | 7. Row M9 read as nine stations | Reworded: eight |
 | 8. PROVENANCE.md's count of availability requests | Brought up to date, with every other count |
+
+## Changes after the experiment, 2026-11-23
+
+The lead's, from [study D2](D2-launch-experiment.md). Nothing above is edited.
+
+- **This look was one launch, and said so.** There are now 23 scored launches at the three nearest stations that have records throughout 2024: 66 of their 69 launch windows hit, and none of 204 control windows. All three are within 50 km of the pad, where D2's own first limit applies: the launch is loud there, not faint.
+- **Row Q1b, CI.GATR's missing record in 2021**: it was missing through most of 2024 as well. D2 has a record of it for no window asked before 2024-11-14.

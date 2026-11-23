@@ -751,3 +751,11 @@ Nothing here changes D0; these are the points where the study touches it.
 - **Stage E4 beside E3.** A launch record is small beside the replay store (H3), so capacity is not the constraint. The label is: a window hundreds of seconds wide (W7), true at a station only as often as that station shows the launch (control 2).
 - **The detector's configuration.** A pooling stage long enough for 207 s at 100 samples a second (control 5's note).
 - **The comparison rules.** D0's rules 2, 3 and 5 carry over as written; rule 1 becomes the manifest of section 7; rule 4's floor becomes H1.
+
+## Changes after the experiment, 2026-11-23
+
+The lead's, from [study D2](D2-launch-experiment.md), which ran the experiment this study proposed. Nothing above is edited.
+
+- **Section 9's open question, whether a public record shows a launch as a rate**, has an answer within 50 km: of 23 scored Falcon 9 launches of 2024, by a rule frozen before any of their records was opened, 23 hit at CI.LOC, 23 at CI.LCP and 20 at CI.SYN, against 0 of 68 control windows at each; CI.GATR, which has a record for seven of them, 7 against 0 of 21. D2's first limit applies: at those distances the launch is loud, not faint.
+- **Section 7, step 4**, "a counting stretch begins inside the window": D2 used another hit, the count of up seconds inside the window, chosen knowing the 2021 launch's records and before any 2024 record was fetched. D2's section 5 says why and what it concedes.
+- **The ladder's nearest rung, CI.GATR**: the station service lists its vertical channel through 2024, and the data centre has no record of it for any window D2 asked before 2024-11-14. An epoch in the station service is not a record.

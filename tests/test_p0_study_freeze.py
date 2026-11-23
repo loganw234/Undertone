@@ -1,0 +1,62 @@
+"""The launch experiment's freeze, held: the files that were frozen before its one scoring run are still those files.
+
+Study D2 (docs/studies/D2-launch-experiment.md) scored twenty-three launches once, by a rule and constants
+committed and hashed before any scored record was opened. The scoring cannot be made again in place, so what
+a reader has is the committed output and the files it names. If one of those files changes afterwards, the
+output no longer says what the tree's rule gives, and nothing would notice: a verifier was handed a tree in
+which one frozen constant had been changed after the scoring, and the gate passed.
+
+This test is the lead's, added at the merge on 2026-11-23. It works the freeze hash itself, from the seven
+files, in the order and form the parcel wrote down at its freeze, and holds it to the hash the scoring run
+printed. It imports nothing of the study's code.
+
+What it cannot see: whether the scoring came after the freeze (no file carries the run's time); whether the
+output is the run's own (it is a committed text file); or the fetched records, which are not in the tree.
+"""
+import hashlib
+import os
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+# The seven frozen files, in the order of the parcel's freeze entry (the round's ledger, 2026-11-23 13:41:57).
+FROZEN = ("docs/studies/d2/rule.py", "docs/studies/d2/score.py", "docs/studies/d2/constants.json",
+          "docs/studies/d2/launches.tsv", "docs/studies/d2/manifest.tsv",
+          "docs/studies/d1/firstlook.py", "docs/studies/d1/mseed.py")
+OUTPUT = "docs/studies/d2/scored-output.txt"
+# Typed here from the lead's ledger entry of 13:44 that day, which recomputed it before the scoring was allowed.
+FREEZE_HASH = "dc7f28f172f8e201095a07a1a5b762a74407b4ca5c78d58a5d4b6815051f781f"
+
+
+def freeze_hash(contents):
+    """The SHA-256 of one line for each file, "<the file's SHA-256>  <its path>", each ended by a line feed."""
+    lines = "".join("%s  %s\n" % (hashlib.sha256(data).hexdigest(), name) for name, data in contents)
+    return hashlib.sha256(lines.encode("ascii")).hexdigest()
+
+
+def frozen_files():
+    out = []
+    for name in FROZEN:
+        with open(os.path.join(ROOT, name), "rb") as f:
+            out.append((name, f.read()))
+    return out
+
+
+def test_p0_the_launch_experiments_frozen_files_are_still_the_frozen_ones():
+    assert freeze_hash(frozen_files()) == FREEZE_HASH, \
+        "a file frozen before study D2's scoring run has changed: its committed output no longer follows from the tree"
+
+
+def test_p0_the_scoring_runs_output_names_that_freeze():
+    with open(os.path.join(ROOT, OUTPUT), encoding="utf-8") as f:
+        first_lines = [f.readline().rstrip("\n") for _ in range(2)]
+    assert first_lines == ["Study D2, the scoring run.", "Freeze hash %s." % FREEZE_HASH]
+
+
+def test_p0_one_changed_byte_in_any_frozen_file_moves_the_hash():
+    """The control: each file in turn with its last byte changed, and the two orders of two files exchanged."""
+    contents = frozen_files()
+    for i, (name, data) in enumerate(contents):
+        changed = list(contents)
+        changed[i] = (name, data[:-1] + bytes([data[-1] ^ 1]))
+        assert freeze_hash(changed) != FREEZE_HASH, name
+    assert freeze_hash([contents[1], contents[0]] + contents[2:]) != FREEZE_HASH

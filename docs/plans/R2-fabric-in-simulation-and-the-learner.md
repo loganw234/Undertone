@@ -188,3 +188,5 @@ Each has a recommendation and a real alternative. A few words answer each. One q
 - *What it does not show:* whether the head meets timing, what the whole design costs, or anything about the card.
 
 **Wave 0's simulators.** Row N20 stands: the image starts on Icarus Verilog. Logan's word of 2026-11-23 on Docker covers building it.
+
+**Row W4, after the launch experiment (2026-11-23).** It was BELIEVED. For the 23 scored Falcon 9 launches of 2024, at four stations within 50 km of the pad, by the rule [study D2](../studies/D2-launch-experiment.md) froze before any of their records was opened, it is MEASURED, and the answer is yes: its test rejects at all four. Within 50 km the launch is loud, not faint, by D2's own first limit. What W4 does not have yet is the part the project wants: a faint launch at a farther station. **Row N17**, 378 MB and 35 minutes, was the lead's arithmetic for another list: D2's was 132 MB in eight and a half minutes, with fewer stations and more control windows.
