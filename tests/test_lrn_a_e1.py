@@ -1212,6 +1212,24 @@ def test_gate_statistics__e1_the_learned_filter_reaches_the_matched_filters_effi
     assert holds(part, r)
 
 
+def test_lrn_a_e1_what_only_a_full_part_would_reach_is_reached_here():
+    """Two things the short form does not exercise by its size, and a full part does.
+
+    A full part filters 25,600,000 kept samples in pieces of 2^20; the short form's 1,024,000 are
+    one piece. So the piecing is held here on smaller pieces: every size must give the same
+    scores at the same positions, across every seam. And a part is written to a file and read
+    back by the judge: the short form's part must survive that unchanged."""
+    got, part = short()
+    held = got["held"][:40000]
+    whole = stat_scores_at_reads(held, part["coefficients"])
+    assert len(whole) == 40000 // STRIDE == 625
+    for chunk in (STRIDE, 2 * STRIDE, 4096, 8192, 32768):          # pieces of one read, two reads, and sizes that leave a short last piece
+        assert stat_scores_at_reads(held, part["coefficients"], chunk).tolist() == whole.tolist(), chunk
+    assert [int(v) for v in whole.tolist()] == [r["score"] for r in got["reads"][:625]], "and they are the model's own scores there"
+    back = json.loads(json.dumps(part))
+    assert back == part and not_as_stated([back], ["short"]) == [] and holds(back)
+
+
 def test_control_statistics__e1_the_two_checks_on_the_instrument_can_each_fail():
     """Two of the verdict's conditions are comparisons made inside `evaluate`. Each is shown to
     report a difference: one score read one unit off, and a core holding another filter."""
