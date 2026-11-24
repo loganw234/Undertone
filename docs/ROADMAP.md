@@ -151,6 +151,12 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 *The lead's reading:* `main` moves to `r2`'s tip and is pushed. It is his word for round 2's push, and not a standing word for later ones. It answers the first of the five and none of the others: they stay open, in "Open with Logan at round 2's close" above.
 
+**2026-11-24, after round 2's push.** The lead had reported the push and asked "Draft the plan for round 3 now?". He changed the session's model to Opus 5.5 and answered:
+
+> Yes, draft it. We are also switching the parcel models to Opus rather than Fable as they have been
+
+*The lead's reading:* the lead drafts round 3's plan, on a local branch, and it goes past a verifier before it comes to him, as round 2's did. **From round 3, every parcel runs on Opus, named when it is sent.** In round 2 the lead named no model for a parcel, so each ran on the session's model, Fable; the verifiers were sent on Opus by name, but for the two closing passes, which ran on the session's model. His word names the parcels. Whether the verifiers stay on Opus, which is now the parcels' model too, the plan puts to him as a question.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
@@ -181,6 +187,7 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 | round | what | state |
 |---|---|---|
+| `2026-11-24-r3-plan` | the draft plan for round 3, [plans/R3-first-light.md](plans/R3-first-light.md) | drafting from 2026-11-24 on the local branch `r3-plan`, on Logan's word "Yes, draft it"; not approved, not pushed |
 | `2026-11-23-r2` | round 2: the fabric in simulation, the learner, the head, the launch experiment | run on 2026-11-23, on the local branch `r2`: six parcels merged (HEAD, LCH-3, LRN-A, RTL-A, RTL-B, SEAM-2) and the lead's foundation, each past verifiers on sealed clones with planted faults, **but for the detector core's last commit, a mutant of the seam's that the lead re-pointed, and the lead's closing documents, which only the round's closing verifier read**: it found wrong statements in the documents, corrected since, and two more faults the core's bench lets through, left as a stated limit; a narrow pass on those corrections found five more slips in them, corrected in the commit that closes the round in the ledger, which no verifier has read, nor the one after it, which records his word to push; stage E1's full run in software and the head's synthesis, both the lead's. **Pushed on Logan's word of 2026-11-23: `main` is `r2`'s tip.** The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-23-r2-plan` | the draft plan for round 2, and a verifier's three passes over its three drafts | drafted 2026-11-23 on the local branch `r2-plan`; approved by Logan on 2026-11-23 with one change; its commits are in `r2`'s history and went out with round 2's push. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-21-r1-model` | round 1: the reference model, the statistics, and the launch-data study | run on 2026-11-23, on `r1`: five merges of four parcels (LCH twice, MOD-A, MOD-B, STAT), each past a verifier of its own before it merged, and the lead's two pieces, the foundation and the seam, each past a verifier too; pushed on Logan's word of 2026-11-23. The record is in [VALIDATION.md](VALIDATION.md) |
