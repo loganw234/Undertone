@@ -1241,3 +1241,76 @@ The lead's additions in the commit that carries this entry: the study's page, it
 - **Stage E1 on the card**, and every later stage: other rounds.
 - **A second seed for any part**: the experiment as fixed has one.
 - **RTL-A and RTL-B**: both have reported; their verifiers are next.
+
+## 2026-11-23 - round 2: the first RTL, in simulation: the source, the injector, the detector core and the three wired together; and what the head costs, synthesised
+
+Three parcels wrote the first RTL of this project and each is merged after its verifiers. **Every word each block puts out, and every score word of the three wired together, is the reference model's, under both sample formats, in a simulator. No verifier found a place where RTL and model differ, and the model did not have to change.** The lead synthesised the head alone, as Logan asked: the slices are what the arithmetic said. Nothing is placed, timed or on a card. Nothing of round 2 is pushed.
+
+### What ran
+
+- **RTL-A** (the noise source and the injector) and **RTL-B** (the detector core and its weight store), each designed from reading alone while the desktop was closed to runs, ruled on by the lead, and built from 17:01. **SEAM-2** (the three wired together) from 18:02, on the lead's merge of the other two before either was verified.
+- **Verifiers, each fresh, each on a sealed clone with planted faults, by its own clock:** VRTLA 17:59:27 to 18:12:26 and VRTLA-2 18:39:13 to 18:49:18; VRTLB 17:59:41 to 18:11:47, VRTLB-2 18:29:38 to 18:39:28 and VRTLB-3 19:05:53 to 19:12:24; VSEAM2 19:37:02 to 19:50:08.
+- **The synthesis**, the lead's, on the Linux box, booked: eleven out-of-context runs, 18:04:30 to 18:22:45.
+- **The merges**, the lead's: each parcel's merge gated at the second size, one run alone, and committed on its bare PASS; the seam's on a tree identical to its merge's, by tree id.
+
+### Measured
+
+- **Plants: VRTLA 3 of 3 and VRTLA-2 3 of 3; VRTLB 3 of 3, VRTLB-2 2 of 2 and VRTLB-3 2 of 2; VSEAM2 3 of 3.** In this round, 60 of 61: 44 of 45 through the learner's passes, and these 16 of 16. No verifier's commands reached for a key, a ledger, a parcel's own commit or another verifier's folder. Where a planted fault touched RTL or a bench, the clone's gate or its benches' stage was run before the verifier was sent and gave exactly the parcel's own counts. Two clones were sent without that: VRTLB-2's, whose two plants were figures of a document, and VSEAM2's as remade after the merge, where the planted test alone was run.
+- **No regression in any pass.**
+- **By the verifiers' own code, which imports nothing of the project:** the generator's 36,465 words against the model's; the source's multiply on 200,007 inputs under five constants; its table search on 20,370 cases; the injector's rounding on 5,368; the core's forty stage widths, at the definition's maxima and at the small top's, under both formats. Nothing differed.
+- **By the verifiers' own streams and faults:** seeds, sigmas, schedules, shapes and lengths the parcels did not use, through each bench and through the chain: identical to the model. Twelve flipped bits of the generator's three constants: all caught. The evidence of every mutant of RTL-A's and of the seam's, and of the core's swap, settling, shadow, overflow and narrowed-stage mutants: each at the record and field its fault explains.
+- **The lead's ruling of two refusal mutants a module, in place of two a name, costs nothing that shows**: two verifiers removed each refusal's check alone, seventeen ways in RTL-A and nineteen in RTL-B, and each time that name's own test failed.
+- **On the merged tree**, by the lead's gate of 19:36: 172 tests of 13 benches in 14 runs, 63,946 words identical to the model's, 96 mutant runs each failed as named, with 1,112 tests in the first size. The seam's merge commit carries the verdict.
+- **The head, synthesised**: 624 DSP slices under 16-bit one-channel samples and 816 under 24-bit three-channel, at twelve hidden units, of the card's 5,952; 208 and 272 at four units; a multiplier alone at nine widths. The record is [docs/studies/SYN-head.md](studies/SYN-head.md). The lead had worked 624 and 816 from four multipliers before any head existed in RTL; the whole head gives the same, to the slice. **In slices the head is three to four tenths of the filter bank, where the count of multipliers that decided "simple enough" made it a tenth.**
+
+### Which authority this rests on
+
+The reference model, word for word: bit identity, in simulation, the first of that gate's three parts in the design D0. **It is not evidence about sensitivity, and it is not evidence that any fabric on a card is correct.** The hand-over of learned weights through the chain shows that a trained blob reaches the RTL's registers and takes effect at the index named; no efficiency is read from it, and it is sixteen truth records under one seed.
+
+### What the verifiers found that was a parcel's, and the answers
+
+- **RTL-A typed widths as literals that the generated package holds**: the truth index's 64, the bus word's 32 in several forms. Nothing was wrong; the rule is that the RTL follows the definition or fails to build. The parcel derived each and added a check at time zero in each module.
+- **RTL-B's bench had holes: faults that passed every test and fell under no stated limit.** A read of the commit index's upper word; a commit at index 0 marking outputs as settling; the overflow flag from hidden unit 0 only; one refusal read before a frame taken at the same edge. Then two neighbours of those; then one more. The RTL was right in every case. Each has a test and a mutant now, or, where the lead ruled it, a limit: what a bench holds at sampled sizes it holds at those sizes.
+- **Holes the lead's own planted faults went through**, which the parcels then closed: nothing held the upper word of the source's frame count; nothing showed the injector's latency test could fail.
+- **The seam**: two sentences of its document were stale in the tree it was merged into, its stage's figures and a remark on RTL-B's helper, both because the RTL parcels changed after it was built. Corrected by the lead at the merge, with four limits from its verifier: truth reaching the core's weights is seen only by chance and as a refusal; a noise table's far entries are never looked up; two mutants are written in a form the parcel itself found unreliable; one mutant edits another parcel's file.
+- **What the parcels found themselves, by trying faults after their benches passed**: RTL-A, that no test put a sum exactly at either end of the sample's range; RTL-B, that an overflow flag which is not sticky passed, and that a pooled sum one bit narrow gave the model's records at the definition's maxima; the seam, that an expression in a port connection did not build as written.
+
+### Merged with these stated limits
+
+- Everything under "Limits" in [docs/rtl/source.md](rtl/source.md), [docs/rtl/core.md](rtl/core.md), [docs/rtl/seam.md](rtl/seam.md) and [docs/studies/SYN-head.md](studies/SYN-head.md).
+- **Every mutant runs under one sample format**, and the refusals have two mutants a module.
+- **The detector core's last commit has not been past a verifier**: one stream for each pair of overflowing units and one mutant, the answer to the third pass. See the lead's calls.
+- **The foundation does not bound a test, and its stage runs one bench at a time**: a bench with an unbounded wait held the container until the lead stopped it, and the gate's second size is now past ten minutes on the shared desktop. Both are in [docs/rtl/README.md](rtl/README.md)'s limits and CLAUDE.md's traps; neither is fixed.
+
+### The lead's calls in this stretch, each a departure or a decision, for Logan
+
+- **Three refusal names the fabric raises and the model never does**, and **two bounds the fabric has and the model does not**. In the definition since the entry before last.
+- **A shadow weight write is refused while frames of the old weight set are in the core's pipeline.** The model, which has no clocks, accepts it. Ruled a stated limit, not a finding against the model.
+- **The seam was made a parcel**, where the plan gave it to the lead, and built on the two RTL parcels before either was verified. It was merged onto their final commits and gated there before its verifier saw it.
+- **The passes on the detector core were ended after the third.** Each pass after the first found the RTL right and a new neighbour of a hole already closed; the third verifier's own words are that the parcel's stated limit could be read to cover its finding. The rule the lead had applied all round would send the parcel back and run a fourth. The lead had the parcel add the stream and the mutant, and left its check to the round's closing verifier.
+- **The seam's document was corrected by the lead, not sent back**, for the same reason: what its verifier found of its own was made stale by the merge.
+
+### What this does not prove
+
+- **Anything on a card.** One simulator, Icarus Verilog 12.0. Nothing is placed or timed; the synthesis counts cells and says nothing of a clock.
+- **That the core meets its eleven clocks, or the injector its fifty-two, in fabric.** They are counts of registers.
+- **Anything about sensitivity.**
+- **That a fault which depends on a value no bench samples is seen.** Three passes on the core each found one more.
+
+### The lead's slips
+
+- **A merge that dropped a line.** Both parcels' manifests end with the same line; git kept it once; the lead's script that kept "both sides" of the conflict gave it to one. The seam's base failed its gate five minutes after the parcel had been sent to build on it. The merges since are made as ours and then what theirs appended, and checked, parsed, as the union.
+- **A mutant of the seam's left pointing at a line another parcel had rewritten.** The lead built the seam's base from the RTL parcels' commits of that hour and did not ask what in the seam's files named their text. The stage refused it by name at the merge.
+- **"Merge nothing"**, told to a parcel sent back, kept the lead's own fix of a foundation test out of its tree; the parcel's next gate failed on that test and it stopped and asked.
+- **A foundation with no bound on a test**, found when a parcel's bench hung.
+- **A width written from memory**: "eighth argument", in the entry before last, caught there.
+
+### Changed after the last pass, and not seen by a verifier
+
+The detector core's last commit. The lead's corrections to the seam's document, its re-pointed mutant, the synthesis page, and the additions to CLAUDE.md, the roadmap and `docs/rtl/README.md` in the commit that carries this entry. **The round's closing verifier reads the tip, with each of these on its list by name.**
+
+### Not done, and why
+
+- **The runner made to run benches side by side, and a bound on each test**: the foundation's, for the next round.
+- **A second simulator, a host library, a kernel wrapper, anything on the card**: other rounds.
+- **A synthesis of the filter bank, the pool or the weight store**: the bank's cost is arithmetic from one multiplier.
