@@ -2,7 +2,7 @@
 
 Parcel KRNL, round 3, 2026-11-24. The source, the injector and the detector core of round 2, unchanged, wired as [the seam](seam.md) wires them, inside a Vitis RTL kernel. A host drives the kernel through one AXI4-Lite slave, and the kernel writes every score record to one buffer in memory through one AXI4 master. The top is `rtl/krnl/undertone_krnl.sv`. The benches are `rtl/tb/bench_krnl.py`, `bench_krnl_max.py` and `bench_krnl_small.py`, with the helpers `rtl/tb/krnl_host.py` and `rtl/tb/krnl_mem.py`. The packaging is `hw/kernel.xml`, `hw/package_kernel.tcl` and `hw/link.cfg`, held to the definition by `tests/test_krnl_packaging.py`. How the RTL side works is [README.md](README.md). The design was approved by the lead on 2026-11-24 (the round's ledger, `lead.md`, entry 09:52) and the definition's change for it is the lead's commit 655d303.
 
-Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION. Every figure here has a row in the register at the end.
+Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION. Every figure here that was measured, read or worked out has a row in the register at the end. The kernel's own constants (a burst of at most 16, 16 bursts unanswered, a drain of 128 clocks) and the benches' (a poll every 12 clocks, a last answer held 200 clocks, the streams' lengths) are stated where their source defines them.
 
 **What rests on what.** Everything here is bit identity: the kernel's score words, read back from a memory model, against the model's own run of the same configuration. **Nothing here is evidence about sensitivity**, nothing here is synthesised, and nothing of the packaging has been run by any tool. D0's gates advanced, and how:
 
@@ -29,7 +29,7 @@ A score record is 168 bits, 21 bytes: index 8, epoch 4, flags 1, score 8.
 
 - In memory it is a **slot of 32 bytes** (`[memory] slot_bytes` in the definition): its canonical bytes first (`model.records.pack`, the first declared field lowest, each field little-endian), then 11 zero bytes. **The zeros are always written**, so a host that fills a buffer first with a pattern sees a slot never written.
 - **Record n is at the buffer's base + 32 n.** The base must be a multiple of 32.
-- One record is one beat of the 256-bit master, data byte k going to address + k (AXI's byte lanes).
+- One record is one beat of the 256-bit master, data byte k going to address + k. That is AXI's rule for byte lanes, BELIEVED from memory of the specification; both memory models here, this parcel's and cocotbext-axi's `AxiRamWrite`, store a beat so.
 - A run of 2^17 records is 4 MiB and one of 2^20 is 32 MiB.
 
 ## 3. Where the kernel's own registers are, and why the protocol is user-managed
@@ -140,7 +140,7 @@ What each fault shows as:
 | fault | where it shows |
 |---|---|
 | a record never written | the pattern at its slot, a WORD mismatch there |
-| one written twice | a mismatch as written, even when memory is right |
+| one written twice | a mismatch as written; in memory too when the second lands in another slot, as the mutant `writes-one-twice` does. A burst written again at its own slot with the same bytes would show as written alone: no such fault is planted |
 | the last lost | a mismatch at N-1 and RUN_LENGTH |
 | the first lost | a mismatch at 0 |
 
@@ -175,6 +175,21 @@ The bench rows:
 
 The truth mutant was planned to show as two digests differing. It is caught earlier: its first wording, with an odd numerator, already differs from the model at record 1.
 
+**Tried once by hand, on a copy, and not in the manifest** (K17). Nine more faults of the kernel's, each under s16x1 on the small top. Eight failed the test named for them, each where its fault predicts:
+
+| fault | what it showed |
+|---|---|
+| the last record not queued | WORD at record 128, the pattern in the slot |
+| the first record not queued | WORD at record 0: index 1 where the model has 0 |
+| no burst cut at a 4 KB page | the memory model's fault: a burst of 5 beats from 0x2FFC0 crosses the page |
+| the base ignored | WORD at record 0, the pattern in the slot |
+| padding of ones | "slot 0's padding is ffffffffffffffffffffff, not zeros" |
+| a drain of one clock | WORD at record 126, the pattern in the slot |
+| strobes not checked | a write of two bytes refused none, not REGISTER_ACCESS |
+| the source's start not checked | a start with no table refused none, not RUN_START |
+
+The ninth was planted to show limit 4, and it passed `identity_small`, as that limit says it must: `issued` and `krn_records` counted modulo 256.
+
 ## 7. The packaging
 
 `hw/kernel.xml` is adapted from the sibling project's, read there and not copied whole. It declares:
@@ -203,7 +218,7 @@ Each is stated by the behaviour it concedes.
 1. **One simulator, nothing built.** Only Icarus Verilog 12.0 has read the RTL. No tool has read the packaging. A construct Vivado will not elaborate, an interface the packager does not infer, or a protocol `package_xo` does not take from the XML is not seen here.
 2. **User-managed rests on a reading.** Under ap_ctrl_hs XRT sends an argument image (READ, from the sibling's code); that it would write the words between this map's rows is BELIEVED and untested. Neither is held by anything here. The host side of user-managed (`xrt::ip`, the buffer's bank) is HOST's and the lead's.
 3. **The overflow is held at a depth of 8, not 512.** A packaged kernel whose queue held fewer than 512 records while its `cap_record_queue` read 512 passes every test here: `capabilities_are_accepted` of `krnl-first` reads 512 from the register, not from the queue. That the register and the queue agree is held on the small top, by `queue_overflow_refused` and its mutant `advertises-a-deeper-queue`.
-4. **No run is longer than 129 frames.** `krn_records`, `rec_in`, the source's count and the address are 64 bits. **A kernel whose counter wrapped at 256 would pass**, as the foundation's README, limit 5, says of its index. The upper words of `krn_records` and `krn_frames` are never non-zero in a run.
+4. **No run is longer than 129 frames.** `krn_records`, `rec_in`, the source's count and the address are 64 bits. **A kernel whose counters wrapped at 256 passes**, as the foundation's README, limit 5, says of its index: one with `issued` and `krn_records` counted modulo 256 passed `identity_small` (K17). The upper words of `krn_records` and `krn_frames` are never non-zero in a run.
 5. **Truth from the host at a long run's rate is not simulated.** No run here holds more than one truth record written while it runs, nor needs more than the injector's store of 1,024, which a run of 65,536 frames would.
 6. **The memory model is this parcel's reading of AXI4**, cross-checked by `identity_on_axi_ram` against cocotbext-axi's `AxiRamWrite` once a profile. It takes a burst's data only after its address. AXI allows data first and this kernel never sends it so; a kernel that did would stall here and fail on a bound, not on a named fault. It never reorders answers.
 7. **Done is polled every 12 clocks.** Done is sticky, so a done that rose is seen. What is held is that when it was first read every burst was answered, not the clock it rose at.
@@ -212,7 +227,7 @@ Each is stated by the behaviour it concedes.
 10. **After MEMORY_WRITE the queued records are abandoned.** `krn_records` counts only the records answered OKAY before the first error. One error test runs: the fourth burst answered SLVERR, with no stall.
 11. **Up to 16 bursts may be unanswered**; no test asserts that sixteen ever were.
 12. **The edge's refusals, the stall, the error, the chain's refusal, the reset and the truth during a run are held on the small top.** The kernel's lines there are the packaged top's, at other parameters. On the packaged top they are not run.
-13. **A burst meeting a page's edge is held on the small top**, where a hold makes one of several beats end there. On the other tops the memory model's check holds the page rule on whatever bursts happen.
+13. **A burst meeting a page's edge is held on the small top**, where a hold makes a burst of several beats end there. On the other tops the memory model's check holds the page rule on whatever bursts happen.
 14. **A record arriving with no run going** (RUN_LENGTH) is not reachable without a fault and is not run. Neither are an answer nobody asked for (MEMORY_WRITE) and a source that stops before its count.
 15. **Each record of an identity test is counted twice in the stage's total**: once from memory and once as written.
 16. **A mutant shows the bench sees its fault under one profile**, but for the capability mutant, which runs under both. One mutant adds logic of its own, `truth-reaches-the-core` (a register and an XOR on one line). Its evidence is at the record it predicts (K6), which is what holds it.
@@ -229,7 +244,7 @@ Each is stated by the behaviour it concedes.
 |---|---|---|---|---|
 | K1 | A score record is 168 bits, 21 bytes, in a slot of 32: 11 bytes of zeros after it | READ | `spec/undertone.toml`, `[records]` and `[memory]` | the definition |
 | K2 | A queue of 512 covers a memory that takes nothing for 10,240 clocks (102.4 us at 100 MHz) under s16x1 and 30,720 under s24x3 | COMPUTED | 512 x 20 and 512 x 60 clocks a record (the plan, L12); 10,240 x 10 ns | arithmetic |
-| K3 | On a copy holding this parcel's four rows, the stage passed: 28 tests in 6 runs of 4 benches, 2,352 records identical to the model's, 10 mutant runs each failed as named, 16 build logs read with 32 lines each on the committed list | MEASURED | the stage on a copy, 2026-11-24 10:38:05 to 10:39:08: its OK line | the gate's second size, whose line for the stage holds these rows' with the others' |
+| K3 | On a copy holding this parcel's four rows, the stage passed: 28 tests in 6 runs of 4 benches, 2,352 records identical to the model's, 10 mutant runs each failed as named, 16 build logs read and the 32 lines in them each on the committed list | MEASURED | the stage on a copy, 2026-11-24 10:38:05 to 10:39:08: its OK line | the gate's second size, whose line for the stage holds these rows' with the others' |
 | K4 | The sixteen runs of those rows took 223 s summed, each run's own time by the runner's count, six side by side: 4 + 4 + 9 + 12 + 15 + 21 + 14 + 24 + 13 + 7 + 7 + 7 + 6 + 9 + 34 + 37. The longest was 37 s, `krnl-small-s24x3.s24x3` | MEASURED | the same run of the stage: its `runner.log`, the lines "ran ... in N s" | another run; another load |
 | K5 | cocotb's own count of the simulated nanoseconds a wall second, for each run's whole test list, was 7,987 and 11,056 on `krnl-first` (s16x1, s24x3), 9,547 and 10,687 on `krnl-max`, 11,102 and 15,257 on `krnl-small`: about 800 to 1,500 clocks a second at 10 ns, the AXI4-Lite writes that load each run among them | MEASURED | the same run: the TESTS line of cocotb's summary in each run's log | another run; another load |
 | K6 | Each of the ten mutant runs failed at the record and field section 6's table gives | MEASURED | the same run: each mutant run's evidence file and log, read line by line | the gate's second size: each fails as named there; its place is in its evidence |
@@ -242,3 +257,7 @@ Each is stated by the behaviour it concedes.
 | K13 | The chain's last record comes 52 + 11 = 63 clocks after the source's last frame; the kernel's drain is 128 | READ | seam.md, row K3; `rtl/krnl/undertone_krnl.sv`, `DRAIN` | `identity_*` ending in RUN_LENGTH |
 | K14 | XRT 2.14's Python binding has no `ip` class and cannot reach a user-managed kernel's registers; C++'s `xrt::ip` can | READ | the round's ledger, `lead.md`, entry 10:09, the lead's trial in `cft2204` | a trial on the box's XRT |
 | K15 | The first build's depth of 512 is a DECISION of this parcel's, approved by the lead; no measurement of the card's memory stalls exists here | DECISION | the round's ledger, `KRNL.md` 09:44:33, section 3; `lead.md` 09:52 | the card day's `krn_queue_peak` |
+| K16 | With these rows the gate's second size passed: the stage `rtl-benches` 200 tests in 20 runs of 17 benches, 66,298 records identical to the model's, 106 mutant runs each failed as named, 126 build logs read, in 202 s; before these rows it was 172 tests, 63,946 records, 96 mutant runs and 110 build logs, so these rows add 28 tests, 2,352 records, 10 mutant runs and 16 build logs, K3's figures. The verdict named one inner skip, E1-RECORD-STALE | MEASURED | `bash verify/run.sh --with rtl`, run 20261124-104407-655d303, 2026-11-24 10:44:05 to 10:52:15, on this parcel's tree before this row was written: its line for `rtl-benches` and its verdict line; the earlier figures are the round's ledger, `lead.md`, entry 09:56, for 28358e0 | that command |
+| K17 | Nine faults tried by hand: eight failed the test named for them where section 6's second table says; the ninth, counters modulo 256, passed `identity_small` | MEASURED | the stage on a copy with the row `krnlx-s16x1` and nine mutants, 2026-11-24 10:52:59 to 10:53:16: "1 finding(s)", that finding "MUTANT-SURVIVED" for the ninth, and each other run's log read; the rows are `scratch/KRNL/extra.toml` | nothing in the tree: these mutants are not in the manifest |
+| K18 | A run of 2^17 records is 4 MiB of slots and one of 2^20 is 32 MiB | COMPUTED | 131,072 x 32 = 4,194,304 bytes; 1,048,576 x 32 = 33,554,432 bytes | arithmetic |
+| K19 | The model's noise table at the seam's sigma of 50 under s16x1 has 459 entries; at the benches' small sigmas, 56 under s16x1 (6) and 60 under s24x3 (13/2) | MEASURED | `python -c "from model import source; print(len(source.Noise('s16x1', 2026112470, 50, 1, 129).table), len(source.Noise('s16x1', 1, 6, 1, 10).table), len(source.Noise('s24x3', 1, 13, 2, 10).table))"`, 2026-11-24: 459, 56, 60 | that command |
