@@ -271,6 +271,36 @@ async def refusal_read_back_by_name(dut):
     await quiet(lib)
 
 
+class TableOneShort(L.Library):
+    """VHOST's case (its B2): a library that declares the whole table and writes its last entry not at all."""
+
+    def _table_pairs(self, table):
+        return super()._table_pairs(table)[:-2]          # the last entry's two words
+
+
+@cocotb.test()
+async def start_refused_ends_by_name(dut):
+    """A start the kernel refuses ends at once, by name: the source's REGISTER_ACCESS (a start with fewer entries
+    than declared), the kernel's RUN_START in its detail, every register cleared. Never a TimeoutError: the
+    kernel clears done at a start and, refusing it, never raises it again."""
+    sim, memory, backend = await begin(dut)
+    lib = AsyncHost(backend, library=TableOneShort())
+    await lib.open()
+    await lib.reset()
+    this = case(40, [])
+    await lib.load(this.blob, epoch=this.epoch)
+    clock = sim.now()
+    try:
+        await lib.run(this.seed, this.noise().table, this.frames, this.schedule, polls(this.frames))
+    except Refusal as e:
+        assert e.name == "REGISTER_ACCESS" and "source REGISTER_ACCESS" in e.detail and "kernel RUN_START" in e.detail, e
+    else:
+        raise AssertionError("a start with the table one entry short was not refused")
+    assert sim.now() - clock < 3000, "the refusal took %d clocks: the library waited on a refused start" % (
+        sim.now() - clock)
+    await quiet(lib)
+
+
 def past_the_build(caps):
     """(name, a blob one past the build's advertisement): what this profile can say."""
     out = [("SHAPE_FILTERS", weights.pack(PROFILE, [{0: [1, 2]} for _ in range(caps["cap_filters"] + 1)],

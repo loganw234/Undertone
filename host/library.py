@@ -91,6 +91,11 @@ def _is_int(v, lo, hi):
     return type(v) is int and lo <= v <= hi
 
 
+def _refused_and_still(status):
+    """krn_status says a refusal is latched and nothing runs: the kernel will do nothing more on its own."""
+    return bool(status & REFUSED) and not status & RUNNING
+
+
 def _field_range(bits, sign):
     return (-(1 << (bits - 1)), (1 << (bits - 1)) - 1) if sign == "signed" else (0, (1 << bits) - 1)
 
@@ -333,9 +338,12 @@ class Library:
         yield from self._after("refusal", "the commit at %d" % at)
 
     def swap(self, blob, at, batch=True):
-        """write_shadow and commit, with nothing of the library's between the first shadow write and the read
-        that says the commit was taken. Returns next_index read just before and just after those, and the
-        positions, among this call's operations counted from 0, of the first shadow write and that read."""
+        """write_shadow and commit. Between the first shadow write and the read that says the commit was taken
+        the library makes exactly the shadow's writes, ONE READ of the core's refusal (after the shadow's last
+        word, so that no commit follows a refused shadow) and the commit's writes; nothing else. Returns
+        next_index read just before and just after those, and the positions, among this call's operations
+        counted from 0, of the first shadow write and the accepting read. `batch=False` writes each word as a
+        Write of its own, so that each can be timed."""
         config = yield from self._shadow_config(blob)
         commit = self._at(at)
         pairs = self._shadow_pairs(config)
@@ -391,15 +399,14 @@ class Library:
         ahead = caps["cap_inject_pending"] if ahead is None else ahead
         if not _is_int(ahead, 1, caps["cap_inject_pending"]):
             raise Refusal("INJECT_PENDING", "ahead %r; the build's store holds %d" % (ahead, caps["cap_inject_pending"]))
+        # A refusal already latched is raised before anything below the seam changes: before the buffer is
+        # allocated or filled, and before the last run's state is replaced, whose records stay readable.
+        yield from self._latched(tuple(r for _b, r in CHAIN), "start")
         buffer = yield Allocate(self.guard + frames * SLOT)
         yield Fill(buffer, 0, bytes([self.pattern]) * (self.guard + frames * SLOT))
         state = RunState(buffer, frames, schedule, ahead)
         self.run_state = state
-        yield from self._latched(tuple(r for _b, r in CHAIN), "start")
-        pairs = [(offset("src_table_length"), len(table) - 1)]
-        for entry in table[:-1]:
-            pairs += words_of("src_table_entry", entry)
-        pairs += words_of("src_seed", seed)
+        pairs = self._table_pairs(table) + words_of("src_seed", seed)
         yield WriteMany(tuple(pairs))
         yield from self._after("src_refusal", "the table or the seed")
         first = schedule[:ahead]
@@ -415,16 +422,31 @@ class Library:
         yield from self._after("krn_refusal", "the run's arguments")
         yield Write(offset("krn_start"), 1)
         status = yield Read(offset("krn_status"))
+        if _refused_and_still(status):
+            yield from self._conclude(state)            # raises the start's refusal by its name, each cleared
+            raise Refusal("RUN_START", "observed: after the start write krn_status says refused (0x%X) and the "
+                          "run's account says nothing else" % status)
         if not status & (RUNNING | DONE | REFUSED):
             raise Refusal("RUN_START", "after the start write the kernel says none of running, done or refused "
                           "(krn_status 0x%X): the start reached nothing that answered" % status)
         return buffer
 
+    def _table_pairs(self, table):
+        """The writes that hand a table over: its length, then every entry but the last, two words each."""
+        pairs = [(offset("src_table_length"), len(table) - 1)]
+        for entry in table[:-1]:
+            pairs += words_of("src_table_entry", entry)
+        return pairs
+
     def step(self):
         """One round of a run: the kernel's status, and as many truth records as bring the store to `ahead`.
-        Returns (krn_status, records written so far)."""
+        Returns (krn_status, records written so far). A kernel that says refused and is not running will do
+        nothing more: the round ends the run there, and raises its refusal by name (`_conclude`)."""
         state = self.run_state
         status = yield Read(offset("krn_status"))
+        if _refused_and_still(status):
+            yield from self._conclude(state)
+            return status, state.sent
         if state.sent < len(state.schedule) and not status & (DONE | REFUSED):
             refused = yield Read(offset("inj_refusal"))
             pending = yield Read(offset("inj_pending"))
@@ -442,16 +464,18 @@ class Library:
         return status, state.sent
 
     def finish(self, polls):
-        """Step and pause until the kernel says done, at most `polls` rounds; then read every refusal.
+        """Step and pause until the kernel says done, or says refused while not running, at most `polls`
+        rounds; then read every refusal.
 
         Returns the run's report; raises the first refusal in the chain's order, with all in its detail; raises
-        TimeoutError past `polls`, writing nothing more."""
+        TimeoutError past `polls`, writing nothing more. A refusal latched while the kernel still runs (its
+        queue full, a memory error) ends the wait at done, which the kernel raises once its source has ended."""
         state = self.run_state
         if not _is_int(polls, 1, 1 << 62):
             raise ValueError("polls is a count of at least 1, not %r" % (polls,))
         for _ in range(polls):
             status, _sent = yield from self.step()
-            if status & DONE:
+            if status & DONE or _refused_and_still(status):
                 break
             yield Pause()
         else:
@@ -459,6 +483,11 @@ class Library:
             records = yield from self._value("krn_records")
             raise TimeoutError("after %d polls the kernel has not said done: krn_status 0x%X, krn_records %d, of %d "
                                "frames asked for; the run may still be going" % (polls, status, records, state.frames))
+        return (yield from self._conclude(state))
+
+    def _conclude(self, state):
+        """The run's account: every refusal register in the chain's order, krn_records and krn_queue_peak. The
+        first refusal latched is raised by its name, every one in its detail, each cleared; else the report."""
         codes = []
         for block, register in CHAIN:
             code = yield Read(offset(register))

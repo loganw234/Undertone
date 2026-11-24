@@ -1328,7 +1328,7 @@ kind = ""
 # part, the host, in simulation: every word the library hands its caller is the model's. One row, both
 # profiles, no RTL mutant: the faults this bench must see are the library's and the backend's, planted as
 # subclasses and wrappers in its control_* tests, each read against the record and field it predicts.
-# The limit is about three times the longer run of the row alone (24 s, docs/host/host.md, row H3).
+# The limit is about three times the longer run of the row alone (25 s, docs/host/host.md, row H3).
 
 [[bench]]
 name = "host-first"

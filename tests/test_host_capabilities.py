@@ -47,7 +47,9 @@ CASES = (
     ("SHAPE_HIDDEN", "s16x1", {"cap_hidden": 2}, blob(hidden=2), blob(hidden=3)),
     ("SHAPE_HIDDEN_SHIFT", "s16x1", {"cap_hidden_shift": 5}, blob(hidden=1, hidden_shift=5), blob(hidden=1, hidden_shift=6)),
     ("SHAPE_BETWEEN", "s16x1", {"cap_rectifiers": 1 << PASS}, blob(hidden=1, between=PASS), blob(hidden=1, between=ABS)),
-    ("SHAPE_ROWS", "s24x3", {"cap_rows": 5}, blob("s24x3", k=1, chans=[0, 1, 2]), blob("s24x3", k=2, chans=[0, 1, 2])),
+    ("SHAPE_ROWS", "s24x3", {"cap_rows": 5},
+     weights.pack("s24x3", [{0: [1], 1: [2], 2: [3]}, {0: [4], 2: [5]}], [1, 1], PASS, 1, 0),      # 3 + 2 = 5 rows
+     blob("s24x3", k=2, chans=[0, 1, 2])),                                                        # 6 rows
 )
 
 
@@ -84,6 +86,9 @@ def test_gate_host_capabilities__past_each_bound_refused_before_any_write():
 
 
 def test_gate_host_capabilities__at_each_bound_written():
+    """Each blob AT its bound is exactly at it: one more and it is the blob past it."""
+    rows_at = L.B.rows(L.B.read(CASES[-1][3]))
+    assert rows_at == CASES[-1][2]["cap_rows"] == 5 and L.B.rows(L.B.read(CASES[-1][4])) == 6
     for want, profile, caps, at, _past in CASES:
         name, effects = attempt(L.Library(), profile, caps, "load", at)
         assert name is None and effects, (want, name)

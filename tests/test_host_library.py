@@ -267,6 +267,100 @@ def test_host_library_control_a_library_that_overfills_is_seen():
     assert max(state["held"]) > 2
 
 
+REFUSED = 1 << C.REGISTER_BITS["krn_status"]["refused"]
+
+
+def refusing_start(latches):
+    """A backend whose kernel refuses the start: at the krn_start write it latches `latches` ({register: name}),
+    says refused and not running, and never says done (as KRNL's kernel clears done at a start)."""
+    backend = fake.Registers(fake.identity_words(PROFILE))
+
+    def started(b, word):
+        for register, name in latches.items():
+            b.words[L.offset(register)] = CODE[name]
+        b.words[L.offset("krn_status")] = REFUSED
+    backend.on_write[L.offset("krn_start")] = started
+    return backend
+
+
+START_REFUSALS = (
+    ({"krn_refusal": "RUN_START"}, "RUN_START"),
+    ({"krn_refusal": "STREAM_LENGTH"}, "STREAM_LENGTH"),
+    ({"krn_refusal": "BUFFER_ALIGN"}, "BUFFER_ALIGN"),
+    ({"krn_refusal": "BUFFER_SIZE"}, "BUFFER_SIZE"),
+    # A table one entry short: the source refuses the start, then the kernel says RUN_START. The cause is first.
+    ({"src_refusal": "REGISTER_ACCESS", "krn_refusal": "RUN_START"}, "REGISTER_ACCESS"),
+)
+
+
+def test_host_library_a_start_the_kernel_refuses_ends_by_name():
+    """VHOST's B2: a refused start is raised by its name at once, every register cleared, never a TimeoutError.
+    Through `start`, and through `run` (start, then finish) on a fresh backend."""
+    for latches, want in START_REFUSALS:
+        for call in ("start", "run"):
+            backend = refusing_start(latches)
+            host = Host(backend)
+            args = (1, TABLE, 10, [])
+            try:
+                if call == "start":
+                    host.start(*args)
+                else:
+                    host.run(*args, polls=10 ** 6)
+            except Refusal as e:
+                assert e.name == want, (latches, call, e)
+                for register, name in latches.items():
+                    assert name in e.detail, (name, e.detail)
+            else:
+                raise AssertionError("a refused start was not raised")
+            for register in latches:
+                assert backend.words[L.offset(register)] == 0, register
+            assert not [op for op in backend.ops if type(op) is ops.Pause], "the library waited on a refused start"
+
+
+def test_host_library_a_refusal_while_not_running_ends_the_wait():
+    """A kernel that, mid-run, says refused and not running (its run ended by a refusal) ends `finish` at once, by
+    name; one that says refused while still running is waited on until done, then the refusal raised."""
+    for running_polls, pauses_most in ((0, 0), (5, 5)):
+        backend = fake.scripted_kernel(PROFILE, polls_running=10 ** 9)
+        state = {"reads": 0}
+        plain_status = backend.on_read[L.offset("krn_status")]
+
+        def status(b):
+            state["reads"] += 1
+            if state["reads"] <= 2:
+                return plain_status(b)
+            b.words[L.offset("krn_refusal")] = CODE["MEMORY_WRITE"]
+            if state["reads"] <= 2 + running_polls:
+                return RUNNING | REFUSED
+            return (DONE | REFUSED) if running_polls else REFUSED
+        backend.on_read[L.offset("krn_status")] = status
+        host = Host(backend)
+        assert refused(host.run, 1, TABLE, 10, [], polls=50) == "MEMORY_WRITE"
+        assert sum(1 for op in backend.ops if type(op) is ops.Pause) <= pauses_most + 1, running_polls
+        assert backend.words[L.offset("krn_refusal")] == 0
+
+
+def test_host_library_a_refusal_latched_before_start_changes_nothing():
+    """VHOST's B3: with any of the four refusal registers latched before a start, the start raises it, nothing
+    below the seam changes (no Allocate, Fill, Write or WriteMany), and the last run's records are still read."""
+    for register in ("src_refusal", "inj_refusal", "refusal", "krn_refusal"):
+        backend = fake.scripted_kernel(PROFILE, polls_running=1)
+        host = Host(backend)
+        host.run(1, TABLE, 12, [], polls=5)
+        before = host.records()
+        assert len(before) == 12
+        backend.words[L.offset(register)] = CODE["REGISTER_ACCESS"]
+        mark = len(backend.ops)
+        try:
+            host.start(2, TABLE, 20, [])
+        except Refusal as e:
+            assert e.name == "REGISTER_ACCESS" and "latched before" in e.detail, e
+        else:
+            raise AssertionError("the latched refusal was not raised")
+        assert [op for op in backend.ops[mark:] if isinstance(op, ops.EFFECTS)] == [], register
+        assert host.records() == before, register
+
+
 def test_host_library_run_start_observed():
     backend = fake.Registers(fake.identity_words(PROFILE))
     assert refused(Host(backend).start, 1, TABLE, 10, []) == "RUN_START"
