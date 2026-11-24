@@ -13,12 +13,27 @@ What each operation is, in XRT's own calls (the shim makes one call each):
     WriteMany      write_register in a loop in C++, in order: one Python call for a batch
     Pause          time.sleep(pause_seconds), 0 by default
     Allocate       xrt::bo(device, size, normal, the memory group of the kernel's buffer argument)
-    Fill           bo.write, THEN bo.sync(XCL_BO_SYNC_BO_TO_DEVICE) over the same bytes
-    Fetch          bo.sync(XCL_BO_SYNC_BO_FROM_DEVICE), THEN bo.read over the same bytes
+    Fill           bo.write of the bytes at their offset, THEN bo.sync(XCL_BO_SYNC_BO_TO_DEVICE) of
+                   [0, offset + length): from the buffer's first byte
+    Fetch          bo.sync(XCL_BO_SYNC_BO_FROM_DEVICE) of [0, offset + size), from the buffer's first
+                   byte, THEN bo.read of [offset, offset + size)
 
-The two orders of the last two lines are this file's, and are held by
-tests/test_host_xrt.py against a fake shim that keeps a host copy and a device
-copy of every buffer; its control is a backend that reads before it syncs.
+The two orders are this file's, and are held by tests/test_host_xrt.py against
+a fake shim that keeps a host copy and a device copy of every buffer; its
+control is a backend that reads before it syncs.
+
+EVERY SYNC STARTS AT THE BUFFER'S FIRST BYTE. Under hardware emulation, XRT
+2.14's bo.sync(direction, size, offset) moved [offset, size), not [offset,
+offset + size), and zeroed the rest of the host's range (the lead's probe,
+2026-11-24, data/BUILD/hwemu_probe_sync.txt in the round's folder): a Fetch at
+the guard's offset read the last 124 slots as zeros. A sync of [0, offset +
+size) moves the bytes asked for under either reading of the call, and some
+before them, which is harmless: a Fetch also brings the device's bytes before
+its offset into the host's copy, and a Fill also sends the host's copy of the
+bytes before its offset to the device, which the library does only at offset
+0, before a start. Whether the card's XRT 2.19 reads the call either way is
+the lead's to probe on the card. The fake shim's tests hold the backend under
+both readings.
 
 THE MEMORY GROUP is found by the shim from the xclbin: the kernel's argument
 whose register offset is `krn_buffer`'s, by OFFSET and never by name (XRT
@@ -161,10 +176,10 @@ class Backend:
             return Buffer(bo, address, op.size)
         if kind is Fill:
             self.shim.bo_write(self.handle, op.buffer.handle, op.offset, op.data)
-            self.shim.bo_sync_to(self.handle, op.buffer.handle, op.offset, len(op.data))
+            self.shim.bo_sync_to(self.handle, op.buffer.handle, 0, op.offset + len(op.data))
             return None
         if kind is Fetch:
-            self.shim.bo_sync_from(self.handle, op.buffer.handle, op.offset, op.size)
+            self.shim.bo_sync_from(self.handle, op.buffer.handle, 0, op.offset + op.size)
             return self.shim.bo_read(self.handle, op.buffer.handle, op.offset, op.size)
         raise TypeError("not an operation of the seam: %r" % (op,))
 
