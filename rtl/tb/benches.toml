@@ -506,7 +506,15 @@ toplevel = "core"
 sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv"]
 module = "bench_core_max"
 profiles = ["s16x1"]
-identity = ["bit_identity_largest_shape", "bit_identity_boundaries"]
+identity = ["bit_identity_largest_shape", "bit_identity_boundaries", "bit_identity_written_extremes"]
+
+# At the definition's maxima, from the written extreme state: the pooled sum one bit narrower.
+[[bench.mutant]]
+name = "narrow-pool"
+file = "rtl/core/core.sv"
+edits = [["$clog2(B_POOL * PER * B_TAPS + 1) + 1;", "$clog2(B_POOL * PER * B_TAPS + 1);"]]
+must_fail = ["bit_identity_written_extremes"]
+kind = "WORD"
 
 [[bench]]
 name = "core-max-s24x3"
@@ -514,7 +522,15 @@ toplevel = "core"
 sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv"]
 module = "bench_core_max"
 profiles = ["s24x3"]
-identity = ["bit_identity_largest_shape", "bit_identity_boundaries"]
+identity = ["bit_identity_largest_shape", "bit_identity_boundaries", "bit_identity_written_extremes"]
+
+# At the definition's maxima, from the written extreme state: the hidden sum one bit narrower.
+[[bench.mutant]]
+name = "narrow-hidden-sum"
+file = "rtl/core/core.sv"
+edits = [["$clog2(B_ROWS * B_POOL * B_TAPS);", "$clog2(B_ROWS * B_POOL * B_TAPS) - 1;"]]
+must_fail = ["bit_identity_written_extremes"]
+kind = "WORD"
 
 # "A value wider than a word takes consecutive words, lowest bits first": the hash's eight words the other way round.
 [[bench.mutant]]

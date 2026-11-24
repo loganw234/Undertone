@@ -17,16 +17,22 @@ and a bound are the definition's own, so this bench holds each against
                                 runs: a hidden sum of exactly the lowest value the field holds
                                 fits; one tap more does not, wraps, and the flag rises and stays
                                 across a swap
+  bit_identity_written_extremes the true extremes at the definition's maxima, from a state the
+                                bench WRITES into the model and into the simulator alike, with four
+                                real frames stepped from it, under each head
   latency_is_eleven_clocks      the latency does not follow the build's size
 
 WHAT THIS BENCH DOES NOT DO: the model's run at the true extremes, 65,663 frames with a pool of
-65,536 full of extremes. So the pool's and the hidden sum's last bits at the definition's maxima
-are held here by the comparison of widths and by nothing else; docs/rtl/core.md says so.
+65,536 full of extremes: about eight minutes a profile in this simulator. The extreme state is
+written instead, so the path that leads to it is not run here; docs/rtl/core.md's limit 13 says
+what that concedes.
 """
 import os
 import random
+from collections import deque
 
 import cocotb
+from cocotb.triggers import FallingEdge
 
 from spec import constants as C
 from model import detector, weights
@@ -282,6 +288,86 @@ async def bit_identity_boundaries(dut):
         total += (await host.compare(dut, core, frames, test="bit_identity_boundaries", label="between, one past the field's highest",
                                         gap_seed=5, max_gap=1, settle=SETTLE)).count
     assert total > 0
+    await host.all_seen()
+
+
+def needs(lo, hi):
+    """The fewest signed bits that hold lo..hi. Written here again, not imported from the model."""
+    bits = 1
+    while -(1 << (bits - 1)) > lo or hi > (1 << (bits - 1)) - 1:
+        bits += 1
+    return bits
+
+
+def prime_model(core, sets, taps, pool):
+    """Write into a model core the state a full run at the extremes reaches: every window full of
+    extremes. These are the lines of `primed` in tests/test_head_overflow.py, written here again."""
+    row = taps * ONE_PRODUCT                             # one row of taps, full of the largest product
+    for c in range(CHANNELS):
+        core._line[c] = deque([PROF["sample_min"]] * taps, maxlen=taps)
+    for k, s in enumerate(sets):
+        core._window[k] = deque([len(s) * row] * pool, maxlen=pool)
+        core._sum[k] = pool * len(s) * row
+    return core
+
+
+async def prime_design(dut, sets, taps, pool, steps):
+    """Write the same state into the design, through the simulator: the delay lines, the pooled sums, the
+    pool's counter at its end, and the memory words the next `steps` frames will read."""
+    core = host.inner(dut)
+    w_rect, w_pool = as_int(core.W_RECT.value), as_int(core.W_POOL.value)
+    row = taps * ONE_PRODUCT
+    sample = PROF["sample_min"] & ((1 << PROF["sample_bits"]) - 1)
+    await FallingEdge(dut.clk)
+    for i in range(CHANNELS * taps):
+        core.dl[i].value = sample
+    core.z_flat.value = sum((pool * len(s) * row) << (k * w_pool) for k, s in enumerate(sets))
+    core.pool_fill.value = pool
+    for i in range(steps):
+        core.pool_mem[i].value = sum((len(s) * row) << (k * w_rect) for k, s in enumerate(sets))
+    await FallingEdge(dut.clk)
+
+
+@cocotb.test()
+async def bit_identity_written_extremes(dut):
+    """The true extremes at the definition's maxima, from a WRITTEN state: the run that leads there is
+    65,663 frames and is not made. The state every window reaches is written into the model and into the
+    design alike, and real frames at the extremes are stepped from it: the pool's and the hidden sum's
+    last bits are reached, and the hidden value, between and the output sum at theirs. What is not run is
+    the path to that state."""
+    caps = await begin(dut)
+    sets, taps, pool, units = extreme_sets(caps), caps["cap_taps"], caps["cap_pool"], caps["cap_hidden"]
+    assert sum(len(s) for s in sets) == C.MAX_ROWS and taps == C.MAX_TAPS and pool == C.MAX_POOL
+    low = (PROF["sample_min"],) * CHANNELS
+    rows_low = [dict((c, [C.COEFF_MIN] * taps) for c in s) for s in sets]
+    head_low = C.COEFF_MIN * C.MAX_ROWS * pool * taps * ONE_PRODUCT          # the hidden sum's extreme: negative
+    shift = needs(head_low, 0) - SCORE_BITS                                # brings it to exactly the field's lowest
+    lowest = -(1 << (SCORE_BITS - 1))
+    assert head_low >> shift == lowest and needs(head_low, 0) == detector.widths(PROFILE)["head"]
+    out_low = units * C.COEFF_MIN * (1 << (SCORE_BITS - 1))                # every unit folded to +2^63, every head weight lowest
+    out_shift = needs(out_low, 0) - SCORE_BITS
+    assert needs(out_low, 0) == detector.hidden_widths(PROFILE)["output"]
+    # One head weight alone, the others zero. With every head weight at its lowest a pooled sum one bit
+    # narrower is NOT seen under the 16-bit profile: the pooled extreme is exactly 2^55, it wraps to -2^55,
+    # and the hidden sum of sixteen such, +2^76, wraps back to the right -2^76 in its own exact width. A
+    # single head weight leaves the pooled value's sign in the score.
+    one_low = C.COEFF_MIN * len(sets[0]) * pool * taps * ONE_PRODUCT
+    steps, total = 4, 0
+    for label, blob, score in (
+            ("no hidden layer", weights.pack(PROFILE, rows_low, [C.COEFF_MIN] * len(sets), PASS, pool, shift), lowest),
+            ("no hidden layer, one head weight", weights.pack(PROFILE, rows_low, [C.COEFF_MIN] + [0] * (len(sets) - 1), PASS,
+                                                              pool, shift), one_low >> shift),
+            ("every unit, abs between", weights.pack(PROFILE, rows_low, [C.COEFF_MIN] * units, PASS, pool, out_shift,
+                                                     [[C.COEFF_MIN] * len(sets)] * units, shift, ABS), out_low >> out_shift)):
+        check = prime_model(Core(blob), sets, taps, pool)
+        for i in range(steps):
+            assert check.step(low) == {"index": i, "epoch": 0, "flags": 0, "score": score}, (label, i)
+        await harness.reset(dut)
+        await host.load(dut, blob, 0)
+        await prime_design(dut, sets, taps, pool, steps)
+        total += (await host.compare(dut, prime_model(Core(blob), sets, taps, pool), [low] * steps,
+                                     test="bit_identity_written_extremes", label=label, max_gap=0, settle=SETTLE)).count
+    assert total == 3 * steps, total
     await host.all_seen()
 
 
