@@ -402,6 +402,19 @@ def test_p0_only_a_function_under_cocotbs_own_decorator_is_a_bench_test(tmp_path
     assert check_rtl.bench_tests(str(tmp_path), "bench_x") == ["first", "second"]
 
 
+def foundations_rows(text):
+    """A manifest's text up to its second bench: the heading, the foundation's own bench and its mutants.
+
+    A parcel appends its benches after the foundation's. The cases below change one text of the
+    foundation's rows, in a copy that holds the foundation's files and no parcel's: with a parcel's rows
+    left in, a text they repeat (an empty kind, a line of two profiles) failed the cases' own count, and
+    their sources, which the copy does not hold, would have been a second reason for every refusal.
+    Parcel RTL-B met the first on 2026-11-23, with its first row."""
+    starts = [m.start() for m in re.finditer(r"^\[\[bench\]\][ \t]*$", text, re.M)]
+    assert starts, "the manifest has no bench"
+    return text if len(starts) == 1 else text[:starts[1]]
+
+
 def manifest_tree(tmp_path, old, new):
     root = str(tmp_path)
     for rel in ("spec/constants.py", "spec/undertone_pkg.sv", "rtl/p0/onetap.sv", "rtl/tb/bench_p0_onetap.py",
@@ -410,11 +423,24 @@ def manifest_tree(tmp_path, old, new):
         shutil.copyfile(os.path.join(ROOT, rel), os.path.join(root, rel))
     path = os.path.join(root, "rtl", "tb", "benches.toml")
     with open(path, encoding="utf-8") as f:
-        text = f.read()
+        text = foundations_rows(f.read())
     assert text.count(old) == 1, old
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(text.replace(old, new))
     return root
+
+
+def test_p0_the_foundations_own_rows_are_cut_from_a_manifest_that_parcels_have_added_to(tmp_path):
+    """The cut is at the second bench and nowhere else, and what is left is a manifest the check accepts:
+    so each case below is refused for the one text it changes."""
+    head = "# a heading\n\n[[bench]]\nname = \"a\"\nkind = \"\"\n\n[[bench.mutant]]\nname = \"m\"\nkind = \"\"\n"
+    more = "\n[[bench]]\nname = \"b\"\nkind = \"\"\n\n[[bench.mutant]]\nname = \"n\"\n\n[[bench]]\nname = \"c\"\n"
+    assert foundations_rows(head) == head and foundations_rows(head + more) == head + "\n"
+    assert foundations_rows(head + more).count('kind = ""') == 2 and (head + more).count('kind = ""') == 3
+    with pytest.raises(AssertionError):
+        foundations_rows("# no bench at all\n")
+    benches = check_rtl.manifest(manifest_tree(tmp_path, 'name = "p0-onetap"', 'name = "p0-onetap"'))
+    assert [b["name"] for b in benches] == ["p0-onetap"] and len(benches[0]["mutant"]) == 7
 
 
 @pytest.mark.parametrize("old, new", [
