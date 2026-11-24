@@ -1,0 +1,27 @@
+# The lines a build may print, and why each is here. tools/check_rtl.py reads every
+# run's build log (<run>.log.build) and passes a line only when an entry below names
+# its file (as a path of the tree), its line, and its words after "<file>:<line>: ".
+# Any other line fails the stage `rtl-benches`, BUILD-LINE, by its run and place.
+#
+# An entry is added by the lead, with its reason. A parcel whose build prints a new
+# line asks the lead: a line nobody has read is what this list is there to stop.
+#
+# Each entry is one place: a mutant whose edits move a listed line to another line
+# number is not passed, and is written so that they do not.
+
+[[line]]
+file = "rtl/source/source.sv"
+line = 187
+says = "sorry: constant selects in always_* processes are not currently supported (all bits will be included)."
+why = """Icarus Verilog 12.0, at the first line of an always_comb process that reads constant bit
+selects. By the message's own words the process is then woken by every bit of the vector and
+not only the bit selected, which changes when it runs and not what it computes. That reading is
+the lead's, BELIEVED, and no test separates it (docs/rtl/README.md, limit 15). Found by round
+2's closing verifier; every build that holds this file prints it."""
+
+[[line]]
+file = "rtl/inject/inject.sv"
+line = 276
+says = "sorry: constant selects in always_* processes are not currently supported (all bits will be included)."
+why = """The same line of Icarus Verilog 12.0 as above, at the first line of the injector's
+always_comb process, with the same reading, BELIEVED (docs/rtl/README.md, limit 15)."""

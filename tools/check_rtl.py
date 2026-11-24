@@ -28,6 +28,16 @@ with every test failed, and exits 0 having run none. So:
   records compared with the two digests equal. A mutant passes the stage only
   when each test it names failed, for the kind of mismatch it names.
 
+  Since round 3's P0-3: every run has a LIMIT in seconds (the bench's `limit`
+  in the manifest, or the runner's default), and a run the runner stopped at
+  it is a finding, RUN-TIMEOUT. And every run that left results has its
+  BUILD LOG read, line by line: a line is passed only when the committed list
+  rtl/tb/build_lines.toml names its file, its line and its words, each entry
+  with the reason it is there. Any other line is a finding, BUILD-LINE, and a
+  run that left results and no build log is one, BUILD-LOG-MISSING. The
+  runner's own account, runs.json, can add a finding (RUN-TIMEOUT) and never
+  take one away.
+
 WHAT THESE CHECKS CANNOT SEE (stated limits):
   rtl-image    whether the image of that name was built by tools/sim_image.py:
                anyone can tag and label an image. The base image's own
@@ -64,6 +74,18 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                `@cocotb.test`, written that way; one made some other way
                (a test factory) is not in the list this check requires, and
                shows as UNKNOWN-TEST when the results carry it.
+               The build logs: a listed line is passed wherever it appears
+               in a log of a run whose sources hold that file, as often as
+               it appears; a mutant whose edits move a listed line to
+               another line number fails as BUILD-LINE, and is written so
+               that they do not. What the simulator prints while it RUNS
+               (<run>.log) is read by no check. A line of the build log
+               that does not begin with a file and a line number is matched
+               whole against no entry, and is a finding.
+               The limit stops a run, not a test: a bench whose one slow
+               test is inside the run's limit passes however slow it is.
+               Runs side by side share the container's cores; a limit set
+               close to a run's own time can be passed under load.
   control      plants the faults listed in plants() and no others. The
                benches' control cuts its copy's manifest down to the
                foundation's own bench, p0-onetap, and plants there: it shows
@@ -94,6 +116,14 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                built from. It plants no image.
                An unreadable evidence line is a finding in a bench's own run
                and in a mutant's.
+               Since P0-3 the benches' control plants three more faults in a
+               second copy and a line in the first: a test that waits
+               forever, under a limit of LIMIT_PLANTED seconds, which must
+               be reported RUN-TIMEOUT by that name; a runner that drops the
+               last run of its list, which must be reported NO-RESULTS; and
+               in the first copy, a line the simulator prints while it
+               builds that the list does not name, which must be reported
+               BUILD-LINE in every run of that profile that left results.
 """
 import argparse
 import ast
@@ -113,8 +143,11 @@ from check_build import copy_tree, write  # noqa: E402
 from check_tree import Refusal  # noqa: E402
 
 MANIFEST = "rtl/tb/benches.toml"
+BUILD_LIST = "rtl/tb/build_lines.toml"
 NAME = re.compile(r"[a-z][a-z0-9-]*\Z")
 KINDS_OF_MISMATCH = ("WORD", "COUNT", "UNKNOWN-BITS", "")
+LIMIT_MOST = 3000       # a bench's limit may not pass the stage's own, which is sim_image.run's timeout below
+LIMIT_PLANTED = 20      # the limit the benches' control gives its copy
 
 
 def constants(root):
@@ -328,8 +361,10 @@ def manifest(root):
         raise Refusal("NOTHING-SELECTED: %s names no bench" % MANIFEST)
     seen = set()
     for b in benches:
-        if not isinstance(b, dict) or set(b) - {"mutant"} != {"name", "toplevel", "sources", "module", "profiles", "identity"}:
+        if not isinstance(b, dict) or set(b) - {"mutant", "limit"} != {"name", "toplevel", "sources", "module", "profiles", "identity"}:
             bad("a bench's keys are %s" % (sorted(b) if isinstance(b, dict) else b))
+        if "limit" in b and (type(b["limit"]) is not int or not 1 <= b["limit"] <= LIMIT_MOST):
+            bad("%s: limit is a whole number of seconds from 1 to %d" % (b.get("name"), LIMIT_MOST))
         if type(b["name"]) is not str or not NAME.match(b["name"]) or b["name"] in seen:
             bad("the bench name %r is used twice or is not lower case letters, digits and hyphens" % (b["name"],))
         seen.add(b["name"])
@@ -371,6 +406,75 @@ def manifest(root):
             if m["kind"] not in KINDS_OF_MISMATCH:
                 bad("%s: mutant %s: kind is WORD, COUNT, UNKNOWN-BITS or empty" % (b["name"], m["name"]))
     return benches
+
+
+def build_list(root):
+    """The committed list of lines a build may print: a set of (file, line, words). Refused by name,
+    BUILD-LIST-MALFORMED, when it cannot be read exactly: every entry has a file of the tree, a line inside
+    it, the words the simulator prints after "<file>:<line>: ", and a reason."""
+    path = os.path.join(root, BUILD_LIST)
+
+    def bad(what):
+        raise Refusal("BUILD-LIST-MALFORMED: %s" % what)
+
+    if not os.path.isfile(path):
+        bad("%s is not in the tree" % BUILD_LIST)
+    try:
+        with open(path, "rb") as f:
+            doc = tomllib.loads(f.read().decode("utf-8"))
+    except Exception as e:
+        bad("%s: %s" % (type(e).__name__, e))
+    entries = doc.get("line", [])
+    if set(doc) - {"line"} or not isinstance(entries, list):
+        bad("the list has keys %s; it is [[line]] tables and nothing else" % sorted(doc))
+    out = set()
+    for e in entries:
+        if not isinstance(e, dict) or set(e) != {"file", "line", "says", "why"}:
+            bad("an entry's keys are %s" % (sorted(e) if isinstance(e, dict) else e))
+        if type(e["file"]) is not str or os.path.isabs(e["file"]) or ".." in e["file"].split("/") \
+                or not os.path.isfile(os.path.join(root, e["file"])):
+            bad("%r is not a file of the tree" % (e["file"],))
+        with open(os.path.join(root, e["file"]), encoding="utf-8") as f:
+            count = len(f.read().split("\n"))
+        if type(e["line"]) is not int or not 1 <= e["line"] <= count:
+            bad("%s: line %r is not a line of that file" % (e["file"], e["line"]))
+        if type(e["says"]) is not str or not e["says"].strip() or type(e["why"]) is not str or not e["why"].strip():
+            bad("%s:%s: says and why are words" % (e["file"], e["line"]))
+        key = (e["file"], e["line"], e["says"])
+        if key in out:
+            bad("%s:%s is listed twice with the same words" % (e["file"], e["line"]))
+        out.add(key)
+    return frozenset(out)
+
+
+BUILD_LINE = re.compile(r"(?P<path>[^\s:][^:]*):(?P<line>[0-9]+): (?P<says>.*)\Z")
+
+
+def read_build_log(path, run, allowed):
+    """The findings of one run's build log, and how many of its lines the list passed. None when it is missing."""
+    if not os.path.isfile(path):
+        return None
+    findings, listed = [], 0
+    with open(path, encoding="utf-8", errors="replace") as f:
+        lines = f.read().split("\n")
+    for n, line in enumerate(lines, 1):
+        line = line.rstrip("\r")
+        if not line.strip():
+            continue
+        m = BUILD_LINE.match(line)
+        rel = None
+        if m:
+            p = m.group("path")
+            for prefix in ("/work/", "/tmp/src/%s/" % run):     # the tree as mounted, and a mutant's copy of it
+                if p.startswith(prefix):
+                    rel = p[len(prefix):]
+        if rel is not None and (rel, int(m.group("line")), m.group("says")) in allowed:
+            listed += 1
+            continue
+        where = "%s %s:%s" % (run, rel, m.group("line")) if rel is not None else "%s build-log:%d" % (run, n)
+        findings.append((where, "BUILD-LINE: the build printed a line the list %s does not name: %r"
+                         % (BUILD_LIST, line[:300])))
+    return findings, listed
 
 
 def runs_of(benches):
@@ -426,22 +530,35 @@ def read_evidence(path):
     return out
 
 
-def judge(benches, out):
-    """Read every run's files under `out`. Returns (findings, tests passed, records compared, runs, mutants, skips)."""
+def judge(benches, out, allowed=frozenset()):
+    """Read every run's files under `out`. `allowed` is build_list()'s set. Returns (findings, tests passed,
+    records compared, runs, mutants, skips, build logs read, build-log lines the list passed)."""
     findings, passed, records, nruns, nmutants, skips = [], 0, 0, 0, 0, []
+    logs, listed = 0, 0
     errors = {}
     try:
         with open(os.path.join(out, "runs.json"), encoding="utf-8") as f:
             errors = dict((r["run"], r["error"]) for r in json.load(f) if r.get("error"))
     except (OSError, ValueError, KeyError, TypeError):
-        pass                        # the runner's own account is a help for messages, never a verdict
+        pass                        # the runner's own account adds a finding at most, never takes one away
     for run, bench, mutant in runs_of(benches):
+        if type(errors.get(run)) is str and errors[run].startswith("RUN-TIMEOUT"):
+            findings.append((run, errors[run]))
+            continue
         results = read_results(os.path.join(out, run + ".xml"))
         evidence = read_evidence(os.path.join(out, run + ".evidence.jsonl"))
         if results is None:
             findings.append((run, "NO-RESULTS: the run left no results file with a test in it%s"
                              % (" (%s)" % errors[run] if run in errors else "")))
             continue
+        built = read_build_log(os.path.join(out, run + ".log.build"), run, allowed)
+        if built is None:
+            findings.append((run, "BUILD-LOG-MISSING: the run left results and no build log, so nothing read what "
+                                  "the simulator printed while it built"))
+        else:
+            logs += 1
+            listed += built[1]
+            findings.extend(built[0])
         if any(e.get("verdict") == "UNREADABLE" for e in evidence):
             findings.append((run, "EVIDENCE-UNREADABLE: a line of the run's evidence file is not what the harness writes"))
         if mutant is not None:
@@ -483,24 +600,26 @@ def judge(benches, out):
                         findings.append((where, "EVIDENCE-DISAGREES: a line has no records, or its two digests differ"))
                     else:
                         records += sum(e["records"] for e in same)
-    return findings, passed, records, nruns, nmutants, skips
+    return findings, passed, records, nruns, nmutants, skips, logs, listed
 
 
 def check_benches(root, state):
     benches = manifest(root)
+    allowed = build_list(root)
     sim_image.require(root)
     out = os.path.join(state, "out")
     shutil.rmtree(out, ignore_errors=True)      # this stage's own folder: nothing of an earlier attempt may be read
     os.makedirs(out)
     r = sim_image.run(root, [(root, "/work", "ro"), (out, "/out", "rw")],
-                      ["python", "/work/rtl/tb/run_benches.py", "--root", "/work", "--out", "/out"], timeout=3000)
+                      ["python", "/work/rtl/tb/run_benches.py", "--root", "/work", "--out", "/out"], timeout=LIMIT_MOST)
     with open(os.path.join(state, "runner.log"), "w", encoding="utf-8", newline="\n") as f:
         f.write(r.stdout + "\n---- stderr ----\n" + r.stderr)
-    findings, passed, records, nruns, nmutants, skips = judge(benches, out)
+    findings, passed, records, nruns, nmutants, skips, logs, listed = judge(benches, out, allowed)
     for where in skips:
         print("SKIPPED %s" % where)
     ok = "%d test(s) passed in %d run(s) of %d bench(es); %d record(s) identical to the model's, word for word; " \
-         "%d mutant run(s) each failed as named" % (passed, nruns, len(benches), records, nmutants)
+         "%d mutant run(s) each failed as named; %d build log(s) read, %d line(s) in them each on the committed list" \
+         % (passed, nruns, len(benches), records, nmutants, logs, listed)
     return findings, passed, ok
 
 
@@ -578,16 +697,40 @@ def plants(kind, root, scratch):
         if not named or len(named[0]["profiles"]) < 2:
             raise Refusal("PLANT-DOES-NOT-APPLY: there is no bench p0-onetap under two profiles")
         bench = named[0]
-        # The copy's manifest keeps that bench alone: everything from the second top-level [[bench]] on is cut.
-        with open(os.path.join(a, MANIFEST), encoding="utf-8", newline="") as f:
-            lines = f.read().split("\n")
-        starts = [i for i, line in enumerate(lines) if line.strip() == "[[bench]]"]
-        if not starts or manifest(root)[0]["name"] != "p0-onetap":
+        if manifest(root)[0]["name"] != "p0-onetap":
             raise Refusal("PLANT-DOES-NOT-APPLY: p0-onetap is not the manifest's first bench")
-        if len(starts) > 1:
-            write(a, MANIFEST, "\n".join(lines[:starts[1]]).rstrip("\n") + "\n")
+
+        def cut(copy):
+            # The copy's manifest keeps that bench alone: everything from the second top-level [[bench]] on is cut.
+            with open(os.path.join(copy, MANIFEST), encoding="utf-8", newline="") as f:
+                lines = f.read().split("\n")
+            starts = [i for i, line in enumerate(lines) if line.strip() == "[[bench]]"]
+            if len(starts) > 1:
+                write(copy, MANIFEST, "\n".join(lines[:starts[1]]).rstrip("\n") + "\n")
+
+        cut(a)
         first, second = bench["profiles"][0], bench["profiles"][1]
         module = "rtl/tb/%s.py" % bench["module"]
+        # A line the simulator prints while it builds that the list does not name: a constant select in an
+        # always_comb, which Icarus Verilog 12.0 answers with a "sorry:" line, put in the top before its end.
+        top = "rtl/p0/onetap.sv"
+        with open(os.path.join(a, top), encoding="utf-8", newline="") as f:
+            before = f.read()
+        if before.count("\nendmodule") != 1:
+            raise Refusal("PLANT-DOES-NOT-APPLY: %s does not end one module" % top)
+        planted = "    always_comb begin\n        planted_b = planted_v[3];\n"
+        edit(a, top, "\nendmodule", "\n    logic [7:0] planted_v;\n    logic planted_b;\n" + planted + "    end\nendmodule")
+
+        def planted_line(mutant):
+            # The line the simulator names: the planted process's first, in the top as the run builds it. A
+            # mutant whose edits add lines above it moves it (the docstring's limit), so each is worked out.
+            with open(os.path.join(a, top), encoding="utf-8", newline="") as f:
+                text = f.read()
+            for old, new in (mutant["edits"] if mutant is not None and mutant["file"] == top else []):
+                text = text.replace(old, new)
+            return text[:text.index(planted)].count("\n") + 1
+
+        planted_at = planted_line(None)
         # Under the second profile the simulator exits, with exit code 0, before any test: no results file.
         edit(a, module, "\nimport cocotb\n",
              "\nimport cocotb\nif os.environ.get(\"UNDERTONE_PROFILE\") == \"%s\":\n    os._exit(0)\n" % second)
@@ -610,7 +753,24 @@ def plants(kind, root, scratch):
                 "%s.%s.mutant.stops-after-four bit_identity_random" % (bench["name"], first),
                 "%s.%s.mutant.stops-after-four bit_identity_extremes" % (bench["name"], first)}
         want |= set("%s.%s.mutant.%s" % (bench["name"], second, m["name"]) for m in bench["mutant"])
-        return [(a, want)]
+        # The unlisted build line, in every run of the first profile: each left results. (The second
+        # profile's runs left none, and a run with no results has no build log read.)
+        want |= {"%s.%s %s:%d" % (bench["name"], first, top, planted_at)}
+        want |= set("%s.%s.mutant.%s %s:%d" % (bench["name"], first, m["name"], top, planted_line(m))
+                    for m in bench["mutant"])
+        # A second copy: a run that waits forever under a short limit, and a runner that loses one run.
+        b = copy_tree(root, scratch, "b")
+        cut(b)
+        identity = 'identity = ["bit_identity_random", "bit_identity_extremes"]\n'
+        edit(b, MANIFEST, identity, identity + "limit = %d\n" % LIMIT_PLANTED)
+        write(b, module, "\n\n@cocotb.test()\nasync def planted_waits_forever(dut):\n"
+                         "    if os.environ.get(\"UNDERTONE_PROFILE\") == \"%s\":\n"
+                         "        harness.start_clock(dut)\n"
+                         "        from cocotb.triggers import Event\n"
+                         "        await Event().wait()\n" % first, "a")
+        edit(b, "rtl/tb/run_benches.py", "    todo = list(runs)\n", "    todo = list(runs)[:-1]\n")
+        last = runs_of([bench])[-1][0]
+        return [(a, want), (b, {"%s.%s" % (bench["name"], first): "RUN-TIMEOUT", last: "NO-RESULTS"})]
     raise Refusal("no control for %s" % kind)
 
 
@@ -632,10 +792,16 @@ def control(kind, root, scratch):
             continue
         got = set(f[0].replace("\\", "/") for f in findings)
         total += len(want)
-        if rc != 1 or got != want:
+        if rc != 1 or got != set(want):
             print("control %s: NOT detected as planted (rc=%d). missed: %s. reported but not planted: %s"
-                  % (kind, rc, sorted(want - got) or "none", sorted(got - want) or "none"))
+                  % (kind, rc, sorted(set(want) - got) or "none", sorted(got - set(want)) or "none"))
             ok = False
+        elif isinstance(want, dict):        # each fault reported under its own name, not only at its place
+            for where, name in sorted(want.items()):
+                said = [what for w, what in findings if w.replace("\\", "/") == where]
+                if not all(what.startswith(name + ":") for what in said):
+                    print("control %s: %s was reported, but not as %s: %s" % (kind, where, name, said))
+                    ok = False
     if ok:
         print("CONTROL-DETECTED %s all %d planted fault(s), nothing else" % (kind, total))
         return 1

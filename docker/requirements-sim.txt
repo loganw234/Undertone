@@ -2,7 +2,14 @@
 # tools/sim_image.py check compares this list with what the image holds:
 # a package the image has and this list does not is a finding, and so is the reverse.
 # cocotb is the one asked for; the rest came with it on 2026-11-23.
+# cocotbext-axi is round 3's (P0-3): bus models of AXI4-Lite and AXI4 for the
+# kernel's benches, MIT, read on PyPI on 2026-11-24. cocotb-bus and scapy came
+# with it: cocotb-bus requires scapy outright, though nothing here uses it.
+# scapy is GPL-2.0; it is installed in this image and in no file of the tree.
 cocotb==2.1.0
+cocotb-bus==0.3.0
+cocotbext-axi==0.1.28
+scapy==2.8.0
 find_libpython==0.5.1
 iniconfig==2.3.1
 packaging==26.3

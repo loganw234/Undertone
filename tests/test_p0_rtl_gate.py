@@ -155,6 +155,8 @@ def good(tmp_path):
     evidence(os.path.join(out, "b.s16x1.evidence.jsonl"), IDENTICAL, dict(IDENTICAL, records=2))
     results(os.path.join(out, "b.s16x1.mutant.m.xml"), identity="fail", other="pass")
     evidence(os.path.join(out, "b.s16x1.mutant.m.evidence.jsonl"), MISMATCH)
+    for run in ("b.s16x1", "b.s16x1.mutant.m"):         # a build that printed nothing
+        open(os.path.join(out, run + ".log.build"), "w", encoding="utf-8").close()
     return out
 
 
@@ -163,8 +165,107 @@ def wheres(findings):
 
 
 def test_p0_the_judge_passes_a_run_that_is_good_and_counts_what_it_read(tmp_path):
-    findings, passed, records, nruns, nmutants, skips = check_rtl.judge([BENCH], good(tmp_path))
-    assert (findings, passed, records, nruns, nmutants, skips) == ([], 2, 42, 1, 1, [])
+    findings, passed, records, nruns, nmutants, skips, logs, listed = check_rtl.judge([BENCH], good(tmp_path))
+    assert (findings, passed, records, nruns, nmutants, skips, logs, listed) == ([], 2, 42, 1, 1, [], 2, 0)
+
+
+# ---- round 3's P0-3: a run's limit, and what a build prints ----
+
+SORRY = "sorry: constant selects in always_* processes are not currently supported (all bits will be included)."
+LISTED = frozenset({("rtl/x/x.sv", 7, SORRY)})
+
+
+def build_log(out, run, *lines):
+    with open(os.path.join(out, run + ".log.build"), "w", encoding="utf-8") as f:
+        f.write("".join(line + "\n" for line in lines))
+
+
+def test_p0_a_run_the_runner_stopped_at_its_limit_is_reported_by_name_whatever_it_left(tmp_path):
+    """The runner's account can add a finding and never take one away: a run it says it stopped is a
+    finding, RUN-TIMEOUT, even beside a results file that says every test passed."""
+    out = good(tmp_path)
+    with open(os.path.join(out, "runs.json"), "w", encoding="utf-8") as f:
+        json.dump([{"run": "b.s16x1", "what": "bench", "error": "RUN-TIMEOUT: the run was still going at its limit "
+                                                                 "of 20 s and was stopped"}], f)
+    assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1 | RUN-TIMEOUT"]
+    os.remove(os.path.join(out, "b.s16x1.xml"))
+    assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1 | RUN-TIMEOUT"]
+
+
+def test_p0_a_run_that_left_results_and_no_build_log_is_a_finding(tmp_path):
+    out = good(tmp_path)
+    os.remove(os.path.join(out, "b.s16x1.mutant.m.log.build"))
+    assert wheres(check_rtl.judge([BENCH], out)[0]) == ["b.s16x1.mutant.m | BUILD-LOG-MISSING"]
+
+
+def test_p0_a_listed_build_line_passes_in_the_tree_and_in_a_mutants_copy_and_is_counted(tmp_path):
+    out = good(tmp_path)
+    build_log(out, "b.s16x1", "/work/rtl/x/x.sv:7: " + SORRY, "")
+    build_log(out, "b.s16x1.mutant.m", "/tmp/src/b.s16x1.mutant.m/rtl/x/x.sv:7: " + SORRY, "/work/rtl/x/x.sv:7: " + SORRY)
+    findings, *_rest, logs, listed = check_rtl.judge([BENCH], out, LISTED)
+    assert (findings, logs, listed) == ([], 2, 3)
+
+
+@pytest.mark.parametrize("line, where", [
+    ("/work/rtl/x/x.sv:8: " + SORRY, "b.s16x1 rtl/x/x.sv:8"),                      # the words, at another line
+    ("/work/rtl/x/y.sv:7: " + SORRY, "b.s16x1 rtl/x/y.sv:7"),                      # in another file
+    ("/work/rtl/x/x.sv:7: warning: " + SORRY, "b.s16x1 rtl/x/x.sv:7"),             # other words at the place
+    ("/work/rtl/x/x.sv:7: " + SORRY[:-1], "b.s16x1 rtl/x/x.sv:7"),                 # the words cut short
+    ("/tmp/src/b.s16x1.mutant.other/rtl/x/x.sv:7: " + SORRY, "b.s16x1 build-log:1"),   # another run's copy
+    ("/tmp/build/b.s16x1/x.sv:7: " + SORRY, "b.s16x1 build-log:1"),                # not a file of the tree
+    ("a line with no file and no number", "b.s16x1 build-log:1"),
+    ("rtl/x/x.sv:7: " + SORRY, "b.s16x1 build-log:1"),                             # not as the mounted tree says it
+])
+def test_p0_a_build_line_the_list_does_not_name_is_a_finding_at_its_run_and_place(tmp_path, line, where):
+    out = good(tmp_path)
+    build_log(out, "b.s16x1", line)
+    assert wheres(check_rtl.judge([BENCH], out, LISTED)[0]) == ["%s | BUILD-LINE" % where]
+    build_log(out, "b.s16x1")
+    build_log(out, "b.s16x1.mutant.m", line.replace("b.s16x1", "b.s16x1.mutant.m", 1) if "/tmp/src/" not in line else line)
+    assert [w.split(" | ")[1] for w in wheres(check_rtl.judge([BENCH], out, LISTED)[0])] == ["BUILD-LINE"]
+
+
+def test_p0_the_committed_build_list_is_read_whole_and_names_the_two_lines_of_round_2(tmp_path):
+    listed = check_rtl.build_list(ROOT)
+    assert listed == {("rtl/source/source.sv", 187, SORRY), ("rtl/inject/inject.sv", 276, SORRY)}
+    for path, line, _says in listed:
+        with open(os.path.join(ROOT, path), encoding="utf-8") as f:
+            assert f.read().split("\n")[line - 1].strip() == "always_comb begin", (path, line)
+
+
+ENTRY = '[[line]]\nfile = "rtl/x/x.sv"\nline = 2\nsays = "words"\nwhy = "a reason"\n'
+
+
+@pytest.mark.parametrize("text", [
+    ENTRY.replace('why = "a reason"\n', ""),                       # no reason
+    ENTRY.replace('why = "a reason"', 'why = "  "'),                # an empty one
+    ENTRY.replace('says = "words"', 'says = ""'),
+    ENTRY.replace("rtl/x/x.sv", "rtl/x/not-there.sv"),
+    ENTRY.replace("rtl/x/x.sv", "../x.sv"),
+    ENTRY.replace("line = 2", "line = 4"),                          # past the file's last line
+    ENTRY.replace("line = 2", "line = 0"),
+    ENTRY.replace("line = 2", 'line = "2"'),
+    ENTRY + "extra = 1\n",
+    ENTRY + "\n" + ENTRY,                                            # the same entry twice
+    "something = 1\n" + ENTRY,
+    "[[line\n",
+])
+def test_p0_a_build_list_that_cannot_be_read_exactly_is_refused_by_name(tmp_path, text):
+    os.makedirs(tmp_path / "rtl" / "x")
+    (tmp_path / "rtl" / "x" / "x.sv").write_text("module x;\nendmodule\n", encoding="utf-8")
+    (tmp_path / "rtl" / "tb").mkdir()
+    (tmp_path / "rtl" / "tb" / "build_lines.toml").write_text(ENTRY, encoding="utf-8")
+    assert check_rtl.build_list(str(tmp_path)) == {("rtl/x/x.sv", 2, "words")}
+    (tmp_path / "rtl" / "tb" / "build_lines.toml").write_text(text, encoding="utf-8")
+    with pytest.raises(Refusal) as e:
+        check_rtl.build_list(str(tmp_path))
+    assert str(e.value).startswith("BUILD-LIST-MALFORMED")
+
+
+def test_p0_a_tree_with_no_build_list_is_refused_by_name(tmp_path):
+    with pytest.raises(Refusal) as e:
+        check_rtl.build_list(str(tmp_path))
+    assert str(e.value).startswith("BUILD-LIST-MALFORMED")
 
 
 def test_p0_the_judge_reports_a_run_with_no_results_whatever_the_runner_says(tmp_path):
@@ -235,7 +336,7 @@ def test_p0_an_evidence_line_that_is_not_the_harnesss_is_a_finding_of_its_run(tm
 def test_p0_the_judge_names_a_skipped_test_and_does_not_count_it_as_passed(tmp_path):
     out = good(tmp_path)
     results(os.path.join(out, "b.s16x1.xml"), identity="pass", other="skip")
-    findings, passed, _records, _nruns, _nmutants, skips = check_rtl.judge([BENCH], out)
+    findings, passed, _records, _nruns, _nmutants, skips, _logs, _listed = check_rtl.judge([BENCH], out)
     assert (findings, passed, skips) == ([], 1, ["b.s16x1 other"])
 
 
@@ -458,11 +559,33 @@ def test_p0_the_foundations_own_rows_are_cut_from_a_manifest_that_parcels_have_a
     ('module = "bench_p0_onetap"', 'module = "bench_that_is_not_there"'),
     ('name = "stops-after-four"', 'name = "coefficient-bit"'),
     ('toplevel = "onetap"', 'toplevel = "onetap"\nextra = 1'),
+    ('toplevel = "onetap"', 'toplevel = "onetap"\nlimit = 0'),
+    ('toplevel = "onetap"', 'toplevel = "onetap"\nlimit = 3001'),
+    ('toplevel = "onetap"', 'toplevel = "onetap"\nlimit = "20"'),
+    ('toplevel = "onetap"', 'toplevel = "onetap"\nlimit = 20.5'),
 ])
 def test_p0_a_manifest_that_cannot_be_read_exactly_is_refused(tmp_path, old, new):
     with pytest.raises(Refusal) as e:
         check_rtl.manifest(manifest_tree(tmp_path, old, new))
     assert str(e.value).startswith("MANIFEST-MALFORMED")
+
+
+@pytest.mark.parametrize("limit", [1, 20, 3000])
+def test_p0_a_benchs_limit_is_whole_seconds_inside_the_stages_own(tmp_path, limit):
+    root = manifest_tree(tmp_path, 'toplevel = "onetap"', 'toplevel = "onetap"\nlimit = %d' % limit)
+    assert check_rtl.manifest(root)[0]["limit"] == limit
+
+
+def test_p0_the_runner_and_the_judge_list_the_same_runs_in_the_same_order():
+    """The runner (inside the image) and the judge (outside it) each work out the runs from the manifest;
+    the runner's list is what it starts, the judge's what it requires. They share no code."""
+    sys.path.insert(0, os.path.join(ROOT, "rtl", "tb"))
+    try:
+        import run_benches
+    finally:
+        sys.path.remove(os.path.join(ROOT, "rtl", "tb"))
+    benches = check_rtl.manifest(ROOT)
+    assert [r[0] for r in run_benches.plan(run_benches.load_manifest(ROOT))] == [r[0] for r in check_rtl.runs_of(benches)]
 
 
 def test_p0_a_manifest_with_no_bench_is_refused_as_nothing_selected(tmp_path):
@@ -504,7 +627,9 @@ def test_p0_a_tree_without_its_docker_files_is_refused_by_name(tmp_path):
 def test_p0_the_pins_are_read_from_the_two_files(tmp_path):
     pins = sim_image.pins(ROOT)
     assert pins["iverilog"] == "12.0-2build2" and pins["pip"]["cocotb"] == "2.1.0"
-    assert all(re.match(r"[0-9][0-9A-Za-z.]*\Z", v) for v in pins["pip"].values()) and len(pins["pip"]) == 7
+    assert all(re.match(r"[0-9][0-9A-Za-z.]*\Z", v) for v in pins["pip"].values()) and len(pins["pip"]) == 10
+    # round 3's P0-3: the AXI bus models and what came with them
+    assert (pins["pip"]["cocotbext-axi"], pins["pip"]["cocotb-bus"], pins["pip"]["scapy"]) == ("0.1.28", "0.3.0", "2.8.0")
     root = docker_files(tmp_path, requirements=lambda d: d + b"pytest\n")
     with pytest.raises(sim_image.ImageRefusal) as e:
         sim_image.pins(root)

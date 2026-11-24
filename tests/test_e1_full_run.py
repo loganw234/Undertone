@@ -30,6 +30,8 @@ import io
 import json
 import os
 
+import pytest
+
 import test_lrn_a_e1 as E1
 from spec import constants as C
 
@@ -72,12 +74,15 @@ def test_e1_full_run_the_seven_files_are_the_ones_the_run_left():
     assert sorted(n for n in os.listdir(FOLDER) if not n.startswith(".")) == sorted(SHA256)
 
 
+STALE = "E1-RECORD-STALE"
+
+
 def test_e1_full_run_the_trees_judge_says_of_the_committed_parts_what_the_committed_output_says():
     """Each part carries the hash of the definition it was run under, and the judge refuses a part of
     another definition: that is the judge's rule, not this test's. So there are two cases.
 
     The definition is the one the parts were run under: the judge prints the committed output, byte for
-    byte, and returns 0. This is the case on the day the run was committed.
+    byte, and returns 0, and this test passes. This is the case on the day the run was committed.
 
     The definition has changed since: the judge must refuse, and for that reason ALONE. Every line it
     prints is a line of the committed output but eight: the line that says the parts are the stated
@@ -86,9 +91,37 @@ def test_e1_full_run_the_trees_judge_says_of_the_committed_parts_what_the_commit
     The first run of 2026-11-23 met this at its merge, half an hour after it was made: it was run on the
     parcel's commit, and the branch it was merged into had a later definition.
 
-    WHAT THIS CASE DOES NOT DO: say so where the gate's reader looks. The note below is printed only when
-    pytest is asked for a passing test's output (-rA); the gate's line for the tests is the same in both
-    cases."""
+    In that case THIS TEST SKIPS, by name, E1-RECORD-STALE, once it has held that the hash is the judge's
+    only reason. Until round 3's P0-3 it passed, and the gate was green without a word on a record of an
+    earlier definition. A skip is named and counted on the gate's verdict line, and fails the gate under
+    --require-all. The control is the next test: one comment line of the definition changed."""
+    reason = the_committed_record_against(C.SPEC_SHA256)
+    if reason is not None:
+        pytest.skip(reason)
+
+
+def test_e1_full_run_a_definition_changed_by_one_comment_line_makes_the_record_stale_by_name(monkeypatch):
+    """The control of the skip above. The definition's hash is taken over its bytes, so one comment line
+    changed is another definition to the judge. Under that hash the committed parts must be refused for
+    that reason alone, and the reason given must be the skip's, by its name."""
+    with open(os.path.join(ROOT, "spec", "undertone.toml"), "rb") as f:
+        raw = f.read().replace(b"\r\n", b"\n")
+    lines = raw.split(b"\n")
+    at = next(i for i, line in enumerate(lines) if line.startswith(b"#"))
+    lines[at] = lines[at] + b" (a comment changed by this test's control)"
+    other = hashlib.sha256(b"\n".join(lines)).hexdigest()
+    assert hashlib.sha256(raw).hexdigest() == C.SPEC_SHA256, "the hash is not taken as this control takes it"
+    assert other != C.SPEC_SHA256
+    monkeypatch.setattr(C, "SPEC_SHA256", other)
+    reason = the_committed_record_against(other)
+    assert reason is not None and reason.startswith(STALE + ":"), reason
+    print("CONTROL the full run of E1 under a definition with one comment line changed: %s" % reason[:120])
+
+
+def the_committed_record_against(spec_sha256):
+    """None when the parts were run under `spec_sha256` and the tree's judge prints the committed output for
+    them. The skip's reason when they were run under another and the judge refuses them for that alone.
+    Fails on anything else."""
     committed = data(OUTPUT).decode("utf-8").rstrip("\n").split("\n")
     assert committed[-1] == VERDICT
     # The reported model is the one named before the run, and its count is the page's.
@@ -99,18 +132,19 @@ def test_e1_full_run_the_trees_judge_says_of_the_committed_parts_what_the_commit
     run_under = set(p["spec_sha256"] for p in parts)
     assert len(run_under) == 1, "the six parts were not run under one definition"
     printed, code = judged(os.path.join(FOLDER, name) for name in PARTS)
-    if run_under == {C.SPEC_SHA256}:
+    if run_under == {spec_sha256}:
         assert code == 0
         assert printed.encode("utf-8") == data(OUTPUT), "the judge no longer prints the committed output for the committed parts"
-        return
+        return None
     lines = printed.rstrip("\n").split("\n")
     new = [line for line in lines if line not in committed]
     gone = [line for line in committed if line not in lines]
-    print("NOTE the full run of E1 was made under another definition than this tree's; the judge refuses its parts, "
-          "and for that alone")
     assert code != 0 and lines[-1] == "== E1 SOFTWARE VERDICT: FAIL"
     assert len([line for line in new if "spec_sha256 is" in line]) == 6 and len(new) == 8, new
     assert len(gone) == 2 and gone[-1] == VERDICT, gone
+    return ("%s: the full run of E1 was made under the definition %s..., and this tree's is %s...; the judge refuses "
+            "its parts for that alone, so docs/studies/E1-software.md's figures are an earlier definition's until "
+            "the run is made again" % (STALE, sorted(run_under)[0][:12], spec_sha256[:12]))
 
 
 def test_e1_full_run_a_part_changed_by_one_count_is_seen_twice(tmp_path):
