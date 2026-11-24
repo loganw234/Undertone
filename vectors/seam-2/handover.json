@@ -1,0 +1,288 @@
+{
+ "cases": {
+  "s16x1": {
+   "blob_hex": "554e4454424c4f42010005733136783101004000000001000000000000000100450500000e010000820600005c05000055110000191e000009200000691c00008b0100008adbffff25a9ffffdf76ffff6458fffff54affff9c61ffffb5a5ffffb9000000257100004ee50000f142010036790100a07201001830010030a70000c9fbffff6048ffffaea9feff8131feff0100feffd31efeff608cfeff8333ffffc9070000cac80000bd6e01004bd501004df601002cc60100ac4701001fa7000091000000b65cffff16e7feffa5abfefff5a7feffddcefeffd52bffffbf98fffff601000092500000a88900007d9800001b8c0000166d0000d6460000b9190000d1000000caf1ffffb3e9ffff5af0ffff78efffff2bfcffff980000006a04000001000000cc69feea7a44bc43423812eb1b720a1967d72bc4e84d7ef50286f6b8d77d4881",
+   "blob_sha256": "ff0b8b69481097f57888016508ebb37aefa6d26c9e1f7e873570bf74ce9bd852",
+   "count": 16,
+   "frames": 2180,
+   "hand_over_at": 2072,
+   "period": 2050,
+   "schedule": [
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 65,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 193,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 321,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 449,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 577,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 705,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 833,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 961,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1089,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1217,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1345,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1473,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1601,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1729,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1857,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1985,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 3,
+     "amplitude_num": 7,
+     "index": 2112,
+     "pulse_id": 0
+    }
+   ],
+   "seed": 2026112345,
+   "sigma": [
+    50,
+    1
+   ],
+   "start_hex": "554e4454424c4f420100057331367831010040000000010000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000500000001000000154e867686bdadcbb7a985e4ae25b41e2f3407f386ac8755220697d3f48a0c9b",
+   "start_newest_tap": [
+    5
+   ],
+   "taps": 64,
+   "train_indexes": [
+    65,
+    193,
+    321,
+    449,
+    577,
+    705,
+    833,
+    961,
+    1089,
+    1217,
+    1345,
+    1473,
+    1601,
+    1729,
+    1857,
+    1985
+   ]
+  },
+  "s24x3": {
+   "blob_hex": "554e4454424c4f420100057332347833010040000000010000000000000007000cfdffff820100000a050000820c000000160000701e0000f4230000341900004104000061d6ffff02acffff487cfffffd58ffff9149ffff686affff21a0ffffa00200001e71000025e2000022420100a57701000c6a0100d52b0100b1a8000078010000f54affffaba8feffa133feff0707feffd623feff3c8efeff5335ffff6f000000c8c40000c372010097d4010027f1010001c70100ca4c0100b6b5000086fbffffde5effff1ee4feff25a8feff68a9feff47d8feffca2effff4d9bfffff9000000434c0000f2860000259700009b8b00002871000065450000fa1e0000a1000000abf0ffff4aeaffff01e9ffffbaf8ffffdeffffff7df9ffff1204000093fcffff6204000073fefffff10c000015190000841900002b2600008414000028fbffffc3d5ffff7ba6ffffaf7fffff8c51ffff294dffff155effffcfa1ffff3bfdffff426d00000fe5000016440100fa700100ef6c0100f626010062a600005e000000934affff2eaafeff002dfeff0100feff6522feff6a90feffbc34ffffdafcffffe0c90000536f0100f5cf010096f6010078c0010013490100bab000003b0300002f59ffffa1eefeff5da5feff08acfeffc7d8feff5a30ffff0898ffffe4000000ea5300005e8c0000289c0000748f0000247200004d460000a624000079000000a0edffff1ee5ffffcdeaffff49f1ffff79faffff31fdffffb3feffff640100001a070000e4010000e70700003b1d0000791b0000c92100001c13000024fcffffe5d5ffffbcaaffffc276ffff1258ffffd24cfffffc69fffff2a4ffff6efcffff8a760000b4de0000a33f0100a2710100946701000e270100ada40000e3020000814dffff26acfeff092ffeff5505feffb823feffa98cfeff3c35ffff3cfbffff2bcd0000d26a01008dd301002eeb010023c6010095510100f2ac00006bfbffff6d5dffff96e5feff7faafeff08a1feffc9cffeff062fffff729affffd8feffff2f500000c1890000ff9c0000378f00009f6a000094410000aa220000c600000005eeffffa7e7ffffe9e8ffff7bfdffff66f8ffff82fcffff7900000001000000eb43e801594ec1c83d573e4430e306e7168e4680ed4aaf359c887c985fa32dc7",
+   "blob_sha256": "b9861ac5c970b087bf63dfe0c159c2a3253f482c11dabb3a247d4e3e054f7529",
+   "count": 16,
+   "frames": 2180,
+   "hand_over_at": 2072,
+   "period": 2050,
+   "schedule": [
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 65,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 193,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 321,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 449,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 577,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 705,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 833,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 961,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1089,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1217,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1345,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1473,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1601,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1729,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1857,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 2,
+     "amplitude_num": 5,
+     "index": 1985,
+     "pulse_id": 0
+    },
+    {
+     "amplitude_den": 3,
+     "amplitude_num": 7,
+     "index": 2112,
+     "pulse_id": 0
+    }
+   ],
+   "seed": 2026112345,
+   "sigma": [
+    97,
+    2
+   ],
+   "start_hex": "554e4454424c4f4201000573323478330100400000000100000000000000070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000fdffffff0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200000001000000eb01ba391a705fcf174fc95a5ad8d5810bf0442d5ba94b627dc93247837f5ce8",
+   "start_newest_tap": [
+    5,
+    -3,
+    2
+   ],
+   "taps": 64,
+   "train_indexes": [
+    65,
+    193,
+    321,
+    449,
+    577,
+    705,
+    833,
+    961,
+    1089,
+    1217,
+    1345,
+    1473,
+    1601,
+    1729,
+    1857,
+    1985
+   ]
+  }
+ },
+ "how_made": "Outside the image, 2026-11-23, by tests/test_seam2_handover.py's trained_blob and start_blob: model.source.Noise(profile, seed, sigma, frames) through model.inject.inject with the schedule; learn.trainer.train on frames 0 .. period - 1 with train_indexes and taps; learn.handover.candidate_blob. That test makes it again on every gate run and holds these bytes to it. count is 16 truth records, the smallest of stage E1's counts; no efficiency is read from it. start_hex is the blob the core starts with: one filter of the learner's shape whose only tap that is not zero is the newest, start_newest_tap a channel.",
+ "what": "An INPUT, pinned: for each profile, the blob learn/ hands over after training on the model's own frames of the configuration stated here, so that the seam's bench (rtl/tb/bench_seam.py, bit_identity_hand_over) can write it to the detector core's shadow inside the simulation image, which has no numpy. It is NOT a known answer worked by hand and nothing is judged by it."
+}
