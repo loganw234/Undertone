@@ -311,4 +311,437 @@ name = "smallest-sample-refused"
 file = "rtl/inject/inject.sv"
 edits = [["if (s < SMIN || s > SMAX) any_bad = 1'b1;", "if (s <= SMIN || s > SMAX) any_bad = 1'b1;"]]
 must_fail = ["refusal_inject_range"]
+
+# ---- Parcel RTL-B: the detector core and its weight store (docs/rtl/core.md) ----
+#
+# `core_small` is rtl/core/core.sv at small maxima: the runner hands a top two parameters and this
+# file has no key for more, so a build below the definition's maxima is a top of its own. `core` is
+# the same file at the definition's maxima.
+#
+# Each bench module has a row for each profile, so every test runs under both sample formats and
+# EVERY MUTANT RUNS UNDER ONE (the lead's ruling of 2026-11-23: a mutant's run is a build of its own,
+# and the stage has one budget). A mutant is under the profile where its fault can show at all, and
+# otherwise they are split evenly. What that concedes: a mutant shows the bench sees its fault under
+# one sample format.
+
+[[bench]]
+name = "core-s16x1"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_core"
+profiles = ["s16x1"]
+identity = ["bit_identity_random", "bit_identity_every_tap", "bit_identity_swap", "bit_identity_swap_on_the_edge", "bit_identity_extremes", "bit_identity_counters"]
+
+# One flipped coefficient bit in the RTL, on the shape where every tap reaches the score: the lowest
+# bit of row 0's newest-sample coefficient. (The top bit of another is under the other profile.)
+[[bench.mutant]]
+name = "coefficient-bit-low"
+file = "rtl/core/core.sv"
+edits = [["cx = cw;", "cx = ((r*B_TAPS + m) == 0) ? $signed(cw ^ {{(COEFF_BITS-1){1'b0}}, 1'b1}) : cw;"]]
+must_fail = ["bit_identity_every_tap"]
+kind = "WORD"
+
+# A swap that changes half the taps a clock late: the newer half of every row reads the bank that the
+# frame before named.
+[[bench.mutant]]
+name = "swap-half-taps-late"
+file = "rtl/core/core.sv"
+edits = [
+    ["head_valid;", "head_valid;\n    logic sel_late;\n    always @(posedge clk) sel_late <= tg[ST_S1][TAG_SEL];"],
+    ["cw = tg[ST_S1][TAG_SEL] ? coef_b[r*B_TAPS + m] : coef_a[r*B_TAPS + m];", "cw = ((m < B_TAPS/2) ? sel_late : tg[ST_S1][TAG_SEL]) ? coef_b[r*B_TAPS + m] : coef_a[r*B_TAPS + m];"],
+]
+must_fail = ["bit_identity_swap", "bit_identity_swap_on_the_edge"]
+kind = "WORD"
+
+# With a hidden layer: the head weights a clock after the hidden weights.
+[[bench.mutant]]
+name = "head-weights-late"
+file = "rtl/core/core_head.sv"
+edits = [
+    ["// o[j] * b_j at index j", "// o[j] * b_j at index j\n    logic sel_late;\n    always @(posedge clk) sel_late <= h2_sel;"],
+    ["ow = h2_sel ? $signed(out_b", "ow = sel_late ? $signed(out_b"],
+]
+must_fail = ["bit_identity_swap"]
+kind = "WORD"
+
+# A core one bit narrower at a stage, at the small top's own true extremes. The row sum, the pooled
+# sum and the output sum wrap with no flag and are caught by the score; the hidden value raises the
+# flag where the model does not.
+[[bench.mutant]]
+name = "narrow-row"
+file = "rtl/core/core.sv"
+edits = [["$clog2(B_TAPS + 1) + 1;", "$clog2(B_TAPS + 1);"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "narrow-pool"
+file = "rtl/core/core.sv"
+edits = [["$clog2(B_POOL * PER * B_TAPS + 1) + 1;", "$clog2(B_POOL * PER * B_TAPS + 1);"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "narrow-hidden-value"
+file = "rtl/core/core_head.sv"
+edits = [
+    ["us[W_HEADX-1:W_HID-1]) || !(|us[W_HEADX-1:W_HID-1]", "us[W_HEADX-1:W_HID-2]) || !(|us[W_HEADX-1:W_HID-2]"],
+    ["t  = us[W_HID-1:0];", "t  = $signed(us[W_HID-2:0]);"],
+]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "narrow-output"
+file = "rtl/core/core_head.sv"
+edits = [["$clog2(B_HIDDEN + 1) + 1;", "$clog2(B_HIDDEN + 1);"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+# A pipeline one stage longer than the stated latency: every record goes through one more register.
+# The harness does not check latency, so the test that states it is the one that must fail.
+[[bench.mutant]]
+name = "one-stage-longer"
+file = "rtl/core/core.sv"
+edits = [
+    ["head_valid;", "head_valid;\n    logic late_valid = 1'b0;\n    logic [SCORE_RECORD_BITS-1:0] late_record = '0;"],
+    ["out_valid <= vld[ST_H4];", "late_valid <= vld[ST_H4]; out_valid <= late_valid; out_record <= late_record;"],
+    ["out_record <= rec_next;", "late_record <= rec_next;"],
+]
+must_fail = ["latency_is_eleven_clocks"]
+kind = ''
+
+# The shadow's closing, on one side of its last clock: not closed at all.
+[[bench.mutant]]
+name = "shadow-not-closed"
+file = "rtl/core/core.sv"
+edits = [["localparam int ST_CLOSED_LAST = ST_H1;", "localparam int ST_CLOSED_LAST = 0;"]]
+must_fail = ["shadow_closes_and_opens"]
+kind = "WORD"
+
+# The index, on one side of the line the bench's written state draws: sixteen bits.
+[[bench.mutant]]
+name = "index-sixteen-bits"
+file = "rtl/core/core.sv"
+edits = [["index_n    = next_index + (take ? 1 : 0);", "index_n    = next_index + (take ? 1 : 0); index_n[SCORE_INDEX_BITS-1:16] = next_index[SCORE_INDEX_BITS-1:16];"]]
+must_fail = ["bit_identity_counters"]
+kind = "WORD"
+
+# ---- beyond the brief's list: faults a verifier would try, each tried by the parcel first ----
+
+# The first rounding as a logical shift, where the model's is arithmetic.
+[[bench.mutant]]
+name = "hidden-shift-logical"
+file = "rtl/core/core_head.sv"
+edits = [["us = ux >>> q;", "us = $signed({1'b0, ux} >> q);"]]
+must_fail = ["bit_identity_random"]
+kind = "WORD"
+
+# The pool with no forwarding: with a pool of 1 on consecutive clocks it reads a word not yet written.
+# What it reads is unknown, so the harness reports unknown bits, not a wrong word.
+[[bench.mutant]]
+name = "pool-no-forwarding"
+file = "rtl/core/core.sv"
+edits = [["s4_old  <= (vld[ST_S4] && (pool_wp == pool_rp)) ? s4_rect : pool_mem[pool_rp];", "s4_old  <= pool_mem[pool_rp];"]]
+must_fail = ["bit_identity_swap_on_the_edge"]
+kind = "UNKNOWN-BITS"
+
+# One output fewer marked as settling than the pool mixes.
+[[bench.mutant]]
+name = "settling-one-short"
+file = "rtl/core/core.sv"
+edits = [["settle_n = ((next_index != 0) && (cfg_pool >= 2)) ? (cfg_pool - 2) : 0;", "settle_n = ((next_index != 0) && (cfg_pool >= 3)) ? (cfg_pool - 3) : 0;"]]
+must_fail = ["bit_identity_swap"]
+kind = "WORD"
+
+# An epoch that wraps at 2^16.
+[[bench.mutant]]
+name = "epoch-sixteen-bits"
+file = "rtl/core/core.sv"
+edits = [["epoch_n    = epoch + (swap_now ? 1 : 0);", "epoch_n    = epoch + (swap_now ? 1 : 0); epoch_n[SCORE_EPOCH_BITS-1:16] = epoch[SCORE_EPOCH_BITS-1:16];"]]
+must_fail = ["bit_identity_counters"]
+kind = "WORD"
+
+# A rectifier that always passes.
+[[bench.mutant]]
+name = "rectifier-always-pass"
+file = "rtl/core/core.sv"
+edits = [["rr = (cfg_rect_abs && y[W_FILT-1]) ? -yx : yx;", "rr = yx;"]]
+must_fail = ["bit_identity_random"]
+kind = "WORD"
+
+# An overflow flag that is not sticky: each record carries only its own frame's bit. The parcel's
+# first bench did NOT see this on the small top; the last stream of `bit_identity_extremes` was added
+# for it.
+[[bench.mutant]]
+name = "overflow-not-sticky"
+file = "rtl/core/core.sv"
+edits = [["sticky     <= sticky | head_overflow;", "sticky     <= 1'b0;"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+# A design that puts out one record too many: fourteen idle clocks after a record it repeats it.
+[[bench.mutant]]
+name = "one-too-many"
+file = "rtl/core/core.sv"
+edits = [
+    ["head_valid;", "head_valid;\n    logic [3:0] idle;"],
+    ["out_valid  <= 1'b0;", "out_valid  <= 1'b0; idle <= 4'd15;"],
+    ["out_valid <= vld[ST_H4];", "out_valid <= vld[ST_H4] || (idle == 4'd13); idle <= vld[ST_H4] ? 4'd0 : ((idle == 4'd15) ? 4'd15 : idle + 4'd1);"],
+]
+must_fail = ["bit_identity_random"]
+kind = "COUNT"
+
+[[bench]]
+name = "core-s24x3"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_core"
+profiles = ["s24x3"]
+identity = ["bit_identity_random", "bit_identity_every_tap", "bit_identity_swap", "bit_identity_swap_on_the_edge", "bit_identity_extremes", "bit_identity_counters"]
+
+# One flipped coefficient bit: the top bit of the coefficient one sample back, in row 1, which under
+# this profile is the first filter's second channel.
+[[bench.mutant]]
+name = "coefficient-bit-high"
+file = "rtl/core/core.sv"
+edits = [["cx = cw;", "cx = ((r*B_TAPS + m) == (B_TAPS + 1)) ? $signed(cw ^ {1'b1, {(COEFF_BITS-1){1'b0}}}) : cw;"]]
+must_fail = ["bit_identity_every_tap"]
+kind = "WORD"
+
+# The swap's opposite fault: half the taps a clock EARLY, reading the bank the frame behind will name.
+[[bench.mutant]]
+name = "swap-half-taps-early"
+file = "rtl/core/core.sv"
+edits = [
+    ["head_valid;", "head_valid;\n    wire sel_early = active_sel ^ (in_valid && running && commit_valid && (next_index == commit_at));"],
+    ["cw = tg[ST_S1][TAG_SEL] ? coef_b[r*B_TAPS + m] : coef_a[r*B_TAPS + m];", "cw = ((m < B_TAPS/2) ? sel_early : tg[ST_S1][TAG_SEL]) ? coef_b[r*B_TAPS + m] : coef_a[r*B_TAPS + m];"],
+]
+must_fail = ["bit_identity_swap_on_the_edge"]
+kind = "WORD"
+
+# The other way round: the hidden weights a clock after the head weights. In the one route a head
+# with no hidden layer keeps its weights where a unit's are, so this shows on such a head too.
+[[bench.mutant]]
+name = "hidden-weights-late"
+file = "rtl/core/core_head.sv"
+edits = [
+    ["// o[j] * b_j at index j", "// o[j] * b_j at index j\n    logic sel_late;\n    always @(posedge clk) sel_late <= h0_sel;"],
+    ["gw = h0_sel ? $signed(hid_b", "gw = sel_late ? $signed(hid_b"],
+]
+must_fail = ["bit_identity_swap"]
+kind = "WORD"
+
+# One bit narrower at the filter sum and at the rectified value: only under three channels is a
+# filter wider than a row. And at the hidden sum, between and the score.
+[[bench.mutant]]
+name = "narrow-filter"
+file = "rtl/core/core.sv"
+edits = [["W_FILT = E_PROD + $clog2(PER * B_TAPS + 1) + 1;", "W_FILT = E_PROD + $clog2(PER * B_TAPS + 1);"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "narrow-rectifier"
+file = "rtl/core/core.sv"
+edits = [["W_RECT = E_PROD + $clog2(PER * B_TAPS + 1) + 1;", "W_RECT = E_PROD + $clog2(PER * B_TAPS + 1);"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "narrow-hidden-sum"
+file = "rtl/core/core.sv"
+edits = [["$clog2(B_ROWS * B_POOL * B_TAPS);", "$clog2(B_ROWS * B_POOL * B_TAPS) - 1;"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "narrow-between"
+file = "rtl/core/core_head.sv"
+edits = [["W_BTW   = SCORE_SCORE_BITS + 1;", "W_BTW   = SCORE_SCORE_BITS;"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "narrow-score"
+file = "rtl/core/core_head.sv"
+edits = [
+    ["ash[W_OUTX-1:W_HID-1]) || !(|ash[W_OUTX-1:W_HID-1]", "ash[W_OUTX-1:W_HID-2]) || !(|ash[W_OUTX-1:W_HID-2]"],
+    ["out_score    <= ash[W_HID-1:0];", "out_score    <= $signed(ash[W_HID-2:0]);"],
+]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
+# The shadow's closing, on the other side: closed a clock too long.
+[[bench.mutant]]
+name = "shadow-closed-too-long"
+file = "rtl/core/core.sv"
+edits = [["localparam int ST_CLOSED_LAST = ST_H1;", "localparam int ST_CLOSED_LAST = ST_H2;"]]
+must_fail = ["shadow_closes_and_opens"]
+kind = "WORD"
+
+# The index, on the other side of the line: thirty-two bits.
+[[bench.mutant]]
+name = "index-thirty-two-bits"
+file = "rtl/core/core.sv"
+edits = [["index_n    = next_index + (take ? 1 : 0);", "index_n    = next_index + (take ? 1 : 0); index_n[SCORE_INDEX_BITS-1:32] = next_index[SCORE_INDEX_BITS-1:32];"]]
+must_fail = ["bit_identity_counters"]
+kind = "WORD"
+
+# ---- beyond the brief's list ----
+
+# The second rounding as a logical shift.
+[[bench.mutant]]
+name = "score-shift-logical"
+file = "rtl/core/core_head.sv"
+edits = [["ash = ax >>> s;", "ash = $signed({1'b0, ax} >> s);"]]
+must_fail = ["bit_identity_random"]
+kind = "WORD"
+
+# One output more marked as settling than the pool mixes.
+[[bench.mutant]]
+name = "settling-one-long"
+file = "rtl/core/core.sv"
+edits = [["settle_n = ((next_index != 0) && (cfg_pool >= 2)) ? (cfg_pool - 2) : 0;", "settle_n = ((next_index != 0) && (cfg_pool >= 2)) ? (cfg_pool - 1) : 0;"]]
+must_fail = ["bit_identity_swap"]
+kind = "WORD"
+
+# A design that stops putting records out after its fourth: every word it gave is right, and there are too few.
+[[bench.mutant]]
+name = "stops-after-four"
+file = "rtl/core/core.sv"
+edits = [["out_valid <= vld[ST_H4];", "out_valid <= vld[ST_H4] && (tg[ST_H4][15:0] < 16'd4);"]]
+must_fail = ["bit_identity_random"]
+kind = "COUNT"
+
+# Between that always passes.
+[[bench.mutant]]
+name = "between-always-pass"
+file = "rtl/core/core_head.sv"
+edits = [["b  = (abs_on && t[W_HID-1]) ? -tx : tx;", "b  = tx;"]]
+must_fail = ["bit_identity_random"]
+kind = "WORD"
+
+# Coefficients loaded newest first: the convention the model's seam rules out.
+[[bench.mutant]]
+name = "coefficients-newest-first"
+file = "rtl/core/core.sv"
+edits = [["ci = ld_a * B_TAPS + (cfg_taps - 1 - ld_b);", "ci = ld_a * B_TAPS + ld_b;"]]
+must_fail = ["bit_identity_every_tap"]
+kind = "WORD"
+
+# A record put out where no comparison listens: one clock of out_valid at a commit's write, between two
+# pieces of a stream. The harness hears only inside one call of compare, so every comparison still
+# passes; the bench's own count of records over the whole test is what must see it.
+[[bench.mutant]]
+name = "record-at-a-commit"
+file = "rtl/core/core.sv"
+edits = [["out_valid <= vld[ST_H4];", "out_valid <= vld[ST_H4] || (reg_valid && reg_we && (reg_addr == REG_COMMIT_AT_OFFSET + WBYTES));"]]
+must_fail = ["bit_identity_swap"]
+kind = ''
+
+# The control block on the small top, where no capability is the definition's own.
+[[bench]]
+name = "core-control-s16x1"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_core_control"
+profiles = ["s16x1"]
+identity = ["refused_changes_nothing"]
+
+# A capability register that advertises what the build refuses: one tap more than it takes, and a
+# rectifier code it has not.
+[[bench.mutant]]
+name = "cap-taps-one-more"
+file = "rtl/core/core.sv"
+edits = [["reg_rdata <= B_TAPS;", "reg_rdata <= B_TAPS + 1;"]]
+must_fail = ["capabilities_by_trial"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "cap-rectifiers-a-third"
+file = "rtl/core/core.sv"
+edits = [["reg_rdata <= (1 << RECTIFIER_PASS) | (1 << RECTIFIER_ABS);", "reg_rdata <= (1 << RECTIFIER_PASS) | (1 << RECTIFIER_ABS) | 4;"]]
+must_fail = ["capabilities_by_trial"]
+kind = "WORD"
+
+[[bench]]
+name = "core-control-s24x3"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_core_control"
+profiles = ["s24x3"]
+identity = ["refused_changes_nothing"]
+
+# The capability's opposite fault: one tap fewer than the build takes, so it takes what it does not advertise.
+[[bench.mutant]]
+name = "cap-taps-one-fewer"
+file = "rtl/core/core.sv"
+edits = [["reg_rdata <= B_TAPS;", "reg_rdata <= B_TAPS - 1;"]]
+must_fail = ["capabilities_by_trial"]
+kind = "WORD"
+
+# THE REFUSALS' TWO CONTROLS, each held against all nineteen tests, one test a name. Under this
+# profile, because only here does a shape reach SHAPE_ROWS.
+# A core that refuses nothing: the chain's result is forced to none, so every refused write is taken,
+# and a frame offered to a core that is not running is dropped with nothing latched.
+[[bench.mutant]]
+name = "refuses-nothing"
+file = "rtl/core/core.sv"
+edits = [
+    ["if (x_register_access) wcode = REFUSAL_REGISTER_ACCESS;", "if (x_register_access) wcode = REFUSAL_REGISTER_ACCESS;\n            wcode = 8'd0;"],
+    ["if (in_valid && !running) fcode = REFUSAL_CORE_STOPPED;", "if (1'b0) fcode = REFUSAL_CORE_STOPPED;"],
+]
+must_fail = ["refuses_profile_unknown", "refuses_shape_filters", "refuses_shape_taps", "refuses_shape_rectifier", "refuses_shape_shift", "refuses_shape_pool", "refuses_shape_hidden", "refuses_shape_hidden_shift", "refuses_shape_between", "refuses_shape_channel", "refuses_shape_rows", "refuses_weight_count", "refuses_weight_range", "refuses_swap_shape", "refuses_swap_pending", "refuses_swap_index", "refuses_swap_epoch", "refuses_core_stopped", "refuses_register_access"]
+kind = "WORD"
+
+# A core that names every refusal wrongly: the number it reports is changed for all of them, where
+# `refusal` is read. (Changed where it is latched, the latch reads itself back and the fault undoes
+# itself every other clock: the first form of this mutant did that, and all nineteen tests passed it.)
+[[bench.mutant]]
+name = "names-every-refusal-wrongly"
+file = "rtl/core/core.sv"
+edits = [["reg_rdata <= refusal;", "reg_rdata <= (refusal == 8'd0) ? 32'd0 : (refusal ^ 32'd64);"]]
+must_fail = ["refuses_profile_unknown", "refuses_shape_filters", "refuses_shape_taps", "refuses_shape_rectifier", "refuses_shape_shift", "refuses_shape_pool", "refuses_shape_hidden", "refuses_shape_hidden_shift", "refuses_shape_between", "refuses_shape_channel", "refuses_shape_rows", "refuses_weight_count", "refuses_weight_range", "refuses_swap_shape", "refuses_swap_pending", "refuses_swap_index", "refuses_swap_epoch", "refuses_core_stopped", "refuses_register_access"]
+kind = "WORD"
+
+# The core at the definition's maxima: rtl/core/core.sv at its defaults.
+[[bench]]
+name = "core-max-s16x1"
+toplevel = "core"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv"]
+module = "bench_core_max"
+profiles = ["s16x1"]
+identity = ["bit_identity_largest_shape", "bit_identity_boundaries", "bit_identity_written_extremes"]
+
+# At the definition's maxima, from the written extreme state: the pooled sum one bit narrower.
+[[bench.mutant]]
+name = "narrow-pool"
+file = "rtl/core/core.sv"
+edits = [["$clog2(B_POOL * PER * B_TAPS + 1) + 1;", "$clog2(B_POOL * PER * B_TAPS + 1);"]]
+must_fail = ["bit_identity_written_extremes"]
+kind = "WORD"
+
+[[bench]]
+name = "core-max-s24x3"
+toplevel = "core"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv"]
+module = "bench_core_max"
+profiles = ["s24x3"]
+identity = ["bit_identity_largest_shape", "bit_identity_boundaries", "bit_identity_written_extremes"]
+
+# At the definition's maxima, from the written extreme state: the hidden sum one bit narrower.
+[[bench.mutant]]
+name = "narrow-hidden-sum"
+file = "rtl/core/core.sv"
+edits = [["$clog2(B_ROWS * B_POOL * B_TAPS);", "$clog2(B_ROWS * B_POOL * B_TAPS) - 1;"]]
+must_fail = ["bit_identity_written_extremes"]
+kind = "WORD"
+
+# "A value wider than a word takes consecutive words, lowest bits first": the hash's eight words the other way round.
+[[bench.mutant]]
+name = "spec-hash-words-reversed"
+file = "rtl/core/core.sv"
+edits = [["spec_hash[((reg_addr - REG_SPEC_HASH_OFFSET) / WBYTES)*WORD +: WORD]", "spec_hash[(REG_SPEC_HASH_WORDS - 1 - (reg_addr - REG_SPEC_HASH_OFFSET) / WBYTES)*WORD +: WORD]"]]
+must_fail = ["identity_block_reads_back"]
 kind = "WORD"
