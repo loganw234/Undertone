@@ -248,6 +248,7 @@ ENTRY = '[[line]]\nfile = "rtl/x/x.sv"\nline = 2\nsays = "words"\nwhy = "a reaso
     ENTRY.replace("rtl/x/x.sv", "rtl/x/not-there.sv"),
     ENTRY.replace("rtl/x/x.sv", "../x.sv"),
     ENTRY.replace("line = 2", "line = 4"),                          # past the file's last line
+    ENTRY.replace("line = 2", "line = 3"),                          # just past it, after the last line end (VP0R3)
     ENTRY.replace("line = 2", "line = 0"),
     ENTRY.replace("line = 2", 'line = "2"'),
     ENTRY + "extra = 1\n",
@@ -262,6 +263,17 @@ def test_p0_a_build_list_that_cannot_be_read_exactly_is_refused_by_name(tmp_path
     (tmp_path / "rtl" / "tb" / "build_lines.toml").write_text(ENTRY, encoding="utf-8")
     assert check_rtl.build_list(str(tmp_path)) == {("rtl/x/x.sv", 2, "words")}
     (tmp_path / "rtl" / "tb" / "build_lines.toml").write_text(text, encoding="utf-8")
+    with pytest.raises(Refusal) as e:
+        check_rtl.build_list(str(tmp_path))
+    assert str(e.value).startswith("BUILD-LIST-MALFORMED")
+
+
+def test_p0_a_build_list_entry_naming_a_file_that_is_not_text_is_refused_by_name(tmp_path):
+    """VP0R3 found Python's own UnicodeDecodeError here, where the list's refusal belongs."""
+    os.makedirs(tmp_path / "rtl" / "x")
+    (tmp_path / "rtl" / "x" / "x.sv").write_bytes(b"module x;\n\xff\xfe\nendmodule\n")
+    (tmp_path / "rtl" / "tb").mkdir()
+    (tmp_path / "rtl" / "tb" / "build_lines.toml").write_text(ENTRY, encoding="utf-8")
     with pytest.raises(Refusal) as e:
         check_rtl.build_list(str(tmp_path))
     assert str(e.value).startswith("BUILD-LIST-MALFORMED")

@@ -8,3 +8,6 @@ verify/state/
 
 # round folders: plans, briefs, per-author ledgers, reports. Kept on disk, never committed.
 Data/
+
+# the Claude Code harness's local state in this folder (a lock for a scheduled task), never committed
+.claude/

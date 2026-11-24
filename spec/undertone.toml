@@ -157,6 +157,13 @@ names = [
     "RECORD_QUEUE",
     "MEMORY_WRITE",
     "RUN_LENGTH",
+    # The host library's alone (round 3, parcel HOST). No block of the fabric
+    # and nothing of the model raises them: an image whose identity block is not
+    # this definition's; a noise table not of the form the model's source
+    # makes; a slot the kernel says it wrote that holds no record.
+    "IMAGE_SPEC",
+    "NOISE_TABLE",
+    "RECORD_SLOT",
 ]
 
 # Reference pulses, as integer data, by path under spec/.
@@ -225,6 +232,9 @@ RUN_START = 47
 RECORD_QUEUE = 48
 MEMORY_WRITE = 49
 RUN_LENGTH = 50
+IMAGE_SPEC = 51
+NOISE_TABLE = 52
+RECORD_SLOT = 53
 
 # Bounds the fabric has and the model does not: the model takes any noise
 # table its profile's samples can index, and a schedule of any length. Both are

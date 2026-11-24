@@ -6,7 +6,7 @@
 package undertone_pkg;
 
   // the SHA-256 of the definition this package was generated from
-  localparam logic [255:0] SPEC_SHA256 = 256'h58313fd278b2c7f8827b552ad867447a6560136ebe3be033214502668d9b1e55;
+  localparam logic [255:0] SPEC_SHA256 = 256'h0a9242e51c6d861e5165ab445ccbc3438be590d1b523047d0c1a7b7fe5b4888c;
 
   // the definition
   localparam int SPEC_VERSION = 1;
@@ -216,6 +216,9 @@ package undertone_pkg;
   localparam int REFUSAL_RECORD_QUEUE = 48;
   localparam int REFUSAL_MEMORY_WRITE = 49;
   localparam int REFUSAL_RUN_LENGTH = 50;
+  localparam int REFUSAL_IMAGE_SPEC = 51;
+  localparam int REFUSAL_NOISE_TABLE = 52;
+  localparam int REFUSAL_RECORD_SLOT = 53;
 
   // the register map's frame: one register is one word at a byte offset
   localparam int BUS_WORD_BITS = 32;

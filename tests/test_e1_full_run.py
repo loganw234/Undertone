@@ -102,8 +102,9 @@ def test_e1_full_run_the_trees_judge_says_of_the_committed_parts_what_the_commit
 
 def test_e1_full_run_a_definition_changed_by_one_comment_line_makes_the_record_stale_by_name(monkeypatch):
     """The control of the skip above. The definition's hash is taken over its bytes, so one comment line
-    changed is another definition to the judge. Under that hash the committed parts must be refused for
-    that reason alone, and the reason given must be the skip's, by its name."""
+    changed is another definition to the judge. Under that hash THE TEST ABOVE, called as it is, must skip,
+    by the name E1-RECORD-STALE, and for the judge's refusal on the hash alone. Until VP0R3 (2026-11-24) this
+    control called the helper and not the test: a test that went back to passing quietly passed it too."""
     with open(os.path.join(ROOT, "spec", "undertone.toml"), "rb") as f:
         raw = f.read().replace(b"\r\n", b"\n")
     lines = raw.split(b"\n")
@@ -113,8 +114,10 @@ def test_e1_full_run_a_definition_changed_by_one_comment_line_makes_the_record_s
     assert hashlib.sha256(raw).hexdigest() == C.SPEC_SHA256, "the hash is not taken as this control takes it"
     assert other != C.SPEC_SHA256
     monkeypatch.setattr(C, "SPEC_SHA256", other)
-    reason = the_committed_record_against(other)
-    assert reason is not None and reason.startswith(STALE + ":"), reason
+    with pytest.raises(pytest.skip.Exception) as skipped:
+        test_e1_full_run_the_trees_judge_says_of_the_committed_parts_what_the_committed_output_says()
+    reason = str(skipped.value)
+    assert reason.startswith(STALE + ":") and other[:12] in reason, reason
     print("CONTROL the full run of E1 under a definition with one comment line changed: %s" % reason[:120])
 
 

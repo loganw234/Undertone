@@ -7,7 +7,7 @@
 #define UNDERTONE_H
 
 /* the SHA-256 of the definition this header was generated from */
-#define UNDERTONE_SPEC_SHA256 "58313fd278b2c7f8827b552ad867447a6560136ebe3be033214502668d9b1e55"
+#define UNDERTONE_SPEC_SHA256 "0a9242e51c6d861e5165ab445ccbc3438be590d1b523047d0c1a7b7fe5b4888c"
 
 /* the definition */
 #define UNDERTONE_SPEC_VERSION 1
@@ -217,6 +217,9 @@
 #define UNDERTONE_REFUSAL_RECORD_QUEUE 48
 #define UNDERTONE_REFUSAL_MEMORY_WRITE 49
 #define UNDERTONE_REFUSAL_RUN_LENGTH 50
+#define UNDERTONE_REFUSAL_IMAGE_SPEC 51
+#define UNDERTONE_REFUSAL_NOISE_TABLE 52
+#define UNDERTONE_REFUSAL_RECORD_SLOT 53
 
 /* the register map's frame: one register is one word at a byte offset */
 #define UNDERTONE_BUS_WORD_BITS 32

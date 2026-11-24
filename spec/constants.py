@@ -5,7 +5,7 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "58313fd278b2c7f8827b552ad867447a6560136ebe3be033214502668d9b1e55"
+SPEC_SHA256 = "0a9242e51c6d861e5165ab445ccbc3438be590d1b523047d0c1a7b7fe5b4888c"
 
 PROFILES = {
     "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
@@ -115,6 +115,9 @@ REFUSALS = (
     "RECORD_QUEUE",
     "MEMORY_WRITE",
     "RUN_LENGTH",
+    "IMAGE_SPEC",
+    "NOISE_TABLE",
+    "RECORD_SLOT",
 )
 
 PULSES = {
@@ -186,6 +189,9 @@ REFUSAL_CODES = {
     "RECORD_QUEUE": 48,
     "MEMORY_WRITE": 49,
     "RUN_LENGTH": 50,
+    "IMAGE_SPEC": 51,
+    "NOISE_TABLE": 52,
+    "RECORD_SLOT": 53,
 }
 
 BUS = {"word_bits": 32, "address_bits": 12, "first_offset": 16, "magic": 0x554E4454}

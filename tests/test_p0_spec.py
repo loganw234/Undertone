@@ -66,14 +66,17 @@ FABRIC_REFUSALS = ("CORE_STOPPED", "REGISTER_ACCESS", "INJECT_PENDING")
 # Round 3, parcel KRNL: the kernel's alone, typed from its design in the round's ledger. The model raises none.
 KERNEL_REFUSALS = ("KERNEL_BUSY", "BUFFER_ALIGN", "BUFFER_SIZE", "RUN_START", "RECORD_QUEUE", "MEMORY_WRITE",
                    "RUN_LENGTH")
+# Round 3, parcel HOST: the host library's alone, typed from its design in the round's ledger.
+HOST_REFUSALS = ("IMAGE_SPEC", "NOISE_TABLE", "RECORD_SLOT")
 
 
-def test_p0_refusal_names_are_exactly_the_models_forty_the_fabrics_three_and_the_kernels_seven():
+def test_p0_refusal_names_are_the_models_forty_the_fabrics_three_the_kernels_seven_and_the_hosts_three():
     assert (len(P0_REFUSALS), len(MOD_B_REFUSALS), len(MOD_A_REFUSALS), len(HEAD_REFUSALS)) == (10, 16, 11, 3)
     assert C.REFUSALS == (P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS + HEAD_REFUSALS + FABRIC_REFUSALS
-                          + KERNEL_REFUSALS)
-    assert len(set(C.REFUSALS)) == 50 and len(FABRIC_REFUSALS) == 3 and len(KERNEL_REFUSALS) == 7
+                          + KERNEL_REFUSALS + HOST_REFUSALS)
+    assert len(set(C.REFUSALS)) == 53 and len(FABRIC_REFUSALS) == 3 and len(KERNEL_REFUSALS) == 7
     assert [C.REFUSAL_CODES[n] for n in KERNEL_REFUSALS] == list(range(44, 51))
+    assert [C.REFUSAL_CODES[n] for n in HOST_REFUSALS] == [51, 52, 53]
 
 
 def test_p0_the_hidden_layers_bounds_are_the_ones_generated_and_keep_the_head_small():
@@ -223,8 +226,8 @@ def test_p0_reference_pulse_fits_the_narrowest_profile_and_is_not_silent():
 
 
 def test_p0_every_refusal_has_a_code_of_its_own_that_fits_a_byte_and_none_is_zero():
-    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 50
-    assert len(set(C.REFUSAL_CODES.values())) == 50
+    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 53
+    assert len(set(C.REFUSAL_CODES.values())) == 53
     assert all(type(v) is int and 1 <= v <= 255 for v in C.REFUSAL_CODES.values())
     # Typed here from the definition as it was first written, so that a renumbering is made on purpose.
     assert (C.REFUSAL_CODES["PROFILE_UNKNOWN"], C.REFUSAL_CODES["BLOB_HASH"], C.REFUSAL_CODES["SHAPE_BETWEEN"]) == (1, 7, 40)

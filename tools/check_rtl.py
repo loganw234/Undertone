@@ -74,9 +74,9 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                `@cocotb.test`, written that way; one made some other way
                (a test factory) is not in the list this check requires, and
                shows as UNKNOWN-TEST when the results carry it.
-               The build logs: a listed line is passed wherever it appears
-               in a log of a run whose sources hold that file, as often as
-               it appears; a mutant whose edits move a listed line to
+               The build logs: a listed line is passed wherever it appears,
+               in any run's log, as often as it appears, whether or not the
+               run's sources hold that file; a mutant whose edits move a listed line to
                another line number fails as BUILD-LINE, and is written so
                that they do not. What the simulator prints while it RUNS
                (<run>.log) is read by no check. A line of the build log
@@ -85,7 +85,12 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                The limit stops a run, not a test: a bench whose one slow
                test is inside the run's limit passes however slow it is.
                Runs side by side share the container's cores; a limit set
-               close to a run's own time can be passed under load.
+               close to a run's own time can be passed under load. That a
+               stopped run's simulator stops with it rests on the runner
+               killing the run's process group; no control shows it. And
+               when the stage's own clock (LIMIT_MOST) runs out first, the
+               stage is refused DOCKER-TIMEOUT by sim_image, which stops the
+               docker client; whether the container stops too is not shown.
   control      plants the faults listed in plants() and no others. The
                benches' control cuts its copy's manifest down to the
                foundation's own bench, p0-onetap, and plants there: it shows
@@ -116,14 +121,17 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                built from. It plants no image.
                An unreadable evidence line is a finding in a bench's own run
                and in a mutant's.
-               Since P0-3 the benches' control plants three more faults in a
-               second copy and a line in the first: a test that waits
-               forever, under a limit of LIMIT_PLANTED seconds, which must
-               be reported RUN-TIMEOUT by that name; a runner that drops the
-               last run of its list, which must be reported NO-RESULTS; and
-               in the first copy, a line the simulator prints while it
-               builds that the list does not name, which must be reported
-               BUILD-LINE in every run of that profile that left results.
+               Since P0-3 the benches' control plants one more fault in the
+               first copy and three in a second. In the first, a line the
+               simulator prints while it builds that the list does not name,
+               which must be reported BUILD-LINE in every run of that profile
+               that left results. In the second: a test that waits forever,
+               run by the bench's own run and by a mutant's, under a limit
+               of LIMIT_PLANTED seconds, each of which must be reported
+               RUN-TIMEOUT by that name and with that limit; and a runner
+               that drops the last run of its list, which must be reported
+               NO-RESULTS. (Until VP0R3's pass the hang was planted in a
+               bench's own run only, and the limit's value was not read.)
 """
 import argparse
 import ast
@@ -434,8 +442,11 @@ def build_list(root):
         if type(e["file"]) is not str or os.path.isabs(e["file"]) or ".." in e["file"].split("/") \
                 or not os.path.isfile(os.path.join(root, e["file"])):
             bad("%r is not a file of the tree" % (e["file"],))
-        with open(os.path.join(root, e["file"]), encoding="utf-8") as f:
-            count = len(f.read().split("\n"))
+        try:
+            with open(os.path.join(root, e["file"]), encoding="utf-8") as f:
+                count = len(f.read().splitlines())       # a last line end ends the last line; it begins none
+        except UnicodeDecodeError as err:
+            bad("%s is not UTF-8 text: %s" % (e["file"], err))
         if type(e["line"]) is not int or not 1 <= e["line"] <= count:
             bad("%s: line %r is not a line of that file" % (e["file"], e["line"]))
         if type(e["says"]) is not str or not e["says"].strip() or type(e["why"]) is not str or not e["why"].strip():
@@ -768,9 +779,19 @@ def plants(kind, root, scratch):
                          "        harness.start_clock(dut)\n"
                          "        from cocotb.triggers import Event\n"
                          "        await Event().wait()\n" % first, "a")
+        # A mutant whose run asks only for that test: it waits forever too, under the first profile. Its edit
+        # changes nothing; under the second profile the test passes at once, and that run is the last, dropped.
+        write(b, MANIFEST, "\n[[bench.mutant]]\nname = \"planted-hang\"\nfile = \"rtl/p0/onetap.sv\"\n"
+                           "edits = [[\"endmodule\", \"endmodule\"]]\nmust_fail = [\"planted_waits_forever\"]\n"
+                           "kind = \"\"\n", "a")
         edit(b, "rtl/tb/run_benches.py", "    todo = list(runs)\n", "    todo = list(runs)[:-1]\n")
-        last = runs_of([bench])[-1][0]
-        return [(a, want), (b, {"%s.%s" % (bench["name"], first): "RUN-TIMEOUT", last: "NO-RESULTS"})]
+        planted = manifest(b)[0]
+        last = runs_of([planted])[-1][0]
+        if last != "%s.%s.mutant.planted-hang" % (bench["name"], second):
+            raise Refusal("PLANT-DOES-NOT-APPLY: the planted mutant is not the copy's last run")
+        return [(a, want), (b, {"%s.%s" % (bench["name"], first): "RUN-TIMEOUT",
+                                "%s.%s.mutant.planted-hang" % (bench["name"], first): "RUN-TIMEOUT",
+                                last: "NO-RESULTS"})]
     raise Refusal("no control for %s" % kind)
 
 
@@ -801,6 +822,10 @@ def control(kind, root, scratch):
                 said = [what for w, what in findings if w.replace("\\", "/") == where]
                 if not all(what.startswith(name + ":") for what in said):
                     print("control %s: %s was reported, but not as %s: %s" % (kind, where, name, said))
+                    ok = False
+                if name == "RUN-TIMEOUT" and not all("limit of %d s" % LIMIT_PLANTED in what for what in said):
+                    print("control %s: %s was not stopped at the planted limit of %d s: %s"
+                          % (kind, where, LIMIT_PLANTED, said))
                     ok = False
     if ok:
         print("CONTROL-DETECTED %s all %d planted fault(s), nothing else" % (kind, total))
