@@ -8,15 +8,29 @@ This file holds the third:
      The trainer and the refusals import with `model` and `spec` blocked too.
   3. Read as source: `learn/` imports only what is listed here; from the model it takes three
      names, `weights.quantise`, `weights.pack` and `weights.unpack`; it reads no private name off
-     anything but `self`; and it never names the pulse or the parts that make the stream. So the
-     learner cannot look the pulse up, and cannot read the injector.
+     anything but `self`; it never names the pulse or the parts that make the stream; and it names
+     no built-in that opens a file or runs text, and no reader of a file.
 
-The control plants six faults, one at a time, in a copy, and each must be reported where it is.
+So `learn/` does not import the pulse, does not name it, and does not open the file it is kept in,
+by any of the ways this test lists. That is a reading of names. It is not a wall, and it does not
+show that the learner CANNOT look the pulse up.
 
-WHAT THIS CANNOT SEE (stated limits): what `independence` cannot see either. An import made by a
-computed name or through `exec`; a module loaded by path; a file copied in. Check 3 reads names,
-so the pulse's samples typed in as numbers would pass it. And this is a test inside `model-tests`,
-not a stage of the gate with a planted copy of the whole tree.
+The first control plants six faults, one at a time, in a copy, and each must be reported where it
+is. The second plants five ways of reading the pulse's own file with no import of this project,
+the round's verifier's among them: it put a function into the trainer that opens
+spec/pulses/e0.toml by path, and this test, as it then stood, passed.
+
+WHAT THIS CANNOT SEE (stated limits): what `independence` cannot see either. A module loaded by
+path; a file copied in. And, because check 3 reads names against lists:
+  - a file read through a function the lists do not name. They hold the built-in `open`, numpy's
+    readers of text and binary files, and the methods `read`, `readline`, `readlines`,
+    `read_text` and `read_bytes`. A reader of another name, in numpy or in a module the import
+    list lets in, passes;
+  - a name reached without being written, by a road the lists do not name, or through an object
+    a caller hands in. `getattr`, `globals`, `vars`, `__builtins__`, `__dict__`, `__globals__`
+    and `__getattribute__` are refused by name; that is a list too;
+  - the pulse's samples typed in as numbers, or worked out by arithmetic.
+And this is a test inside `model-tests`, not a stage of the gate with a planted copy of the tree.
 """
 import ast
 import os
@@ -86,6 +100,13 @@ MAY_IMPORT = {
 }
 FROM_THE_MODEL = {"quantise", "pack", "unpack"}
 NEVER_NAMED = {"PULSES", "PULSE_IDS", "scaled_pulse", "matched_filter", "inject", "source", "detector", "run"}
+# The pulse is also a data file, spec/pulses/e0.toml, and reading a file needs no import at all. So
+# nothing in learn/ may name a built-in that opens a file or runs text, or one that reaches a name by
+# a string; and nothing may call a reader by these names off anything, numpy among them.
+NO_BUILTIN = {"open", "exec", "eval", "compile", "__import__", "__builtins__", "globals", "vars", "getattr"}
+NO_READER = {"open", "load", "loadtxt", "genfromtxt", "fromfile", "fromregex", "memmap",
+             "read", "readline", "readlines", "read_text", "read_bytes",
+             "__dict__", "__globals__", "__builtins__", "__getattribute__"}
 
 
 def blocked_imports(root):
@@ -140,8 +161,12 @@ def source_findings(root):
                         findings.add((rel, "reads the private name %s" % node.attr))
                     if node.attr in NEVER_NAMED:
                         findings.add((rel, "names %s" % node.attr))
+                    if node.attr in NO_READER:
+                        findings.add((rel, "names the reader %s" % node.attr))
                 elif isinstance(node, ast.Name) and node.id in NEVER_NAMED:
                     findings.add((rel, "names %s" % node.id))
+                elif isinstance(node, ast.Name) and node.id in NO_BUILTIN:
+                    findings.add((rel, "names the built-in %s" % node.id))
                 elif isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in NEVER_NAMED:
                     findings.add((rel, "names %s" % node.name))
     return findings
@@ -214,3 +239,44 @@ def test_lrn_a_boundaries_control__six_planted_faults_are_each_reported_where_th
         got = everything(str(root))
         print("CONTROL boundaries, %s: reported %s" % (what, sorted(got)))
         assert got == want, what
+
+
+def test_lrn_a_boundaries_control__the_pulse_reached_with_no_import_of_this_project_is_reported(tmp_path):
+    """Five ways to the pulse that need no import statement naming this project, each planted alone.
+
+    The first is the round's verifier's (VLRNA, 2026-11-23): a function in the trainer that opens the
+    pulse's own file by path. With that function planted, this file's tests passed, 3 of 3, as they
+    then stood. The check that sees it reads names against lists; the docstring at the top says
+    what the lists leave out."""
+    T, H = "learn/trainer.py", "learn/handover.py"
+    plants = (
+        ("the pulse's file opened by path", T,
+         "\n\ndef planted():\n    with open(\"spec/pulses/e0.toml\") as f:\n"
+         "        return [int(v) for v in f.read().replace(\",\", \" \").split() if v.lstrip(\"-\").isdigit()]\n",
+         {(T, "names the built-in open"), (T, "names the reader read")}),
+        ("the pulse's file read by numpy", T,
+         "\n\ndef planted():\n    return np.fromregex(\"spec/pulses/e0.toml\", \"(-?[0-9]+)\", [(\"v\", np.int64)])\n",
+         {(T, "names the reader fromregex")}),
+        ("an import run as text", T,
+         "\n\ndef planted():\n    scope = {}\n    exec(\"from spec.constants import PULSES as p\", scope)\n    return scope[\"p\"]\n",
+         {(T, "names the built-in exec")}),
+        ("an import by a computed name", T,
+         "\n\ndef planted():\n    return __import__(\"spec.\" + \"constants\").constants.__dict__[\"PUL\" + \"SES\"]\n",
+         {(T, "names the built-in __import__"), (T, "names the reader __dict__")}),
+        ("the pulse's name put together at run time", H,
+         "\n\ndef planted():\n    return getattr(C, \"PUL\" + \"SES\")\n",
+         {(H, "names the built-in getattr")}),
+    )
+    assert len(plants) == 5 and source_findings(ROOT) == set()
+    for what, name, text, want in plants:
+        root = tmp_path / ("copy%d" % len(os.listdir(tmp_path)))
+        shutil.copytree(os.path.join(ROOT, "learn"), root / "learn", ignore=shutil.ignore_patterns("__pycache__"))
+        assert source_findings(str(root)) == set(), "the copy is clean before the fault"
+        with open(os.path.join(root, name), "a", encoding="utf-8", newline="") as f:
+            f.write(text)
+        got = source_findings(str(root))
+        print("CONTROL boundaries, %s: reported %s" % (what, sorted(got)))
+        assert got == want, what
+    # and the lists are about names learn/ could otherwise use: each built-in on the list exists
+    import builtins
+    assert all(hasattr(builtins, name) or name == "__builtins__" for name in NO_BUILTIN)
