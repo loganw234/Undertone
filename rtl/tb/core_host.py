@@ -7,8 +7,13 @@ configures nothing. This file is that work, for rtl/core/core.sv:
     `spec.constants.REGISTERS`; no offset is typed here;
   - `load`, which does what a host library would: unpacks the blob with the
     model's own `unpack` (the hash, the format, the shape), writes the shape,
-    `configure`, the weight words in the blob's order, `start`;
+    `configure`, the weight words in the blob's order, `start`; and then
+    requires that no refusal is latched and that the status says the core runs;
   - `write_shadow` and `commit`, the store's two operations;
+  - `plain_shape` and `try_configure`, a shape as the control block's bare
+    numbers, for what no blob can say (a shape the model would never pack);
+  - `taken`, which waits for the edge that takes the n-th frame, so that a
+    write can be landed at a chosen edge of a running stream;
   - `Scripted`, the model core with the model's own calls made before the
     frames they are scripted for, for an operation in the middle of a stream;
   - `Watch`, a count of the design's records over a whole test, because the

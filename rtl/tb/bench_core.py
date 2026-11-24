@@ -4,7 +4,8 @@ It runs once under each profile, on the top the manifest names. It reads what
 the build can hold from the capability registers, so the same tests run on the
 small top and on the definition's maxima.
 
-The tests that hold the core against the model, each through `harness.compare`:
+Fifteen tests. SEVEN ARE THE IDENTITY TESTS the manifest names, each holding the core
+against the model through `harness.compare`:
 
   bit_identity_random          seeded shapes inside the build's maxima, weights and samples over
                                their whole ranges: no hidden layer, one unit, the build's most
@@ -16,20 +17,36 @@ The tests that hold the core against the model, each through `harness.compare`:
   bit_identity_swap_on_the_edge  the one place where the fabric's order is a choice: a commit
                                whose write lands at the edge that takes frame n-1 and names
                                index n, on an unbroken stream. The swap is at the next clock
+  bit_identity_swap_at_zero    a commit at index 0, at five pools of 2 and more: no output is
+                               marked as settling
   bit_identity_extremes        the build's own true extremes, in full, by real frames: every
                                sample and weight at its lowest at every maximum; the stream that
                                puts a hidden sum at exactly the lowest value the field holds; the
-                               score's own boundary; and a flag that must stay when the sums
-                               come back into range
+                               score's own boundary; a flag that must stay when the sums come
+                               back into range; and the flag from each hidden unit alone
   bit_identity_counters        the epoch across 2^8, 2^16, 2^31 and to its last value, by the
                                start epoch; the index across 2^16, 2^32 and 2^63 by a state the
-                               bench writes into the simulator and into the model alike
+                               bench writes into the simulator and into the model alike; and a
+                               stream longer than the build's largest pool
 
-One test states the latency. One holds the shadow's closing and opening at both
-edges, and three orders of a write and a frame. The rest are the controls on
-the MODEL side: each hands `harness.compare` a model that is wrong in one place
-and requires a Mismatch at the record this file predicts. The controls on the
-RTL side are the mutants in benches.toml.
+FIVE MORE are not identity tests; where they hold a register word it goes through
+`harness.hold`:
+
+  latency_is_eleven_clocks     the latency the RTL states
+  shadow_closes_and_opens      a shadow write is refused at the last clock a frame of the old
+                               set still has weights to read, and taken at the next
+  commit_orders                the commits the store must refuse: a second one while one is
+                               scheduled, a shadow write between a commit and its index, one
+                               while outputs still mix, one below the next index, and one that
+                               names the frame taken at its own edge
+  commit_at_reads_back         both words of `commit_at`, with an index of 2^32 and more
+  swap_epoch_on_the_edge       SWAP_EPOCH for a commit whose write lands at the edge of the swap
+                               that reaches the last epoch
+
+THE LAST THREE are the controls on the MODEL side, `control_model_coefficient_bit`,
+`control_model_commit_late` and `control_model_head_weights`: each hands `harness.compare`
+a model that is wrong in one place and requires a Mismatch at the record this file
+predicts. The controls on the RTL side are the mutants in benches.toml.
 
 WHAT THIS BENCH CANNOT SEE is docs/rtl/core.md's list of limits. Two belong
 here: a shape the seeded generator never draws is not run; and where the bench

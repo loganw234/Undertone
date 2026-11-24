@@ -7,19 +7,25 @@ and a bound are the definition's own, so this bench holds each against
   identity_block_reads_back     all fifteen registers of the read-only block against the package's
                                 Python copy; `spec_hash` as eight words, the lowest first: the
                                 convention docs/rtl/README.md's limit 9 says nothing held
-  widths_are_the_models         every stage's elaborated width against `detector.widths` and
-                                `detector.hidden_widths`
-  bounds_are_the_models         one past each of the definition's maxima is refused by the core
-                                under the name the model's own `pack` refuses it under
-  bit_identity_largest_shape    THE IDENTITY TESTS. The largest shape: every row, every tap, every
-                                hidden unit, every weight drawn over its whole range
+  widths_are_the_models         nine elaborated stage widths against `detector.widths` and
+                                `detector.hidden_widths` (the row sum's is not among them: the
+                                model has no width of that name)
+  bounds_are_the_models         one past each of six of the definition's maxima is refused by the
+                                core under the name the model's own `pack` refuses it under, and
+                                exactly at each the shape is taken
+  bit_identity_largest_shape    THE THREE IDENTITY TESTS. The largest shape, every row and every
+                                tap, with every hidden unit and then with none, every weight drawn
+                                over its whole range, each with a swap to other weights
   bit_identity_boundaries       the two widths that are a choice, at their boundary, by short real
                                 runs: a hidden sum of exactly the lowest value the field holds
-                                fits; one tap more does not, wraps, and the flag rises and stays
-                                across a swap
+                                fits; a pool twice as long holds more than the field can, the value
+                                wraps and the flag rises and stays, across a swap; two units' sum
+                                does not fit the score; between folds the lowest value to one past
+                                the field's highest
   bit_identity_written_extremes the true extremes at the definition's maxima, from a state the
                                 bench WRITES into the model and into the simulator alike, with four
-                                real frames stepped from it, under each head
+                                real frames stepped from it under three shapes: every head weight
+                                at its lowest, one head weight alone, every unit with abs between
   latency_is_eleven_clocks      the latency does not follow the build's size
 
 WHAT THIS BENCH DOES NOT DO: the model's run at the true extremes, 65,663 frames with a pool of
