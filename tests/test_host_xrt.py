@@ -2,9 +2,12 @@
 
 WHAT THIS HOLDS, with a fake shim in place of host/xrt_shim.cpp, which keeps a
 HOST copy and a DEVICE copy of every buffer, as XRT does:
-  - Fetch synchronises from the device and then reads, over the same bytes;
-    so a record the device holds is what comes back, and not the host's stale
-    copy. Fill writes and then synchronises to the device.
+  - Fetch synchronises from the device and then reads; so a record the device
+    holds is what comes back, and not the host's stale copy. Fill writes and
+    then synchronises to the device. Every sync is of [0, offset + size), from
+    the buffer's first byte, and a Fetch past the library's guard hands back
+    every slot under either reading of XRT's sync: the documented one, and the
+    one the lead measured under hw_emu (data/BUILD/hwemu_probe_sync.txt).
   - Read, Write and WriteMany reach the shim's register calls as given, a batch
     in one call, in order; Allocate hands back the shim's address; the memory
     group asked of `open` is the override, or -1 for "find it in the image";
@@ -13,9 +16,12 @@ HOST copy and a DEVICE copy of every buffer, as XRT does:
     ctypes layer turns a non-zero return into one with the shim's message.
   - `close` frees every buffer it allocated, then the device.
 
-ITS CONTROL. A backend whose Fetch reads before it synchronises, made here, hands
+ITS CONTROLS. A backend whose Fetch reads before it synchronises, made here, hands
 back the host's copy, the library's pattern, where the device holds a record:
-the check above reports it.
+the check above reports it. A backend that syncs at the Fetch's own offset (the
+first form) loses the last slots under the emulation's reading, and one that
+syncs one slot short of offset + size loses the last slot under either: each
+is reported.
 
 WHAT IT DOES NOT HOLD: anything of XRT. The shim has never been compiled by its
 author; whether XRT does what its calls say is the lead's to see under hardware
@@ -30,10 +36,23 @@ from host import ops
 
 
 class FakeShim:
-    def __init__(self, fail=None):
-        self.calls, self.fail = [], fail or set()
+    """`reading` is how a sync of (at, size) is taken: "documented", [at, at + size); or "emulation", what the
+    lead's probe measured under hw_emu on XRT 2.14 (data/BUILD/hwemu_probe_sync.txt, 15:03): [at, size) moved;
+    from the device, the host's [size, at + size) zeroed; to the device, the device's left as it was."""
+
+    def __init__(self, fail=None, reading="documented"):
+        self.calls, self.fail, self.reading = [], fail or set(), reading
         self.registers, self.host, self.device = {}, {}, {}
         self.freed, self.closed = [], False
+
+    def _sync(self, source, dest, at, size, from_device):
+        if self.reading == "documented":
+            dest[at:at + size] = source[at:at + size]
+        else:
+            dest[at:size] = source[at:size]
+            if from_device:
+                zero_from = max(at, size)
+                dest[zero_from:at + size] = bytes(max(0, at + size - zero_from))
 
     def _log(self, name, *args):
         self.calls.append((name,) + args)
@@ -73,11 +92,11 @@ class FakeShim:
 
     def bo_sync_to(self, handle, bo, at, size):
         self._log("bo_sync_to", bo, at, size)
-        self.device[bo][at:at + size] = self.host[bo][at:at + size]
+        self._sync(self.host[bo], self.device[bo], at, size, from_device=False)
 
     def bo_sync_from(self, handle, bo, at, size):
         self._log("bo_sync_from", bo, at, size)
-        self.host[bo][at:at + size] = self.device[bo][at:at + size]
+        self._sync(self.device[bo], self.host[bo], at, size, from_device=True)
 
     def bo_read(self, handle, bo, at, size):
         self._log("bo_read", bo, at, size)
@@ -102,12 +121,57 @@ def fetched_after_the_device_wrote(b, shim):
 
 
 def test_host_xrt_fetch_and_fill_keep_the_buffer_honest():
-    b, shim = backend()
-    assert fetched_after_the_device_wrote(b, shim)
-    names = [c[0] for c in shim.calls]
-    assert names[-2:] == ["bo_sync_from", "bo_read"] and shim.calls[-2][2:] == shim.calls[-1][2:] == (32, 32)
-    fill = names.index("bo_write")
-    assert names[fill + 1] == "bo_sync_to" and shim.calls[fill][2:] == (0, 64) and shim.calls[fill + 1][2:] == (0, 64)
+    for reading in ("documented", "emulation"):
+        b, shim = backend(FakeShim(reading=reading))
+        assert fetched_after_the_device_wrote(b, shim), reading
+        names = [c[0] for c in shim.calls]
+        # Every sync from the buffer's first byte to the end of what is asked: [0, offset + size).
+        assert names[-2:] == ["bo_sync_from", "bo_read"] and shim.calls[-2][2:] == (0, 64) and shim.calls[-1][2:] == (32, 32)
+        fill = names.index("bo_write")
+        assert names[fill + 1] == "bo_sync_to" and shim.calls[fill][2:] == (0, 64) and shim.calls[fill + 1][2:] == (0, 64)
+
+
+GUARD, SLOTS = 3968, 4096          # the lead's probe: a buffer of 3,968 + 131,072 = 135,040 bytes
+
+
+def fetched_past_the_guard(b, shim):
+    """The check of the emulation's finding: the library's guard and slots filled with the pattern, the device then
+    writes every slot, and a Fetch at the guard's offset must hand back every slot's bytes, the last included."""
+    buf = b.do(ops.Allocate(GUARD + SLOTS * 32))
+    b.do(ops.Fill(buf, 0, bytes([0xA5]) * (GUARD + SLOTS * 32)))
+    written = bytes((i * 7) % 251 + 1 for i in range(SLOTS * 32))
+    shim.device[buf.handle][GUARD:GUARD + SLOTS * 32] = written
+    return b.do(ops.Fetch(buf, GUARD, SLOTS * 32)) == written
+
+
+def test_host_xrt_a_fetch_past_the_guard_under_either_reading_of_sync():
+    for reading in ("documented", "emulation"):
+        b, shim = backend(FakeShim(reading=reading))
+        assert fetched_past_the_guard(b, shim), reading
+
+
+def test_host_xrt_control_a_sync_at_the_offset_or_short_of_its_end_is_seen():
+    """Two backends, each seen: the first form's sync at the Fetch's own offset (under the emulation's reading its
+    last 124 slots read as zeros, as the lead's run did), and a sync that stops one slot short of offset + size
+    (under either reading its last slot is stale)."""
+    class AtTheOffset(X.Backend):
+        def do(self, op):
+            if type(op) is ops.Fetch:
+                self.shim.bo_sync_from(self.handle, op.buffer.handle, op.offset, op.size)
+                return self.shim.bo_read(self.handle, op.buffer.handle, op.offset, op.size)
+            return super().do(op)
+
+    class OneSlotShort(X.Backend):
+        def do(self, op):
+            if type(op) is ops.Fetch:
+                self.shim.bo_sync_from(self.handle, op.buffer.handle, 0, op.offset + op.size - 32)
+                return self.shim.bo_read(self.handle, op.buffer.handle, op.offset, op.size)
+            return super().do(op)
+    shim = FakeShim(reading="emulation")
+    assert not fetched_past_the_guard(AtTheOffset("image.xclbin", shim=shim), shim)
+    for reading in ("documented", "emulation"):
+        shim = FakeShim(reading=reading)
+        assert not fetched_past_the_guard(OneSlotShort("image.xclbin", shim=shim), shim), reading
 
 
 def test_host_xrt_control_a_backend_that_reads_before_it_syncs_is_seen():
