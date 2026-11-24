@@ -239,6 +239,8 @@ The ninth was planted to show limit 4, and it passed `identity_small`, as that l
 
 `hw/link.cfg` is one compute unit, its master to `HBM[0]`; the clock is the build's to ask.
 
+**The first link for the card failed in placement** (the lead's, 2026-11-24, on 955284c; the round's ledger, `lead.md`). Synthesis had made the core's sum of a row's 128 products (`rtl/core/core.sv`, stage s3) one cascade of DSP blocks through their PCIN ports, and Vivado could not place it: "The height of the device or SLR DSP column is 110 DSPs". The kernel's synthesis used 729 DSPs and 324,425 LUTs. The lead added `[vivado]` to `hw/link.cfg`: the kernel synthesis run's `CASCADE_DSP` set to `tree`, which builds a sum of DSP outputs from adders in the fabric. The RTL is unchanged; whether that link closes, and at what clock, is the build's record.
+
 **The first packaging failed** (K20). The lead ran `hw/package_kernel.tcl` with Vivado 2022.2 on commit 29c843b. Vivado's IP packager read every port width and parameter default written with the package's names (`undertone_pkg::BUS_ADDRESS_BITS`, `undertone_pkg::MAX_POOL`) as a parameter named `undertone_pkg`. `ipx::package_project` failed, with 16 errors on eight ports, the address block and three defaults, and no `.xo` was made.
 
 So **the top's parameter list and port list now hold plain numbers only**:

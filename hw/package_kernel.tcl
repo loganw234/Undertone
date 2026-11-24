@@ -20,14 +20,12 @@
 #   - ONE MASTER, m_axi_gmem, and the slave s_axi_control; the control protocol
 #     is user-managed, carried by hw/kernel.xml.
 #
-# NOTHING HAS RUN THIS SCRIPT. It is the lead's, in BUILD, on a machine with
-# Vivado; this parcel has no Vivado (its brief). What nothing has checked: that
-# Vivado elaborates these files (only Icarus Verilog 12.0 has read them); that
-# the packager infers the two interfaces from the port names; that package_xo
-# takes the user-managed protocol from the XML (the lead's emulation trial of
-# 2026-11-24 saw it do so for another kernel); that the read channels tied off
-# are what v++ wants of a master that only writes; the clock, which the build
-# asks for.
+# Written by parcel KRNL, which had no Vivado (its brief). The lead has since
+# run it with Vivado 2022.2, in BUILD (docs/rtl/krnl.md, K20 and the paragraph
+# on the first link): it failed once (K20) and has packaged since, and v++
+# linked what it packaged for emulation. The first link for the card
+# synthesised it and failed in placement, for the reason hw/link.cfg gives. What this script's runs do not say: the clock, which the build asks
+# for and the build's own timing summary reports.
 
 set part      "xcu50-fsvh2104-2-e"
 set build_dir "build"
