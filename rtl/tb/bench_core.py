@@ -313,7 +313,20 @@ async def bit_identity_extremes(dut):
     core = await fresh(dut, blob)
     total += (await run(dut, core, frames, "bit_identity_extremes", "the flag stays when the sums come back", gap_seed=4,
                         max_gap=1)).count
-    assert total == (taps + pool + 2) + 2 * (t + p + 2) + 1 + 2 * (t + p + 2) + (2 * t + 2 * p + 9), total
+
+    # 5. The flag from a unit that is NOT unit 0, and that the score cannot show. Unit 0's weights are all
+    #    zero; unit 1's are at their lowest, one tap past the boundary, under a head weight of ZERO. The
+    #    score is 0 at every output; the flag rises when unit 1's value stops fitting, and stays. (Added
+    #    after the verifier's fault: a core whose flag only unit 0 could raise passed everything above.)
+    assert units >= 2
+    blob = weights.pack(PROFILE, all_low(one_row, t + 1), [1, 0], PASS, p, 0, [[0] * k, [C.COEFF_MIN] * k], 0, PASS)
+    frames = [low] * (t + p + 3)
+    said = list(Core(blob).run(frames))
+    assert said[0]["flags"] == 0 and said[-1]["flags"] == flag and all(r["score"] == 0 for r in said), said[-1]
+    core = await fresh(dut, blob)
+    total += (await run(dut, core, frames, "bit_identity_extremes", "the flag from a unit the score does not show", gap_seed=5,
+                        max_gap=1)).count
+    assert total == (taps + pool + 2) + 2 * (t + p + 2) + 1 + 2 * (t + p + 2) + (2 * t + 2 * p + 9) + (t + p + 3), total
     await host.all_seen()
 
 
@@ -483,6 +496,101 @@ async def commit_orders(dut):
     await task
     host.hold_words(test, "that commit's refusal", [await host.take_refusal(dut)], [host.code(name)])
     assert name == "SWAP_INDEX"
+    await host.all_seen()
+
+
+# ------------------------------------------------------------------ four holes the verifier found, each now held
+
+@cocotb.test()
+async def commit_at_reads_back(dut):
+    """`commit_at` is two words and reads back the index that is scheduled: its lower word AND its upper
+    word, with an index of 2^32 and more scheduled so that the two differ; and zero when none is. The
+    expected words are what the model's store holds for the commit."""
+    caps = await begin(dut)
+    rng = random.Random(SEED + 1100)
+    test = "commit_at_reads_back"
+    blob = host.random_blob(rng, PROFILE, caps, hidden=0, pool=1)
+    for at in ((1 << host.WORD_BITS) + 5, (0x300 << host.WORD_BITS) | 0x89ABCDEF):
+        core = await fresh(dut, blob)
+        assert core.store._at is None
+        seen = [await host.read(dut, "commit_at", 0), await host.read(dut, "commit_at", 1)]
+        host.hold_words(test, "no commit is scheduled", seen, [0, 0])
+        await host.commit(dut, at)
+        core.commit(at)
+        assert await quiet_refusal(dut) is None
+        held = core.store._at                            # the index the model's store holds for the pending swap
+        seen = [await host.read(dut, "commit_at", 0), await host.read(dut, "commit_at", 1)]
+        host.hold_words(test, "a commit at %d: the lower word, the upper word" % at, seen,
+                        [held & host.WORD_MASK, held >> host.WORD_BITS])
+        assert seen[0] != seen[1]
+    await host.all_seen()
+
+
+@cocotb.test()
+async def bit_identity_swap_at_zero(dut):
+    """A commit at index 0, with a pool of 2 and more: the swap is before the first output, no value was
+    made under the old set, and NO output is marked as settling (model/weights.py, Store.step: the mixed
+    outputs exist only when the index is at least 1). Every record carries the new epoch from the first."""
+    caps = await begin(dut)
+    rng = random.Random(SEED + 1200)
+    settling = 1 << C.FLAGS["settling"]
+    total = 0
+    for n, (pool, hidden) in enumerate(((2, 0), (5, 2), (3, 1))):
+        blob = host.random_blob(rng, PROFILE, caps, hidden=min(hidden, caps["cap_hidden"]), pool=pool)
+        other = host.reweighted(rng, blob)
+        frames = host.random_frames(rng, PROFILE, 30)
+        twin = Core(blob, 60 + n)
+        twin.write_shadow(other)
+        twin.commit(0)
+        said = [twin.step(f) for f in frames]
+        assert all(r["epoch"] == 61 + n and not r["flags"] & settling for r in said), "the model marks no output"
+        core = await fresh(dut, blob, 60 + n)
+        await host.write_shadow(dut, other)
+        core.write_shadow(other)
+        await host.commit(dut, 0)
+        core.commit(0)
+        assert await quiet_refusal(dut) is None
+        total += (await run(dut, core, frames, "bit_identity_swap_at_zero", "pool %d, %d hidden unit(s)" % (pool, hidden),
+                            gap_seed=n)).count
+    assert total == 3 * 30, total
+    await host.all_seen()
+
+
+@cocotb.test()
+async def swap_epoch_on_the_edge(dut):
+    """A write is ordered after a frame at its edge, for SWAP_EPOCH as for SWAP_INDEX. The core starts one
+    below the last epoch with a swap scheduled at index 5. On an unbroken stream a second commit's upper
+    word lands at the very edge that takes frame 5: the frame's swap comes first, the epoch is then the
+    last its field holds, and the commit is refused, SWAP_EPOCH, as the model refuses it after step 5.
+    A core that read the epoch before the frame would take it, and wrap the epoch to 0 at its index."""
+    caps = await begin(dut)
+    rng = random.Random(SEED + 1300)
+    test = "swap_epoch_on_the_edge"
+    blob = host.random_blob(rng, PROFILE, caps, hidden=1, pool=1)
+    other = host.reweighted(rng, blob)
+    frames = host.random_frames(rng, PROFILE, 40)
+    core = await fresh(dut, blob, EPOCH_MAX - 1)
+    await host.write_shadow(dut, other)
+    core.write_shadow(other)
+    await host.commit(dut, 5)
+    core.commit(5)
+    assert await quiet_refusal(dut) is None
+
+    async def writer():
+        await host.taken(dut, 4)                         # the edge that took frame 3 has passed
+        await host.write_many(dut, host.commit_pairs(20))   # the lower word with frame 4, the upper with frame 5
+
+    twin = Core(blob, EPOCH_MAX - 1)
+    twin.write_shadow(other)
+    twin.commit(5)
+    for frame in frames[:6]:
+        twin.step(frame)
+    name = model_refusal(twin.commit, 20)                # the model, asked after step 5
+    assert name == "SWAP_EPOCH"
+    task = cocotb.start_soon(writer())
+    await run(dut, core, frames, test, "a commit at the edge of the swap that reaches the last epoch", max_gap=0)
+    await task
+    host.hold_words(test, "that commit's refusal", [await host.take_refusal(dut)], [host.code(name)])
     await host.all_seen()
 
 

@@ -124,7 +124,7 @@ toplevel = "core_small"
 sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
 module = "bench_core"
 profiles = ["s16x1"]
-identity = ["bit_identity_random", "bit_identity_every_tap", "bit_identity_swap", "bit_identity_swap_on_the_edge", "bit_identity_extremes", "bit_identity_counters"]
+identity = ["bit_identity_random", "bit_identity_every_tap", "bit_identity_swap", "bit_identity_swap_on_the_edge", "bit_identity_swap_at_zero", "bit_identity_extremes", "bit_identity_counters"]
 
 # One flipped coefficient bit in the RTL, on the shape where every tap reaches the score: the lowest
 # bit of row 0's newest-sample coefficient. (The top bit of another is under the other profile.)
@@ -286,13 +286,31 @@ edits = [
 must_fail = ["bit_identity_random"]
 kind = "COUNT"
 
+# ---- the verifier's holes: a fault that passed every gate of the parcel's first commits ----
+
+# A read of `commit_at`'s upper word that answers its lower word.
+[[bench.mutant]]
+name = "commit-at-upper-reads-lower"
+file = "rtl/core/core.sv"
+edits = [["reg_rdata <= commit_valid ? commit_at[2*WORD-1:WORD] : {WORD{1'b0}};", "reg_rdata <= commit_valid ? commit_at[WORD-1:0] : {WORD{1'b0}};"]]
+must_fail = ["commit_at_reads_back"]
+kind = "WORD"
+
+# The overflow flag raised only by hidden unit 0.
+[[bench.mutant]]
+name = "overflow-from-unit-zero-only"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1])", "if ((j == 0) && !((&us[W_HEADX-1:W_HID-1])"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
 [[bench]]
 name = "core-s24x3"
 toplevel = "core_small"
 sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
 module = "bench_core"
 profiles = ["s24x3"]
-identity = ["bit_identity_random", "bit_identity_every_tap", "bit_identity_swap", "bit_identity_swap_on_the_edge", "bit_identity_extremes", "bit_identity_counters"]
+identity = ["bit_identity_random", "bit_identity_every_tap", "bit_identity_swap", "bit_identity_swap_on_the_edge", "bit_identity_swap_at_zero", "bit_identity_extremes", "bit_identity_counters"]
 
 # One flipped coefficient bit: the top bit of the coefficient one sample back, in row 1, which under
 # this profile is the first filter's second channel.
@@ -433,6 +451,27 @@ file = "rtl/core/core.sv"
 edits = [["out_valid <= vld[ST_H4];", "out_valid <= vld[ST_H4] || (reg_valid && reg_we && (reg_addr == REG_COMMIT_AT_OFFSET + WBYTES));"]]
 must_fail = ["bit_identity_swap"]
 kind = ''
+
+# ---- the verifier's holes: a fault that passed every gate of the parcel's first commits ----
+
+# A commit at index 0 that marks settling: the model marks none there, whatever the pool.
+[[bench.mutant]]
+name = "settling-at-index-zero"
+file = "rtl/core/core.sv"
+edits = [
+    ["((next_index != 0) && (cfg_pool >= 2)) : (settle_left != 0);", "(cfg_pool >= 2) : (settle_left != 0);"],
+    ["settle_n = ((next_index != 0) && (cfg_pool >= 2)) ? (cfg_pool - 2) : 0;", "settle_n = (cfg_pool >= 2) ? (cfg_pool - 2) : 0;"],
+]
+must_fail = ["bit_identity_swap_at_zero"]
+kind = "WORD"
+
+# SWAP_EPOCH that reads the epoch before a frame taken at the write's own edge.
+[[bench.mutant]]
+name = "swap-epoch-before-the-frame"
+file = "rtl/core/core.sv"
+edits = [["w_chi && (&epoch_n);", "w_chi && (&epoch);"]]
+must_fail = ["swap_epoch_on_the_edge"]
+kind = "WORD"
 
 # The control block on the small top, where no capability is the definition's own.
 [[bench]]
