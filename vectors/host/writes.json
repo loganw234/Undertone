@@ -1,0 +1,74 @@
+{
+ "about": "The operations the host library must make for four small calls, worked by hand by parcel HOST on 2026-11-24 from the blob format (model/weights.py's docstring), the register map (spec/undertone.toml) and docs/host/host.md section 3, and NOT by running the library or the model. Registers are named, with the word of a wide row (0 its lowest); the test turns a name into an offset with spec/constants.py. An operation is [\"Read\", register, word], [\"Write\", register, word, value], [\"WriteMany\", [[register, word, value], ...]], [\"Allocate\", bytes] or [\"Fill\", offset, bytes, the byte]. The sums: a negative weight is written as its 32-bit two's complement, so -1 is 4294967295, -2 is 4294967294, -3 is 4294967293 and -6 is 4294967290. 2^32 + 5 = 4294967301 is the words 5 and 1; 2^32 + 2 = 4294967298 the words 2 and 1; 2^62 = 4611686018427387904 the words 0 and 2^30 = 1073741824; 2^63 = 9223372036854775808. A blob's words are its rows (each filter's channels in order, oldest coefficient first), then its hidden units, then its head: configure is their count. Under s24x3 a filter reading channels 0 and 2 has the mask 1 + 4 = 5. A run of 70 frames has 70 x 32 = 2240 bytes of slots after a guard of 124 x 32 = 3968, 6208 in all, filled with the byte 0xA5 = 165; the fake backend's first buffer is at 65536, so krn_buffer is 65536 + 3968 = 69504. Before a run the four refusal registers are read in the chain's order: the source's, the injector's, the core's, the kernel's.",
+ "load_v1": {
+  "blob": {"profile": "s16x1", "filters": [{"0": [3, -2]}], "head": [1], "rectifier": 0, "pool": 1, "score_shift": 0},
+  "epoch": 4,
+  "ops": [
+   ["Read", "refusal", 0],
+   ["WriteMany", [["shape_sample_bits", 0, 16], ["shape_channels", 0, 1], ["shape_filters", 0, 1], ["shape_taps", 0, 2],
+                  ["shape_rectifier", 0, 0], ["shape_score_shift", 0, 0], ["shape_pool", 0, 1], ["shape_hidden", 0, 0],
+                  ["shape_hidden_shift", 0, 0], ["shape_between", 0, 0], ["shape_masks", 0, 1], ["configure", 0, 3]]],
+   ["Read", "refusal", 0],
+   ["WriteMany", [["shadow_data", 0, 3], ["shadow_data", 0, 4294967294], ["shadow_data", 0, 1], ["start", 0, 4]]],
+   ["Read", "refusal", 0]
+  ]
+ },
+ "load_v2": {
+  "blob": {"profile": "s24x3", "filters": [{"0": [5], "2": [-6]}], "head": [7], "rectifier": 1, "pool": 3, "score_shift": 9,
+           "hidden": [[-1]], "hidden_shift": 2, "between": 1},
+  "epoch": 0,
+  "ops": [
+   ["Read", "refusal", 0],
+   ["WriteMany", [["shape_sample_bits", 0, 24], ["shape_channels", 0, 3], ["shape_filters", 0, 1], ["shape_taps", 0, 1],
+                  ["shape_rectifier", 0, 1], ["shape_score_shift", 0, 9], ["shape_pool", 0, 3], ["shape_hidden", 0, 1],
+                  ["shape_hidden_shift", 0, 2], ["shape_between", 0, 1], ["shape_masks", 0, 5], ["configure", 0, 4]]],
+   ["Read", "refusal", 0],
+   ["WriteMany", [["shadow_data", 0, 5], ["shadow_data", 0, 4294967290], ["shadow_data", 0, 4294967295], ["shadow_data", 0, 7],
+                  ["start", 0, 0]]],
+   ["Read", "refusal", 0]
+  ]
+ },
+ "swap_v1": {
+  "after": "load_v1",
+  "blob": {"profile": "s16x1", "filters": [{"0": [-1, 2]}], "head": [-3], "rectifier": 0, "pool": 1, "score_shift": 0},
+  "at": 4294967301,
+  "ops": [
+   ["Read", "refusal", 0],
+   ["Read", "next_index", 0],
+   ["Read", "next_index", 1],
+   ["WriteMany", [["shadow_begin", 0, 3], ["shadow_data", 0, 4294967295], ["shadow_data", 0, 2], ["shadow_data", 0, 4294967293]]],
+   ["Read", "refusal", 0],
+   ["WriteMany", [["commit_at", 0, 5], ["commit_at", 1, 1]]],
+   ["Read", "refusal", 0],
+   ["Read", "next_index", 0],
+   ["Read", "next_index", 1]
+  ]
+ },
+ "start_v1": {
+  "after": "load_v1",
+  "seed": 4294967298,
+  "table": [1, 4611686018427387904, 9223372036854775808],
+  "frames": 70,
+  "schedule": [{"index": 3, "pulse_id": 0, "amplitude_num": -3, "amplitude_den": 2}],
+  "ahead": 1,
+  "ops": [
+   ["Allocate", 6208],
+   ["Fill", 0, 6208, 165],
+   ["Read", "src_refusal", 0],
+   ["Read", "inj_refusal", 0],
+   ["Read", "refusal", 0],
+   ["Read", "krn_refusal", 0],
+   ["WriteMany", [["src_table_length", 0, 2], ["src_table_entry", 0, 1], ["src_table_entry", 1, 0],
+                  ["src_table_entry", 0, 0], ["src_table_entry", 1, 1073741824], ["src_seed", 0, 2], ["src_seed", 1, 1]]],
+   ["Read", "src_refusal", 0],
+   ["WriteMany", [["inj_truth_index", 0, 3], ["inj_truth_index", 1, 0], ["inj_truth_pulse_id", 0, 0],
+                  ["inj_truth_amplitude_num", 0, 4294967293], ["inj_truth_amplitude_den", 0, 2]]],
+   ["Read", "inj_refusal", 0],
+   ["WriteMany", [["krn_buffer", 0, 69504], ["krn_buffer", 1, 0], ["krn_size", 0, 2240], ["krn_size", 1, 0],
+                  ["krn_frames", 0, 70], ["krn_frames", 1, 0]]],
+   ["Read", "krn_refusal", 0],
+   ["Write", "krn_start", 0, 1],
+   ["Read", "krn_status", 0]
+  ]
+ }
+}
