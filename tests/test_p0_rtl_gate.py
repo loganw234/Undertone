@@ -58,9 +58,25 @@ def test_p0_the_package_and_the_header_carry_the_same_names_and_the_same_values(
                "BUS_WORD_BITS": 32, "BUS_FIRST_OFFSET": 16, "BUS_MAGIC": 0x554E4454,
                "REG_ID_OFFSET": 16, "REG_ID_READABLE": 1, "REG_ID_WRITABLE": 0,
                "REG_SPEC_VERSION_OFFSET": 20, "REG_SPEC_HASH_OFFSET": 24, "REG_SPEC_HASH_WORDS": 8,
-               "REG_CAP_SAMPLE_BITS_OFFSET": 56, "REFUSAL_NONE": 0, "REFUSAL_PROFILE_UNKNOWN": 1}
+               "REG_CAP_SAMPLE_BITS_OFFSET": 56, "REFUSAL_NONE": 0, "REFUSAL_PROFILE_UNKNOWN": 1,
+               # round 2, typed from the two RTL designs and the lead's ruling on them: the fabric's three
+               # refusals; the core's control block (status at 0x100, its last bit the tenth; the window is
+               # written and never read; a mask word a filter); three blocks, the last ending with the frame
+               "REFUSAL_CORE_STOPPED": 41, "REFUSAL_REGISTER_ACCESS": 42, "REFUSAL_INJECT_PENDING": 43,
+               "REG_STATUS_OFFSET": 256, "REG_STATUS_RUNNING_BIT": 0, "REG_STATUS_REFUSED_AGAIN_BIT": 9,
+               "REG_SRC_STATUS_RUNNING_BIT": 0, "REG_COMMIT_AT_WORDS": 2, "REG_SHADOW_DATA_READABLE": 0,
+               "REG_SHADOW_DATA_WRITABLE": 1, "REG_SHAPE_MASKS_OFFSET": 168, "REG_SHAPE_MASKS_WORDS": 16,
+               "REG_REFUSAL_WRITABLE": 1, "REG_SRC_SEED_OFFSET": 3840, "REG_INJ_FRAME_OFFSET": 3968,
+               "BLOCK_CORE_FIRST": 16, "BLOCK_CORE_END": 3840, "BLOCK_SOURCE_END": 3968, "BLOCK_INJECT_END": 4096,
+               "MAX_NOISE_TABLE": 32767, "MAX_INJECT_PENDING": 1024,
+               # the pulse, read off spec/pulses/e0.toml by eye: its second sample, its largest magnitude
+               # (the fifth of the fourth row of eight), its largest positive, and its last two
+               "PULSE_SAMPLE_BITS": 16, "PULSE_E0_LENGTH": 64, "PULSE_E0_SAMPLE_0": 0, "PULSE_E0_SAMPLE_1": 1,
+               "PULSE_E0_SAMPLE_28": -970, "PULSE_E0_SAMPLE_36": 950, "PULSE_E0_SAMPLE_62": -2,
+               "PULSE_E0_SAMPLE_63": 0}
     for name, value in by_hand.items():
         assert sv[name] == value, name
+    assert "PULSE_E0_SAMPLE_64" not in sv and len([n for n in sv if n.startswith("PULSE_E0_SAMPLE_")]) == 64
 
 
 def test_p0_both_copies_carry_the_definitions_hash():
@@ -487,19 +503,27 @@ def the_gates_own_bash():
 
 # Put together from pieces, so that this file does not carry what it looks for.
 THE_NAME = "ba" + "sh"
-# The name as a word of its own, with or without .exe, in any case: not inside a longer word.
-THE_WORD = re.compile(r"(?<![A-Za-z0-9_])" + THE_NAME + r"(?:\.exe)?(?![A-Za-z0-9_])", re.I)
+# The name as a word of its own, in any case: not inside a longer word. With .exe it is a word too: what
+# follows it then is a dot, which is no part of a word. (A group for ".exe" stood here and did nothing.)
+THE_WORD = re.compile(r"(?<![A-Za-z0-9_])" + THE_NAME + r"(?![A-Za-z0-9_])", re.I)
 SKIPPED_FOLDERS = (".git", "Data", "__pycache__", ".pytest_cache", "state")
 
 
 def shell_starts(source):
-    """What in a Python source could start that shell by name, or any shell: [(line, what)].
+    """Where a Python source names that shell, or writes out a request for a shell: [(line, what)].
 
     The source is parsed, not matched line by line. Reported: a string or bytes literal that holds the
     name as a word, in any case, with or without .exe, bare or at the end of a path or anywhere in a
     command; a keyword argument `shell` given anything but the constant False; and a dict literal with
     the key "shell". NOT reported: a docstring; a comment; and the argument of the one call that looks
     the name up on the PATH.
+
+    It does not find every way of starting a shell, and was never needed to: the slip was that one name.
+    NOT reported either, each tried by a verifier: a `shell` key that is not written in a dict literal
+    (`kw['shell'] = True`, `kw.setdefault('shell', True)`, `dict([('shell', True)])`); and a function that
+    starts the platform's own shell with no keyword at all (`os.system`, `os.popen`,
+    `subprocess.getoutput`, `subprocess.getstatusoutput`) when its string does not hold the name. On
+    Windows that shell is cmd.exe, not the WSL launcher.
     """
     tree = ast.parse(source)
     spared = set()
@@ -530,7 +554,12 @@ def shell_starts(source):
 
 def shell_starts_under(root):
     """Every Python file of a tree, in every folder but the ones no commit holds (SKIPPED_FOLDERS), through
-    `shell_starts`: a list of "<path from the root>:<line>: <what>". A file Python cannot parse is listed too."""
+    `shell_starts`: a list of "<path from the root>:<line>: <what>". A file Python cannot parse is listed too.
+
+    A folder with one of those names is skipped wherever it is, not only at the two places `.gitignore`
+    names (`Data/` and `verify/state/`): a committed Python file under some other folder called `state`
+    or `Data` would not be read, and nothing checks that there is none. And it reads what is on the
+    disk, not what is committed: an untracked folder of Python, a virtual environment say, is read too."""
     found = []
     for folder, dirs, files in os.walk(root):
         dirs[:] = sorted(d for d in dirs if d not in SKIPPED_FOLDERS)
@@ -549,7 +578,13 @@ def test_p0_no_python_file_of_the_tree_names_that_shell_or_asks_for_one():
     """The slip above, held, as far as reading source can hold it. What it cannot see: a name put together
     at run time, as this file's own is; a name that reaches Python from outside the file (an environment
     variable, a configuration file, a command line); a docstring handed to something as data; a program
-    started by another name that starts that shell itself; and anything that is not a Python file."""
+    started by another name that starts that shell itself; a shell asked for in a way `shell_starts` says
+    it does not report; and anything that is not a Python file.
+
+    "A docstring handed to something as data" is not empty in this tree: the fifth verifier found two
+    docstrings that say the name and are printed as messages, the description `tools/check_rtl.py` gives
+    its argument parser and the usage `docs/studies/d2/fetch.py` exits with. Neither starts anything.
+    So "no string of this tree says the name" is true only of strings that are not docstrings."""
     assert shell_starts_under(ROOT) == []
 
 
@@ -626,6 +661,9 @@ def test_p0_only_the_one_call_spares_its_argument():
 def test_p0_a_modules_docstring_is_spared_and_a_string_that_only_looks_like_one_is_not():
     assert shell_starts("\"\"\"How %s is found.\"\"\"\nx = 1\n" % THE_NAME) == []
     assert shell_starts("x = 1\n\"\"\"How %s is found.\"\"\"\n" % THE_NAME) == [(2, "the name, in a literal")]
+    # The first string of a block that is not a module, a class or a function is no docstring. The fifth
+    # verifier spared it in a copy and no test failed.
+    assert shell_starts("x = 1\nif x:\n    \"\"\"How %s is found.\"\"\"\n" % THE_NAME) == [(3, "the name, in a literal")]
 
 
 def test_p0_a_sentence_about_the_name_in_a_string_is_reported_and_that_is_meant():

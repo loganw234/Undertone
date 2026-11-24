@@ -82,8 +82,9 @@ WHAT THESE CHECKS CANNOT SEE (stated limits):
                The rtl-spec control changes EVERY number in each copy, the
                hash among them, and takes one name out of the header: every
                one must be reported, so a check that skipped any name, or any
-               kind of name, fails it. Each integer has one added to it and
-               the hash is changed in one digit of each copy: a check that
+               kind of name, fails it. Each integer has one added to it; the
+               hash has one added to it in the package, and in the header a
+               digit is put before its sixty-four: a check that
                saw only some other kind of change (one that compared whether
                a number is odd, say) would pass this control.
                The rtl-image control plants three trees: one whose Dockerfile
@@ -171,6 +172,8 @@ def expected_numbers(C):
     for name, ident in C["PULSE_IDS"].items():
         e["PULSE_%s_ID" % name.upper()] = ident
         e["PULSE_%s_LENGTH" % name.upper()] = len(C["PULSES"][name])
+        for j, sample in enumerate(C["PULSES"][name]):
+            e["PULSE_%s_SAMPLE_%d" % (name.upper(), j)] = sample
     e["REFUSAL_NONE"] = 0
     for name, code in C["REFUSAL_CODES"].items():
         e["REFUSAL_%s" % name] = code
@@ -180,6 +183,11 @@ def expected_numbers(C):
         stem = "REG_%s" % name.upper()
         e[stem + "_OFFSET"], e[stem + "_WORDS"] = offset, words
         e[stem + "_READABLE"], e[stem + "_WRITABLE"] = int("r" in access), int("w" in access)
+    for name, (first, end) in C["BLOCKS"].items():
+        e["BLOCK_%s_FIRST" % name.upper()], e["BLOCK_%s_END" % name.upper()] = first, end
+    for register, bits in C["REGISTER_BITS"].items():
+        for name, bit in bits.items():
+            e["REG_%s_%s_BIT" % (register.upper(), name.upper())] = bit
     return e
 
 

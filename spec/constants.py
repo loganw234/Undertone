@@ -5,7 +5,7 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "266db4114abf34e6d744a14bd81e4f892267db5768b3d2cc7ff2f0daf5696a7a"
+SPEC_SHA256 = "6b86c106d4f649ebcc7ee4e9b4ac4932e05186fd21f4e6c4147f616760c10ee0"
 
 PROFILES = {
     "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
@@ -23,6 +23,8 @@ MAX_SCORE_SHIFT = 31
 MAX_HIDDEN = 12
 MAX_HIDDEN_SHIFT = 31
 MAX_HIST_BINS = 4096
+MAX_NOISE_TABLE = 32767
+MAX_INJECT_PENDING = 1024
 
 RECTIFIERS = {
     "pass": 0,
@@ -102,6 +104,9 @@ REFUSALS = (
     "SHAPE_HIDDEN",
     "SHAPE_HIDDEN_SHIFT",
     "SHAPE_BETWEEN",
+    "CORE_STOPPED",
+    "REGISTER_ACCESS",
+    "INJECT_PENDING",
 )
 
 PULSES = {
@@ -116,6 +121,7 @@ PULSES = {
         0, -33, -43, -36, -22, -9, -2, 0,
     ),
 }
+PULSE_SAMPLE_BITS = 16
 
 PULSE_IDS = {
     "e0": 0,
@@ -162,9 +168,18 @@ REFUSAL_CODES = {
     "SHAPE_HIDDEN": 38,
     "SHAPE_HIDDEN_SHIFT": 39,
     "SHAPE_BETWEEN": 40,
+    "CORE_STOPPED": 41,
+    "REGISTER_ACCESS": 42,
+    "INJECT_PENDING": 43,
 }
 
 BUS = {"word_bits": 32, "address_bits": 12, "first_offset": 16, "magic": 0x554E4454}
+
+BLOCKS = {
+    "core": (0x010, 0xF00),
+    "source": (0xF00, 0xF80),
+    "inject": (0xF80, 0x1000),
+}
 
 REGISTERS = {
     "id": (0x010, "ro", 1),
@@ -182,4 +197,46 @@ REGISTERS = {
     "cap_hidden_shift": (0x05C, "ro", 1),
     "cap_rectifiers": (0x060, "ro", 1),
     "cap_blob_versions": (0x064, "ro", 1),
+    "shape_sample_bits": (0x080, "rw", 1),
+    "shape_channels": (0x084, "rw", 1),
+    "shape_filters": (0x088, "rw", 1),
+    "shape_taps": (0x08C, "rw", 1),
+    "shape_rectifier": (0x090, "rw", 1),
+    "shape_score_shift": (0x094, "rw", 1),
+    "shape_pool": (0x098, "rw", 1),
+    "shape_hidden": (0x09C, "rw", 1),
+    "shape_hidden_shift": (0x0A0, "rw", 1),
+    "shape_between": (0x0A4, "rw", 1),
+    "shape_masks": (0x0A8, "rw", 16),
+    "configure": (0x0E8, "wo", 1),
+    "shadow_begin": (0x0EC, "wo", 1),
+    "shadow_data": (0x0F0, "wo", 1),
+    "start": (0x0F4, "wo", 1),
+    "commit_at": (0x0F8, "rw", 2),
+    "status": (0x100, "ro", 1),
+    "refusal": (0x104, "rw", 1),
+    "epoch": (0x108, "ro", 1),
+    "next_index": (0x10C, "ro", 2),
+    "shadow_count": (0x114, "ro", 1),
+    "shadow_words": (0x118, "ro", 1),
+    "src_seed": (0xF00, "wo", 2),
+    "src_frames": (0xF08, "wo", 2),
+    "src_table_length": (0xF10, "wo", 1),
+    "src_table_entry": (0xF14, "wo", 2),
+    "src_status": (0xF1C, "ro", 1),
+    "src_refusal": (0xF20, "rw", 1),
+    "cap_noise_table": (0xF24, "ro", 1),
+    "inj_frame": (0xF80, "wo", 2),
+    "inj_truth_index": (0xF88, "wo", 2),
+    "inj_truth_pulse_id": (0xF90, "wo", 1),
+    "inj_truth_amplitude_num": (0xF94, "wo", 1),
+    "inj_truth_amplitude_den": (0xF98, "wo", 1),
+    "inj_pending": (0xF9C, "ro", 1),
+    "inj_refusal": (0xFA0, "rw", 1),
+    "cap_inject_pending": (0xFA4, "ro", 1),
+}
+
+REGISTER_BITS = {
+    "status": {"running": 0, "loading": 1, "commit": 2, "settling": 3, "closed": 4, "partial": 5, "whole": 6, "overflow": 7, "refused": 8, "refused_again": 9},
+    "src_status": {"running": 0},
 }

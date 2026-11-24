@@ -61,12 +61,14 @@ MOD_A_REFUSALS = ("SEED_RANGE", "NOISE_SIGMA", "NOISE_RANGE", "STREAM_LENGTH", "
                   "REPLAY_HASH")
 # Round 2, parcel HEAD: the head's hidden layer.
 HEAD_REFUSALS = ("SHAPE_HIDDEN", "SHAPE_HIDDEN_SHIFT", "SHAPE_BETWEEN")
+# Round 2, parcels RTL-B and RTL-A: the fabric's alone. The model raises none of the three.
+FABRIC_REFUSALS = ("CORE_STOPPED", "REGISTER_ACCESS", "INJECT_PENDING")
 
 
-def test_p0_refusal_names_are_exactly_the_declared_forty():
+def test_p0_refusal_names_are_exactly_the_models_forty_and_the_fabrics_three():
     assert (len(P0_REFUSALS), len(MOD_B_REFUSALS), len(MOD_A_REFUSALS), len(HEAD_REFUSALS)) == (10, 16, 11, 3)
-    assert C.REFUSALS == P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS + HEAD_REFUSALS
-    assert len(set(C.REFUSALS)) == 40
+    assert C.REFUSALS == P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS + HEAD_REFUSALS + FABRIC_REFUSALS
+    assert len(set(C.REFUSALS)) == 43 and len(FABRIC_REFUSALS) == 3
 
 
 def test_p0_the_hidden_layers_bounds_are_the_ones_generated_and_keep_the_head_small():
@@ -216,11 +218,13 @@ def test_p0_reference_pulse_fits_the_narrowest_profile_and_is_not_silent():
 
 
 def test_p0_every_refusal_has_a_code_of_its_own_that_fits_a_byte_and_none_is_zero():
-    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 40
-    assert len(set(C.REFUSAL_CODES.values())) == 40
+    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 43
+    assert len(set(C.REFUSAL_CODES.values())) == 43
     assert all(type(v) is int and 1 <= v <= 255 for v in C.REFUSAL_CODES.values())
     # Typed here from the definition as it was first written, so that a renumbering is made on purpose.
     assert (C.REFUSAL_CODES["PROFILE_UNKNOWN"], C.REFUSAL_CODES["BLOB_HASH"], C.REFUSAL_CODES["SHAPE_BETWEEN"]) == (1, 7, 40)
+    # The fabric's three, typed from the lead's ruling of 2026-11-23 on the two RTL designs.
+    assert [C.REFUSAL_CODES[n] for n in FABRIC_REFUSALS] == [41, 42, 43]
 
 
 def test_p0_the_registers_lie_inside_the_frame_in_whole_words_and_do_not_overlap():
@@ -236,5 +240,40 @@ def test_p0_the_registers_lie_inside_the_frame_in_whole_words_and_do_not_overlap
     # The block P0 wrote down: identity and capabilities, read-only, below the control block's 0x80.
     assert C.REGISTERS["id"] == (0x10, "ro", 1) and C.REGISTERS["spec_hash"] == (0x18, "ro", 8)
     assert C.REGISTERS["cap_sample_bits"][0] == 0x18 + 4 * 8          # the hash's eight words, then this
-    assert all(access == "ro" and offset + 4 * words <= 0x80 for offset, access, words in C.REGISTERS.values())
+    below = [(offset, access, words) for offset, access, words in C.REGISTERS.values() if offset < 0x80]
+    assert len(below) == 15 and all(access == "ro" and offset + 4 * words <= 0x80 for offset, access, words in below)
     assert 8 * 32 == 256                                                 # the hash is a SHA-256
+
+
+def test_p0_the_register_map_is_three_blocks_and_every_register_is_inside_one():
+    """Round 2: the core's control block from 0x080, and the source's and the injector's from 0xF00.
+    The figures are typed here from the two designs and the lead's ruling on them, not read from the definition."""
+    assert C.BLOCKS == {"core": (0x010, 0xF00), "source": (0xF00, 0xF80), "inject": (0xF80, 0x1000)}
+    counts = dict.fromkeys(C.BLOCKS, 0)
+    for name, (offset, _access, words) in C.REGISTERS.items():
+        inside = [b for b, (first, end) in C.BLOCKS.items() if first <= offset and offset + 4 * words <= end]
+        assert len(inside) == 1, name
+        counts[inside[0]] += 1
+    assert counts == {"core": 15 + 22, "source": 7, "inject": 8} and len(C.REGISTERS) == 52
+    # The control block as parcel RTL-B's design counted it: 22 registers in 39 words, 0x080 to 0x11B.
+    control = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0x080 <= offset < 0xF00]
+    assert (len(control), sum(w for _o, w in control), min(o for o, _w in control)) == (22, 39, 0x080)
+    assert max(o + 4 * w for o, w in control) == 0x11C
+    assert C.REGISTERS["shape_masks"][2] == C.MAX_FILTERS            # one word of channel mask a filter
+    assert C.REGISTERS["commit_at"] == (0x0F8, "rw", 2) and C.REGISTERS["next_index"] == (0x10C, "ro", 2)
+    # One refusal register a block, each read and written.
+    assert [C.REGISTERS[n][1] for n in ("refusal", "src_refusal", "inj_refusal")] == ["rw", "rw", "rw"]
+    assert C.REGISTERS["src_seed"] == (0xF00, "wo", 2) and C.REGISTERS["cap_inject_pending"] == (0xFA4, "ro", 1)
+
+
+def test_p0_the_registers_that_are_read_as_bits_and_the_fabrics_two_bounds():
+    assert C.REGISTER_BITS == {
+        "status": {"running": 0, "loading": 1, "commit": 2, "settling": 3, "closed": 4, "partial": 5, "whole": 6,
+                   "overflow": 7, "refused": 8, "refused_again": 9},
+        "src_status": {"running": 0}}
+    for register in C.REGISTER_BITS:
+        assert C.REGISTERS[register][1] == "ro" and C.REGISTERS[register][2] == 1
+    assert (C.MAX_NOISE_TABLE, C.MAX_INJECT_PENDING) == (32767, 1024)
+    # Under the narrowest profile the fabric's table bound is the largest sample, so it takes what the model takes.
+    assert C.MAX_NOISE_TABLE == min(p["sample_max"] for p in C.PROFILES.values())
+    assert C.PULSE_SAMPLE_BITS == min(p["sample_bits"] for p in C.PROFILES.values()) == 16

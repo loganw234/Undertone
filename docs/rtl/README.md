@@ -63,9 +63,19 @@ The controls on the model side are tests in the bench: `compare` is handed a mod
 
 `rtl/p0/onetap.sv` is the model's core at one setting: one filter of one tap reading every channel, a pool of 1, one head weight. It is not part of the detector and has no weight store, no swap and no refusal. Its bench holds it against the model on twelve random configurations and on thirty-two configurations of extremes, under both profiles: the coefficient, the head weight, the rectifier, the shift and the epoch each at both ends, with the channels' coefficients alternating between the two extremes, which is not every combination across the channels. Its seven mutants are the faults the harness was required to see: a coefficient bit, a logical shift for an arithmetic one, an index that starts at one, a flag bit, a design that stops putting records out, a design that puts out one too many, and a design one clock late.
 
-## The register map, as far as it goes
+## The register map
 
-The definition has the register map's frame (`[bus]`), a read-only block of identity and capability registers (`[registers]`), and a number for each refusal (`[refusal_codes]`). **The control block is not there**: the shape, the shadow weights, the commit, the status and the latched refusal are drawn at the design stop of the detector core's RTL, from offset 0x80 up. The plan gave the whole map to the foundation; the lead's ledger for round 2 says why this part waits.
+The definition has the register map's frame (`[bus]`), a read-only block of identity and capability registers, and a number for each refusal (`[refusal_codes]`). The plan gave the whole map to the foundation; the foundation wrote that much and left the rest to the designs that would use it. **The rest was entered on 2026-11-23, from the design stops of the two RTL parcels, as each drew it and the lead ruled**: the detector core's control block from 0x080, and the source's and the injector's registers from 0xF00 and 0xF80. Nothing in RTL answers any of it until those parcels merge.
+
+What the two designs were ruled to share, and the definition now says:
+
+- **Three blocks, each with a range** (`[blocks]`: `core`, `source`, `inject`). Outside its range a block does nothing. Inside it every write is taken or refused by name; none is dropped.
+- **One port on every block**: `reg_valid`, `reg_we`, `reg_addr`, `reg_wdata`, and `reg_rdata`, a register that answers zero for what is not a readable row of that block, so the blocks' words can be ORed onto one bus. No ready and no response. An AXI4-Lite face is a kernel wrapper's, in a later round.
+- **One refusal register a block** (`refusal`, `src_refusal`, `inj_refusal`): the number of the first refusal since it was cleared, and a write of zero clears it.
+- **Three refusal names that are the fabric's alone**, which the model never raises: CORE_STOPPED, REGISTER_ACCESS, INJECT_PENDING. The model's names are still forty.
+- **Registers read as bits** have their bits in the definition (`[register_bits]`), generated as `REG_<REGISTER>_<NAME>_BIT`.
+- **Two bounds the fabric has and the model does not** (`[fabric]`): the most entries of a noise table, and the most truth records the injector holds.
+- **Each pulse sample is in the package and the header**, an integer a sample, beside the pulse's id and length.
 
 ## Limits
 
@@ -77,7 +87,7 @@ The definition has the register map's frame (`[bus]`), a read-only block of iden
 6. **The evidence is written from inside the simulator**, by the harness, beside the bench. The stage reads it; it cannot tell a line the harness wrote from one a bench wrote for itself.
 7. **`rtl-spec` holds the two copies against the Python copy**, which `generated` holds against the definition. It does not know whether RTL or a C program uses a constant rightly.
 8. **The base image's own packages are not pinned**: Python, the C compiler and the system libraries are what its archive served on the day of the build. `rtl-image` prints what it finds.
-9. **The register map is not whole**, as above. And one of its conventions is held by nothing yet: a value wider than a word takes consecutive words, its lowest bits at the lowest offset. The definition says so in a comment. The first bench that reads `spec_hash` back, eight words, is what will hold it.
+9. **The register map is in the definition and in no RTL yet**, as above: what a write or a read of a row does is each parcel's design and its bench, not this file's. The generator holds that the rows lie in whole words inside one block each and do not overlap; it does not know what a row means. And one of the map's conventions is held by nothing yet: a value wider than a word takes consecutive words, its lowest bits at the lowest offset. The definition says so in a comment. The first bench that reads `spec_hash` back, eight words, is what will hold it.
 10. **The controls do not cover the whole judge.** `ctl-rtl-benches` plants four of the judge's findings; the other six are held by tests in the gate's first size and by no control. `tools/check_rtl.py` lists which.
 
 ## Register
@@ -85,11 +95,11 @@ The definition has the register map's frame (`[bus]`), a read-only block of iden
 | # | claim | basis | source or command | falsified by |
 |---|---|---|---|---|
 | R1 | The image holds Icarus Verilog 12.0-2build2, cocotb 2.1.0 with six more pip packages as pinned, Python 3.12.3 and gcc 13.3.0 | MEASURED | `python tools/check_rtl.py rtl-image --root . --state <a folder>`, 2026-11-23: its OK line | that command on another build of the image |
-| R2 | The package and the header carry 172 values, the definition's hash among them, and Icarus Verilog and gcc each read every one as `spec/constants.py` holds it | MEASURED | `python tools/check_rtl.py rtl-spec --root . --state <a folder>`, 2026-11-23: its OK line | that command |
+| R2 | The package and the header carry 407 values, the definition's hash among them, and Icarus Verilog and gcc each read every one as `spec/constants.py` holds it. They carried 172 before the register map, the fabric's names and bounds and the pulse's samples were entered | MEASURED | `python tools/check_rtl.py rtl-spec --root . --state <a folder>`, 2026-11-23, after that entry: its OK line. 172 is the same command's line before it | that command |
 | R3 | Under both profiles the filter of one tap put out 8,960 score records equal to the model's, byte for byte, over the two identity tests; twelve tests passed in the two runs | MEASURED | `python tools/check_rtl.py rtl-benches --root . --state <a folder>`, 2026-11-23: its OK line | that command |
 | R4 | 8,960 is 2 x 12 x 200 for the random test, and 32 x 5 and 32 x 125 for the extremes under one channel and three | COMPUTED | `rtl/tb/bench_p0_onetap.py`: twelve configurations of 200 frames; 32 configurations over every frame of five values a channel. 4,800 + 160 + 4,000 | arithmetic |
 | R5 | Each of the seven mutants failed the tests it names, for the kind it names, under both profiles: fourteen mutant runs | MEASURED | the same command as R3: "14 mutant run(s) each failed as named" | that command |
-| R6 | The three controls each reported every planted fault and nothing else: 3, 345 and 12 | MEASURED | `python tools/check_rtl.py control <kind> --root . --scratch <a folder>` for each kind, 2026-11-23: each CONTROL-DETECTED line | those commands |
+| R6 | The three controls each reported every planted fault and nothing else: 3, 815 and 12. The second is two for each of the 407 values and one name taken out; it was 345 when the values were 172 | MEASURED | `python tools/check_rtl.py control <kind> --root . --scratch <a folder>` for each kind, 2026-11-23: each CONTROL-DETECTED line | those commands |
 | R7 | The image is 389 MB | MEASURED | `docker images undertone-sim`, 2026-11-23: the size it prints for the tag `python tools/sim_image.py tag` gives | that command |
 | R8 | The first image built stopped every run before any build with "Unable to find libpython", and adding the package `libpython3.12t64` cured it | MEASURED | the runner's output on the first image, and `find_libpython` before and after installing the package in a throwaway container, 2026-11-23 | a build without that line |
 | R9 | The sibling project's kernel presents an AXI4-Lite slave of 32-bit words under 12 address bits, with the kernel's control at 0x00 and its own registers from 0x10 | READ | `<repos>/cft-fp256/docs/ARCHITECTURE.md`, the table under "CSR map"; the 12-bit address in that project's place-and-route harness | those files |

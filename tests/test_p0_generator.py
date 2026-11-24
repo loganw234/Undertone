@@ -114,6 +114,43 @@ BAD = [
     ("a pulse id that is a string", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = \"0\"")], "PULSE_IDS"),
     ("a truth record with no pulse_id field", [("[\"pulse_id\", 16, \"unsigned\"], ", "")], "RECORD"),
     ("a signed pulse_id field", [("[\"pulse_id\", 16, \"unsigned\"], ", "[\"pulse_id\", 16, \"signed\"], ")], "RECORD"),
+    # Round 2: the blocks of the register map, the registers read as bits, and the fabric's own bounds.
+    ("a block that is not a pair", [("core = [0x010, 0xF00]", "core = [0x010]")], "BLOCKS"),
+    ("a block whose end is a string", [("core = [0x010, 0xF00]", "core = [0x010, \"0xF00\"]")], "BLOCKS"),
+    ("a block that ends where it begins", [("source = [0xF00, 0xF80]", "source = [0xF00, 0xF00]")], "BLOCKS"),
+    ("a block that is not whole words", [("inject = [0xF80, 0x1000]", "inject = [0xF80, 0xFFE]")], "BLOCKS"),
+    ("a block past the frame's address bits", [("inject = [0xF80, 0x1000]", "inject = [0xF80, 0x1004]")], "BLOCKS"),
+    ("a block below the frame's first offset", [("core = [0x010, 0xF00]", "core = [0x00C, 0xF00]")], "BLOCKS"),
+    ("two blocks that overlap", [("source = [0xF00, 0xF80]", "source = [0xEFC, 0xF80]")], "BLOCKS"),
+    ("a register in no block", [("source = [0xF00, 0xF80]", "source = [0xF04, 0xF80]")], "BLOCKS"),
+    ("a register across two blocks", [("core = [0x010, 0xF00]", "core = [0x010, 0x01C]\nmiddle = [0x01C, 0xF00]")], "BLOCKS"),
+    ("an upper-case block name", [("source = [0xF00, 0xF80]", "SOURCE = [0xF00, 0xF80]")], "NAME"),
+    ("no block at all", [("core = [0x010, 0xF00]\nsource = [0xF00, 0xF80]\ninject = [0xF80, 0x1000]\n", "")], "BLOCKS"),
+    ("bits of a register that is not declared", [("[register_bits.src_status]", "[register_bits.no_such]")], "REGISTER_BITS"),
+    ("bits of a register that cannot be read", [("[register_bits.src_status]", "[register_bits.start]")], "REGISTER_BITS"),
+    ("bits of a register of two words", [("[register_bits.src_status]", "[register_bits.next_index]")], "REGISTER_BITS"),
+    ("a register bit used twice", [("loading = 1", "loading = 0")], "REGISTER_BITS"),
+    ("a register bit past the word", [("refused_again = 9", "refused_again = 32")], "REGISTER_BITS"),
+    ("a negative register bit", [("refused_again = 9", "refused_again = -1")], "REGISTER_BITS"),
+    # In a register with no other bit: `true` is 1 to Python, and beside a bit 1 it was refused as used twice.
+    ("a register bit that is a bool", [("[register_bits.src_status]\nrunning = 0", "[register_bits.src_status]\nrunning = true")], "REGISTER_BITS"),
+    ("an upper-case bit name", [("refused_again = 9", "REFUSED_AGAIN = 9")], "NAME"),
+    ("a noise table bound of zero", [("max_noise_table = 32767", "max_noise_table = 0")], "NUMBER"),
+    ("a noise table bound past the generator's range", [("max_noise_table = 32767", "max_noise_table = 1048577")], "NUMBER"),
+    ("a pending bound that is a string", [("max_inject_pending = 1024", "max_inject_pending = \"1024\"")], "NUMBER"),
+    ("a pending bound past the generator's range", [("max_inject_pending = 1024", "max_inject_pending = 65537")], "NUMBER"),
+    ("a fabric with an unknown key", [("max_inject_pending = 1024", "max_inject_pending = 1024\nextra = 1")], "KEYS"),
+    ("a fabric with no table bound", [("max_noise_table = 32767\n", "")], "KEYS"),
+    # Three more, each for a clause that the lead's own faults showed no case above could fail on.
+    ("an empty block beside the others", [("inject = [0xF80, 0x1000]", "inject = [0xF80, 0x1000]\nspare = [0x1000, 0x1000]")], "BLOCKS"),
+    ("a register of bits with no bit", [("[register_bits.src_status]\nrunning = 0", "[register_bits.src_status]")], "REGISTER_BITS"),
+    ("register bits that are not a table",
+     [("[register_bits.status]\nrunning = 0\nloading = 1\ncommit = 2\nsettling = 3\nclosed = 4\npartial = 5\nwhole = 6\n"
+       "overflow = 7\nrefused = 8\nrefused_again = 9\n\n[register_bits.src_status]\nrunning = 0\n", ""),
+      ("[meta]", "register_bits = 3\n\n[meta]")], "REGISTER_BITS"),
+    ("blocks that are not a table",
+     [("[blocks]\ncore = [0x010, 0xF00]\nsource = [0xF00, 0xF80]\ninject = [0xF80, 0x1000]\n", ""),
+      ("[meta]", "blocks = 3\n\n[meta]")], "BLOCKS"),
 ]
 
 

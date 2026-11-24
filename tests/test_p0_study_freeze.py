@@ -19,9 +19,11 @@ What it cannot see:
     was committed, by a hash the lead took from the committed file, which a verifier's own rerun of the
     scoring at the freeze commit reproduced byte for byte;
   - the fetched records, which are not in the tree;
-  - a file that is NOT frozen and changes what a frozen one does. The frozen scripts put docs/studies/d1/ at
-    the front of their import path: a new file there with the name of a module they import would take its
-    place, and no frozen file would change. A verifier named this; nothing holds it.
+  - a file that is NOT frozen and changes what a frozen one does. The frozen scripts put two folders at the
+    front of their import path, docs/studies/d1/ (rule.py and firstlook.py do) and docs/studies/d2/ (score.py
+    does, before anything of numpy's is imported): a new file in either with the name of a module they
+    import, numpy's among them, would take its place, and no frozen file would change. Two verifiers named
+    this, one folder each; nothing holds it.
 """
 import hashlib
 import os

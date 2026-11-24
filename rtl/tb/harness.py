@@ -249,10 +249,20 @@ def hold(test, label, seen, expected, *, width_bytes, prefix, describe=describe_
 async def compare(dut, core, frames, *, test, label, gap_seed=0, max_gap=2, max_latency=64, settle=8):
     """Drive `frames` into the design and into the model core; hold every record against the model's.
 
-    `core` is a `model.detector.Core` that has produced nothing yet, built from
-    the configuration the bench loaded into the design. `test` is the name of
-    the cocotb test calling this, and `label` says which run of it: both go
-    into the evidence line. Call `reset` first.
+    `core` is a `model.detector.Core` built from the configuration the bench
+    loaded into the design. `test` is the name of the cocotb test calling this,
+    and `label` says which run of it: both go into the evidence line. Call
+    `reset` first.
+
+    What is taken of `core` is `core.store.config["profile"]` and `core.step`,
+    and nothing else: the model is stepped through every frame before the
+    first is driven, and nothing here resets the design or the model. So a
+    stream may be compared in pieces, one call after another on the same core
+    and the same running design, with the design's registers written between
+    two calls; and `core` may be an object of a bench's own that carries the
+    model core and does the model's own operations before a frame it is told
+    to. Such an object stands between the bench and the authority: a bench
+    that uses one shows it whole and has a control that hands it a wrong model.
     """
     profile_name = core.store.config["profile"]
     frames = list(frames)

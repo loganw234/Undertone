@@ -13,11 +13,11 @@ One definition, generated copies. There are three:
 
 The second and third carry the same names with the same values, from one list
 (`numbers` below): the header's names have the prefix UNDERTONE_. They hold
-the integers only. What the Python copy has and they do not: the refusal names
-(a refusal has no number yet; the register map gives it one), the pulses'
-samples (they carry each pulse's id and length), the profiles as a table (they
-carry each profile's two numbers), and the names of the quantising and
-injection rules. A name that two entries of the list would share is REFUSED.
+the integers only. What the Python copy has and they do not: the profiles as
+a table (they carry each profile's two numbers), the pulses as lists (they
+carry each sample as an integer of its own), and the names of the quantising
+and injection rules. A name that two entries of the list would share is
+REFUSED.
 
 `--check` compares text: each copy must equal what this generator renders
 today. It does not show that a simulator or a compiler reads those lines as
@@ -26,8 +26,8 @@ the same numbers; the `rtl-spec` stage of `verify/run.sh --with rtl` does.
 The definition is checked before anything is written, and one that does not
 make sense is REFUSED by name. What is checked, exactly:
 
-  - the top-level sections are the fifteen this generator knows (TOP below),
-    no more, no fewer;
+  - the top-level sections are the ones this generator knows (TOP below), no
+    more, no fewer;
   - every section's keys are the ones listed in KEYS below, no more, no fewer;
   - a number is an int (never a bool, a float or a string) inside its range;
   - a profile, field, flag, rectifier or pulse name is lower case letters,
@@ -47,6 +47,11 @@ make sense is REFUSED by name. What is checked, exactly:
     [offset, "ro" | "rw" | "wo", words] with 1 to 64 words, at a multiple of the
     word's bytes, not below the frame's first offset and not past its address
     bits, and no two registers overlap;
+  - a block is [first offset, end], whole words inside the frame with its
+    first before its end; no two blocks overlap; and every register lies
+    wholly inside one block;
+  - a register that has named bits is declared, is one word and can be read;
+    a bit is inside the word, and no bit of a register is used twice;
   - a pulse's file is under spec/pulses/, names itself as the definition names
     it, and holds ints that fit the NARROWEST profile;
   - the pulse ids name exactly the pulses, each id fits the truth record's
@@ -83,14 +88,17 @@ KEYS = {
     "records": {"score", "truth", "event"},
     "refusals": {"names"},
     "bus": {"word_bits", "address_bits", "first_offset", "magic"},
+    "fabric": {"max_noise_table", "max_inject_pending"},
 }
-TOP = set(KEYS) | {"profile", "flags", "rectifier", "pulses", "pulse_ids", "refusal_codes", "registers"}
+TOP = set(KEYS) | {"profile", "flags", "rectifier", "pulses", "pulse_ids", "refusal_codes", "registers",
+                   "blocks", "register_bits"}
 ACCESS = ("ro", "rw", "wo")
 RANGE = {"spec_version": (1, 10 ** 6), "sample_bits": (2, 32), "channels": (1, 16),
          "coeff_bits": (2, 32), "max_filters": (1, 1024), "max_taps": (1, 65536),
          "max_rows": (1, 1024), "max_pool": (1, 2 ** 24), "max_score_shift": (0, 63),
          "max_hist_bins": (1, 65536), "max_hidden": (1, 1024), "max_hidden_shift": (0, 63),
-         "word_bits": (32, 32), "address_bits": (4, 16), "first_offset": (0, 65532), "magic": (1, 2 ** 31 - 1)}
+         "word_bits": (32, 32), "address_bits": (4, 16), "first_offset": (0, 65532), "magic": (1, 2 ** 31 - 1),
+         "max_noise_table": (1, 2 ** 20), "max_inject_pending": (1, 65536)}
 LOWER = re.compile(r"[a-z][a-z0-9_]*\Z")
 UPPER = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 
@@ -220,6 +228,41 @@ def validate(d, root):
     for (_a0, a1, an), (b0, _b1, bn) in zip(spans, spans[1:]):
         if b0 < a1:
             raise Refused("REGISTERS: %s and %s overlap" % (an, bn))
+    for key in sorted(KEYS["fabric"]):
+        number("fabric", key, d["fabric"][key])
+    if not isinstance(d["blocks"], dict) or not d["blocks"]:
+        raise Refused("BLOCKS: there is no block")
+    ranges = []
+    for name, r in d["blocks"].items():
+        lower("block", name)
+        if not isinstance(r, list) or len(r) != 2 or type(r[0]) is not int or type(r[1]) is not int:
+            raise Refused("BLOCKS: %s = %r is not [first offset, end], two ints" % (name, r))
+        first, end = r
+        if first % step or end % step or not d["bus"]["first_offset"] <= first < end <= limit:
+            raise Refused("BLOCKS: %s from %d to %d is not whole words from %d to %d with its first before its end"
+                          % (name, first, end, d["bus"]["first_offset"], limit))
+        ranges.append((first, end, name))
+    ranges.sort()
+    for (_a0, a1, an), (b0, _b1, bn) in zip(ranges, ranges[1:]):
+        if b0 < a1:
+            raise Refused("BLOCKS: %s and %s overlap" % (an, bn))
+    for r0, r1, rn in spans:
+        if not any(first <= r0 and r1 <= end for first, end, _name in ranges):
+            raise Refused("BLOCKS: the register %s lies in no block, or across two" % rn)
+    if not isinstance(d["register_bits"], dict):
+        raise Refused("REGISTER_BITS: is not a table")
+    for reg, bits in d["register_bits"].items():
+        if reg not in d["registers"] or d["registers"][reg][1] == "wo" or d["registers"][reg][2] != 1:
+            raise Refused("REGISTER_BITS: %s is not a register of one word that can be read" % reg)
+        if not isinstance(bits, dict) or not bits:
+            raise Refused("REGISTER_BITS: %s has no bit" % reg)
+        used = set()
+        for name, bit in bits.items():
+            lower("bit of the register %s" % reg, name)
+            if type(bit) is not int or not 0 <= bit < d["bus"]["word_bits"] or bit in used:
+                raise Refused("REGISTER_BITS: %s.%s = %r is used twice or lies outside the %d-bit word"
+                              % (reg, name, bit, d["bus"]["word_bits"]))
+            used.add(bit)
     if not isinstance(d["pulses"], dict) or not d["pulses"]:
         raise Refused("PULSES: there is no pulse")
     narrowest = min(p["sample_bits"] for p in d["profile"].values())
@@ -295,6 +338,8 @@ def render(d, pulses, digest):
           "MAX_HIDDEN = %d" % c["max_hidden"],
           "MAX_HIDDEN_SHIFT = %d" % c["max_hidden_shift"],
           "MAX_HIST_BINS = %d" % d["scorer"]["max_hist_bins"],
+          "MAX_NOISE_TABLE = %d" % d["fabric"]["max_noise_table"],
+          "MAX_INJECT_PENDING = %d" % d["fabric"]["max_inject_pending"],
           "",
           "RECTIFIERS = {"]
     for name in sorted(d["rectifier"], key=lambda n: d["rectifier"][n]):
@@ -328,7 +373,7 @@ def render(d, pulses, digest):
         for i in range(0, len(s), 8):
             L.append("        " + ", ".join(str(v) for v in s[i:i + 8]) + ",")
         L.append("    ),")
-    L += ["}", "", "PULSE_IDS = {"]
+    L += ["}", "PULSE_SAMPLE_BITS = %d" % min(p["sample_bits"] for p in d["profile"].values()), "", "PULSE_IDS = {"]
     for name in sorted(d["pulse_ids"], key=lambda n: d["pulse_ids"][n]):
         L.append('    "%s": %d,' % (name, d["pulse_ids"][name]))
     L += ["}", "", "REFUSAL_CODES = {"]
@@ -339,10 +384,17 @@ def render(d, pulses, digest):
           'BUS = {"word_bits": %d, "address_bits": %d, "first_offset": %d, "magic": 0x%08X}'
           % (b["word_bits"], b["address_bits"], b["first_offset"], b["magic"]),
           "",
-          "REGISTERS = {"]
+          "BLOCKS = {"]
+    for name in sorted(d["blocks"], key=lambda n: d["blocks"][n][0]):
+        L.append('    "%s": (0x%03X, 0x%03X),' % (name, d["blocks"][name][0], d["blocks"][name][1]))
+    L += ["}", "", "REGISTERS = {"]
     for name in sorted(d["registers"], key=lambda n: d["registers"][n][0]):
         offset, access, words = d["registers"][name]
         L.append('    "%s": (0x%03X, "%s", %d),' % (name, offset, access, words))
+    L += ["}", "", "REGISTER_BITS = {"]
+    for reg in sorted(d["register_bits"], key=lambda n: d["registers"][n][0]):
+        bits = d["register_bits"][reg]
+        L.append('    "%s": {%s},' % (reg, ", ".join('"%s": %d' % (n, bits[n]) for n in sorted(bits, key=lambda n: bits[n]))))
     L += ["}", ""]
     return "\n".join(L)
 
@@ -371,6 +423,9 @@ def numbers(d, pulses):
         ("MAX_HIDDEN", c["max_hidden"]),
         ("MAX_HIDDEN_SHIFT", c["max_hidden_shift"]),
         ("MAX_HIST_BINS", d["scorer"]["max_hist_bins"])]))
+    groups.append(("the fabric's own bounds, which the model does not have", [
+        ("MAX_NOISE_TABLE", d["fabric"]["max_noise_table"]),
+        ("MAX_INJECT_PENDING", d["fabric"]["max_inject_pending"])]))
     groups.append(("the rectifier's codes", [
         ("RECTIFIER_%s" % n.upper(), d["rectifier"][n])
         for n in sorted(d["rectifier"], key=lambda n: d["rectifier"][n])]))
@@ -388,16 +443,22 @@ def numbers(d, pulses):
         rows.append(("%s_RECORD_BITS" % rec.upper(), at))
         groups.append(("the %s record: each field's lowest bit, its width, and whether it is signed. The canonical "
                        "bytes are little-endian in declared order, so bit 0 is the lowest bit of the first byte" % rec, rows))
-    rows = []
+    rows = [("PULSE_SAMPLE_BITS", min(p["sample_bits"] for p in d["profile"].values()))]
     for name in sorted(d["pulse_ids"], key=lambda n: d["pulse_ids"][n]):
         rows += [("PULSE_%s_ID" % name.upper(), d["pulse_ids"][name]), ("PULSE_%s_LENGTH" % name.upper(), len(pulses[name]))]
-    groups.append(("the reference pulses: the id a truth record carries, and the length in samples", rows))
+        rows += [("PULSE_%s_SAMPLE_%d" % (name.upper(), j), v) for j, v in enumerate(pulses[name])]
+    groups.append(("the reference pulses: the signed bits every sample of a pulse fits (the narrowest profile's), "
+                   "and for each pulse the id a truth record carries, its length in samples, and each sample", rows))
     groups.append(("the number the fabric reports for each refusal; 0 is none",
                    [("REFUSAL_NONE", 0)] + [("REFUSAL_%s" % n, d["refusal_codes"][n]) for n in d["refusals"]["names"]]))
     b = d["bus"]
     groups.append(("the register map's frame: one register is one word at a byte offset",
                    [("BUS_WORD_BITS", b["word_bits"]), ("BUS_ADDRESS_BITS", b["address_bits"]),
                     ("BUS_FIRST_OFFSET", b["first_offset"]), ("BUS_MAGIC", b["magic"])]))
+    rows = []
+    for name in sorted(d["blocks"], key=lambda n: d["blocks"][n][0]):
+        rows += [("BLOCK_%s_FIRST" % name.upper(), d["blocks"][name][0]), ("BLOCK_%s_END" % name.upper(), d["blocks"][name][1])]
+    groups.append(("the blocks that share the register map: each one's first byte offset, and its end, one past its last byte", rows))
     rows = []
     for name in sorted(d["registers"], key=lambda n: d["registers"][n][0]):
         offset, access, words = d["registers"][name]
@@ -406,6 +467,11 @@ def numbers(d, pulses):
                  (stem + "_READABLE", 1 if access in ("ro", "rw") else 0),
                  (stem + "_WRITABLE", 1 if access in ("rw", "wo") else 0)]
     groups.append(("the registers: each one's byte offset, its words, and whether the host may read and write it", rows))
+    rows = []
+    for reg in sorted(d["register_bits"], key=lambda n: d["registers"][n][0]):
+        bits = d["register_bits"][reg]
+        rows += [("REG_%s_%s_BIT" % (reg.upper(), n.upper()), bits[n]) for n in sorted(bits, key=lambda n: bits[n])]
+    groups.append(("the bits of the registers that are read as bits; every other bit of such a register reads zero", rows))
     seen = set()
     for _heading, rows in groups:
         for name, value in rows:
