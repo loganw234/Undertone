@@ -304,6 +304,14 @@ edits = [["if (!((&us[W_HEADX-1:W_HID-1])", "if ((j == 0) && !((&us[W_HEADX-1:W_
 must_fail = ["bit_identity_extremes"]
 kind = "WORD"
 
+# Its neighbour, the second verifier's: the flag raised by every hidden unit but the build's last.
+[[bench.mutant]]
+name = "overflow-not-from-the-last-unit"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1])", "if ((j != B_HIDDEN-1) && !((&us[W_HEADX-1:W_HID-1])"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
 [[bench]]
 name = "core-s24x3"
 toplevel = "core_small"

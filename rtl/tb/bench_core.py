@@ -314,19 +314,23 @@ async def bit_identity_extremes(dut):
     total += (await run(dut, core, frames, "bit_identity_extremes", "the flag stays when the sums come back", gap_seed=4,
                         max_gap=1)).count
 
-    # 5. The flag from a unit that is NOT unit 0, and that the score cannot show. Unit 0's weights are all
-    #    zero; unit 1's are at their lowest, one tap past the boundary, under a head weight of ZERO. The
-    #    score is 0 at every output; the flag rises when unit 1's value stops fitting, and stays. (Added
-    #    after the verifier's fault: a core whose flag only unit 0 could raise passed everything above.)
+    # 5. The flag from EACH unit alone, where the score cannot show it: one stream for every unit of the
+    #    build. That unit's weights are at their lowest, one tap past the boundary; every other unit's
+    #    weights are zero; every head weight is ZERO. The score is 0 at every output; the flag rises when
+    #    that unit's value stops fitting, and stays. (The verifiers' faults: a core whose flag only unit 0
+    #    could raise, and then one whose flag every unit but the build's last could raise, each passed
+    #    everything that was here before.)
     assert units >= 2
-    blob = weights.pack(PROFILE, all_low(one_row, t + 1), [1, 0], PASS, p, 0, [[0] * k, [C.COEFF_MIN] * k], 0, PASS)
     frames = [low] * (t + p + 3)
-    said = list(Core(blob).run(frames))
-    assert said[0]["flags"] == 0 and said[-1]["flags"] == flag and all(r["score"] == 0 for r in said), said[-1]
-    core = await fresh(dut, blob)
-    total += (await run(dut, core, frames, "bit_identity_extremes", "the flag from a unit the score does not show", gap_seed=5,
-                        max_gap=1)).count
-    assert total == (taps + pool + 2) + 2 * (t + p + 2) + 1 + 2 * (t + p + 2) + (2 * t + 2 * p + 9) + (t + p + 3), total
+    for only in range(units):
+        hidden = [[C.COEFF_MIN] * k if j == only else [0] * k for j in range(units)]
+        blob = weights.pack(PROFILE, all_low(one_row, t + 1), [0] * units, PASS, p, 0, hidden, 0, PASS)
+        said = list(Core(blob).run(frames))
+        assert said[0]["flags"] == 0 and said[-1]["flags"] == flag and all(r["score"] == 0 for r in said), (only, said[-1])
+        core = await fresh(dut, blob)
+        total += (await run(dut, core, frames, "bit_identity_extremes", "the flag from unit %d alone of %d" % (only, units),
+                            gap_seed=5 + only, max_gap=1)).count
+    assert total == (taps + pool + 2) + 2 * (t + p + 2) + 1 + 2 * (t + p + 2) + (2 * t + 2 * p + 9) + units * (t + p + 3), total
     await host.all_seen()
 
 
@@ -505,7 +509,9 @@ async def commit_orders(dut):
 async def commit_at_reads_back(dut):
     """`commit_at` is two words and reads back the index that is scheduled: its lower word AND its upper
     word, with an index of 2^32 and more scheduled so that the two differ; and zero when none is. The
-    expected words are what the model's store holds for the commit."""
+    expected words of a scheduled commit are what the model's store holds for it. Zero for "none is
+    scheduled" is the REGISTER MAP's word, not the model's: the model's store holds None there, which
+    this test asserts first, and no number stands for None in the model."""
     caps = await begin(dut)
     rng = random.Random(SEED + 1100)
     test = "commit_at_reads_back"
@@ -526,16 +532,21 @@ async def commit_at_reads_back(dut):
     await host.all_seen()
 
 
+AT_ZERO = ((2, 0), (5, 2), (3, 1), (4, 0), (8, 1))       # (pool, hidden units) for a commit at index 0
+
+
 @cocotb.test()
 async def bit_identity_swap_at_zero(dut):
     """A commit at index 0, with a pool of 2 and more: the swap is before the first output, no value was
     made under the old set, and NO output is marked as settling (model/weights.py, Store.step: the mixed
-    outputs exist only when the index is at least 1). Every record carries the new epoch from the first."""
+    outputs exist only when the index is at least 1). Every record carries the new epoch from the first.
+    It is driven at the pools of `AT_ZERO` and at no other: a fault that marks settling at index 0 for one
+    other pool size is not seen (docs/rtl/core.md, the limit on sampled sizes)."""
     caps = await begin(dut)
     rng = random.Random(SEED + 1200)
     settling = 1 << C.FLAGS["settling"]
     total = 0
-    for n, (pool, hidden) in enumerate(((2, 0), (5, 2), (3, 1))):
+    for n, (pool, hidden) in enumerate(AT_ZERO):
         blob = host.random_blob(rng, PROFILE, caps, hidden=min(hidden, caps["cap_hidden"]), pool=pool)
         other = host.reweighted(rng, blob)
         frames = host.random_frames(rng, PROFILE, 30)
@@ -552,7 +563,7 @@ async def bit_identity_swap_at_zero(dut):
         assert await quiet_refusal(dut) is None
         total += (await run(dut, core, frames, "bit_identity_swap_at_zero", "pool %d, %d hidden unit(s)" % (pool, hidden),
                             gap_seed=n)).count
-    assert total == 3 * 30, total
+    assert total == len(AT_ZERO) * 30, total
     await host.all_seen()
 
 

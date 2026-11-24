@@ -183,6 +183,10 @@ async def load(dut, blob, epoch=0):
                      + [(offset("start"), epoch)])
     refused = await take_refusal(dut)
     assert refused == 0, "the bench's own load was refused: %s" % NAME_OF.get(refused, refused)
+    # "No refusal" is also what a core that never heard the bus would answer: the load is taken only if
+    # the core now says it runs.
+    state = await status(dut)
+    assert state["running"] == 1 and state["loading"] == 0, "after a load the core's status is %s" % state
     return config
 
 
