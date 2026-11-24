@@ -263,6 +263,12 @@ async def compare(dut, core, frames, *, test, label, gap_seed=0, max_gap=2, max_
     model core and does the model's own operations before a frame it is told
     to. Such an object stands between the bench and the authority: a bench
     that uses one shows it whole and has a control that hands it a wrong model.
+
+    NOTHING LISTENS BETWEEN TWO CALLS. Each call collects from its own first
+    frame to its own settle. A word the design puts out while a bench writes
+    registers between two calls is seen by neither. A bench that compares in
+    pieces counts `out_valid` over its whole test itself, and holds that count
+    to the records its calls compared.
     """
     profile_name = core.store.config["profile"]
     frames = list(frames)

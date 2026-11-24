@@ -546,10 +546,12 @@ def shell_starts(source):
 
     It does not find every way of starting a shell, and was never needed to: the slip was that one name.
     NOT reported either, each tried by a verifier: a `shell` key that is not written in a dict literal
-    (`kw['shell'] = True`, `kw.setdefault('shell', True)`, `dict([('shell', True)])`); and a function that
-    starts the platform's own shell with no keyword at all (`os.system`, `os.popen`,
-    `subprocess.getoutput`, `subprocess.getstatusoutput`) when its string does not hold the name. On
-    Windows that shell is cmd.exe, not the WSL launcher.
+    (`kw['shell'] = True`, `kw.setdefault('shell', True)`, `dict([('shell', True)])`, a dict
+    comprehension, a key that is a name, as in `**{K: True}`); `shell` passed by position, which
+    `subprocess.Popen` takes as its ninth argument; and a function that starts the platform's own
+    shell with no keyword at all (`os.system`, `os.popen`, `subprocess.getoutput`,
+    `subprocess.getstatusoutput`) when its string does not hold the name. On Windows that shell is
+    cmd.exe, not the WSL launcher. This is a list of what has been tried, not of what there is.
     """
     tree = ast.parse(source)
     spared = set()
@@ -600,7 +602,7 @@ def shell_starts_under(root):
     return found
 
 
-def test_p0_no_python_file_of_the_tree_names_that_shell_or_asks_for_one():
+def test_p0_no_python_file_of_the_tree_names_that_shell_or_writes_out_a_request_for_one():
     """The slip above, held, as far as reading source can hold it. What it cannot see: a name put together
     at run time, as this file's own is; a name that reaches Python from outside the file (an environment
     variable, a configuration file, a command line); a docstring handed to something as data; a program
@@ -640,7 +642,7 @@ STARTS = [
 
 
 @pytest.mark.parametrize("what, statement", STARTS, ids=[s[0] for s in STARTS])
-def test_p0_each_way_of_starting_that_shell_is_seen(what, statement):
+def test_p0_each_form_the_guard_is_said_to_report_is_reported(what, statement):
     """Every form four verifiers tried or named. The first guard looked for a list on one line and missed
     a tuple and a command string; the second did not look for a shell asked of subprocess, nor the name
     with .exe; the third missed the name after other words of a command, a shell asked for in any way but

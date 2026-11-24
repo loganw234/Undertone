@@ -22,8 +22,9 @@ What it cannot see:
   - a file that is NOT frozen and changes what a frozen one does. The frozen scripts put two folders at the
     front of their import path, docs/studies/d1/ (rule.py and firstlook.py do) and docs/studies/d2/ (score.py
     does, before anything of numpy's is imported): a new file in either with the name of a module they
-    import, numpy's among them, would take its place, and no frozen file would change. Two verifiers named
-    this, one folder each; nothing holds it.
+    import, numpy's among them, would take its place, and no frozen file would change. And Python itself
+    puts the folder of a script that is run directly first, before either. Two verifiers named this, one
+    folder each, and a third the last sentence; nothing holds it.
 """
 import hashlib
 import os

@@ -141,7 +141,7 @@ BAD = [
     ("a pending bound past the generator's range", [("max_inject_pending = 1024", "max_inject_pending = 65537")], "NUMBER"),
     ("a fabric with an unknown key", [("max_inject_pending = 1024", "max_inject_pending = 1024\nextra = 1")], "KEYS"),
     ("a fabric with no table bound", [("max_noise_table = 32767\n", "")], "KEYS"),
-    # Three more, each for a clause that the lead's own faults showed no case above could fail on.
+    # Four more, each for a clause that the lead could see no case above would fail on.
     ("an empty block beside the others", [("inject = [0xF80, 0x1000]", "inject = [0xF80, 0x1000]\nspare = [0x1000, 0x1000]")], "BLOCKS"),
     ("a register of bits with no bit", [("[register_bits.src_status]\nrunning = 0", "[register_bits.src_status]")], "REGISTER_BITS"),
     ("register bits that are not a table",

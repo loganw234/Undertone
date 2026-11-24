@@ -1114,3 +1114,55 @@ Everything in this commit. The sixth pass is on it.
 - **The learner's verifier has reported** and is not in this entry: the parcel answers it first.
 - **The full run of stage E1**: next, the lead's, booked.
 - **RTL-A and RTL-B build** when this commit is merged into their branches.
+
+## 2026-11-23 - round 2: the foundation is READY after a sixth pass; a foundation test that failed at a parcel's first bench
+
+The sixth verifier found the four planted faults and nothing else that is a wrong answer. **By the method's rule the foundation is READY**, at the commit of the last entry. Twenty minutes later a parcel's first gate run failed a foundation test that six passes had not touched.
+
+### What ran
+
+- **VP0-6**, a fresh verifier on Opus, on a sealed clone of the round branch's tip: 17:15:35 to 17:25:16 by its own clock. Four faults planted, two in the answers to the fifth pass and two in the definition's new entries. Its clone passed both sizes of the gate before it was sent, with the same count of tests as the tree.
+- **The lead's fix of the manifest test**, gated alone and committed, and the answers below, in this commit.
+
+### Measured
+
+- **Plants: 4 of 4.** A first string of an `if` block spared as a docstring, with its case moved so that it could not see; a generator that accepts a register running past its block's end, with the case that tried it changed for another; the docstring's planted digit on the wrong side of the hash; the injector's offset in the document. Its 67 tool inputs reached for no key, no ledger, no commit without the faults and no other verifier's folder.
+- **No regression, and no wrong answer that is the lead's own.** Its four findings marked (b) are the four plants.
+- **On the definition's new entries**: every sentence the generator's docstring gained, broken in a copy, is refused by the name it implies, but for the planted one. Each new clause of the generator, removed alone, fails a case, but for two that the next check covers under the same name. The two derivations of the generated numbers share no code. Every figure typed by hand in the tests is what the definition gives: 37, 7 and 8 registers; 22 in 39 words to 0x11B; the pulse's samples; 407 as 172 and 3, 2, 1, 64, 6, 148 and 11 more. Rows read by hand across the three copies agree.
+- **On the guard**: 409,691 strings through the pattern with the group that did nothing and the pattern without it; none matched under one and not the other.
+- **On `compare` in pieces**, which the last commit's docstring newly allowed: a test split into two calls on one core and one running design gave the same 8,960 records under both profiles, and a fresh core handed to the second call was a WORD mismatch at its first record.
+
+### The verifier's smaller points, and the answers
+
+- **CLAUDE.md's trap 13 listed less than the guard's own docstring, and three more forms are in neither**: `shell` passed to `Popen` by position, a key that is a name, a dict comprehension. Both lists are longer now, and both say they are lists of what has been tried.
+- **Two tests' names promised more than they check.** They are named for what they do.
+- **Nothing listens between two calls of `compare`.** A word a design puts out while a bench writes registers between two pieces is seen by neither. Said in the harness's docstring and in the limits of `docs/rtl/README.md`; the one bench that compares in pieces, the detector core's, is told to count `out_valid` over its whole test.
+- **The freeze test's limit** left out that Python itself puts a directly run script's folder first. Added.
+- A comment that said three and listed four.
+- **In the last entry**, "35 tool calls in 379 seconds" and "38 tool inputs" for one verifier: the first two are the harness's figures for the agent, the third is the lead's script's count of distinct inputs in its transcript, and its own clock gives 342 seconds. None is wrong; together they read as a disagreement.
+
+### A foundation test that failed as soon as a parcel added a bench
+
+**Found by parcel RTL-B at its first gate run, not by any verifier.** The cases of `test_p0_a_manifest_that_cannot_be_read_exactly_is_refused` each change one text of the bench manifest in a copy of the tree, and count that text first: exactly once. The copy took the whole manifest. A parcel's row that repeats one of the fourteen texts, an empty `kind` in this case, failed the count, and the control on the tests failed with it. And the copy holds the foundation's files only: with a parcel's rows in it, every case would have been refused for a second reason, sources that are not there, so that each would have passed without its own text mattering.
+
+The copy's manifest is now cut at the second bench. On a copy with a valid bench appended that repeats an empty kind, a line of two profiles and a mutant's name, the test as it was fails 11 cases and the test as it is passes 17 of 17. **Six passes did not see it because no verifier's clone ever held a parcel's row**: the foundation was verified as it stood alone, and this was a fault in how it meets what is built on it.
+
+### What this does not prove
+
+- **READY is the rule's word, not a claim that nothing is left.** Six passes each found something, and the thing above was found by use an hour after the fifth. What the sixth pass says is that a fresh verifier with half an hour, four planted faults to find and a list of fourteen things to break, found the four and nothing else that is wrong.
+- **That the guard sees every way of starting a shell.** It is a reading of names against lists, and says so.
+- **Anything about RTL or about the learner.** Both RTL parcels report benches that pass against the model; the learner's verifier has reported twice; the full run of stage E1 has been made. None of that is in this entry: each is recorded when it is verified and merged.
+
+### The lead's slips
+
+- **The foundation was never tried with a second bench in its manifest.** Its own controls cut their copies down to the foundation's bench; this test did not, and nothing ran it on a manifest of two.
+- **"Eighth argument"**, written into the guard's docstring for where `Popen` takes `shell`, was ninth. Counted by `inspect` before this entry; caught by the lead and not by a gate.
+
+### Changed after the last pass, and not seen by a verifier
+
+The fix of the manifest test and every answer above. The round's closing verifier reads the tip.
+
+### Not done, and why
+
+- **The learner's merge, with the full run of stage E1**: the parcel is answering its second verifier.
+- **RTL-A and RTL-B**: each is finishing; each goes past a verifier.
