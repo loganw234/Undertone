@@ -1,0 +1,34 @@
+E1 in software: profile s16x1, sigma 1477/1, Pfa 0.01, amplitude 1/1; the matched filter's d is 2.3269
+  the curve: the learned filter on held-out injections, at its own measured threshold
+  records windows  seed        d        found            efficiency against its own D8     against E0's D8        tolerance
+  16      32       2026112500  1.4508   18814 of 100000  0.18814    0.1907 -1.13 se INSIDE 0.5003 -99.24 se OUTSIDE 0.01258
+  64      128      2026112501  2.0313   38385 of 100000  0.38385    0.3840 -0.06 se INSIDE 0.5003 -37.01 se OUTSIDE 0.01258
+  256     512      2026112502  2.1899   44901 of 100000  0.44901    0.4458 +1.04 se INSIDE 0.5003 -16.29 se OUTSIDE 0.01258
+  1024    2048     2026112503  2.3069   48985 of 100000  0.48985    0.4923 -0.78 se INSIDE 0.5003 -3.31 se INSIDE 0.01258
+  4096    8192     2026112504  2.3201   50013 of 100000  0.50013    0.4976 +0.82 se INSIDE 0.5003 -0.04 se INSIDE 0.01258
+  16384   32768    2026112505  2.3254   49492 of 100000  0.49492    0.4997 -1.51 se INSIDE 0.5003 -1.70 se INSIDE 0.01258
+  the baseline, E0's matched filter, on each part's held-out stream:
+  16      measured threshold: 49614 of 100000, -1.31 se, INSIDE; D8's own threshold: 50073, +0.33 se, INSIDE
+  64      measured threshold: 50316 of 100000, +0.92 se, INSIDE; D8's own threshold: 50035, +0.09 se, INSIDE
+  256     measured threshold: 50319 of 100000, +0.93 se, INSIDE; D8's own threshold: 50272, +1.59 se, INSIDE
+  1024    measured threshold: 49895 of 100000, -0.42 se, INSIDE; D8's own threshold: 49672, -2.20 se, INSIDE
+  4096    measured threshold: 50301 of 100000, +0.88 se, INSIDE; D8's own threshold: 50003, -0.11 se, INSIDE
+  16384   measured threshold: 49496 of 100000, -1.68 se, INSIDE; D8's own threshold: 49859, -1.02 se, INSIDE
+  the paired cost against the baseline, each at its own threshold (reported; not in the verdict):
+  16      cost +0.30800, se 0.00339 (pairs 0.00163, thresholds 0.00297); its coefficients predict +0.30960: -0.47 se
+  64      cost +0.11931, se 0.00301 (pairs 0.00132, thresholds 0.00270); its coefficients predict +0.11623: +1.03 se
+  256     cost +0.05418, se 0.00252 (pairs 0.00107, thresholds 0.00229); its coefficients predict +0.05449: -0.12 se
+  1024    cost +0.00910, se 0.00152 (pairs 0.00065, thresholds 0.00138); its coefficients predict +0.00795: +0.75 se
+  4096    cost +0.00288, se 0.00116 (pairs 0.00049, thresholds 0.00105); its coefficients predict +0.00269: +0.16 se
+  16384   cost +0.00004, se 0.00081 (pairs 0.00034, thresholds 0.00073); its coefficients predict +0.00057: -0.66 se
+  the instrument, on each part:
+  16      flags 0; every score read identical to the statistics': yes; the core equal to the baseline on the first 256 trials: yes; peak at truth + 63; signal-free scores 300000, floor 3.3e-05, a rate of 0.01 is COUNTED
+  64      flags 0; every score read identical to the statistics': yes; the core equal to the baseline on the first 256 trials: yes; peak at truth + 63; signal-free scores 300000, floor 3.3e-05, a rate of 0.01 is COUNTED
+  256     flags 0; every score read identical to the statistics': yes; the core equal to the baseline on the first 256 trials: yes; peak at truth + 63; signal-free scores 300000, floor 3.3e-05, a rate of 0.01 is COUNTED
+  1024    flags 0; every score read identical to the statistics': yes; the core equal to the baseline on the first 256 trials: yes; peak at truth + 63; signal-free scores 300000, floor 3.3e-05, a rate of 0.01 is COUNTED
+  4096    flags 0; every score read identical to the statistics': yes; the core equal to the baseline on the first 256 trials: yes; peak at truth + 63; signal-free scores 300000, floor 3.3e-05, a rate of 0.01 is COUNTED
+  16384   flags 0; every score read identical to the statistics': yes; the core equal to the baseline on the first 256 trials: yes; peak at truth + 63; signal-free scores 300000, floor 3.3e-05, a rate of 0.01 is COUNTED
+  one reading of the curve, at this tolerance's resolution: every count from 1024 truth records on is inside the tolerance of E0's figure
+  the parts against the experiment as this file states it: one part a count, each under its own seed and its committed injection set
+  THE REPORTED MODEL, named before the run: part 5, 16384 truth records, 32768 labelled windows: 49492 of 100000, efficiency 0.49492; E0's figure 0.50026; -1.70 se, tolerance 0.01258, INSIDE
+== E1 SOFTWARE VERDICT: PASS, the reported model is inside the tolerance of E0's efficiency

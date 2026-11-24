@@ -1166,3 +1166,78 @@ The fix of the manifest test and every answer above. The round's closing verifie
 
 - **The learner's merge, with the full run of stage E1**: the parcel is answering its second verifier.
 - **RTL-A and RTL-B**: each is finishing; each goes past a verifier.
+
+## 2026-11-23 - round 2: the learner is in; stage E1 in software, the full run: a learner that starts blank reaches the matched filter's efficiency
+
+Parcel LRN-A is merged after three verifier passes. The lead made the full run of stage E1 in software on the seeds named before the experiment was written, and then made it again, because the tree's own judge refused the first run's parts on the merged tree. **The verdict is PASS, both times, with the same figures.** It is a result about software and about sensitivity. Nothing of round 2 is pushed.
+
+### What ran
+
+- **VLRNA**, a fresh verifier on Opus, on a sealed clone of the parcel's three commits squashed into one, four faults planted: 15:14:23 to 15:18:19, stopped for another project's timing window, and 16:43:19 to 16:53:00 by its own clock.
+- **VLRNA-2** and **VLRNA-3**, each a fresh verifier on a sealed clone of the parcel's branch after its answer, three faults and two: 17:19:19 to 17:25:26, and 17:33:47 to 17:37:28.
+- **The full run of stage E1, twice**, the lead's, each booked on the TimeSheet: six processes, one a part, 17:02:26 to 17:13:05 on the parcel's commit 6a2431f, and 17:44:09 to 17:53:08 on the merge commit 9c9da6f; each part ended with exit code 0, each tree was clean before and after, and the judge was run in the same tree as its parts.
+
+### Measured: the full run
+
+The record is [docs/studies/E1-software.md](studies/E1-software.md), with the judge's whole output and the six parts beside it.
+
+- **The reported model, named before any run: the last part, 16,384 truth records. 49,492 of 100,000 held-out injections found, 0.49492, against the matched filter's 0.50026: 1.70 standard errors below, inside a tolerance of 0.01258.**
+- **The curve**, found of 100,000 at 16, 64, 256, 1,024, 4,096 and 16,384 truth records: 18,814, 38,385, 44,901, 48,985, 50,013 and 49,492. Against the matched filter's figure: -99.24, -37.01, -16.29, -3.31, -0.04 and -1.70 standard errors, the first three outside the tolerance and the last three inside.
+- **Every part is inside the tolerance of what the statistics predict for the integers that part's learner produced.** So the three parts that fall short of the matched filter fall short by what their own weights say they should.
+- The matched filter on each part's own held-out stream, at its own measured threshold, is inside the tolerance in all six. The paired cost of the reported model against it is +0.00004 with a standard error of 0.00081.
+- The instrument, in every part: no flag; every score read identical to the statistics package's own; 300,000 signal-free scores.
+- **The second run's parts equal the first run's in every field but the definition's hash, fifty fields a part, and the judge's two outputs are equal byte for byte.**
+
+### Which authority this rests on
+
+The statistics package's formula D8 and its tolerance, on scores the reference model produced. It is evidence about sensitivity in software. It is not evidence that any fabric is correct, and nothing in it used RTL.
+
+### Why the run was made twice
+
+A part carries the SHA-256 of the definition it was run under, and the judge refuses a part of another definition. The lead made the first run on the parcel's commit and, in the hour after, entered the register map and the fabric's names in the definition for the RTL parcels. On the merged tree the judge said NOT AS STATED of the first run's six parts, for that hash and nothing else. The lead met this when the test that was to hold the committed result failed at its first run. The experiment reads none of what was added; the rule does not know that, and should not.
+
+### Measured: the verifiers
+
+- **Plants: 3 of 4, then 3 of 3, then 2 of 2.** In this round so far, 44 of 45: 32 of 32 through the foundation's fifth pass, 4 of 4 in its sixth, and these 8 of 9. **The one missed** was a wrong sum in the hand-working written beside a frozen vector, `9 * 72817 + 4` for 655355: the first verifier reworked every number of that vector with code of its own and compared the numbers; it did not read the sentence. No verifier's commands reached for a key, a ledger, a commit without the faults or another verifier's folder.
+- **No regression in any pass.**
+- The first verifier reproduced, with code that imports nothing of the parcel's: every weight of the learning rule's frozen vector; the tolerance for the short form and for a full part, to the last digit given; all seven injection sets' digests. It broke eighteen things, one at a time, and each failed a test. It found where the short form stops seeing: a filter whose cosine with the pulse is 0.93 is outside, one at 0.94 is inside.
+
+### What the verifiers found that was the parcel's, and the answers
+
+- **"So the learner cannot look the pulse up"**, in bold, said more than its test showed: a function in the trainer that opens the pulse's file by path, with no import, passed the boundary test. The parcel made the test read names against lists and rewrote the sentence: it is a reading of names, not a wall.
+- **The next sentence was then wider than the new check**: numpy's readers "refused by name" were seen only after a dot, and one imported by name and called bare read the file. The parcel made the check see an import by name, under another name, and a star import.
+- **No test held that a threshold of a later epoch is refused on an earlier epoch's records.** The code refused it; the lead's planted change of `!=` to `>` passed every test. A test holds both directions now.
+- Four limits: what a filter of negative deflection does at the judge's second check; a likelihood stated as a certainty; two things the rule's functions leave to their caller; and what the short form cannot tell apart, as a number.
+
+### Merged with these stated limits
+
+- **The boundary test is names against lists.** The third verifier reached the pulse's file through the loader of an imported module, by a function on no list; the parcel's limit 12 covers it in so many words.
+- **The trainer is exact integer arithmetic, the difference of two class means.** The design D0 says the host "trains in floating point" (section 4). The parcel's design said why not and the lead approved it. **For Logan.**
+- **Register row L23's rerun** was described so that it would not reproduce; the lead added the missing half of the sentence.
+- Everything under "Limits" in the two documents.
+
+### What this does not prove
+
+- **Anything about fabric.** The detector here is the reference model.
+- **Where the curve crosses into the tolerance.** The part at 1,024 records is 3.31 standard errors low of 4. One draw.
+- **That the learner equals the matched filter.** It is inside a tolerance of 0.0126. The paired cost is the sharper figure, and it is reported, not judged.
+- **A gain over the matched filter**, which the statistics say cannot be had on this problem.
+- **That the result holds for the next definition.** When the definition changes again the judge will refuse these parts; the test that holds them then holds only that the hash is the one reason.
+
+### The lead's slips
+
+- **The first run was made before the parcel's second and third passes**, on the lead's judgement that what was sent back could not touch it. That held, and the verifiers' own diffs show it; it was still a run made ahead of the order the lead had written down.
+- **The lead changed the definition between a run and its merge without asking what carries the definition's hash.** The judge caught it. A second run of nine minutes, and a second booking.
+- **The lead's running count of planted faults found was wrong twice in the round's ledger and in what the lead told Logan**, "39 of 40" and then "41 of 42", where the counts were 42 of 43 and 44 of 45: a sum carried in the head across four reports. The figure above is added up from the reports' own counts.
+- **A figure passed on wrong**: the lead's ruling told the parcel the short form's blind spot was "an eighth" of the named count, from a verifier's report. It is 15 percent; the parcel worked it and said so.
+- **The judge's output was first hashed with Windows line ends in it**, which no committed file may hold; the committed copy and its hash are of the bytes with line feeds.
+
+### Changed after the last pass, and not seen by a verifier
+
+The lead's additions in the commit that carries this entry: the study's page, its seven files, `tests/test_e1_full_run.py`, a paragraph and half a sentence in `docs/model/lrn-a.md`. The round's closing verifier reads the tip.
+
+### Not done, and why
+
+- **Stage E1 on the card**, and every later stage: other rounds.
+- **A second seed for any part**: the experiment as fixed has one.
+- **RTL-A and RTL-B**: both have reported; their verifiers are next.
