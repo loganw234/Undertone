@@ -23,9 +23,10 @@ What holds the source against the model, each through `harness.hold`:
   refusal_register_access    every write the block does not take, and the
                              writes it must take or leave alone
 
-THE REFUSAL WORD. Every comparison of frames ends with the refusal register as
-one more word (source_bus.py says why), so each count of words in the evidence
-is one more than the frames compared.
+THE REFUSAL WORD. Every comparison of FRAMES ends with the refusal register as
+one more word (source_bus.py says why), so for a comparison of frames the count
+of words in the evidence is one more than the frames compared. A comparison of
+the generator's words carries no such word.
 
 WHOSE EXPECTATION. The frames and words are the model's. In
 refusal_noise_range the name is the model's own, raised by
@@ -42,6 +43,7 @@ WHAT THIS BENCH DOES NOT SEE: a seed, a sigma or a length it does not run;
 anything about the noise's tails, which is the model's gate; whether a table
 the host loads is a Gaussian's, since the bench loads the model's own.
 """
+import itertools
 import os
 import random
 
@@ -181,6 +183,21 @@ async def frames_are_the_models(dut):
             await hold_frames(b, "frames_are_the_models", "sigma %d/%d seed %d" % (sigma_num, sigma_den, again),
                               seen, unknown, list(noise))
             assert at == every_clock(frames), at[:4]
+    # THE FRAME COUNT'S UPPER WORD. No bench can run 2^32 frames. What a short run can hold: a count of
+    # 2^32 + 3 offers a fourth and a fifth frame and is still running after them, and a count of exactly
+    # 2^32 runs at all. The model is asked for the same count and read no further than the frames taken.
+    table = source.gaussian_table(2, 1)
+    for count, take in (((1 << 32) + 3, 5), (1 << 32, 2)):
+        await b.reset()
+        await load_table(b, table)
+        seed = rng.getrandbits(64)
+        model_frames = list(itertools.islice(source.Noise(PROFILE, seed, 2, 1, count), take))
+        seen, at, unknown = await run(b, seed, count, expect=take, settle=2, listen=take + 1)
+        await hold_frames(b, "frames_are_the_models", "a count of %d, its first %d frames" % (count, take),
+                          seen, unknown, model_frames)
+        assert at == every_clock(take), at
+        assert await b.read(bus.offset("src_status")) == 1 << C_RUNNING_BIT, "the source stopped before its count"
+    await b.reset()
 
 
 @cocotb.test()

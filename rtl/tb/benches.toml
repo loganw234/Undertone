@@ -213,6 +213,19 @@ edits = [["refusal <= wr_code;", "refusal <= wr_code ^ 8'd1;"]]
 must_fail = ["refusal_noise_range", "refusal_register_access"]
 kind = "WORD"
 
+# A source that drops the upper word of src_frames: a count of 2^32 + 3 runs three frames, and a count
+# of exactly 2^32 does not run. The lead planted it in the verifier's clone and the gate passed it: no
+# test asked for a count past 32 bits. This mutant is that fault, kept so the gate is shown to see it.
+[[bench.mutant]]
+name = "frames-upper-word-dropped"
+file = "rtl/source/source.sv"
+edits = [
+    ["frames_left <= {reg_wdata, frames_low};", "frames_left <= {WORD_ZERO, frames_low};"],
+    ["if ({reg_wdata, frames_low} != FRAMES_ZERO) running <= 1'b1;", "if (frames_low != WORD_ZERO) running <= 1'b1;"],
+]
+must_fail = ["frames_are_the_models"]
+kind = "WORD"
+
 # The injector.
 
 [[bench]]
@@ -284,7 +297,7 @@ kind = "WORD"
 [[bench.mutant]]
 name = "half-amplitude"
 file = "rtl/inject/inject.sv"
-edits = [["s2_den <= active ? head_den : 32'd1;", "s2_den <= active ? {head_den[30:0], 1'b0} : 32'd1;"]]
+edits = [["s2_den <= active ? head_den : DEN_ONE;", "s2_den <= active ? {head_den[DEN_BITS-2:0], 1'b0} : DEN_ONE;"]]
 must_fail = ["stream_is_the_models"]
 kind = "WORD"
 
@@ -294,7 +307,7 @@ kind = "WORD"
 name = "refuses-nothing"
 file = "rtl/inject/inject.sv"
 edits = [
-    ["end else if ((t_pulse >> TRUTH_PULSE_ID_BITS) != 32'd0 || reg_wdata == 32'd0) begin", "end else if (1'b0) begin"],
+    ["end else if ((t_pulse >> TRUTH_PULSE_ID_BITS) != WORD_ZERO || reg_wdata == WORD_ZERO) begin", "end else if (1'b0) begin"],
     ["end else if (t_pulse != PULSE_E0_ID) begin", "end else if (1'b0) begin"],
     ["end else if ({1'b0, t_index} < free_from || t_index < n) begin", "end else if (1'b0) begin"],
     ["end else if (count == MAX_INJECT_PENDING) begin", "end else if (1'b0) begin"],
@@ -304,6 +317,22 @@ edits = [
 ]
 must_fail = ["refusal_record_field", "refusal_pulse_unknown", "refusal_inject_overlap", "refusal_inject_pending", "refusal_inject_range", "refusal_register_access"]
 kind = "WORD"
+
+# An injector with truth in its timing: every frame after the first one that has a pulse on it goes
+# through one register more, so it comes out 53 clocks after it went in, with every sample right. The
+# verifier built it and nothing failed: no mutant was made to fail the latency's test. It names no kind:
+# the words are the model's, and what fails is the test's own count of clocks.
+[[bench.mutant]]
+name = "one-register-more-after-a-pulse"
+file = "rtl/inject/inject.sv"
+edits = [
+    ["logic                      any_bad, range_refuse;", "logic                      any_bad, range_refuse; logic late, x_valid; logic [W-1:0] x_frame;"],
+    ["r_delta <= delta;", "r_delta <= delta; x_valid <= 1'b0;"],
+    ["out_frame <= sum_frame;", "out_frame <= sum_frame; if (late) begin out_valid <= 1'b0; x_valid <= 1'b1; x_frame <= sum_frame; end if (r_delta != 0) late <= 1'b1;"],
+    ["if (wr_run_refused || range_refuse) dead <= 1'b1;", "if (x_valid) begin out_valid <= 1'b1; out_frame <= x_frame; end if (wr_run_refused || range_refuse) dead <= 1'b1;"],
+]
+must_fail = ["latency_is_fifty_two_clocks"]
+kind = ""
 
 # The mirror of `largest-sample-refused`: an injector that refuses a sum equal to the smallest sample.
 [[bench.mutant]]

@@ -6,8 +6,8 @@ the injector with that profile's SAMPLE_BITS and CHANNELS.
 Every comparison drives frames through `harness.exchange`, loads the schedule
 through the register port (source_bus.py), and holds what comes out against
 what `model.inject.inject` hands out, through `harness.hold`. Each ends with
-the refusal register as one more word, so each count of words in the evidence
-is one more than the frames compared.
+the refusal register as one more word, so for each of these comparisons of
+frames the count of words in the evidence is one more than the frames compared.
 
 WHOSE EXPECTATION. The frames, and the name of a refusal, are the model's,
 with four exceptions that are THIS DESIGN'S and are said where they are used:
@@ -378,14 +378,17 @@ async def refusal_inject_overlap(dut):
     _rtl, _lat, name, out = await run_case(b, test, "a record at the run's first frame", steady(100), [rec(first, 3, 1)],
                                            first=first)
     assert name is None and out != steady(100)
-    # And while a stream runs: a record whose frame has gone ends the run.
+    # And while a stream runs: a record whose frame has gone ends the run. The record is behind the frame the
+    # injector has reached and NOT behind the record before it, which ended at 84: only the fabric's half of
+    # the rule refuses it. No model has this case, so the register is asserted and THE FRAMES COLLECTED ARE
+    # COMPARED WITH NOTHING: that a frame taken after the refused write is not offered is not held here.
     await b.reset()
-    await load(b, [rec(400, 1, 1)])
-    task = cocotb.start_soon(driver(b.dut, steady(200), 0, max_gap=0))
-    for _ in range(60):
+    await load(b, [rec(20, 1, 1)])
+    task = cocotb.start_soon(driver(b.dut, steady(300), 0, max_gap=0))
+    for _ in range(160):
         await FallingEdge(b.dut.clk)
-    await b.write_many(truth_writes(rec(500, 1, 1)))        # ahead of the stream: taken
-    await b.write_many(truth_writes(rec(30, 1, 1)))         # behind the frame reached, and behind the record before it
+    assert await b.read(bus.offset("inj_refusal")) == 0
+    await b.write_many(truth_writes(rec(100, 1, 1)))        # past the first record's end, behind the frame reached
     await task
     code = await b.read(bus.offset("inj_refusal"))
     assert code == C.REFUSAL_CODES["INJECT_OVERLAP"], code

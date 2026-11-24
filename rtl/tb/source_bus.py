@@ -12,8 +12,9 @@ model refuses before any frame has no frame to hold. So every comparison of
 frames in these two benches ends with one more word: the block's refusal
 register, read after the stream, under a marker bit above the frame's bits
 (`account`). The model's side is the code of the name the model refused by,
-or 0. EVERY COUNT OF WORDS THE EVIDENCE CARRIES IS THEREFORE ONE MORE THAN THE
-FRAMES COMPARED, for each comparison.
+or 0. FOR A COMPARISON OF FRAMES THE COUNT OF WORDS THE EVIDENCE CARRIES IS
+THEREFORE ONE MORE THAN THE FRAMES COMPARED. A comparison of the generator's
+words carries no such word: its count is the words.
 
 `Bus.edges` counts rising edges from the reset on, so a bench can say how many
 clocks lie between the edge that took a write and the edge a word was seen at.

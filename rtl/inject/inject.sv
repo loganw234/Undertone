@@ -94,12 +94,36 @@ module inject #(
     localparam int SMAX      = (1 << (SAMPLE_BITS - 1)) - 1;
     localparam int SMIN      = -(1 << (SAMPLE_BITS - 1));
 
-    localparam logic [7:0] CODE_RECORD_FIELD   = REFUSAL_RECORD_FIELD;
-    localparam logic [7:0] CODE_PULSE_UNKNOWN  = REFUSAL_PULSE_UNKNOWN;
-    localparam logic [7:0] CODE_INJECT_OVERLAP = REFUSAL_INJECT_OVERLAP;
-    localparam logic [7:0] CODE_INJECT_PENDING = REFUSAL_INJECT_PENDING;
-    localparam logic [7:0] CODE_INJECT_RANGE   = REFUSAL_INJECT_RANGE;
-    localparam logic [7:0] CODE_ACCESS         = REFUSAL_REGISTER_ACCESS;
+    // Every width below is the package's. What stays typed, and why: CODE_BITS, the byte a refusal's
+    // number fits by the definition's own rule, for which it generates no width; and the 8 bits that
+    // index a pulse's samples, which hold any length to 255.
+    localparam int CODE_BITS  = 8;
+    localparam int WORD_BYTES = BUS_WORD_BITS / 8;
+    localparam int INDEX_BITS = TRUTH_INDEX_BITS;
+
+    localparam logic [BUS_WORD_BITS-1:0] WORD_ZERO = '0;
+    localparam logic [INDEX_BITS-1:0]    INDEX_ONE = {{(INDEX_BITS-1){1'b0}}, 1'b1};
+    localparam logic [DEN_BITS-1:0]      DEN_ONE   = {{(DEN_BITS-1){1'b0}}, 1'b1};
+
+    localparam logic [CODE_BITS-1:0] CODE_NONE           = REFUSAL_NONE;
+    localparam logic [CODE_BITS-1:0] CODE_RECORD_FIELD   = REFUSAL_RECORD_FIELD;
+    localparam logic [CODE_BITS-1:0] CODE_PULSE_UNKNOWN  = REFUSAL_PULSE_UNKNOWN;
+    localparam logic [CODE_BITS-1:0] CODE_INJECT_OVERLAP = REFUSAL_INJECT_OVERLAP;
+    localparam logic [CODE_BITS-1:0] CODE_INJECT_PENDING = REFUSAL_INJECT_PENDING;
+    localparam logic [CODE_BITS-1:0] CODE_INJECT_RANGE   = REFUSAL_INJECT_RANGE;
+    localparam logic [CODE_BITS-1:0] CODE_ACCESS         = REFUSAL_REGISTER_ACCESS;
+
+    // A definition whose rows no longer fit this module stops every run at time zero, by name: the index is
+    // taken as a lower and an upper word, and each other field of a truth record as one word.
+    initial begin
+        if (REG_INJ_TRUTH_INDEX_WORDS != 2 || REG_INJ_FRAME_WORDS != 2
+                || REG_INJ_TRUTH_INDEX_WORDS * BUS_WORD_BITS != INDEX_BITS
+                || REG_INJ_FRAME_WORDS * BUS_WORD_BITS != INDEX_BITS
+                || NUM_BITS != BUS_WORD_BITS || DEN_BITS != BUS_WORD_BITS || TRUTH_PULSE_ID_BITS > BUS_WORD_BITS) begin
+            $display("inject: DEFINITION-MISMATCH: a truth record's fields no longer fit the rows that carry them");
+            $finish;
+        end
+    end
 
     // The pulse e0, sample j, from the generated package's sixty-four integers.
     function automatic logic signed [PULSE_SAMPLE_BITS-1:0] e0_sample(input logic [7:0] j);
@@ -173,22 +197,22 @@ module inject #(
     endfunction
 
     // ---- the registers, and the store ----
-    logic [63:0]       n;               // the index the next frame taken will have
-    logic [31:0]       frame_low;
-    logic [63:0]       t_index;
-    logic [31:0]       t_pulse;
-    logic [31:0]       t_num;
+    logic [INDEX_BITS-1:0]    n;        // the index the next frame taken will have
+    logic [BUS_WORD_BITS-1:0] frame_low;
+    logic [INDEX_BITS-1:0]    t_index;
+    logic [BUS_WORD_BITS-1:0] t_pulse;
+    logic [BUS_WORD_BITS-1:0] t_num;
     logic [PTR_BITS:0] wr_ptr, rd_ptr, count;
-    logic [64:0]       free_from;       // the end of the last record taken
-    logic [7:0]        refusal;
+    logic [INDEX_BITS:0] free_from;     // the end of the last record taken: one bit more than an index
+    logic [CODE_BITS-1:0] refusal;
     logic              dead;            // the run has ended on a refusal
 
-    logic [63:0]         st_index [0:MAX_INJECT_PENDING-1];
+    logic [INDEX_BITS-1:0] st_index [0:MAX_INJECT_PENDING-1];
     logic [NUM_BITS-1:0] st_num   [0:MAX_INJECT_PENDING-1];
     logic [DEN_BITS-1:0] st_den   [0:MAX_INJECT_PENDING-1];
 
     logic                head_valid;
-    logic [63:0]         head_index;
+    logic [INDEX_BITS-1:0] head_index;
     logic [NUM_BITS-1:0] head_num;
     logic [DEN_BITS-1:0] head_den;
 
@@ -201,12 +225,12 @@ module inject #(
     // ---- the pipeline ----
     logic                                s1_valid, s2_valid, r_valid;
     logic [W-1:0]                        s1_frame, s2_frame, r_frame;
-    logic [63:0]                         s1_index;
+    logic [INDEX_BITS-1:0]               s1_index;
     logic signed [PULSE_SAMPLE_BITS-1:0] s2_p;
     logic signed [NUM_BITS-1:0]          s2_num;
     logic [DEN_BITS-1:0]                 s2_den;
 
-    logic [63:0] diff;
+    logic [INDEX_BITS-1:0] diff;
     logic        active;
     assign diff   = s1_index - head_index;
     assign active = s1_valid && head_valid && (s1_index >= head_index) && (diff < PULSE_E0_LENGTH);
@@ -261,21 +285,21 @@ module inject #(
     assign range_refuse = r_valid && !dead && any_bad;
 
     // The refusal this clock earns, 0 for none: a refused write's, or a sum out of range.
-    logic [7:0] wr_code, new_code;
-    assign new_code = (wr_code != 8'd0) ? wr_code : (range_refuse ? CODE_INJECT_RANGE : 8'd0);
+    logic [CODE_BITS-1:0] wr_code, new_code;
+    assign new_code = (wr_code != CODE_NONE) ? wr_code : (range_refuse ? CODE_INJECT_RANGE : CODE_NONE);
 
     // ---- what a write is ----
-    logic [31:0] addr;
+    logic [BUS_ADDRESS_BITS:0] addr;        // one bit more than an address, so that a block's END compares rightly
     logic        in_block, wr, rd;
     logic        wr_run_refused, wr_frame_low, wr_begin, wr_index_low, wr_index_high, wr_pulse, wr_num, wr_push, wr_clear;
 
-    assign addr     = {{(32 - BUS_ADDRESS_BITS){1'b0}}, reg_addr};
+    assign addr     = {1'b0, reg_addr};
     assign in_block = (addr >= BLOCK_INJECT_FIRST) && (addr < BLOCK_INJECT_END);
     assign wr       = reg_valid && reg_we && in_block;
     assign rd       = reg_valid && !reg_we;
 
     always_comb begin
-        wr_code        = 8'd0;
+        wr_code        = CODE_NONE;
         wr_run_refused = 1'b0;
         wr_frame_low   = 1'b0;
         wr_begin       = 1'b0;
@@ -288,16 +312,16 @@ module inject #(
         if (wr) begin
             case (addr)
                 REG_INJ_FRAME_OFFSET:               wr_frame_low  = 1'b1;
-                REG_INJ_FRAME_OFFSET + 4:           wr_begin      = 1'b1;
+                REG_INJ_FRAME_OFFSET + WORD_BYTES:           wr_begin      = 1'b1;
                 REG_INJ_TRUTH_INDEX_OFFSET:         wr_index_low  = 1'b1;
-                REG_INJ_TRUTH_INDEX_OFFSET + 4:     wr_index_high = 1'b1;
+                REG_INJ_TRUTH_INDEX_OFFSET + WORD_BYTES:     wr_index_high = 1'b1;
                 REG_INJ_TRUTH_PULSE_ID_OFFSET:      wr_pulse      = 1'b1;
                 REG_INJ_TRUTH_AMPLITUDE_NUM_OFFSET: wr_num        = 1'b1;
                 REG_INJ_TRUTH_AMPLITUDE_DEN_OFFSET: begin
                     // The offer. The model's checks, in the model's order.
                     if (dead) begin
                         wr_code = CODE_ACCESS;
-                    end else if ((t_pulse >> TRUTH_PULSE_ID_BITS) != 32'd0 || reg_wdata == 32'd0) begin
+                    end else if ((t_pulse >> TRUTH_PULSE_ID_BITS) != WORD_ZERO || reg_wdata == WORD_ZERO) begin
                         wr_code        = CODE_RECORD_FIELD;
                         wr_run_refused = 1'b1;
                     end else if (t_pulse != PULSE_E0_ID) begin
@@ -314,7 +338,7 @@ module inject #(
                     end
                 end
                 REG_INJ_REFUSAL_OFFSET: begin
-                    if (reg_wdata == 32'd0) wr_clear = 1'b1;
+                    if (reg_wdata == WORD_ZERO) wr_clear = 1'b1;
                     else                    wr_code  = CODE_ACCESS;
                 end
                 default:                            wr_code = CODE_ACCESS;      // read-only, no row, or not a word's offset
@@ -324,24 +348,24 @@ module inject #(
 
     always_ff @(posedge clk) begin
         if (rst) begin
-            n         <= 64'd0;
-            frame_low <= 32'd0;
-            t_index   <= 64'd0;
-            t_pulse   <= 32'd0;
-            t_num     <= 32'd0;
+            n         <= '0;
+            frame_low <= '0;
+            t_index   <= '0;
+            t_pulse   <= '0;
+            t_num     <= '0;
             wr_ptr    <= '0;
             rd_ptr    <= '0;
-            free_from <= 65'd0;
-            refusal   <= 8'd0;
+            free_from <= '0;
+            refusal   <= CODE_NONE;
             dead      <= 1'b0;
             s1_valid  <= 1'b0;
             s1_frame  <= '0;
-            s1_index  <= 64'd0;
+            s1_index  <= '0;
             s2_valid  <= 1'b0;
             s2_frame  <= '0;
             s2_p      <= '0;
             s2_num    <= '0;
-            s2_den    <= 32'd1;
+            s2_den    <= DEN_ONE;
             r_valid   <= 1'b0;
             r_frame   <= '0;
             r_delta   <= '0;
@@ -353,7 +377,7 @@ module inject #(
                 dv_frame[k] <= '0;
                 dv_neg[k]   <= 1'b0;
                 dv_num[k]   <= '0;
-                dv_den[k]   <= 32'd1;
+                dv_den[k]   <= DEN_ONE;
                 dv_rem[k]   <= '0;
                 dv_quo[k]   <= '0;
             end
@@ -364,14 +388,14 @@ module inject #(
             s1_valid <= in_valid;
             s1_frame <= in_frame;
             s1_index <= n;
-            if (in_valid) n <= n + 64'd1;
+            if (in_valid) n <= n + INDEX_ONE;
 
             // ---- the pulse's sample and the record's two numbers ----
             s2_valid <= s1_valid;
             s2_frame <= s1_frame;
             s2_p     <= active ? e0_sample(diff[7:0]) : {PULSE_SAMPLE_BITS{1'b0}};
             s2_num   <= active ? head_num : {NUM_BITS{1'b0}};
-            s2_den <= active ? head_den : 32'd1;
+            s2_den <= active ? head_den : DEN_ONE;
             if (active && diff == PULSE_E0_LENGTH - 1) rd_ptr <= rd_ptr + 1'b1;     // its last sample: the record leaves
 
             // ---- the product, as a sign and a magnitude ----
@@ -413,15 +437,15 @@ module inject #(
             // ---- a refusal that ends the run, and the refusal register: the first refusal stands ----
             if (wr_run_refused || range_refuse) dead <= 1'b1;
             if (wr_clear) begin
-                refusal <= 8'd0;
-            end else if (refusal == 8'd0 && new_code != 8'd0) begin
+                refusal <= CODE_NONE;
+            end else if (refusal == CODE_NONE && new_code != CODE_NONE) begin
                 refusal <= new_code;
             end
 
             // ---- writes that are taken ----
             if (wr_frame_low)  frame_low      <= reg_wdata;
-            if (wr_index_low)  t_index[31:0]  <= reg_wdata;
-            if (wr_index_high) t_index[63:32] <= reg_wdata;
+            if (wr_index_low)  t_index[BUS_WORD_BITS-1:0]          <= reg_wdata;
+            if (wr_index_high) t_index[INDEX_BITS-1:BUS_WORD_BITS] <= reg_wdata;
             if (wr_pulse)      t_pulse        <= reg_wdata;
             if (wr_num)        t_num          <= reg_wdata;
             if (wr_push) begin
@@ -438,8 +462,8 @@ module inject #(
                     reg_rdata <= '0;
                 end else begin
                     case (addr)
-                        REG_INJ_PENDING_OFFSET:        reg_rdata <= {{(32 - PTR_BITS - 1){1'b0}}, count};
-                        REG_INJ_REFUSAL_OFFSET:        reg_rdata <= {24'd0, refusal};
+                        REG_INJ_PENDING_OFFSET:        reg_rdata <= {{(BUS_WORD_BITS - PTR_BITS - 1){1'b0}}, count};
+                        REG_INJ_REFUSAL_OFFSET:        reg_rdata <= {{(BUS_WORD_BITS - CODE_BITS){1'b0}}, refusal};
                         REG_CAP_INJECT_PENDING_OFFSET: reg_rdata <= MAX_INJECT_PENDING;
                         default:                       reg_rdata <= '0;
                     endcase
@@ -451,8 +475,8 @@ module inject #(
                 n         <= {reg_wdata, frame_low};
                 wr_ptr    <= '0;
                 rd_ptr    <= '0;
-                free_from <= 65'd0;
-                refusal   <= 8'd0;
+                free_from <= '0;
+                refusal   <= CODE_NONE;
                 dead      <= 1'b0;
                 s1_valid  <= 1'b0;
                 s2_valid  <= 1'b0;

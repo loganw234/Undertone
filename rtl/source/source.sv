@@ -103,39 +103,65 @@ module source #(
     localparam int SAMPLE_MAX    = (1 << (SAMPLE_BITS - 1)) - 1;
     localparam int LARGEST_INT   = (MAX_NOISE_TABLE < SAMPLE_MAX) ? MAX_NOISE_TABLE : SAMPLE_MAX;
 
-    localparam logic [31:0] LARGEST = LARGEST_INT;
-    localparam logic [7:0]  CODE_NOISE_RANGE = REFUSAL_NOISE_RANGE;
-    localparam logic [7:0]  CODE_ACCESS      = REFUSAL_REGISTER_ACCESS;
+    // Every width below is the package's. A row of two words is its WORDS times the bus word.
+    // What stays typed, and why: GEN_BITS, the 64 of SplitMix64's word, which is model/source.py's
+    // WORD_BITS and goes with the three constants the definition does not hold; CODE_BITS, the byte a
+    // refusal's number fits by the definition's own rule, for which it generates no width; and the 8 bits
+    // of this module's own small counters (ph, chan, bitsel).
+    localparam int GEN_BITS    = 64;
+    localparam int CODE_BITS   = 8;
+    localparam int WORD_BYTES  = BUS_WORD_BITS / 8;
+    localparam int SEED_BITS   = REG_SRC_SEED_WORDS * BUS_WORD_BITS;
+    localparam int FRAMES_BITS = REG_SRC_FRAMES_WORDS * BUS_WORD_BITS;
+    localparam int ENTRY_BITS  = REG_SRC_TABLE_ENTRY_WORDS * BUS_WORD_BITS;
+
+    localparam logic [BUS_WORD_BITS-1:0] WORD_ZERO   = '0;
+    localparam logic [FRAMES_BITS-1:0]   FRAMES_ZERO = '0;
+    localparam logic [FRAMES_BITS-1:0]   FRAMES_ONE  = {{(FRAMES_BITS-1){1'b0}}, 1'b1};
+    localparam logic [BUS_WORD_BITS-1:0] LARGEST = LARGEST_INT;
+    localparam logic [CODE_BITS-1:0] CODE_NONE        = REFUSAL_NONE;
+    localparam logic [CODE_BITS-1:0] CODE_NOISE_RANGE = REFUSAL_NOISE_RANGE;
+    localparam logic [CODE_BITS-1:0] CODE_ACCESS      = REFUSAL_REGISTER_ACCESS;
+
+    // A definition whose rows no longer fit this module stops every run at time zero, by name: the seed and a
+    // table entry are the generator's word, and each two-word row is taken as a lower and an upper word.
+    initial begin
+        if (SEED_BITS != GEN_BITS || ENTRY_BITS != GEN_BITS || REG_SRC_SEED_WORDS != 2
+                || REG_SRC_FRAMES_WORDS != 2 || REG_SRC_TABLE_ENTRY_WORDS != 2) begin
+            $display("source: DEFINITION-MISMATCH: src_seed, src_frames or src_table_entry is not two words of the generator's 64 bits");
+            $finish;
+        end
+    end
 
     // ---- the registers ----
-    logic [63:0]    seed;
-    logic [31:0]    frames_low;
-    logic [31:0]    entry_low;
+    logic [SEED_BITS-1:0]     seed;
+    logic [BUS_WORD_BITS-1:0] frames_low;
+    logic [BUS_WORD_BITS-1:0] entry_low;
     logic [STEPS:0] table_len;      // the declared length
     logic [STEPS:0] table_place;    // how many entries have been written
     logic           table_declared; // a src_table_length has been taken since rst
-    logic [7:0]     refusal;
+    logic [CODE_BITS-1:0] refusal;
     logic           running;
 
     // ---- the engine ----
-    logic [63:0]    frames_left;
+    logic [FRAMES_BITS-1:0] frames_left;
     logic [7:0]     ph;             // the clock within a sample
     logic [7:0]     chan;
-    logic [63:0]    acc;
+    logic [GEN_BITS-1:0] acc;
     logic [STEPS:0] pos;
     logic [7:0]     bitsel;
     logic [CHANNELS*SAMPLE_BITS-1:0] frame_acc;
 
-    logic [63:0] table_mem [0:(1 << STEPS) - 1];
-    logic [63:0] mem_q;
+    logic [ENTRY_BITS-1:0] table_mem [0:(1 << STEPS) - 1];
+    logic [ENTRY_BITS-1:0] mem_q;
 
-    logic [63:0] x1, y1, x2, y2, w;
-    logic [62:0] u;
+    logic [GEN_BITS-1:0] x1, y1, x2, y2, w;
+    logic [GEN_BITS-2:0] u;
 
     assign x1 = acc ^ (acc >> 30);
     assign x2 = y1 ^ (y1 >> 27);
     assign w  = y2 ^ (y2 >> 31);
-    assign u  = w[63:1];
+    assign u  = w[GEN_BITS-1:1];
 
     source_mulc #(.K(64'hBF58476D1CE4E5B9)) mul1 (.clk(clk), .x(x1), .y(y1));
     source_mulc #(.K(64'h94D049BB133111EB)) mul2 (.clk(clk), .x(x2), .y(y2));
@@ -166,18 +192,18 @@ module source #(
     end
 
     // ---- what a write is ----
-    logic [31:0] addr;
+    logic [BUS_ADDRESS_BITS:0] addr;        // one bit more than an address, so that a block's END compares rightly
     logic        in_block, wr, rd;
-    logic [7:0]  wr_code;
+    logic [CODE_BITS-1:0] wr_code;
     logic        wr_seed_low, wr_seed_high, wr_frames_low, wr_start, wr_length, wr_entry_low, wr_entry_high, wr_clear;
 
-    assign addr     = {{(32 - BUS_ADDRESS_BITS){1'b0}}, reg_addr};
+    assign addr     = {1'b0, reg_addr};
     assign in_block = (addr >= BLOCK_SOURCE_FIRST) && (addr < BLOCK_SOURCE_END);
     assign wr       = reg_valid && reg_we && in_block;
     assign rd       = reg_valid && !reg_we;
 
     always_comb begin
-        wr_code       = 8'd0;
+        wr_code       = CODE_NONE;
         wr_seed_low   = 1'b0;
         wr_seed_high  = 1'b0;
         wr_frames_low = 1'b0;
@@ -188,17 +214,17 @@ module source #(
         wr_clear      = 1'b0;
         if (wr) begin
             if (addr == REG_SRC_REFUSAL_OFFSET) begin
-                if (reg_wdata == 32'd0) wr_clear = 1'b1;        // taken in every state, during a run too
+                if (reg_wdata == WORD_ZERO) wr_clear = 1'b1;    // taken in every state, during a run too
                 else                    wr_code  = CODE_ACCESS;
             end else if (running) begin
                 wr_code = CODE_ACCESS;                          // no other write is taken during a run
             end else begin
                 case (addr)
                     REG_SRC_SEED_OFFSET:         wr_seed_low   = 1'b1;
-                    REG_SRC_SEED_OFFSET + 4:     wr_seed_high  = 1'b1;
+                    REG_SRC_SEED_OFFSET + WORD_BYTES:     wr_seed_high  = 1'b1;
                     REG_SRC_FRAMES_OFFSET:       wr_frames_low = 1'b1;
-                    REG_SRC_FRAMES_OFFSET + 4: begin
-                        if (refusal != 8'd0)                wr_start = 1'b0;      // a refusal is latched: nothing
+                    REG_SRC_FRAMES_OFFSET + WORD_BYTES: begin
+                        if (refusal != CODE_NONE)           wr_start = 1'b0;      // a refusal is latched: nothing
                         else if (!table_declared)           wr_code  = CODE_ACCESS;
                         else if (table_place != table_len)  wr_code  = CODE_ACCESS;
                         else                                wr_start = 1'b1;
@@ -208,7 +234,7 @@ module source #(
                         else                     wr_length = 1'b1;
                     end
                     REG_SRC_TABLE_ENTRY_OFFSET:  wr_entry_low  = 1'b1;
-                    REG_SRC_TABLE_ENTRY_OFFSET + 4: begin
+                    REG_SRC_TABLE_ENTRY_OFFSET + WORD_BYTES: begin
                         if (table_place == table_len) wr_code       = CODE_ACCESS;
                         else                          wr_entry_high = 1'b1;
                     end
@@ -220,35 +246,35 @@ module source #(
 
     always_ff @(posedge clk) begin
         if (rst) begin
-            seed        <= 64'd0;
-            frames_low  <= 32'd0;
-            entry_low   <= 32'd0;
+            seed        <= '0;
+            frames_low  <= '0;
+            entry_low   <= '0;
             table_len   <= '0;
             table_place <= '0;
             table_declared <= 1'b0;
-            refusal     <= 8'd0;
+            refusal     <= CODE_NONE;
             running     <= 1'b0;
-            frames_left <= 64'd0;
+            frames_left <= '0;
             ph          <= 8'd0;
             chan        <= 8'd0;
-            acc         <= 64'd0;
+            acc         <= '0;
             pos         <= '0;
             bitsel      <= 8'd0;
             frame_acc   <= '0;
-            mem_q       <= 64'd0;
+            mem_q       <= '0;
             reg_rdata   <= '0;
             out_valid   <= 1'b0;
             out_frame   <= '0;
             word_valid  <= 1'b0;
-            word        <= 64'd0;
+            word        <= '0;
         end else begin
             out_valid  <= 1'b0;
             word_valid <= 1'b0;
             mem_q      <= table_mem[mem_addr[STEPS-1:0]];
 
             // ---- writes that are taken ----
-            if (wr_seed_low)   seed[31:0]  <= reg_wdata;
-            if (wr_seed_high)  seed[63:32] <= reg_wdata;
+            if (wr_seed_low)   seed[BUS_WORD_BITS-1:0]         <= reg_wdata;
+            if (wr_seed_high)  seed[SEED_BITS-1:BUS_WORD_BITS] <= reg_wdata;
             if (wr_frames_low) frames_low  <= reg_wdata;
             if (wr_entry_low)  entry_low   <= reg_wdata;
             if (wr_length) begin
@@ -262,8 +288,8 @@ module source #(
             end
 
             // ---- the refusal register: the first refusal stands ----
-            if (wr_clear || wr_length)                      refusal <= 8'd0;
-            else if (wr_code != 8'd0 && refusal == 8'd0)    refusal <= wr_code;
+            if (wr_clear || wr_length)                                refusal <= CODE_NONE;
+            else if (wr_code != CODE_NONE && refusal == CODE_NONE)    refusal <= wr_code;
 
             // ---- reads ----
             if (rd) begin
@@ -271,8 +297,8 @@ module source #(
                     reg_rdata <= '0;
                 end else begin
                     case (addr)
-                        REG_SRC_STATUS_OFFSET:      reg_rdata <= {31'd0, running} << REG_SRC_STATUS_RUNNING_BIT;
-                        REG_SRC_REFUSAL_OFFSET:     reg_rdata <= {24'd0, refusal};
+                        REG_SRC_STATUS_OFFSET:      reg_rdata <= {{(BUS_WORD_BITS-1){1'b0}}, running} << REG_SRC_STATUS_RUNNING_BIT;
+                        REG_SRC_REFUSAL_OFFSET:     reg_rdata <= {{(BUS_WORD_BITS-CODE_BITS){1'b0}}, refusal};
                         REG_CAP_NOISE_TABLE_OFFSET: reg_rdata <= LARGEST;
                         default:                    reg_rdata <= '0;
                     endcase
@@ -285,7 +311,7 @@ module source #(
                 acc         <= seed + GAMMA;
                 ph          <= 8'd0;
                 chan        <= 8'd0;
-                if ({reg_wdata, frames_low} != 64'd0) running <= 1'b1;
+                if ({reg_wdata, frames_low} != FRAMES_ZERO) running <= 1'b1;
             end
 
             // ---- the engine ----
@@ -307,8 +333,8 @@ module source #(
                         chan        <= 8'd0;
                         out_valid   <= 1'b1;
                         out_frame   <= frame_next;
-                        frames_left <= frames_left - 64'd1;
-                        if (frames_left == 64'd1) running <= 1'b0;
+                        frames_left <= frames_left - FRAMES_ONE;
+                        if (frames_left == FRAMES_ONE) running <= 1'b0;
                     end else begin
                         chan <= chan + 8'd1;
                     end
