@@ -1487,3 +1487,49 @@ In [ROADMAP.md](ROADMAP.md), "Open with Logan at round 2's close": whether `main
 - **`main` has not moved and nothing is pushed.** The lead asks first.
 - **The worktrees and branches are kept**, the lead's trial ones among them, under the ignored `Data/worktrees/`, until Logan has seen the round.
 - **The two streams and two mutants for the core's overflow flag, a gate that says when a long run's record is of an earlier definition, a check that reads the simulator's build log, a bound on one test, and benches run side by side**: each is in the roadmap's list for the next round's plan.
+
+## 2026-11-24 - the draft plan for round 3: five drafts, and four verifier passes
+
+Logan asked for a plan for round 3 ("Yes, draft it"), and in the same message moved the parcels to Opus. The plan is [plans/R3-first-light.md](plans/R3-first-light.md), on the local branch `r3-plan`, cut from `main` at `44640f3`. **It is a draft. Nothing of round 3 has started, and nothing of the plan is pushed.**
+
+### What changed
+
+- The plan: three shapes, with A, first light on the card, recommended; a small first build; a wave 0 of the lead's that repairs four of round 2's stated limits and measures the platform; the parcels KRNL, FLAG, HOST and, if he says so, LCH-4; the lead's build, card day and a rerun of stage E1; seven questions.
+- The roadmap: his words of 2026-11-24 and the lead's reading; the draft's row in the table of rounds.
+
+### What ran
+
+- **Four verifiers, each fresh, each on Opus by name, each on a sealed clone with faults amended into the draft's tip commit**, by their own clocks: VP3 07:02:15 to 07:13:54 on the first draft, whole; VP3-2 07:22:08 to 07:33:22 on the second, whole; VP3-3 07:42:29 to 07:48:59 on the third draft's changes; VP3-4 07:54:04 to 07:59:30 on the fourth's. As the harness reported each: 61, 59, 42 and 36 tool calls; 12.5, 11.9, 7.5 and 6.0 minutes.
+- **The gate's first size** on each draft before its commit, and the commit made only on a single PASS line. One run failed: the third draft's claims stage, on a table row an escaped pipe had split. Each verifier ran it again in its own copy and got PASS.
+
+### Measured
+
+- **Plants: 13 of 13**, by pass 4, 4, 3 and 2. No verifier's commands reached for a key, a ledger outside its clone, a retired folder, or the draft's tip before its plants.
+- **Wrong answers of the draft's own, beyond the plants: 4, 4, 3 and 2.** Each pass found fewer, and the last two were all small: a citation a line off, a sentence about widths the RTL contradicts, the paragraph's own count of drafts, a manifest field nothing checks.
+- **Four gaps in the design**, found as smaller points and each answered in the plan: the injector has no truth records to write to memory, since the host writes them; a host library tested through a backend that is the model tests nothing, so it now drives the kernel's RTL; a refusal on the card was the host's, so the card day writes raw to the core; and the injector holds 1,024 truth records, where a run of 2^20 samples of stage E0's stream at 100 MHz needs about 39,000 more a second, so the card day's runs are 2^17 samples unless the kernel's design feeds them.
+- **One fact the first draft had wrong, about the round before**: the chain makes a score record every 20 or 60 clocks, not one a clock (`docs/rtl/source.md:19`). The first draft priced the memory path for one a clock.
+
+### A correction to round 2's closing entry
+
+It says "Two passes on the lead's closing text found ten slips and then five." Counted the same way both times, that is ten and thirteen: the first pass's list was seven numbered items and three smaller, the second's five numbered and eight smaller. The second figure counted the numbered items only.
+
+### The lead's slips in the drafting
+
+- **The first draft's register gave six rows two labels each**, which the claims stage refuses; rewritten before any gate ran.
+- **A command began with a bare `python -`**, which waited on input until the lead stopped it.
+- **An escaped pipe in a command inside a table row**, which split the row; the gate refused it.
+- **The second draft's commit message said VP3 found "eight wrong answers of the draft's own"**; it found eight in all, four of them planted.
+- **The fourth draft's opening paragraph numbered itself the third.**
+
+### The lead's call
+
+**The fifth draft goes to Logan without a fifth pass.** VP3-4's two findings are small and are answered in it; the passes found 4, 4, 3 and 2 of the draft's own. The rule for a piece of work would run one more. The plan says in its opening paragraph that its last changes have been read by no verifier.
+
+### Not seen by a verifier
+
+The fifth draft's changes, and this entry.
+
+### Not done, and why
+
+- **Nothing of round 3 has started**: it waits on his answers to the plan's seven questions.
+- **`r3-plan` is not pushed**, and `main` has not moved.
