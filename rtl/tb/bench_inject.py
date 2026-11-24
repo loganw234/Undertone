@@ -182,6 +182,21 @@ async def stream_is_the_models(dut):
         assert name is None and len(out) == len(frames), (name, len(out))
         changed = sum(1 for a, c in zip(frames, out) if a != c)
         assert changed > len(SCHEDULE) * (L - 20), "the schedule adds too little to hold anything: %d frames" % changed
+    # A RECORD WRITTEN WHILE THE STREAM RUNS, ahead of the frame the injector has reached: it is taken, and
+    # added exactly. The model is given the whole schedule before frame 0; the RTL its second record after
+    # about a hundred frames have gone by, a frame every clock.
+    later = [rec(20, 3, 2), rec(300, -5, 4)]
+    short = frames[:400]
+    model_frames, refused = model_outcome(short, later)
+    assert refused is None and model_frames[300:364] != short[300:364]
+    await b.reset()
+    await load(b, later[:1])
+    task = cocotb.start_soon(driver(b.dut, short, len(short), gap_seed=SEED, max_gap=0))
+    for _ in range(100):
+        await FallingEdge(b.dut.clk)
+    await b.write_many(truth_writes(later[1]))
+    seen, _seen_at, _sent_at, unknown = await task
+    await hold_stream(b, test, "a record written while the stream runs", seen, unknown, model_frames, None)
 
 
 def differing_ties(schedule):
@@ -393,6 +408,12 @@ async def refusal_inject_pending(dut):
     _rtl, _lat, name, out = await run_case(b, test, "as many as the store holds", frames, full, declared=far + L * PENDING)
     assert name is None and out != frames
     assert await b.read(bus.offset("inj_pending")) == PENDING - 2      # two have had their last sample added
+    # inj_frame EMPTIES THE STORE: with 1,022 records still held, a new run begins with none, and is the model's.
+    first = 5000
+    _rtl, _lat, name, out = await run_case(b, test, "a new run begun on a full store", steady(100), [rec(first + 9, 4, 3)],
+                                           first=first, fresh=False)
+    assert name is None and out != steady(100)
+    assert await b.read(bus.offset("inj_pending")) == 0
 
 
 def widest_amplitude(frames, index, sign):

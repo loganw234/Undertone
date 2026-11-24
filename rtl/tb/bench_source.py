@@ -387,6 +387,13 @@ async def refusal_register_access(dut):
     await b.write(bus.offset("src_refusal"), 0)
     seen, _at, unknown = await run(b, 21, 5)
     await hold_frames(b, test, "cleared, then started", seen, unknown, list(noise))
+    # A src_table_length that is taken CLEARS THE REFUSAL too: it begins a new table.
+    await b.write(bus.offset("src_status"), 0)
+    await hold_code(b, test, "a refusal latched again", name)
+    await load_table(b, noise.table)
+    await hold_code(b, test, "a taken table length clears it", None)
+    seen, _at, unknown = await run(b, 21, 5)
+    await hold_frames(b, test, "and the new table runs", seen, unknown, list(noise))
 
     # A write during a run: refused, and the run goes on untouched. All but one: a write of 0 to the
     # refusal register is taken in every state, and anything but 0 into it is refused in every state.
