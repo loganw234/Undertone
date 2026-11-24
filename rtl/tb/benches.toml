@@ -481,6 +481,15 @@ edits = [["w_chi && (&epoch_n);", "w_chi && (&epoch);"]]
 must_fail = ["swap_epoch_on_the_edge"]
 kind = "WORD"
 
+# The third verifier's: an overflow flag that is the PARITY of the units that do not fit. Right for one
+# unit and for all three, wrong for two.
+[[bench.mutant]]
+name = "overflow-is-a-parity"
+file = "rtl/core/core_head.sv"
+edits = [["ovf = 1'b1;", "ovf = !ovf;"]]
+must_fail = ["bit_identity_extremes"]
+kind = "WORD"
+
 # The control block on the small top, where no capability is the definition's own.
 [[bench]]
 name = "core-control-s16x1"

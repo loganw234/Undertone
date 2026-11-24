@@ -27,7 +27,8 @@ against the model through `harness.compare`:
                                sample and weight at its lowest at every maximum; the stream that
                                puts a hidden sum at exactly the lowest value the field holds; the
                                score's own boundary; a flag that must stay when the sums come
-                               back into range; and the flag from each hidden unit alone
+                               back into range; the flag from each hidden unit alone; and the
+                               flag from every unit but one, each unit left out in turn
   bit_identity_counters        the epoch across 2^8, 2^16, 2^31 and to its last value, by the
                                start epoch; the index across 2^16, 2^32 and 2^63 by a state the
                                bench writes into the simulator and into the model alike; and a
@@ -351,7 +352,22 @@ async def bit_identity_extremes(dut):
         core = await fresh(dut, blob)
         total += (await run(dut, core, frames, "bit_identity_extremes", "the flag from unit %d alone of %d" % (only, units),
                             gap_seed=5 + only, max_gap=1)).count
-    assert total == (taps + pool + 2) + 2 * (t + p + 2) + 1 + 2 * (t + p + 2) + (2 * t + 2 * p + 9) + units * (t + p + 3), total
+
+    # 6. The flag when every unit BUT ONE overflows, at the same output: one stream for each unit left
+    #    out. With three units that is exactly two overflowing at once, each pair in turn. (The third
+    #    verifier's fault: a flag that is the PARITY of the overflowing units is right for one unit and for
+    #    all three, and wrong for two, and passed everything above.)
+    assert units >= 3, "with fewer than three units, all but one is one: stream 5 already"
+    for left_out in range(units):
+        hidden = [[0] * k if j == left_out else [C.COEFF_MIN] * k for j in range(units)]
+        blob = weights.pack(PROFILE, all_low(one_row, t + 1), [0] * units, PASS, p, 0, hidden, 0, PASS)
+        said = list(Core(blob).run(frames))
+        assert said[0]["flags"] == 0 and said[-1]["flags"] == flag and all(r["score"] == 0 for r in said), (left_out, said[-1])
+        core = await fresh(dut, blob)
+        total += (await run(dut, core, frames, "bit_identity_extremes",
+                            "the flag from every unit of %d but unit %d" % (units, left_out), gap_seed=9 + left_out,
+                            max_gap=1)).count
+    assert total == (taps + pool + 2) + 2 * (t + p + 2) + 1 + 2 * (t + p + 2) + (2 * t + 2 * p + 9) + 2 * units * (t + p + 3), total
     await host.all_seen()
 
 
