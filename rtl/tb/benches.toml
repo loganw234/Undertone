@@ -105,3 +105,210 @@ edits = [
 ]
 must_fail = ["latency_is_one_clock"]
 kind = ""
+
+# ---- parcel RTL-A: the source, and the injector ----
+#
+# Each bench has two rows, one a profile: the bench runs under both sample formats, and EVERY MUTANT
+# RUNS UNDER ONE (the lead's ruling of 2026-11-23, for the stage's length). A mutant shows that the
+# bench sees its fault under that one sample format. None of these faults depends on the format.
+#
+# The refusals have two mutants a module, not two a name: one that refuses nothing, and one that
+# names every refusal wrongly. Each must fail EVERY refusal test of its bench, one test a name. So
+# each name's test is seen to fail with its refusal absent and again with its number wrong. What that
+# concedes: no mutant removes ONE name's check and leaves the others.
+
+# The source. The generator is held on its words, all 64 bits, and not through the table: a sample is
+# a lossy view of a word. Its three constants are typed once in rtl/source/source.sv and once in
+# model/source.py; the definition does not hold them. The six constant mutants and the test they fail do.
+
+[[bench]]
+name = "source-s16x1"
+toplevel = "source"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv"]
+module = "bench_source"
+profiles = ["s16x1"]
+identity = ["words_are_the_models", "frames_are_the_models", "every_boundary_is_reached", "the_widest_table_runs", "refusal_noise_range", "refusal_register_access"]
+
+# One bit of the increment: its lowest.
+[[bench.mutant]]
+name = "gamma-bit0"
+file = "rtl/source/source.sv"
+edits = [["64'h9E3779B97F4A7C15", "64'h9E3779B97F4A7C14"]]
+must_fail = ["words_are_the_models"]
+kind = "WORD"
+
+# The highest bit of the first mixing constant. It changes a product only in its top bit, and only
+# when the multiplicand is odd: a multiply right in its low half.
+[[bench.mutant]]
+name = "mix1-bit63"
+file = "rtl/source/source.sv"
+edits = [["64'hBF58476D1CE4E5B9", "64'h3F58476D1CE4E5B9"]]
+must_fail = ["words_are_the_models"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "mix2-bit0"
+file = "rtl/source/source.sv"
+edits = [["64'h94D049BB133111EB", "64'h94D049BB133111EA"]]
+must_fail = ["words_are_the_models"]
+kind = "WORD"
+
+# A table one entry short: the search never counts the table's last entry, so the largest magnitude
+# never comes out. No drawn seed reaches that entry; the test builds the seeds that do.
+[[bench.mutant]]
+name = "table-one-entry-short"
+file = "rtl/source/source.sv"
+edits = [["(cand <= table_len)", "(cand < table_len)"]]
+must_fail = ["every_boundary_is_reached"]
+kind = "WORD"
+
+# A source that refuses nothing: a table longer than the build holds is taken, and no refusal is
+# ever latched.
+[[bench.mutant]]
+name = "refuses-nothing"
+file = "rtl/source/source.sv"
+edits = [
+    ["if (reg_wdata > LARGEST) wr_code   = CODE_NOISE_RANGE;", "if (1'b0) wr_code   = CODE_NOISE_RANGE;"],
+    ["refusal <= wr_code;", "refusal <= 8'd0;"],
+]
+must_fail = ["refusal_noise_range", "refusal_register_access"]
+kind = "WORD"
+
+[[bench]]
+name = "source-s24x3"
+toplevel = "source"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv"]
+module = "bench_source"
+profiles = ["s24x3"]
+identity = ["words_are_the_models", "frames_are_the_models", "every_boundary_is_reached", "the_widest_table_runs", "refusal_noise_range", "refusal_register_access"]
+
+# The highest bit of the increment.
+[[bench.mutant]]
+name = "gamma-bit63"
+file = "rtl/source/source.sv"
+edits = [["64'h9E3779B97F4A7C15", "64'h1E3779B97F4A7C15"]]
+must_fail = ["words_are_the_models"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "mix1-bit0"
+file = "rtl/source/source.sv"
+edits = [["64'hBF58476D1CE4E5B9", "64'hBF58476D1CE4E5B8"]]
+must_fail = ["words_are_the_models"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "mix2-bit63"
+file = "rtl/source/source.sv"
+edits = [["64'h94D049BB133111EB", "64'h14D049BB133111EB"]]
+must_fail = ["words_are_the_models"]
+kind = "WORD"
+
+# A source that names every refusal wrongly: the number latched has its lowest bit flipped, which is
+# another declared name's number each time.
+[[bench.mutant]]
+name = "every-refusal-misnamed"
+file = "rtl/source/source.sv"
+edits = [["refusal <= wr_code;", "refusal <= wr_code ^ 8'd1;"]]
+must_fail = ["refusal_noise_range", "refusal_register_access"]
+kind = "WORD"
+
+# The injector.
+
+[[bench]]
+name = "inject-s16x1"
+toplevel = "inject"
+sources = ["spec/undertone_pkg.sv", "rtl/inject/inject.sv"]
+module = "bench_inject"
+profiles = ["s16x1"]
+identity = ["stream_is_the_models", "ties_go_to_the_even", "records_that_touch_and_the_ends", "a_run_begun_far_out", "wide_amplitudes", "other_truth_same_samples", "refusal_record_field", "refusal_pulse_unknown", "refusal_inject_overlap", "refusal_inject_pending", "refusal_inject_range", "refusal_register_access"]
+
+# Two of the four of the design D0: an injector that adds nothing, and one with the sign flipped.
+# On a schedule whose amplitudes are not zero.
+[[bench.mutant]]
+name = "adds-nothing"
+file = "rtl/inject/inject.sv"
+edits = [["r_delta <= delta;", "r_delta <= '0;"]]
+must_fail = ["stream_is_the_models"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "sign-flipped"
+file = "rtl/inject/inject.sv"
+edits = [["assign delta = neg_last ? (~magr + 1'b1) : magr;", "assign delta = neg_last ? magr : (~magr + 1'b1);"]]
+must_fail = ["stream_is_the_models"]
+kind = "WORD"
+
+# The fifth: a tie rounded upward, where the rule says to the even integer.
+[[bench.mutant]]
+name = "tie-upward"
+file = "rtl/inject/inject.sv"
+edits = [["((twice == den_wide) && q_last[0])", "(twice == den_wide)"]]
+must_fail = ["ties_go_to_the_even"]
+kind = "WORD"
+
+# An injector that names every refusal wrongly: the number latched has its lowest bit flipped.
+[[bench.mutant]]
+name = "every-refusal-misnamed"
+file = "rtl/inject/inject.sv"
+edits = [["refusal <= new_code;", "refusal <= new_code ^ 8'd1;"]]
+must_fail = ["refusal_record_field", "refusal_pulse_unknown", "refusal_inject_overlap", "refusal_inject_pending", "refusal_inject_range", "refusal_register_access"]
+kind = "WORD"
+
+# An injector that refuses a sum EQUAL to the largest sample. Parcel RTL-A's own pass of one-place
+# changes found that no test held the range at either end; this mutant and its mirror in the other
+# row are that fault, kept here so that the gate is shown to see it.
+[[bench.mutant]]
+name = "largest-sample-refused"
+file = "rtl/inject/inject.sv"
+edits = [["if (s < SMIN || s > SMAX) any_bad = 1'b1;", "if (s < SMIN || s >= SMAX) any_bad = 1'b1;"]]
+must_fail = ["refusal_inject_range"]
+kind = "WORD"
+
+[[bench]]
+name = "inject-s24x3"
+toplevel = "inject"
+sources = ["spec/undertone_pkg.sv", "rtl/inject/inject.sv"]
+module = "bench_inject"
+profiles = ["s24x3"]
+identity = ["stream_is_the_models", "ties_go_to_the_even", "records_that_touch_and_the_ends", "a_run_begun_far_out", "wide_amplitudes", "other_truth_same_samples", "refusal_record_field", "refusal_pulse_unknown", "refusal_inject_overlap", "refusal_inject_pending", "refusal_inject_range", "refusal_register_access"]
+
+# The other two of D0's four: an injector a sample late, and one at half amplitude.
+[[bench.mutant]]
+name = "one-sample-late"
+file = "rtl/inject/inject.sv"
+edits = [["assign diff   = s1_index - head_index;", "assign diff   = s1_index - head_index - 64'd1;"]]
+must_fail = ["stream_is_the_models"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "half-amplitude"
+file = "rtl/inject/inject.sv"
+edits = [["s2_den <= active ? head_den : 32'd1;", "s2_den <= active ? {head_den[30:0], 1'b0} : 32'd1;"]]
+must_fail = ["stream_is_the_models"]
+kind = "WORD"
+
+# An injector that refuses nothing: every record offered is taken whatever it holds, a sum out of
+# range is offered as it wraps, no run ends, and no refusal is ever latched.
+[[bench.mutant]]
+name = "refuses-nothing"
+file = "rtl/inject/inject.sv"
+edits = [
+    ["end else if ((t_pulse >> TRUTH_PULSE_ID_BITS) != 32'd0 || reg_wdata == 32'd0) begin", "end else if (1'b0) begin"],
+    ["end else if (t_pulse != PULSE_E0_ID) begin", "end else if (1'b0) begin"],
+    ["end else if ({1'b0, t_index} < free_from || t_index < n) begin", "end else if (1'b0) begin"],
+    ["end else if (count == MAX_INJECT_PENDING) begin", "end else if (1'b0) begin"],
+    ["if (wr_run_refused || range_refuse) dead <= 1'b1;", "if (1'b0) dead <= 1'b1;"],
+    ["if (r_valid && !dead && !any_bad) begin", "if (r_valid && !dead) begin"],
+    ["refusal <= new_code;", "refusal <= 8'd0;"],
+]
+must_fail = ["refusal_record_field", "refusal_pulse_unknown", "refusal_inject_overlap", "refusal_inject_pending", "refusal_inject_range", "refusal_register_access"]
+kind = "WORD"
+
+# The mirror of `largest-sample-refused`: an injector that refuses a sum equal to the smallest sample.
+[[bench.mutant]]
+name = "smallest-sample-refused"
+file = "rtl/inject/inject.sv"
+edits = [["if (s < SMIN || s > SMAX) any_bad = 1'b1;", "if (s <= SMIN || s > SMAX) any_bad = 1'b1;"]]
+must_fail = ["refusal_inject_range"]
+kind = "WORD"
