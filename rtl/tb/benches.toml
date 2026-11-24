@@ -255,6 +255,16 @@ edits = [["refusal <= new_code;", "refusal <= new_code ^ 8'd1;"]]
 must_fail = ["refusal_record_field", "refusal_pulse_unknown", "refusal_inject_overlap", "refusal_inject_pending", "refusal_inject_range", "refusal_register_access"]
 kind = "WORD"
 
+# An injector that refuses a sum EQUAL to the largest sample. Parcel RTL-A's own pass of one-place
+# changes found that no test held the range at either end; this mutant and its mirror in the other
+# row are that fault, kept here so that the gate is shown to see it.
+[[bench.mutant]]
+name = "largest-sample-refused"
+file = "rtl/inject/inject.sv"
+edits = [["if (s < SMIN || s > SMAX) any_bad = 1'b1;", "if (s < SMIN || s >= SMAX) any_bad = 1'b1;"]]
+must_fail = ["refusal_inject_range"]
+kind = "WORD"
+
 [[bench]]
 name = "inject-s24x3"
 toplevel = "inject"
@@ -293,4 +303,12 @@ edits = [
     ["refusal <= new_code;", "refusal <= 8'd0;"],
 ]
 must_fail = ["refusal_record_field", "refusal_pulse_unknown", "refusal_inject_overlap", "refusal_inject_pending", "refusal_inject_range", "refusal_register_access"]
+kind = "WORD"
+
+# The mirror of `largest-sample-refused`: an injector that refuses a sum equal to the smallest sample.
+[[bench.mutant]]
+name = "smallest-sample-refused"
+file = "rtl/inject/inject.sv"
+edits = [["if (s < SMIN || s > SMAX) any_bad = 1'b1;", "if (s <= SMIN || s > SMAX) any_bad = 1'b1;"]]
+must_fail = ["refusal_inject_range"]
 kind = "WORD"

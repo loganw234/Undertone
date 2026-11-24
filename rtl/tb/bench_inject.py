@@ -423,9 +423,25 @@ async def refusal_inject_range(dut):
             _rtl, _lat, name, out = await run_case(b, test, "%s, %d/1: one more" % (label, sign * (widest + 1)),
                                                    frames, [rec(10, sign * (widest + 1), 1)])
             assert name == "INJECT_RANGE" and 10 < len(out) < 10 + L, (name, len(out))
-    # A refusal on the last sample of a record, and one far past the range.
+    # Far past the range.
     _rtl, _lat, name, out = await run_case(b, test, "far past the range", steady(120), [rec(10, -(1 << 31), 1)])
     assert name == "INJECT_RANGE" and len(out) == 11, (name, len(out))     # e0's first sample is 0, its second is not
+    # THE RANGE'S TWO ENDS, EXACTLY. A sum equal to the largest sample, or to the smallest, is taken; one past
+    # either is refused, at the frame of the pulse's largest or smallest sample. The last channel carries the
+    # value at the edge, the others stay quiet. (Without these four cases a build that refused a sum equal
+    # to either end passed every test here: two one-place changes tried in a copy showed it.)
+    for end, edge, peak, step in (("the largest sample", PROF["sample_max"], max(PULSE), 1),
+                                  ("the smallest sample", PROF["sample_min"], min(PULSE), -1)):
+        for past in (0, step):
+            frame = tuple(5 * c - 3 for c in range(CHANNELS - 1)) + (edge - peak + past,)
+            frames = [frame] * 120
+            label = "a sum %s %s" % ("equal to" if past == 0 else "one past", end)
+            _rtl, _lat, name, out = await run_case(b, test, label, frames, [rec(10, 1, 1)])
+            if past == 0:
+                assert name is None and len(out) == len(frames), (label, name, len(out))
+                assert edge in [f[-1] for f in out], "the sum never reaches %s" % end
+            else:
+                assert name == "INJECT_RANGE" and len(out) == 10 + PULSE.index(peak), (label, name, len(out))
 
 
 @cocotb.test()
