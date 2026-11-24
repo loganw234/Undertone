@@ -317,6 +317,26 @@ def test_host_library_a_start_the_kernel_refuses_ends_by_name():
             assert not [op for op in backend.ops if type(op) is ops.Pause], "the library waited on a refused start"
 
 
+def test_host_library_a_refused_start_after_a_run_says_the_count_is_the_last_runs():
+    """VHOST-2's (c): krn_records is not cleared by a refused start. The refusal's detail names the count it reads
+    as the last run's, and this run's records are none."""
+    backend = fake.scripted_kernel(PROFILE, polls_running=1)
+    host = Host(backend)
+    host.run(1, TABLE, 12, [], polls=5)
+
+    def refuse(b, word):
+        b.words[L.offset("krn_refusal")] = CODE["BUFFER_SIZE"]
+        b.left = None
+    backend.on_write[L.offset("krn_start")] = refuse
+    try:
+        host.start(2, TABLE, 20, [])
+    except Refusal as e:
+        assert e.name == "BUFFER_SIZE" and "krn_records reads 12, the last run's count" in e.detail, e.detail
+    else:
+        raise AssertionError("the refused start was not raised")
+    assert host.records() == []
+
+
 def test_host_library_a_refusal_while_not_running_ends_the_wait():
     """A kernel that, mid-run, says refused and not running (its run ended by a refusal) ends `finish` at once, by
     name; one that says refused while still running is waited on until done, then the refusal raised."""
@@ -336,8 +356,35 @@ def test_host_library_a_refusal_while_not_running_ends_the_wait():
         backend.on_read[L.offset("krn_status")] = status
         host = Host(backend)
         assert refused(host.run, 1, TABLE, 10, [], polls=50) == "MEMORY_WRITE"
-        assert sum(1 for op in backend.ops if type(op) is ops.Pause) <= pauses_most + 1, running_polls
+        pauses = sum(1 for op in backend.ops if type(op) is ops.Pause)
+        assert pauses <= pauses_most + 1, running_polls
+        # Limit 17: a refusal while the kernel still runs is waited on until done, every round of it. A library
+        # that ended the wait at the refused bit alone would make no pause here (VHOST-2's B3).
+        assert pauses >= pauses_most, (running_polls, pauses)
         assert backend.words[L.offset("krn_refusal")] == 0
+
+
+def test_host_library_control_a_wait_that_ends_at_the_refused_bit_alone_is_seen(monkeypatch):
+    """The check above, on a library whose wait ends at the refused bit while the kernel still runs: seen."""
+    monkeypatch.setattr(L, "_refused_and_still", lambda status: bool(status & REFUSED))
+    try:
+        test_host_library_a_refusal_while_not_running_ends_the_wait()
+    except AssertionError:
+        return
+    raise AssertionError("a library that ended the wait while the kernel ran was not seen")
+
+
+def test_host_library_step_ends_a_refused_wait_itself():
+    """`step` alone, called by a caller's own loop (run_case's wait for --swap-after), raises a refusal of a kernel
+    that is not running, by name, cleared: it does not hand back a status for the caller to wait on for ever."""
+    backend = fake.scripted_kernel(PROFILE, polls_running=10 ** 9)
+    host = Host(backend)
+    host.start(1, TABLE, 10, [])
+    assert host.step()[0] & RUNNING
+    backend.on_read[L.offset("krn_status")] = lambda b: REFUSED
+    backend.words[L.offset("krn_refusal")] = CODE["MEMORY_WRITE"]
+    assert refused(host.step) == "MEMORY_WRITE"
+    assert backend.words[L.offset("krn_refusal")] == 0
 
 
 def test_host_library_a_refusal_latched_before_start_changes_nothing():

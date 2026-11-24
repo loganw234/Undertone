@@ -423,7 +423,10 @@ class Library:
         yield Write(offset("krn_start"), 1)
         status = yield Read(offset("krn_status"))
         if _refused_and_still(status):
-            yield from self._conclude(state)            # raises the start's refusal by its name, each cleared
+            # Raises the start's refusal by its name, each cleared. The kernel wrote nothing of this run: its
+            # krn_records still holds the last run's count (a refused start clears it not), so that count is
+            # named in the detail as the last run's, and this run's records are none.
+            yield from self._conclude(state, refused_start=True)
             raise Refusal("RUN_START", "observed: after the start write krn_status says refused (0x%X) and the "
                           "run's account says nothing else" % status)
         if not status & (RUNNING | DONE | REFUSED):
@@ -485,14 +488,17 @@ class Library:
                                "frames asked for; the run may still be going" % (polls, status, records, state.frames))
         return (yield from self._conclude(state))
 
-    def _conclude(self, state):
+    def _conclude(self, state, refused_start=False):
         """The run's account: every refusal register in the chain's order, krn_records and krn_queue_peak. The
-        first refusal latched is raised by its name, every one in its detail, each cleared; else the report."""
+        first refusal latched is raised by its name, every one in its detail, each cleared; else the report.
+        After a refused start the kernel wrote nothing of this run, and krn_records is its LAST run's count: the
+        run's records are taken as none, and the detail names that count as the last run's."""
         codes = []
         for block, register in CHAIN:
             code = yield Read(offset(register))
             codes.append((block, register, code))
-        state.records = yield from self._value("krn_records")
+        counted = yield from self._value("krn_records")
+        state.records = 0 if refused_start else counted
         state.peak = yield Read(offset("krn_queue_peak"))
         latched = [(b, r, c) for b, r, c in codes if c]
         report = {"frames": state.frames, "records": state.records, "queue_peak": state.peak,
@@ -503,6 +509,9 @@ class Library:
                 yield Write(offset(register), 0)
             said = "; ".join("%s %s" % (b, NAME_OF.get(c, "code %d" % c)) for b, _r, c in codes if c)
             block, _r, code = latched[0]
+            if refused_start:
+                raise named(code, "the start was refused: %s; no record of this run was written (krn_records reads "
+                            "%d, the last run's count, which a refused start does not clear)" % (said, counted))
             raise named(code, "the run ended refused: %s; %d of %d records written; truth written %d before the "
                         "start and %d while it ran, the least slack %s" % (said, state.records, state.frames,
                                                                             state.before, state.sent - state.before,

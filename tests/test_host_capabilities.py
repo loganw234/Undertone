@@ -85,10 +85,26 @@ def test_gate_host_capabilities__past_each_bound_refused_before_any_write():
             assert (name, effects) == (want, []), (want, call, name, effects[:2])
 
 
+NUMERIC = {"SHAPE_FILTERS": "cap_filters", "SHAPE_TAPS": "cap_taps", "SHAPE_SHIFT": "cap_score_shift",
+           "SHAPE_POOL": "cap_pool", "SHAPE_HIDDEN": "cap_hidden", "SHAPE_HIDDEN_SHIFT": "cap_hidden_shift",
+           "SHAPE_ROWS": "cap_rows"}
+
+
 def test_gate_host_capabilities__at_each_bound_written():
-    """Each blob AT its bound is exactly at it: one more and it is the blob past it."""
+    """Each blob AT a numeric bound is exactly at it: written by the build, and refused by that bound's name by a
+    build one lower. For the profile, the blob versions and the rectifier codes, which are sets and not
+    counts, "at" means a value the build has and "past" one it has not."""
     rows_at = L.B.rows(L.B.read(CASES[-1][3]))
     assert rows_at == CASES[-1][2]["cap_rows"] == 5 and L.B.rows(L.B.read(CASES[-1][4])) == 6
+    lowered = 0
+    for want, profile, caps, at, _past in CASES:
+        if want in NUMERIC:
+            key = NUMERIC[want]
+            lower = dict(caps, **{key: caps[key] - 1})
+            name, effects = attempt(L.Library(), profile, lower, "load", at)
+            assert (name, effects) == (want, []), (want, "a build one lower took the blob at the bound")
+            lowered += 1
+    assert lowered == len(NUMERIC) == 7
     for want, profile, caps, at, _past in CASES:
         name, effects = attempt(L.Library(), profile, caps, "load", at)
         assert name is None and effects, (want, name)

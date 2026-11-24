@@ -111,11 +111,17 @@ def scripted_kernel(profile, polls_running=10, written=None, ignore_base=False, 
     """Registers that run a kernel BY SCRIPT, for the library's logic and nothing else: a write of krn_start
     writes `written` slots (all the run's frames when None) at krn_buffer, each a record of its own index with
     the padding zero, and sets krn_records to that count; then `polls_running` reads of krn_status say running,
-    and every later read says done. No refusal is ever latched, and inj_pending always reads 0.
-    `ignore_base` writes the slots at the start of the buffer instead: a kernel that ignored krn_buffer."""
+    and every later read says done. inj_pending always reads 0.
+    `ignore_base` writes the slots at the start of the buffer instead: a kernel that ignored krn_buffer.
+
+    krn_status's refused bit is krn_refusal not 0, as the RTL's is. A write of krn_reset is answered as the
+    RTL answers it (rtl/krnl/undertone_krnl.sv, its krn_reset row; docs/rtl/krnl.md section 5): while the
+    script says running it is refused, KERNEL_BUSY latched, and the run goes on; otherwise every refusal
+    register is cleared and nothing runs."""
     backend = Registers(identity_words(profile, **caps))
     backend.left = None
     status_bits = C.REGISTER_BITS["krn_status"]
+    refusal_at = C.REGISTERS["krn_refusal"][0]
 
     def started(b, word):
         frames, base = value(b, "krn_frames"), value(b, "krn_buffer")
@@ -129,14 +135,26 @@ def scripted_kernel(profile, polls_running=10, written=None, ignore_base=False, 
         b.left = polls_running
 
     def status(b):
+        refused = (1 << status_bits["refused"]) if b.words.get(refusal_at, 0) else 0
         if b.left is None:
-            return 0
+            return refused
         if b.left > 0:
             b.left -= 1
-            return 1 << status_bits["running"]
-        return 1 << status_bits["done"]
+            return (1 << status_bits["running"]) | refused
+        return (1 << status_bits["done"]) | refused
+
+    def reset(b, word):
+        if b.left is not None and b.left > 0:
+            if not b.words.get(refusal_at, 0):
+                b.words[refusal_at] = C.REFUSAL_CODES["KERNEL_BUSY"]
+            return
+        for name in ("src_refusal", "inj_refusal", "refusal", "krn_refusal"):
+            b.words[C.REGISTERS[name][0]] = 0
+        b.words.update(value_words("krn_records", 0))
+        b.left = None
 
     backend.on_write[C.REGISTERS["krn_start"][0]] = started
+    backend.on_write[C.REGISTERS["krn_reset"][0]] = reset
     backend.on_read[C.REGISTERS["krn_status"][0]] = status
     return backend
 

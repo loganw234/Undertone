@@ -17,24 +17,38 @@ model, wherever it runs, and the records are compared with the model's there.
                         rounds of waiting for that, whichever is first: the swap is made either way, and
                         report.json's "swap" gives the index the core had reached
 
-Once the backend is open (a failure to open it raises, writing nothing), it writes, into --out, however the
-run ends:
+Its arguments are checked before the backend opens: --polls below 1 is refused
+there, by argparse, with its usage line and exit 2. A failure to open the
+backend raises, writing nothing. Once the backend is open it writes, into
+--out, however the run ends, and BEFORE the backend frees its buffers and
+closes the device:
   records.bin    each score record's canonical bytes (model.records.pack's), one after another, in order
   report.json    the identity read, the run's report, the swap's report if any, and how the run ended
   trace.json     every operation: call, its place in the call, kind, offset or size, result, ns before and after
+The files are not written when writing them fails, or when the process is
+killed; nothing else stops them.
 
-and then prints ONE LINE beginning "PASS host.run_case", LAST, only when the
+It then prints ONE LINE beginning "PASS host.run_case", LAST, only when the
 run finished and every file is written. A run with no such line is a lost run,
 never a result: under hardware emulation a run can end with exit code 0 and
 no output (the lead, 2026-11-24 10:17). The other ends, each with its files
 written and no PASS line:
   REFUSED host.run_case <name>   a refusal by name, during the run or while reading its records: exit 2
   DEADLINE host.run_case         the kernel did not say done within --polls rounds: exit 3
-  FAILED host.run_case           the backend failed (XRT's own error): exit 1
-After a deadline or a backend failure, krn_reset is written BEFORE the backend
-frees its buffers and closes the device, so that no kernel writes into a
-buffer being freed. Whether that write itself lands, after a backend failure,
-is not known: report.json says whether it raised.
+  FAILED host.run_case           the backend failed (XRT's own error), its close failed, or an error that
+                                 is none of these was raised: exit 1
+WHICH END WINS: a backend failure wins over a refusal met before it (exit 1,
+the refusal kept in report.json); a failure of the close wins over every
+other end, the files already written then.
+
+AFTER ANY END BUT PASS it writes krn_reset, and then reads krn_refusal and
+krn_status and records in report.json what the kernel answered ("reset"):
+taken, or refused KERNEL_BUSY with the kernel still running, that latch then
+cleared. NOTHING THE HOST WRITES STOPS A RUNNING KERNEL: the kernel refuses a
+reset while its run goes (rtl/krnl/undertone_krnl.sv, its krn_reset row;
+docs/rtl/krnl.md section 5), and only the image's reload or the card's own
+reset stops it. A kernel still running when the backend frees its buffers
+may write into a buffer being freed (docs/host/host.md, limit 18).
 """
 import argparse
 import json
@@ -90,6 +104,8 @@ def main(argv=None):
     ap.add_argument("--cu", default="undertone_krnl")
     ap.add_argument("--device", type=int, default=0)
     a = ap.parse_args(argv)
+    if a.polls < 1:
+        ap.error("--polls is a count of at least 1, not %d" % a.polls)
     with open(a.blob, "rb") as f:
         blob = f.read()
     with open(a.table, encoding="utf-8") as f:
@@ -103,8 +119,9 @@ def main(argv=None):
     os.makedirs(a.out, exist_ok=True)
     trace, report, records = [], {}, []
     end, said = EXIT_PASS, ""
-    with Backend(a.xclbin, device=a.device, cu_name=a.cu, memory_group=a.memory_group, shim_path=a.shim) as backend:
-        lib = Host(backend, trace=trace)
+    backend = Backend(a.xclbin, device=a.device, cu_name=a.cu, memory_group=a.memory_group, shim_path=a.shim)
+    lib = Host(backend, trace=trace)
+    try:
         try:
             report["identity"] = dict(lib.open(), spec_hash="%064x" % lib.identity["spec_hash"])
             report["memory_group"] = backend.memory_group
@@ -128,14 +145,11 @@ def main(argv=None):
         except OSError as e:
             end, said = EXIT_FAILED, "FAILED host.run_case: %s" % e
             report["failed"] = str(e)
-        if end in (EXIT_DEADLINE, EXIT_FAILED):
-            # Stop the kernel before the backend frees its buffers and closes the device.
-            try:
-                lib.raw_write(L.offset("krn_reset"), 1)
-                report["reset_before_free"] = "written"
-            except OSError as e:
-                report["reset_before_free"] = "raised: %s" % e
-        elif lib.library.run_state is not None and lib.library.run_state.records is not None:
+        except Exception as e:          # none of a refusal, a deadline or XRT's error: a fault, ended as FAILED
+            end, said = EXIT_FAILED, "FAILED host.run_case: %s: %s" % (type(e).__name__, e)
+            report["failed"] = "%s: %s" % (type(e).__name__, e)
+        if end in (EXIT_PASS, EXIT_REFUSED) and lib.library.run_state is not None \
+                and lib.library.run_state.records is not None:
             try:
                 records = lib.records()
             except Refusal as e:
@@ -145,24 +159,54 @@ def main(argv=None):
             except OSError as e:
                 end, said = EXIT_FAILED, "FAILED host.run_case: %s" % e
                 report["failed"] = str(e)
-                try:
-                    lib.raw_write(L.offset("krn_reset"), 1)
-                    report["reset_before_free"] = "written"
-                except OSError as e2:
-                    report["reset_before_free"] = "raised: %s" % e2
-    with open(os.path.join(a.out, "records.bin"), "wb") as f:
-        pad = b"\0" * (L.SLOT - L.RECORD_BYTES)
-        for r in records:
-            f.write(L.SLOT_FORMAT.pack(*[r[name] for name, _b, _s in L.SCORE], pad)[:L.RECORD_BYTES])
-    with open(os.path.join(a.out, "report.json"), "w", encoding="utf-8", newline="\n") as f:
-        json.dump(dict(report, records=len(records)), f, indent=1, default=str)
-    with open(os.path.join(a.out, "trace.json"), "w", encoding="utf-8", newline="\n") as f:
-        json.dump(_trace_rows(trace), f)
+        if end != EXIT_PASS:
+            report["reset"] = _reset_and_read(lib)
+        _write_files(a.out, records, report, trace)
+    finally:
+        try:
+            backend.close()
+        except OSError as e:
+            end, said = EXIT_FAILED, "FAILED host.run_case: the backend's close: %s" % e
+            report["close_failed"] = str(e)
+            _write_files(a.out, records, report, trace)
     if end != EXIT_PASS:
         print(said, flush=True)
         return end
     print("PASS host.run_case: %d records of %d frames written to %s" % (len(records), a.frames, a.out), flush=True)
     return EXIT_PASS
+
+
+def _reset_and_read(lib):
+    """krn_reset written, then krn_refusal and krn_status read: what the kernel answered. A reset refused
+    KERNEL_BUSY (the kernel still running: nothing the host writes stops it) is cleared and said so."""
+    out = {}
+    try:
+        lib.raw_write(L.offset("krn_reset"), 1)
+        code = lib.raw_read(L.offset("krn_refusal"))
+        status = lib.raw_read(L.offset("krn_status"))
+        out = {"krn_refusal": L.NAME_OF.get(code, code) if code else None, "krn_status": "0x%X" % status,
+               "running": bool(status & L.RUNNING)}
+        if code == L.C.REFUSAL_CODES["KERNEL_BUSY"]:
+            lib.raw_write(L.offset("krn_refusal"), 0)
+            out["answer"] = "refused KERNEL_BUSY: the kernel still runs, and the latch was cleared"
+        elif code:
+            out["answer"] = "a refusal is latched after the reset: %s" % L.NAME_OF.get(code, code)
+        else:
+            out["answer"] = "taken" if not status & L.RUNNING else "no refusal, and the kernel still says running"
+    except OSError as e:
+        out["answer"] = "raised: %s" % e
+    return out
+
+
+def _write_files(folder, records, report, trace):
+    with open(os.path.join(folder, "records.bin"), "wb") as f:
+        pad = b"\0" * (L.SLOT - L.RECORD_BYTES)
+        for r in records:
+            f.write(L.SLOT_FORMAT.pack(*[r[name] for name, _b, _s in L.SCORE], pad)[:L.RECORD_BYTES])
+    with open(os.path.join(folder, "report.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(dict(report, records=len(records)), f, indent=1, default=str)
+    with open(os.path.join(folder, "trace.json"), "w", encoding="utf-8", newline="\n") as f:
+        json.dump(_trace_rows(trace), f)
 
 
 if __name__ == "__main__":
