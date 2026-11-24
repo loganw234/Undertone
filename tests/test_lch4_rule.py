@@ -160,6 +160,14 @@ def test_lch4_three_hundred_noise_frames_are_enough_and_two_hundred_and_ninety_n
     assert rule.MIN_NOISE_FRAMES == 300
 
 
+def test_lch4_a_record_whose_noise_is_zero_is_no_record_by_that_name():
+    # a record of nothing but zeros: every frame's power is 0, so the noise is 0 and
+    # no ratio can be taken. It is NO RECORD with its own reason, not a division error.
+    first, x = made_up_record([], before=700)
+    s, why = rule.score_at((first, np.zeros_like(x)), T0, "MPP")
+    assert (s, why) == (None, "the noise is zero")
+
+
 def rows_for(bursts, station="MPP", control_bursts=()):
     launches = [
         {"n": 1, "side": rule.SETS, "tag": "2030-001", "t0": T0, "flight": "made up",

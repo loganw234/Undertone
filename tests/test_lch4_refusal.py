@@ -184,6 +184,27 @@ def test_lch4_the_scoring_script_refuses_a_fetch_that_is_not_whole(tmp_path):
     assert not output.exists()
 
 
+def test_lch4_the_scoring_run_writes_the_file_it_then_refuses_on(tmp_path, monkeypatch):
+    # D2's limit: the name the run writes under was held by no test, so a run that wrote
+    # under one name and looked for another would not refuse a second run. Here main() is
+    # run in-process, its output path moved to a temporary folder, with a fetch that is
+    # settled and a loader that has no file: the first call must write that very path,
+    # and the second must be refused on it.
+    out = tmp_path / "scored-output.txt"
+    monkeypatch.setattr(score, "OUTPUT", str(out))
+    monkeypatch.setattr(score.rule, "not_fetched", lambda *a: [])
+    monkeypatch.setattr(score.rule, "make_loader", lambda *a: (lambda tag, station, days: None))
+    freeze = score.freeze_lines()[1]
+    monkeypatch.setattr(sys, "argv", ["d3score.py", str(tmp_path / "no-data"), "--freeze", freeze])
+    assert score.main() == 0
+    assert out.read_text(encoding="utf-8").split("\n")[:2] == [
+        "Study D3, the scoring run.", "Freeze hash %s." % freeze]
+    assert [p.name for p in tmp_path.iterdir()] == ["scored-output.txt"]
+    with pytest.raises(SystemExit) as e:
+        score.main()
+    assert "REFUSED ALREADY-SCORED" in str(e.value)
+
+
 def test_lch4_the_scoring_script_refuses_a_second_run(tmp_path):
     script, output, data, freeze = copy_of_the_study(tmp_path)
     output.write_bytes(b"the one run's output\n")
