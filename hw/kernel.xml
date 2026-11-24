@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Vitis kernel description for undertone_krnl (parcel KRNL, round 3; docs/rtl/krnl.md).
+
+  Adapted from the sibling project's <repos>/cft-fp256/hw/kernel.xml, which is read
+  and not copied whole. Two differences, each a decision of this project's:
+
+  hwControlProtocol is "user_managed". XRT writes no register of this kernel's:
+  not a control word, not an argument. Under ap_ctrl_hs XRT's start sends an
+  image of the arguments (the sibling's host/src/backend_xrt.cpp says so), and in
+  this project's register map the detector core's rows begin at 0x10, where an
+  ap_ctrl_hs kernel's arguments would sit. The host writes every row itself,
+  through xrt::ip, as it writes the weights, the noise table and the truth
+  records; the kernel's start and done are rows of its own (krn_start,
+  krn_status), in the definition's block `kernel`.
+
+  One argument, the buffer the score records go to. It is declared so that v++
+  binds the master to memory (hw/link.cfg) and the host can find the buffer's
+  bank; its offset is krn_buffer's in spec/undertone.toml, and XRT never writes
+  it. tests/test_krnl_packaging.py holds every number here to the definition:
+  the slave's range (2^address_bits), its word, the master's width (one slot of
+  [memory] slot_bytes a beat), the argument's offset, the kernel's name and port
+  names, and the protocol.
+
+  NOTHING HAS CHECKED that the tools read this file as this comment says: it is
+  the lead's to package and link, in round 3's BUILD.
+-->
+<root versionMajor="1" versionMinor="6">
+  <kernel name="undertone_krnl" language="ip_c"
+          vlnv="undertone:kernel:undertone_krnl:1.0"
+          attributes="" preferredWorkGroupSizeMultiple="0" workGroupSize="1"
+          interrupt="false" hwControlProtocol="user_managed">
+    <ports>
+      <port name="s_axi_control" mode="slave" range="0x1000" dataWidth="32"
+            portType="addressable" base="0x0"/>
+      <port name="m_axi_gmem" mode="master" range="0xFFFFFFFFFFFFFFFF"
+            dataWidth="256" portType="addressable" base="0x0"/>
+    </ports>
+    <args>
+      <arg name="records" addressQualifier="1" id="0" port="m_axi_gmem"
+           size="0x8" offset="0xE00" type="void*"
+           hostOffset="0x0" hostSize="0x8"/>
+    </args>
+  </kernel>
+</root>
