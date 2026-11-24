@@ -83,7 +83,12 @@ def test_e1_full_run_the_trees_judge_says_of_the_committed_parts_what_the_commit
     prints is a line of the committed output but eight: the line that says the parts are the stated
     experiment, six lines naming the hash, one a part, and the verdict. Then the page's figures are
     those of an earlier definition, and the run is made again before it is claimed for the new one.
-    The first run of 2026-11-23 met exactly this, an hour after it was made."""
+    The first run of 2026-11-23 met this at its merge, half an hour after it was made: it was run on the
+    parcel's commit, and the branch it was merged into had a later definition.
+
+    WHAT THIS CASE DOES NOT DO: say so where the gate's reader looks. The note below is printed only when
+    pytest is asked for a passing test's output (-rA); the gate's line for the tests is the same in both
+    cases."""
     committed = data(OUTPUT).decode("utf-8").rstrip("\n").split("\n")
     assert committed[-1] == VERDICT
     # The reported model is the one named before the run, and its count is the page's.

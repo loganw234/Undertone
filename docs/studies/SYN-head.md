@@ -46,7 +46,7 @@ And one multiplier alone, registered in and out, a coefficient of 18 bits by:
 
 ## Limits
 
-1. **No timing.** A unit's sum of sixteen products, its shift and its comparison are one stage in this RTL, and a product of 18 by 66 bits is four cascaded slices. Nothing says that closes at any clock. A build that needs more pipeline stages has more registers and the same multipliers.
+1. **No timing.** A unit's sum of sixteen products, its shift and its comparison are one stage in this RTL, and a product of 18 by 66 bits is four slices (Y4); that the four are cascaded is the lead's reading of the count, BELIEVED, not read from a netlist. Nothing says that closes at any clock. A build that needs more pipeline stages has more registers and the same multipliers.
 2. **Out of context.** The module was synthesised alone, its inputs free. In a whole design the tool may share, trim or duplicate logic, and constants at the ports (a build with fewer units, a fixed shift) would shrink it. The figures are for the head with every weight and every pooled value a free input.
 3. **One tool, one version, default strategy.** Another version or another setting may infer the multipliers otherwise.
 4. **The filter bank, the pool and the weight store were not synthesised.** The bank's 2,048 is one slice a multiplier by arithmetic. The two banks of weights are 40,536 register bits each by the parcel's count; the pool's memory is in `docs/model/mod-b.md`.

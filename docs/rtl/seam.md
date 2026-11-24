@@ -119,7 +119,7 @@ The gains differ by channel, (3, -2, 1) under `s24x3`, and the noise differs by 
 
 **The trainer cannot run where a bench runs.** `learn/trainer.py` imports numpy and the simulation image holds none (K12). Section 6 is what was done about it, by the lead's ruling.
 
-**What it costs.** The two rows and their fifteen mutants took 173 seconds of one run of the stage on a copy whose manifest held them alone, on a shared desktop; the hand-over's test was 16 and 45 seconds of that under the two profiles (K6). Inside the gate's second size the whole stage took 350 seconds with these rows, and the gate 10 minutes 4 seconds (K16): the second size with these rows is at the line past which only the lead runs it. In an earlier and faster reading the chain simulated about 3,600 clocks a second under `s16x1` and 3,680 under `s24x3`, which is about 180 and 61 frames a second (K2).
+**What it costs.** The two rows and their fifteen mutants took 173 seconds of one run of the stage on a copy whose manifest held them alone, on a shared desktop; the hand-over's test was 16 and 45 seconds of that under the two profiles (K6). Inside the gate's second size the whole stage took 350 seconds with these rows, and the gate 10 minutes 4 seconds (K16); *on the merged tree, the lead's: 387 seconds and 10 minutes 33 seconds (K17)*: the second size with these rows is at the line past which only the lead runs it. In an earlier and faster reading the chain simulated about 3,600 clocks a second under `s16x1` and 3,680 under `s24x3`, which is about 180 and 61 frames a second (K2).
 
 ## 6. The learner's hand-over through the chain
 

@@ -1314,3 +1314,73 @@ The detector core's last commit. The lead's corrections to the seam's document, 
 - **The runner made to run benches side by side, and a bound on each test**: the foundation's, for the next round.
 - **A second simulator, a host library, a kernel wrapper, anything on the card**: other rounds.
 - **A synthesis of the filter bank, the pool or the weight store**: the bank's cost is arithmetic from one multiplier.
+
+## 2026-11-23 - round 2: the closing verifier on the tip: seven wrong statements of the lead's, two more faults the core's bench lets through, and the answers
+
+A fresh verifier read the round's tip. **No regression, the four merges are what their parents give, and no RTL differs from the model.** It found every planted fault. It also found seven statements in the lead's closing documents that the tree or the record does not bear, and two more faults in the detector core's overflow flag that every bench passes, the RTL right in both. The statements are corrected in the commit that carries this entry. The two faults are stated as a limit and are not closed with tests: that is the lead's call, below, and it is a departure.
+
+### What ran
+
+- **VCLOSE**, fresh, on a sealed clone of the tip with the whole history and five faults amended into the tip commit; 19:59:40 to 20:18:43 by its own clock, of a box of forty minutes. It ran the gate's first size once (PASS, 1,112 tests, 3 minutes 17 seconds), the benches' stage four times on manifests it cut down, the record of stage E1 in both of its cases, and two streams and three mutants of its own on the detector core.
+- **The clone's gate was not run before it was sent.** The five plants were text of documents, and no test or tool reads any of the five documents by name.
+
+### Measured
+
+- **Plants: 5 of 5.** A ratio of the synthesis page wrong in its prose and its register alike; a total of plants in this ledger's last entry that its own parts did not give; a sentence of the roadmap that read an efficiency from the hand-over; the seam's row K17 against the manifest; a limit that named a number the tool does not have. In this round, 65 of 66: the 60 of 61 of the entry before, and these.
+- **No regression.**
+- **The merges.** The manifest of each merge, parsed, is the exact union of its parents': 1 bench and 7 mutants after the learner's, 5 and 27 after RTL-A's, 11 and 74 after RTL-B's, 13 and 89 after the seam's. `tests/gates.toml` the same: 12, 12, 13 and 13 rows. No bench or mutant is lost, doubled or changed but the one the lead re-pointed, and that change is one line in each of its two texts, `32'd1` to `DEN_ONE`. No parcel's file is changed in a merge other than by a parent.
+- **The detector core's last commit, which no verifier had seen:** each of its streams leaves exactly one unit out, the others overflowing at one output by construction; its mutant `overflow-is-a-parity` first differs at record 5 of the stream that leaves unit 0 out, in the flags, which is where its fault puts it.
+- **The record of stage E1:** its test passes; every figure of the page equals the judge's committed output. With one comment line of the definition changed and the copies generated again, the test passes by its second case and the judge refuses the six parts for the hash and for nothing else.
+- **The synthesis page:** every sum, product and ratio is what arithmetic gives, and row Y6's command prints nothing.
+- **Which authority each result is given:** in CLAUDE.md and in this ledger no sentence takes bit identity for evidence about sensitivity or a card, the learner's result for evidence about fabric, or a synthesis for evidence about a clock. The roadmap's one such sentence was the planted one.
+
+### Wrong in the lead's closing documents, and the answers
+
+1. **The entry before this one says the seam "was merged onto their final commits and gated there before its verifier saw it." It was not before.** The gate ran from 19:36:49 to 19:47:22 and the verifier from 19:37:02: the gate began thirteen seconds earlier and printed its PASS ten minutes into the verifier's pass. What is true: the verifier's clone was of the tree being gated, the merge was committed on that PASS, and the verifier's report came after it. Corrected here; the ledger is not edited.
+2. **The entry before this one says "Every mutant runs under one sample format."** The foundation's seven run under both, fourteen runs. It is true of the 82 mutants of the three RTL parcels: 14 + 82 is the stage's 96.
+3. **CLAUDE.md's figures for the gate's length were an earlier tree's**: a second size of "between 5 minutes 20 seconds and 10 minutes 4 seconds" where the last tree's own run is 10 minutes 33 seconds, and a first size of "about two and a half minutes" on one line and 3 minutes 24 seconds on another. Now: about three and a half minutes, 3 minutes 22 seconds measured, and 10 minutes 33 seconds.
+4. **CLAUDE.md's trap 18 said the first full run of stage E1 was refused "an hour after it was made, because the register map had been entered in between."** It was half an hour, and nothing was entered in between: the run was on the parcel's commit, and the round's branch had gained the register map two minutes before the run began. The same in the study's page and in the docstring of its test. All three are corrected.
+5. **Three figures that the merges made stale and nobody marked**: the seam's "What it costs", and the stage's line in row C13 of the core's document and row S17 of the source's, each true of its parcel's own tree. Each now says so, in a note that is marked as the lead's.
+6. **The roadmap's list for Logan left out one of the five calls of the entry before this one**, that the seam's document was corrected by the lead and not sent back, and shortened another, that the seam was built on the two RTL parcels before either was verified. Both are in the list now.
+7. **The roadmap's row for this round said "six parcels merged ... each past verifiers".** The detector core's last commit was past none until this pass. The row says so now, and says what this pass found.
+
+And three the verifier called smaller, which are the same kind:
+
+- **The roadmap said five of D0's sixteen gates wait for hardware.** Thirteen have a row in the registry: the comparison rules have had one since the learner merged. Three have none, and the roadmap now names them.
+- **The study's page said its test "says so in the gate's output" when the committed run is of an earlier definition. It does not.** The note is printed only when pytest is asked for a passing test's output. The page, the test's docstring and trap 18 now say that the gate is green, without a word, on a record of an earlier definition. **Not fixed**: the gate's own way of saying such a thing is a skipped test on its verdict line, and that would hold every commit after a change to the definition until a run of ten minutes on six cores is made again. Whether that is wanted is for the next round's plan.
+- **The synthesis page called four slices "cascaded".** It read a structure from a count. Now labelled BELIEVED.
+
+### Two more faults the core's bench lets through
+
+Both are in the overflow flag of `rtl/core/core_head.sv`; each is one edit; each passes all 112 test runs that build the head, under both sample formats.
+
+- **The flag as the exclusive-or of its two sources**, a hidden value that does not fit and an output sum that does not fit, where the RTL has their or. No stream of the bench makes both true at one output.
+- **A hidden value's fit tested on the low side only.** No test fails when a hidden sum that leaves its field upward is missed.
+
+On a stream of the verifier's own for each, the RTL as it is equals the model, 11 and 1,031 records, and the fault is seen in the flags, at record 5 under 24-bit samples and 821 under 16-bit. A third neighbour it tried, the fit tested before the shift, the bench catches.
+
+**The lead's call, and it is a departure.** By the rule the lead applied to three passes on this parcel, this is a wrong answer of the piece's own: its limit 23 conceded less than the tree does. The answer the rule gives is the two streams and two mutants, and a pass after. The lead has not done that. Limit 23 now names both faults, the verifier's evidence, and that nothing on the full top makes between two and eleven of twelve units overflow at once. The reason: this is the fifth pass to find the RTL right and one more fault of this one kind that the bench lets through, and a sixth stream for a sixth point does not end it. What ends it is a test of the flag over all its sources and both directions together, and that is a piece of design for the next round, not a line added at a close. The verifier's two streams are kept in the round's folder. It is in the roadmap's list for Logan.
+
+### What nobody had read: the simulator's own warnings
+
+Icarus Verilog prints "sorry: constant selects in always_* processes are not currently supported (all bits will be included)" for one line of the source and one of the injector, in every build that holds either: in the lead's last gate run, mutants aside, the source's two builds, the injector's two and the seam's two. The judge reads results and evidence, never a build's log, and no document of a parcel's had the line. It is limit 15 of [docs/rtl/README.md](rtl/README.md) now, with the lead's reading of it, BELIEVED: the process wakes on more bits than it selects, and computes the same.
+
+### The verifier's own departures, by its report
+
+Two of its runs overlapped, in different trees. One stage run took five minutes, where its brief said one to three. Two one-line Python commands ran without a TimeSheet check immediately before, in a stretch its check before had called FREE; every check it made read FREE. It read one file of its own command's output outside its two folders. Its 92 distinct tool inputs name no key, reflog, retired folder or worktree, and not the tip's id before the plants.
+
+### The lead's slips
+
+- **Seven statements written from memory at the end of a long day**, each a figure or a time carried from one tree or one hour into another. The verifier's brief named that shape before it looked.
+- **A claim about what a test prints**, in the study's page, that the lead had not run.
+- **The verifier's brief said "There is no pass after yours."** There is one, narrow, on the commit that carries this entry: these corrections are the lead's own text, and a fresh pass on what changed is the round's rule.
+
+### Not seen by a verifier
+
+This entry, and every correction in its commit: CLAUDE.md, the roadmap, the notes in the four documents under `docs/rtl/`, the two study pages, and one docstring of a test. A last narrow pass reads that commit; what it finds is the next entry.
+
+### Not done, and why
+
+- **The two streams and two mutants in the core's bench**: the lead's call, above.
+- **A gate that says when a committed long run is of an earlier definition**: a decision for the next round's plan.
+- **A check that reads what the simulator prints while it builds**: the foundation's, for the next round.
