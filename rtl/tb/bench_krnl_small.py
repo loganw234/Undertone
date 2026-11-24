@@ -18,6 +18,8 @@ WHAT EACH TEST HOLDS
                             meet it: every record the model's, done only after every answer. Then, on
                             that run's words, the comparison handed a model one record late must report
                             a WORD mismatch at record 0 (the evidence is the test control_model_record_late's)
+  identity_w_before_aw      a memory that takes an address only while WVALID is high: every record the
+                            model's (a writer that waits for AWREADY before WVALID hangs here, bounded)
   truth_isolation           two wordings of the truth that add the same samples (3/1 and 6/2) give the
                             same score words
   truth_while_running       a truth record written after the start, ahead of the stream, gives the model's
@@ -144,6 +146,25 @@ async def identity_small(dut):
         assert e.kind == "WORD" and e.at == 0, "the comparison reported %s at %d, not WORD at 0" % (e.kind, e.at)
     else:
         raise AssertionError("the comparison passed a model one record late")
+
+
+# ------------------------------------------------------------------ a memory whose AWREADY waits for WVALID
+
+W_FIRST_FRAMES = 33
+
+
+@cocotb.test()
+async def identity_w_before_aw(dut):
+    """The memory takes an address only while the burst's data is offered, as a slave may (AXI4 A3.3.1,
+    BELIEVED), and takes the data only once the address is taken. A kernel that waited for AWREADY before
+    raising WVALID would never be answered; the wait for done is bounded, and its message names it."""
+    test = "identity_w_before_aw"
+    this = case(W_FIRST_FRAMES, [], seed=SEED + 11)
+    base = 0xD0000
+    host, mem = await k.begin(dut, base=base, size=this.frames * SLOT, seed=SEED + 11, stall=0.03, stall_len=20)
+    mem.aw_waits_for_w = True
+    await k.hold_run(test, "AWREADY waits for WVALID", host, mem, this, base)
+    assert len(mem.bursts) >= 1 and len(mem.beats) == this.frames
 
 
 # ------------------------------------------------------------------ truth isolation

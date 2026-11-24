@@ -319,13 +319,14 @@ def e0_case(profile, frames, seed, sigma, schedule, epoch=3):
 
 async def identity_e0(dut, test, profile, frames, seed, sigma, schedule, swap_at=None):
     """E0's shape through the kernel: slots across a 4 KB page, random holds of every channel, late answers,
-    the last answer held 200 clocks; with `swap_at`, other gains written to the shadow while the run goes
-    and committed at that index."""
+    the last answer held 200 clocks, and a memory that takes an address only while its data is offered;
+    with `swap_at`, other gains written to the shadow while the run goes and committed at that index."""
     this = e0_case(profile, frames, seed, sigma, schedule)
     base = 0x20000 - 7 * SLOT
     host, mem = await begin(dut, base=base, size=this.frames * SLOT, seed=seed, stall=0.05, stall_len=60,
                             answer_delay=20)
     mem.late_beat, mem.late_clocks = this.frames - 1, 200
+    mem.aw_waits_for_w = True           # an address taken only while its data is offered
     expected, during, label = None, None, "E0's shape, random holds"
     if swap_at is not None:
         other = weights.matched_filter(profile, PULSE, OTHER_GAINS[profile])

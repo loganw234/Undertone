@@ -47,8 +47,8 @@
 // RUN_LENGTH. One arriving with the queue full: RECORD_QUEUE, and from then on no record of the run
 // is queued (the ones queued are still written). An answer other than OKAY: MEMORY_WRITE, and no
 // burst is issued after it. A burst is as many queued records as no burst has taken, at most
-// BURST, never across a 4 KB page; one burst's data at a time, after its address; up to OUTS
-// unanswered.
+// BURST, never across a 4 KB page; one burst out at a time, its address and its data offered
+// together, the data never waiting for the address to be taken; up to OUTS unanswered.
 //
 // DONE rises only with the chain idle: the source has put out krn_frames frames, DRAIN clocks have
 // passed since (the injector's 52 and the core's 11 clocks, twice over), every queued record is
@@ -292,13 +292,22 @@ module undertone_krnl #(
     wire  [QB:0]     q_count  = wp - rp;
     wire  [QB:0]     unissued = wp - ip;
 
-    // the writer: one burst's data at a time; the lengths of the bursts not yet answered
-    logic [1:0]      wr;
-    localparam logic [1:0] WR_IDLE = 2'd0, WR_AW = 2'd1, WR_DATA = 2'd2;
+    // the writer: one burst out at a time, its address and its data offered together. AXI4, section
+    // A3.3.1, as remembered (BELIEVED, the specification not read): a master must not wait for AWREADY
+    // or WREADY before raising AWVALID or WVALID, and a slave may wait for WVALID before raising
+    // AWREADY. So the data never waits for the address to be taken (w_gate), and may lead it. The first
+    // version raised WVALID only after AWREADY, and a memory that waits for WVALID hung it (VKRNL).
+    // The lengths of the bursts not yet answered are kept from the moment each is offered.
+    logic            wr;
+    localparam logic WR_IDLE = 1'b0, WR_BUSY = 1'b1;
+    logic            aw_done;           // this burst's address is taken
+    logic            w_on;              // this burst's data is offered
+    wire             w_gate = 1'b1;     // the data does not wait for the address
     logic [4:0]      beats_left;
     logic [4:0]      o_len [0:OUTS-1];
     logic [OB:0]     ow, orr;
     wire  [OB:0]     outs = ow - orr;
+    assign m_axi_gmem_wvalid = w_on && w_gate;
 
     // what the master puts out that never changes
     assign m_axi_gmem_awid    = 1'b0;
@@ -358,7 +367,7 @@ module undertone_krnl #(
     always @(posedge ap_clk) begin : krn
         logic [A:0]       a;
         logic [CODE-1:0]  f_code, r_code, b_code, e_code, ref_n;
-        logic             clear, go_start, go_reset, forward, push, pop, issue;
+        logic             clear, go_start, go_reset, forward, push, pop, issue, aw_fin, w_fin;
         logic [69:0]      need, ends;
         logic [7:0]       len, page_left;
         logic [63:0]      at_addr;
@@ -374,8 +383,8 @@ module undertone_krnl #(
             running <= 1'b0; done <= 1'b0; halted <= 1'b0; mem_err <= 1'b0; refusal <= '0;
             src_count <= '0; rec_in <= '0; answered <= '0; issued <= '0; drain_left <= '0; rec_hold <= '0; peak <= '0;
             wp <= '0; rp <= '0; ip <= '0;
-            wr <= WR_IDLE; beats_left <= '0; ow <= '0; orr <= '0;
-            m_axi_gmem_awvalid <= 1'b0; m_axi_gmem_awaddr <= '0; m_axi_gmem_awlen <= '0; m_axi_gmem_wvalid <= 1'b0;
+            wr <= WR_IDLE; beats_left <= '0; ow <= '0; orr <= '0; aw_done <= 1'b0; w_on <= 1'b0;
+            m_axi_gmem_awvalid <= 1'b0; m_axi_gmem_awaddr <= '0; m_axi_gmem_awlen <= '0;
         end else begin
             f_code = '0; r_code = '0; b_code = '0; e_code = '0;
             clear = 1'b0; go_start = 1'b0; go_reset = 1'b0; forward = 1'b0;
@@ -534,8 +543,8 @@ module undertone_krnl #(
                         done <= 1'b0; halted <= 1'b0; mem_err <= 1'b0;
                         src_count <= '0; rec_in <= '0; answered <= '0; issued <= '0; peak <= '0; drain_left <= '0;
                         wp <= '0; rp <= '0; ip <= '0; ow <= '0; orr <= '0;
-                        wr <= WR_IDLE; beats_left <= '0;
-                        m_axi_gmem_awvalid <= 1'b0; m_axi_gmem_wvalid <= 1'b0;
+                        wr <= WR_IDLE; beats_left <= '0; aw_done <= 1'b0; w_on <= 1'b0;
+                        m_axi_gmem_awvalid <= 1'b0;
                         clear = 1'b1;
                         s_axi_control_bvalid <= 1'b1;
                         st <= S_B;
@@ -585,33 +594,35 @@ module undertone_krnl #(
                         if (page_left < len) len = page_left;
                         m_axi_gmem_awaddr  <= at_addr;
                         m_axi_gmem_awlen   <= len - 1'b1;
-                        m_axi_gmem_awvalid <= 1'b1;
+                        m_axi_gmem_awvalid <= 1'b1;         // the address and the data, together
+                        w_on       <= 1'b1;
+                        aw_done    <= 1'b0;
                         beats_left <= len[4:0];
+                        o_len[ow[OB-1:0]] <= len[4:0];
+                        ow     <= ow + 1'b1;
                         ip     <= ip + len;
                         issued <= issued + len;
-                        wr <= WR_AW;
+                        wr <= WR_BUSY;
                     end
                 end
-                WR_AW: begin
-                    if (m_axi_gmem_awready) begin
+                default: begin                              // a burst is out: each channel until taken
+                    aw_fin = aw_done;
+                    if (m_axi_gmem_awvalid && m_axi_gmem_awready) begin
                         m_axi_gmem_awvalid <= 1'b0;
-                        o_len[ow[OB-1:0]] <= beats_left;
-                        ow <= ow + 1'b1;
-                        m_axi_gmem_wvalid <= 1'b1;
-                        wr <= WR_DATA;
+                        aw_done <= 1'b1;
+                        aw_fin = 1'b1;
                     end
-                end
-                WR_DATA: begin
-                    if (m_axi_gmem_wready) begin
+                    w_fin = !w_on;
+                    if (m_axi_gmem_wvalid && m_axi_gmem_wready) begin
                         pop = 1'b1;
                         beats_left <= beats_left - 1'b1;
                         if (beats_left == 5'd1) begin
-                            m_axi_gmem_wvalid <= 1'b0;
-                            wr <= WR_IDLE;
+                            w_on <= 1'b0;
+                            w_fin = 1'b1;
                         end
                     end
+                    if (aw_fin && w_fin) wr <= WR_IDLE;
                 end
-                default: wr <= WR_IDLE;
             endcase
             if (pop) rp <= rp + 1'b1;
 

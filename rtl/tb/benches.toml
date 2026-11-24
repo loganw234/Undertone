@@ -1023,7 +1023,7 @@ toplevel = "krnl_small"
 sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
 module = "bench_krnl_small"
 profiles = ["s16x1"]
-identity = ["identity_small", "truth_isolation", "truth_while_running", "reset_between_runs"]
+identity = ["identity_small", "identity_w_before_aw", "truth_isolation", "truth_while_running", "reset_between_runs"]
 limit = 110
 
 # A record writer that drops one record: record 5 counted and not queued.
@@ -1075,13 +1075,22 @@ edits = [["assign core_frame = inj_frame;", "logic snoop = 1'b0; always @(posedg
 must_fail = ["truth_isolation"]
 kind = ""
 
+# A writer that waits for AWREADY before raising WVALID, against a memory whose AWREADY waits for WVALID:
+# never answered, so the test's bounded wait for done fails by name (VKRNL's finding, round 3).
+[[bench.mutant]]
+name = "w-waits-for-the-address"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["wire             w_gate = 1'b1;", "wire             w_gate = aw_done;"]]
+must_fail = ["identity_w_before_aw"]
+kind = ""
+
 [[bench]]
 name = "krnl-small-s24x3"
 toplevel = "krnl_small"
 sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
 module = "bench_krnl_small"
 profiles = ["s24x3"]
-identity = ["identity_small", "truth_isolation", "truth_while_running", "reset_between_runs"]
+identity = ["identity_small", "identity_w_before_aw", "truth_isolation", "truth_while_running", "reset_between_runs"]
 limit = 120
 
 # A record writer that writes one twice: record 5's beat sent, and sent again as the next.

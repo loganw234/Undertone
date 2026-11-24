@@ -23,12 +23,18 @@ benches need:
     one slot, INCR, at most 16 beats, no 4 KB page crossed, every strobe set,
     WLAST exactly on the last beat, every beat inside the region.
 
-WHAT IT DOES NOT DO, each a stated limit of docs/rtl/krnl.md: it takes a beat
-of data only once the burst's address is taken (AXI allows data first; this
-kernel never sends it so, and a kernel that did would stall here and fail by a
-bound, not by a named fault); it holds one region of memory; it never reorders
-answers; it is this parcel's own reading of AXI4, cross-checked once by
-`identity_on_axi_ram` against cocotbext-axi's AxiRamWrite.
+  - the two orders a slave may impose (AXI4, section A3.3.1, as remembered:
+    BELIEVED, the specification not read): it always takes a beat of data
+    only once its burst's address is taken (WREADY waits for the address),
+    and with `aw_waits_for_w` it takes an address only at an edge where WVALID
+    is high (AWREADY waits for WVALID). Under both at once, a master that
+    waits for AWREADY before raising WVALID never gets either, and the bench's
+    bound ends the test.
+
+WHAT IT DOES NOT DO, each a stated limit of docs/rtl/krnl.md: it holds one
+region of memory; it never reorders answers; it is this parcel's own reading
+of AXI4, cross-checked once by `identity_on_axi_ram` against cocotbext-axi's
+AxiRamWrite.
 """
 import random
 
@@ -65,6 +71,7 @@ class Memory:
         self.mem = bytearray([PATTERN]) * (self.hi - self.lo)
         self.stall, self.stall_len, self.answer_delay = stall, stall_len, answer_delay
         self.hold_aw = self.hold_w = self.hold_b = False
+        self.aw_waits_for_w = False     # AWREADY only while WVALID is high, as a slave may (AXI4 A3.3.1, BELIEVED)
         self.late_beat, self.late_clocks = None, 0
         self.error_burst = None
         self.bursts = []        # (clock, address, beats)
@@ -139,7 +146,9 @@ class Memory:
                 self._b.pop(0)
                 self._drive["bvalid"] = 0
             # ---- what to drive for the next edge ----
-            self._drive["awready"] = int(not self._stalled("aw") and not self.hold_aw)
+            wvalid_now = self._one("wvalid")
+            self._drive["awready"] = int(not self._stalled("aw") and not self.hold_aw
+                                         and (wvalid_now or not self.aw_waits_for_w))
             self._drive["wready"] = int(not self._stalled("w") and bool(self._aw) and not self.hold_w)
             due = not self._stalled("b") and bool(self._b) and self._b[0][0] <= self.clock and not self.hold_b
             if self._drive["bvalid"] and self._b:
