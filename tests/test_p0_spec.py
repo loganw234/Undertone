@@ -63,12 +63,17 @@ MOD_A_REFUSALS = ("SEED_RANGE", "NOISE_SIGMA", "NOISE_RANGE", "STREAM_LENGTH", "
 HEAD_REFUSALS = ("SHAPE_HIDDEN", "SHAPE_HIDDEN_SHIFT", "SHAPE_BETWEEN")
 # Round 2, parcels RTL-B and RTL-A: the fabric's alone. The model raises none of the three.
 FABRIC_REFUSALS = ("CORE_STOPPED", "REGISTER_ACCESS", "INJECT_PENDING")
+# Round 3, parcel KRNL: the kernel's alone, typed from its design in the round's ledger. The model raises none.
+KERNEL_REFUSALS = ("KERNEL_BUSY", "BUFFER_ALIGN", "BUFFER_SIZE", "RUN_START", "RECORD_QUEUE", "MEMORY_WRITE",
+                   "RUN_LENGTH")
 
 
-def test_p0_refusal_names_are_exactly_the_models_forty_and_the_fabrics_three():
+def test_p0_refusal_names_are_exactly_the_models_forty_the_fabrics_three_and_the_kernels_seven():
     assert (len(P0_REFUSALS), len(MOD_B_REFUSALS), len(MOD_A_REFUSALS), len(HEAD_REFUSALS)) == (10, 16, 11, 3)
-    assert C.REFUSALS == P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS + HEAD_REFUSALS + FABRIC_REFUSALS
-    assert len(set(C.REFUSALS)) == 43 and len(FABRIC_REFUSALS) == 3
+    assert C.REFUSALS == (P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS + HEAD_REFUSALS + FABRIC_REFUSALS
+                          + KERNEL_REFUSALS)
+    assert len(set(C.REFUSALS)) == 50 and len(FABRIC_REFUSALS) == 3 and len(KERNEL_REFUSALS) == 7
+    assert [C.REFUSAL_CODES[n] for n in KERNEL_REFUSALS] == list(range(44, 51))
 
 
 def test_p0_the_hidden_layers_bounds_are_the_ones_generated_and_keep_the_head_small():
@@ -218,8 +223,8 @@ def test_p0_reference_pulse_fits_the_narrowest_profile_and_is_not_silent():
 
 
 def test_p0_every_refusal_has_a_code_of_its_own_that_fits_a_byte_and_none_is_zero():
-    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 43
-    assert len(set(C.REFUSAL_CODES.values())) == 43
+    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 50
+    assert len(set(C.REFUSAL_CODES.values())) == 50
     assert all(type(v) is int and 1 <= v <= 255 for v in C.REFUSAL_CODES.values())
     # Typed here from the definition as it was first written, so that a renumbering is made on purpose.
     assert (C.REFUSAL_CODES["PROFILE_UNKNOWN"], C.REFUSAL_CODES["BLOB_HASH"], C.REFUSAL_CODES["SHAPE_BETWEEN"]) == (1, 7, 40)
@@ -245,18 +250,25 @@ def test_p0_the_registers_lie_inside_the_frame_in_whole_words_and_do_not_overlap
     assert 8 * 32 == 256                                                 # the hash is a SHA-256
 
 
-def test_p0_the_register_map_is_three_blocks_and_every_register_is_inside_one():
+def test_p0_the_register_map_is_four_blocks_and_every_register_is_inside_one():
     """Round 2: the core's control block from 0x080, and the source's and the injector's from 0xF00.
-    The figures are typed here from the two designs and the lead's ruling on them, not read from the definition."""
-    assert C.BLOCKS == {"core": (0x010, 0xF00), "source": (0xF00, 0xF80), "inject": (0xF80, 0x1000)}
+    Round 3: the kernel's block from 0xE00, taken from the end of the core's range, where the core had no row.
+    The figures are typed here from the designs and the lead's rulings on them, not read from the definition."""
+    assert C.BLOCKS == {"core": (0x010, 0xE00), "kernel": (0xE00, 0xF00), "source": (0xF00, 0xF80),
+                        "inject": (0xF80, 0x1000)}
     counts = dict.fromkeys(C.BLOCKS, 0)
     for name, (offset, _access, words) in C.REGISTERS.items():
         inside = [b for b, (first, end) in C.BLOCKS.items() if first <= offset and offset + 4 * words <= end]
         assert len(inside) == 1, name
         counts[inside[0]] += 1
-    assert counts == {"core": 15 + 22, "source": 7, "inject": 8} and len(C.REGISTERS) == 52
+    assert counts == {"core": 15 + 22, "kernel": 10, "source": 7, "inject": 8} and len(C.REGISTERS) == 62
+    # The kernel's block as parcel KRNL's design drew it: ten registers in fourteen words, 0xE00 to 0xE37.
+    kernel = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0xE00 <= offset < 0xF00]
+    assert (len(kernel), sum(w for _o, w in kernel), min(o for o, _w in kernel)) == (10, 14, 0xE00)
+    assert max(o + 4 * w for o, w in kernel) == 0xE38
+    assert C.MEMORY_SLOT_BYTES == 32 and C.MEMORY_SLOT_BYTES >= sum(f[1] for f in C.RECORDS["score"]) // 8
     # The control block as parcel RTL-B's design counted it: 22 registers in 39 words, 0x080 to 0x11B.
-    control = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0x080 <= offset < 0xF00]
+    control = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0x080 <= offset < 0xE00]
     assert (len(control), sum(w for _o, w in control), min(o for o, _w in control)) == (22, 39, 0x080)
     assert max(o + 4 * w for o, w in control) == 0x11C
     assert C.REGISTERS["shape_masks"][2] == C.MAX_FILTERS            # one word of channel mask a filter
@@ -270,7 +282,8 @@ def test_p0_the_registers_that_are_read_as_bits_and_the_fabrics_two_bounds():
     assert C.REGISTER_BITS == {
         "status": {"running": 0, "loading": 1, "commit": 2, "settling": 3, "closed": 4, "partial": 5, "whole": 6,
                    "overflow": 7, "refused": 8, "refused_again": 9},
-        "src_status": {"running": 0}}
+        "src_status": {"running": 0},
+        "krn_status": {"running": 0, "done": 1, "refused": 2}}
     for register in C.REGISTER_BITS:
         assert C.REGISTERS[register][1] == "ro" and C.REGISTERS[register][2] == 1
     assert (C.MAX_NOISE_TABLE, C.MAX_INJECT_PENDING) == (32767, 1024)

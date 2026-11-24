@@ -6,7 +6,7 @@
 package undertone_pkg;
 
   // the SHA-256 of the definition this package was generated from
-  localparam logic [255:0] SPEC_SHA256 = 256'h6b86c106d4f649ebcc7ee4e9b4ac4932e05186fd21f4e6c4147f616760c10ee0;
+  localparam logic [255:0] SPEC_SHA256 = 256'h58313fd278b2c7f8827b552ad867447a6560136ebe3be033214502668d9b1e55;
 
   // the definition
   localparam int SPEC_VERSION = 1;
@@ -34,6 +34,9 @@ package undertone_pkg;
   // the fabric's own bounds, which the model does not have
   localparam int MAX_NOISE_TABLE = 32767;
   localparam int MAX_INJECT_PENDING = 1024;
+
+  // the memory a kernel writes records to: the bytes of one record's slot
+  localparam int MEMORY_SLOT_BYTES = 32;
 
   // the rectifier's codes
   localparam int RECTIFIER_PASS = 0;
@@ -206,6 +209,13 @@ package undertone_pkg;
   localparam int REFUSAL_CORE_STOPPED = 41;
   localparam int REFUSAL_REGISTER_ACCESS = 42;
   localparam int REFUSAL_INJECT_PENDING = 43;
+  localparam int REFUSAL_KERNEL_BUSY = 44;
+  localparam int REFUSAL_BUFFER_ALIGN = 45;
+  localparam int REFUSAL_BUFFER_SIZE = 46;
+  localparam int REFUSAL_RUN_START = 47;
+  localparam int REFUSAL_RECORD_QUEUE = 48;
+  localparam int REFUSAL_MEMORY_WRITE = 49;
+  localparam int REFUSAL_RUN_LENGTH = 50;
 
   // the register map's frame: one register is one word at a byte offset
   localparam int BUS_WORD_BITS = 32;
@@ -215,7 +225,9 @@ package undertone_pkg;
 
   // the blocks that share the register map: each one's first byte offset, and its end, one past its last byte
   localparam int BLOCK_CORE_FIRST = 16;
-  localparam int BLOCK_CORE_END = 3840;
+  localparam int BLOCK_CORE_END = 3584;
+  localparam int BLOCK_KERNEL_FIRST = 3584;
+  localparam int BLOCK_KERNEL_END = 3840;
   localparam int BLOCK_SOURCE_FIRST = 3840;
   localparam int BLOCK_SOURCE_END = 3968;
   localparam int BLOCK_INJECT_FIRST = 3968;
@@ -370,6 +382,46 @@ package undertone_pkg;
   localparam int REG_SHADOW_WORDS_WORDS = 1;
   localparam int REG_SHADOW_WORDS_READABLE = 1;
   localparam int REG_SHADOW_WORDS_WRITABLE = 0;
+  localparam int REG_KRN_BUFFER_OFFSET = 3584;
+  localparam int REG_KRN_BUFFER_WORDS = 2;
+  localparam int REG_KRN_BUFFER_READABLE = 1;
+  localparam int REG_KRN_BUFFER_WRITABLE = 1;
+  localparam int REG_KRN_SIZE_OFFSET = 3592;
+  localparam int REG_KRN_SIZE_WORDS = 2;
+  localparam int REG_KRN_SIZE_READABLE = 1;
+  localparam int REG_KRN_SIZE_WRITABLE = 1;
+  localparam int REG_KRN_FRAMES_OFFSET = 3600;
+  localparam int REG_KRN_FRAMES_WORDS = 2;
+  localparam int REG_KRN_FRAMES_READABLE = 1;
+  localparam int REG_KRN_FRAMES_WRITABLE = 1;
+  localparam int REG_KRN_START_OFFSET = 3608;
+  localparam int REG_KRN_START_WORDS = 1;
+  localparam int REG_KRN_START_READABLE = 0;
+  localparam int REG_KRN_START_WRITABLE = 1;
+  localparam int REG_KRN_RESET_OFFSET = 3612;
+  localparam int REG_KRN_RESET_WORDS = 1;
+  localparam int REG_KRN_RESET_READABLE = 0;
+  localparam int REG_KRN_RESET_WRITABLE = 1;
+  localparam int REG_KRN_STATUS_OFFSET = 3616;
+  localparam int REG_KRN_STATUS_WORDS = 1;
+  localparam int REG_KRN_STATUS_READABLE = 1;
+  localparam int REG_KRN_STATUS_WRITABLE = 0;
+  localparam int REG_KRN_REFUSAL_OFFSET = 3620;
+  localparam int REG_KRN_REFUSAL_WORDS = 1;
+  localparam int REG_KRN_REFUSAL_READABLE = 1;
+  localparam int REG_KRN_REFUSAL_WRITABLE = 1;
+  localparam int REG_KRN_RECORDS_OFFSET = 3624;
+  localparam int REG_KRN_RECORDS_WORDS = 2;
+  localparam int REG_KRN_RECORDS_READABLE = 1;
+  localparam int REG_KRN_RECORDS_WRITABLE = 0;
+  localparam int REG_KRN_QUEUE_PEAK_OFFSET = 3632;
+  localparam int REG_KRN_QUEUE_PEAK_WORDS = 1;
+  localparam int REG_KRN_QUEUE_PEAK_READABLE = 1;
+  localparam int REG_KRN_QUEUE_PEAK_WRITABLE = 0;
+  localparam int REG_CAP_RECORD_QUEUE_OFFSET = 3636;
+  localparam int REG_CAP_RECORD_QUEUE_WORDS = 1;
+  localparam int REG_CAP_RECORD_QUEUE_READABLE = 1;
+  localparam int REG_CAP_RECORD_QUEUE_WRITABLE = 0;
   localparam int REG_SRC_SEED_OFFSET = 3840;
   localparam int REG_SRC_SEED_WORDS = 2;
   localparam int REG_SRC_SEED_READABLE = 0;
@@ -442,6 +494,9 @@ package undertone_pkg;
   localparam int REG_STATUS_OVERFLOW_BIT = 7;
   localparam int REG_STATUS_REFUSED_BIT = 8;
   localparam int REG_STATUS_REFUSED_AGAIN_BIT = 9;
+  localparam int REG_KRN_STATUS_RUNNING_BIT = 0;
+  localparam int REG_KRN_STATUS_DONE_BIT = 1;
+  localparam int REG_KRN_STATUS_REFUSED_BIT = 2;
   localparam int REG_SRC_STATUS_RUNNING_BIT = 0;
 
 endpackage

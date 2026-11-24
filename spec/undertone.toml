@@ -144,6 +144,19 @@ names = [
     "CORE_STOPPED",
     "REGISTER_ACCESS",
     "INJECT_PENDING",
+    # The kernel's alone (round 3, parcel KRNL). The model raises none of
+    # these: it has no kernel, no buffer and no memory path. A start while a
+    # run goes; a buffer base that is not a slot's multiple; a buffer too small
+    # for the run; a source that does not run when started; a record that
+    # finds the kernel's queue full; a write the memory answers with an error;
+    # a run that ends with another count of records than it was asked for.
+    "KERNEL_BUSY",
+    "BUFFER_ALIGN",
+    "BUFFER_SIZE",
+    "RUN_START",
+    "RECORD_QUEUE",
+    "MEMORY_WRITE",
+    "RUN_LENGTH",
 ]
 
 # Reference pulses, as integer data, by path under spec/.
@@ -205,6 +218,13 @@ SHAPE_BETWEEN = 40
 CORE_STOPPED = 41
 REGISTER_ACCESS = 42
 INJECT_PENDING = 43
+KERNEL_BUSY = 44
+BUFFER_ALIGN = 45
+BUFFER_SIZE = 46
+RUN_START = 47
+RECORD_QUEUE = 48
+MEMORY_WRITE = 49
+RUN_LENGTH = 50
 
 # Bounds the fabric has and the model does not: the model takes any noise
 # table its profile's samples can index, and a schedule of any length. Both are
@@ -217,6 +237,15 @@ INJECT_PENDING = 43
 [fabric]
 max_noise_table = 32767
 max_inject_pending = 1024
+
+# The memory the kernel writes score records to (round 3, parcel KRNL's design,
+# entered by the lead). One record is one slot of slot_bytes: its canonical
+# bytes first (the score record's fields in declared order, each little-endian,
+# as model.records.pack gives them), then zeros to the slot's end, always
+# written. Record n's slot begins at the buffer's base + n * slot_bytes, and the
+# base is a multiple of slot_bytes. A power of two, at least the record's bytes.
+[memory]
+slot_bytes = 32
 
 # The register map's frame: what the host reads and writes, and how.
 #   A register is one word of word_bits at a byte offset that is a multiple of
@@ -237,7 +266,8 @@ magic = 0x554E4454
 # ignored and a read answers zero. Inside it every write is taken or refused
 # by name, REGISTER_ACCESS when no other name fits, and never dropped.
 [blocks]
-core = [0x010, 0xF00]
+core = [0x010, 0xE00]
+kernel = [0xE00, 0xF00]
 source = [0xF00, 0xF80]
 inject = [0xF80, 0x1000]
 
@@ -277,6 +307,27 @@ inject = [0xF80, 0x1000]
 #                                order; the write of the denominator offers it
 #   inj_pending                  truth records held
 #   cap_noise_table, cap_inject_pending   the build's value of each fabric bound
+#
+# Under a kernel (round 3), src_frames is the kernel's to write: krn_start
+# writes it from krn_frames, and a host's write of it through the kernel is
+# refused, REGISTER_ACCESS, so that nothing starts the source with nobody
+# collecting its records.
+#
+# From 0xE00: the kernel's own block, drawn at the design stop of parcel KRNL
+# (round 3), taken from the end of the core's range, where the core has no row.
+# The kernel's control protocol is Vitis's user-managed one, so nothing sits
+# below first_offset and XRT writes no register of the kernel's.
+#   krn_buffer, krn_size   the buffer's base and size in bytes
+#   krn_frames             the run's length in frames: the records it must write
+#   krn_start              a write of 1 starts a run, after the checks named in
+#                          the kernel's design
+#   krn_reset              a write of 1 resets the three blocks and the run;
+#                          the arguments are kept
+#   krn_status             bits, in [register_bits.krn_status]
+#   krn_refusal            the kernel's refusal, under the rule every block has
+#   krn_records            records written and answered, in order, from slot 0
+#   krn_queue_peak         the most records the kernel's queue held in the run
+#   cap_record_queue       the build's depth of that queue
 [registers]
 id = [0x10, "ro", 1]
 spec_version = [0x14, "ro", 1]
@@ -315,6 +366,16 @@ epoch = [0x108, "ro", 1]
 next_index = [0x10C, "ro", 2]
 shadow_count = [0x114, "ro", 1]
 shadow_words = [0x118, "ro", 1]
+krn_buffer = [0xE00, "rw", 2]
+krn_size = [0xE08, "rw", 2]
+krn_frames = [0xE10, "rw", 2]
+krn_start = [0xE18, "wo", 1]
+krn_reset = [0xE1C, "wo", 1]
+krn_status = [0xE20, "ro", 1]
+krn_refusal = [0xE24, "rw", 1]
+krn_records = [0xE28, "ro", 2]
+krn_queue_peak = [0xE30, "ro", 1]
+cap_record_queue = [0xE34, "ro", 1]
 src_seed = [0xF00, "wo", 2]
 src_frames = [0xF08, "wo", 2]
 src_table_length = [0xF10, "wo", 1]
@@ -351,3 +412,10 @@ refused_again = 9
 
 [register_bits.src_status]
 running = 0
+
+#   krn_status: a run is going; the last run is done (it stays until the next
+#   start or krn_reset, and is not cleared by a read); a refusal is latched.
+[register_bits.krn_status]
+running = 0
+done = 1
+refused = 2

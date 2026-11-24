@@ -5,7 +5,7 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "6b86c106d4f649ebcc7ee4e9b4ac4932e05186fd21f4e6c4147f616760c10ee0"
+SPEC_SHA256 = "58313fd278b2c7f8827b552ad867447a6560136ebe3be033214502668d9b1e55"
 
 PROFILES = {
     "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
@@ -25,6 +25,7 @@ MAX_HIDDEN_SHIFT = 31
 MAX_HIST_BINS = 4096
 MAX_NOISE_TABLE = 32767
 MAX_INJECT_PENDING = 1024
+MEMORY_SLOT_BYTES = 32
 
 RECTIFIERS = {
     "pass": 0,
@@ -107,6 +108,13 @@ REFUSALS = (
     "CORE_STOPPED",
     "REGISTER_ACCESS",
     "INJECT_PENDING",
+    "KERNEL_BUSY",
+    "BUFFER_ALIGN",
+    "BUFFER_SIZE",
+    "RUN_START",
+    "RECORD_QUEUE",
+    "MEMORY_WRITE",
+    "RUN_LENGTH",
 )
 
 PULSES = {
@@ -171,12 +179,20 @@ REFUSAL_CODES = {
     "CORE_STOPPED": 41,
     "REGISTER_ACCESS": 42,
     "INJECT_PENDING": 43,
+    "KERNEL_BUSY": 44,
+    "BUFFER_ALIGN": 45,
+    "BUFFER_SIZE": 46,
+    "RUN_START": 47,
+    "RECORD_QUEUE": 48,
+    "MEMORY_WRITE": 49,
+    "RUN_LENGTH": 50,
 }
 
 BUS = {"word_bits": 32, "address_bits": 12, "first_offset": 16, "magic": 0x554E4454}
 
 BLOCKS = {
-    "core": (0x010, 0xF00),
+    "core": (0x010, 0xE00),
+    "kernel": (0xE00, 0xF00),
     "source": (0xF00, 0xF80),
     "inject": (0xF80, 0x1000),
 }
@@ -219,6 +235,16 @@ REGISTERS = {
     "next_index": (0x10C, "ro", 2),
     "shadow_count": (0x114, "ro", 1),
     "shadow_words": (0x118, "ro", 1),
+    "krn_buffer": (0xE00, "rw", 2),
+    "krn_size": (0xE08, "rw", 2),
+    "krn_frames": (0xE10, "rw", 2),
+    "krn_start": (0xE18, "wo", 1),
+    "krn_reset": (0xE1C, "wo", 1),
+    "krn_status": (0xE20, "ro", 1),
+    "krn_refusal": (0xE24, "rw", 1),
+    "krn_records": (0xE28, "ro", 2),
+    "krn_queue_peak": (0xE30, "ro", 1),
+    "cap_record_queue": (0xE34, "ro", 1),
     "src_seed": (0xF00, "wo", 2),
     "src_frames": (0xF08, "wo", 2),
     "src_table_length": (0xF10, "wo", 1),
@@ -238,5 +264,6 @@ REGISTERS = {
 
 REGISTER_BITS = {
     "status": {"running": 0, "loading": 1, "commit": 2, "settling": 3, "closed": 4, "partial": 5, "whole": 6, "overflow": 7, "refused": 8, "refused_again": 9},
+    "krn_status": {"running": 0, "done": 1, "refused": 2},
     "src_status": {"running": 0},
 }
