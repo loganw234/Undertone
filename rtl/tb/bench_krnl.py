@@ -13,11 +13,14 @@ WHAT EACH TEST HOLDS
                              model's, from memory and as written; done only after every answer. Under
                              s16x1, the first build's profile, at the seam's sigma (a table of 459
                              entries) with two pulses that touch; under s24x3 at a small sigma, one pulse
+  identity_long_bursts       two long holds of the memory, so that bursts of 16 and of 9 to 15 beats
+                             come by construction, one cut at a 4 KB page, under both profiles
   identity_hidden            a seeded shape at the build's taps and rows with all twelve hidden units
   capabilities_are_accepted  each bound the build advertises: a shape at it taken, one past it refused by
                              that bound's name (the capability-bits gate, in simulation)
   identity_on_axi_ram        a run against cocotbext-axi's AxiRamWrite, a third party's write path, under
-                             its own pause generators: the records read back are the model's
+                             its own pause generators: the records read back are the model's, and done
+                             read only after every answer, by a passive look at the bus
 
 WHAT THIS BENCH DOES NOT SEE, each a stated limit of docs/rtl/krnl.md: the queue's overflow at its
 depth of 512 (bench_krnl_small holds the overflow at a depth of 8); a stream longer than 129 frames;
@@ -53,6 +56,39 @@ async def identity_e0(dut):
     await k.identity_e0(dut, "identity_e0", PROFILE, frames, SEED, sigma, schedule, swap_at)
 
 
+LONG_FRAMES = 61
+PAGE_AT = 21                # the slot that begins a 4 KB page
+
+
+@cocotb.test()
+async def identity_long_bursts(dut):
+    """Bursts of 9 to 16 beats, by construction. The memory holds its address and data channels while
+    forty records queue, from the third, and again while twelve do, from the forty-sixth. The kernel's
+    queue of 512 holds them all, so on each release the bursts are as long as the rule allows: 16 from
+    slot 2, cut to 3 at the page that begins at slot 21, 16 from it, then the rest; and about twelve at
+    once after the second hold. A burst of 9 to 15 beats and one of 16 are both required."""
+    test = "identity_long_bursts"
+    this = k.e0_case(PROFILE, LONG_FRAMES, SEED + 3, k.SIGMA_SMALL[PROFILE], [])
+    base = 0x50000 - PAGE_AT * SLOT
+    host, mem = await k.begin(dut, base=base, size=this.frames * SLOT, seed=SEED + 3)
+    mem.aw_waits_for_w = True
+    period = seam.period(PROFILE)
+
+    async def holds(host_, mem_):
+        for after, records in ((2, 40), (46, 12)):
+            await k.until_beats(host_, mem_, after, period * (after + 50) + 4000)
+            mem_.hold_aw = mem_.hold_w = True
+            await k.clocks(host_, period * records)
+            mem_.hold_aw = mem_.hold_w = False
+
+    await k.hold_run(test, "bursts of 16 and of 9 to 15 beats, one cut at a page", host, mem, this, base,
+                     during=holds)
+    lengths = [b[2] for b in mem.bursts]
+    assert 16 in lengths and any(9 <= n <= 15 for n in lengths), "the bursts' lengths: %r" % lengths
+    assert any((b[1] % 4096) + b[2] * SLOT == 4096 and b[2] > 1 for b in mem.bursts), \
+        "no burst of more than one beat ended at the page's edge: %r" % [(hex(b[1]), b[2]) for b in mem.bursts]
+
+
 @cocotb.test()
 async def identity_hidden(dut):
     test = "identity_hidden"
@@ -82,7 +118,10 @@ async def capabilities_are_accepted(dut):
 # ------------------------------------------------------------------ the cross-check on a third party's memory
 
 class RamMemory:
-    """cocotbext-axi's AxiRamWrite on m_axi_gmem, under its own pause generators, with a clock count."""
+    """cocotbext-axi's AxiRamWrite on m_axi_gmem, under its own pause generators, with a clock count and a
+    passive look at the bus: each address taken (awvalid and awready at an edge) is a burst, and each answer
+    taken (bvalid and bready) an answer, so that the check that done was read only after every answer holds
+    here too."""
 
     def __init__(self, dut, seed):
         self.ram = AxiRamWrite(AxiWriteBus.from_prefix(dut, "m_axi_gmem"), dut.ap_clk, dut.ap_rst_n,
@@ -98,13 +137,21 @@ class RamMemory:
         self.ram.w_channel.set_pause_generator(pauses(0.3))
         self.ram.b_channel.set_pause_generator(pauses(0.3))
         self.clock, self.answers, self.bursts, self._b = 0, [], [], []
-        self.clk = dut.ap_clk
+        self.dut, self.clk = dut, dut.ap_clk
         cocotb.start_soon(self._count())
+
+    def _one(self, name):
+        return str(getattr(self.dut, "m_axi_gmem_" + name).value) == "1"
 
     async def _count(self):
         while True:
             await RisingEdge(self.clk)
             self.clock += 1
+            if self._one("awvalid") and self._one("awready"):
+                self.bursts.append((self.clock, getattr(self.dut, "m_axi_gmem_awaddr").value.to_unsigned(),
+                                    getattr(self.dut, "m_axi_gmem_awlen").value.to_unsigned() + 1))
+            if self._one("bvalid") and self._one("bready"):
+                self.answers.append(self.clock)
 
     def read(self, address, length):
         return self.ram.read(address, length)
@@ -120,3 +167,4 @@ async def identity_on_axi_ram(dut):
     out = await k.run_case(host, mem, this, base)
     k.hold_memory(test, "E0's shape on AxiRamWrite", mem, base, expected)
     k.check_quiet(out, this.frames)
+    assert mem.bursts and len(mem.answers) == len(mem.bursts), "bursts %d, answers %d" % (len(mem.bursts), len(mem.answers))

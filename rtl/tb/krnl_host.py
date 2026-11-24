@@ -149,6 +149,21 @@ async def begin(dut, memory=None, **mem):
     return host, m
 
 
+async def until_beats(host, mem, n, clocks_most):
+    """Return once the memory has taken n beats; never wait more than `clocks_most` clocks."""
+    waited = 0
+    while len(mem.beats) < n:
+        assert waited < clocks_most, "after %d clocks the memory has taken %d beat(s), not %d" % (
+            waited, len(mem.beats), n)
+        await RisingEdge(host.dut.ap_clk)
+        waited += 1
+
+
+async def clocks(host, n):
+    for _ in range(n):
+        await RisingEdge(host.dut.ap_clk)
+
+
 async def again(host, mem, base, size, **mem_kw):
     """Another run in the same test: krn_reset, and the memory renewed at another base."""
     await host.write(off("krn_reset"), 1)

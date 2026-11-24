@@ -122,7 +122,13 @@ The memory model:
 - fills the buffer and a margin round it with a pattern;
 - checks every burst against what the kernel must do: one slot a beat, INCR, at most 16 beats, no 4 KB page crossed, every strobe set, WLAST on the last beat, every beat inside the region.
 
-One test a profile runs against cocotbext-axi's own `AxiRamWrite` instead, under its pause generators, so a third party's write path reads the same records back.
+One test a profile runs against cocotbext-axi's own `AxiRamWrite` instead, under its pause generators, so a third party's write path reads the same records back. There a passive look at the bus counts each address and each answer taken, so that the check that done was read only after every answer holds there too. Until commit 955284c it held nothing there, since nothing filled those counts (VKRNL).
+
+**Long bursts, by construction.** Until commit 955284c no bench made a burst of more than 8 beats: the small top's queue of 8 capped them, and the large tops never queued more. The verifier VKRNL showed four faults that only longer bursts show, each passing every identity test then. `identity_long_bursts`, on the packaged top under both profiles, now makes them come:
+- the memory holds its address and data channels while forty records queue, so the kernel's queue of 512 releases bursts of 16, one cut at a 4 KB page;
+- it holds them again while twelve queue, for a burst of 9 to 15.
+
+The test requires a burst of 16, one of 9 to 15, and one of several beats ending at the page's edge. VKRNL's four are mutants on that test (the table below).
 
 **What a run holds** (`krnl_host.hold_run`). The model's records are `seam_host.model_records`: `model/run.py`'s own lines, with a shadow write and a commit made on the model's core first when a swap is asked for. Then:
 - **memory**, slots 0 to N-1 against those records, where **N is `krn_frames`, what the kernel was asked for, not what was read**;
@@ -156,13 +162,13 @@ The bench rows:
 
 | row | top | tests |
 |---|---|---|
-| `krnl-first`, both profiles | `undertone_krnl` | `identity_e0` (E0's shape, slots across a 4 KB page, random holds, a memory whose AWREADY waits for WVALID, a swap written while the run goes and committed at a named index; under s16x1 at the seam's sigma, a table of 459 entries, with two pulses that touch), `identity_hidden` (every row at every tap, all twelve hidden units), `capabilities_are_accepted`, `identity_on_axi_ram` |
+| `krnl-first`, both profiles | `undertone_krnl` | `identity_e0` (E0's shape, slots across a 4 KB page, random holds, a memory whose AWREADY waits for WVALID, a swap written while the run goes and committed at a named index; under s16x1 at the seam's sigma, a table of 459 entries, with two pulses that touch), `identity_long_bursts`, `identity_hidden` (every row at every tap, all twelve hidden units), `capabilities_are_accepted`, `identity_on_axi_ram` |
 | `krnl-max`, both profiles | `krnl_max` | `identity_e0`, `capabilities_are_accepted` |
 | `krnl-small-s16x1`, `krnl-small-s24x3` | `krnl_small` | `identity_small` (a burst held to meet a page's edge, random holds, the last answer late; then the comparison handed a model one record late must report WORD at 0), `identity_w_before_aw` (a memory whose AWREADY waits for WVALID), `truth_isolation` (3/1 and 6/2 at one index, the same samples, the same digests), `truth_while_running`, `chain_refusal_ends_the_run`, `queue_overflow_refused`, `memory_error_refused`, `refused_at_the_edge`, `reset_between_runs` |
 
 **The capability-bits gate.** `capabilities_are_accepted` reads every capability register through the port. For each bound it configures a shape at the advertised value, with the others small, and requires it taken; then one past it, which must be refused by that bound's name. The bounds are filters, taps, pool, the score shift, hidden units, the hidden shift, and rows under s24x3 only (core.md, limit 12). Each rectifier code from 0 to 7 is taken or refused as `cap_rectifiers` says. Each case begins with `krn_reset`, since a configured core has no way back.
 
-**The mutants**: eleven runs, each read by its evidence (K6):
+**The mutants**: nineteen runs, each read by its evidence (K6):
 
 | mutant | row | what it plants | must fail | what its evidence says |
 |---|---|---|---|---|
@@ -176,6 +182,10 @@ The bench rows:
 | `writes-one-twice` | krnl-small-s24x3 | record 5's beat sent and sent again as the next | `identity_small` | WORD at record 6: index 5 where the model has 6 |
 | `advertises-a-deeper-queue` | krnl-small-s24x3 | `cap_record_queue` reads twice the depth | `queue_overflow_refused` | `krn_records` 13 where the advertisement predicts 21 (5 taken and a queue of 16) |
 | `advertises-a-longer-filter` | krnl-first, both profiles | a copy of `rtl/core/core.sv` reads `cap_taps` as one more | `capabilities_are_accepted` | "a shape at the advertised taps was refused SHAPE_TAPS", under each profile |
+| `a-slot-skipped-after-a-burst-of-16` | krnl-first, both profiles | the next burst's address one slot on after a burst of 16 | `identity_long_bursts` | WORD at record 19, the pattern in the slot, under each profile: the first burst of 16 was slots 3 to 18 |
+| `a-slot-skipped-after-a-burst-over-8` | krnl-first, both profiles | the same after any burst of more than 8 | `identity_long_bursts` | WORD at record 19, the pattern in the slot, under each profile |
+| `wlast-early-in-a-burst-of-16` | krnl-first, both profiles | WLAST a beat early in a burst of 16 | `identity_long_bursts` | the memory model's faults "beat 17: WLAST 1 on beat 14 of 16" and "beat 35: ...", under each profile |
+| `bursts-of-20` | krnl-first, both profiles | bursts of up to 20 beats | `identity_long_bursts` | the memory model's faults "burst 3: ... 18 beats" and "burst 4: ... 20 beats", under each profile |
 
 The truth mutant was planned to show as two digests differing. It is caught earlier: its first wording, with an odd numerator, already differs from the model at record 1.
 
@@ -241,7 +251,7 @@ Each is stated by the behaviour it concedes.
 10. **After MEMORY_WRITE the queued records are abandoned.** `krn_records` counts only the records answered OKAY before the first error. One error test runs: the fourth burst answered SLVERR, with no stall.
 11. **Up to 16 bursts may be unanswered**; no test asserts that sixteen ever were.
 12. **The edge's refusals, the stall, the error, the chain's refusal, the reset and the truth during a run are held on the small top.** The kernel's lines there are the packaged top's, at other parameters. On the packaged top they are not run.
-13. **A burst meeting a page's edge is held on the small top**, where a hold makes a burst of several beats end there. On the other tops the memory model's check holds the page rule on whatever bursts happen.
+13. **A burst meeting a page's edge is held by `identity_small` and `identity_long_bursts`**, where holds make a burst of several beats end there. On the other tests the memory model's check holds the page rule on whatever bursts happen. Bursts of 9 to 16 beats are made by construction in `identity_long_bursts` alone.
 14. **A record arriving with no run going** (RUN_LENGTH) is not reachable without a fault and is not run. Neither are an answer nobody asked for (MEMORY_WRITE) and a source that stops before its count.
 15. **Each record of an identity test is counted twice in the stage's total**: once from memory and once as written.
 16. **A mutant shows the bench sees its fault under one profile**, but for the capability mutant, which runs under both. One mutant adds logic of its own, `truth-reaches-the-core` (a register and an XOR on one line). Its evidence is at the record it predicts (K6), which is what holds it.
@@ -258,10 +268,10 @@ Each is stated by the behaviour it concedes.
 |---|---|---|---|---|
 | K1 | A score record is 168 bits, 21 bytes, in a slot of 32: 11 bytes of zeros after it | READ | `spec/undertone.toml`, `[records]` and `[memory]` | the definition |
 | K2 | A queue of 512 covers a memory that takes nothing for 10,240 clocks (102.4 us at 100 MHz) under s16x1 and 30,720 under s24x3 | COMPUTED | 512 x 20 and 512 x 60 clocks a record (the plan, L12); 10,240 x 10 ns | arithmetic |
-| K3 | On a copy holding this parcel's four rows, the stage passed: 30 tests in 6 runs of 4 benches, 2,484 records identical to the model's, 11 mutant runs each failed as named, 17 build logs read and the 34 lines in them each on the committed list | MEASURED | the stage on a copy, 2026-11-24 11:24:29 to 11:25:01, on the writer that offers its data with its address: its OK line | the gate's second size, whose line for the stage holds these rows' with the others' |
-| K4 | The seventeen runs of those rows took 110 s summed, each run's own time by the runner's count, six side by side: 2 + 2 + 6 + 4 + 7 + 4 + 11 + 4 + 3 + 13 + 3 + 4 + 4 + 3 + 4 + 15 + 21. The longest was 21 s, `krnl-small-s24x3.s24x3`. An earlier run of the sixteen before `identity_w_before_aw`, on a busier desktop (10:38), summed to 223 s, its longest 37 s | MEASURED | the same run of the stage: its `runner.log`, the lines "ran ... in N s"; the earlier, that run's | another run; another load |
-| K5 | cocotb's own count of the simulated nanoseconds a wall second, for each run's whole test list, was 18,614 and 17,484 on `krnl-first` (s16x1, s24x3), 12,321 and 14,688 on `krnl-max`, 20,737 and 29,991 on `krnl-small`: about 1,200 to 3,000 clocks a second at 10 ns, the AXI4-Lite writes that load each run among them | MEASURED | the same run: the TESTS line of cocotb's summary in each run's log | another run; another load |
-| K6 | Each of the eleven mutant runs failed at the record and field section 6's table gives | MEASURED | the same run: each mutant run's log, read for its failure; the ten earlier ones' evidence is the same as at 10:38, when the writer waited for AWREADY | the gate's second size: each fails as named there; its place is in its evidence |
+| K3 | On a copy holding this parcel's four rows, the stage passed: 32 tests in 6 runs of 4 benches, 2,728 records identical to the model's, 19 mutant runs each failed as named, 25 build logs read and the 50 lines in them each on the committed list | MEASURED | the stage on a copy, 2026-11-24 11:33:39 to 11:34:16, with `identity_long_bursts` and its four mutants: its OK line | the gate's second size, whose line for the stage holds these rows' with the others' |
+| K4 | The twenty-five runs of those rows took 130 s summed, each run's own time by the runner's count, six side by side; the longest was 20 s, `krnl-small-s24x3.s24x3`. An earlier run of sixteen of them, on a busier desktop (10:38), summed to 223 s, its longest 37 s | MEASURED | the same run of the stage: its `runner.log`, the lines "ran ... in N s", added; the earlier, that run's | another run; another load |
+| K5 | cocotb's own count of the simulated nanoseconds a wall second, for each run's whole test list, was 22,016 and 21,143 on `krnl-first` (s16x1, s24x3), 14,592 and 16,995 on `krnl-max`, 23,420 and 29,715 on `krnl-small`: about 1,500 to 3,000 clocks a second at 10 ns, the AXI4-Lite writes that load each run among them | MEASURED | the same run: the TESTS line of cocotb's summary in each run's log | another run; another load |
+| K6 | Each of the nineteen mutant runs failed at the record and field section 6's table gives | MEASURED | the same run, and the run of the row `krnl-first` alone at 11:32:44: each mutant run's log, read for its failure; the ten first mutants' evidence is the same as at 10:38, when the writer waited for AWREADY | the gate's second size: each fails as named there; its place is in its evidence |
 | K7 | The packaging and the top's header agree with the definition, and the check reports each of fourteen planted faults | MEASURED | `python -m pytest -q -p no:cacheprovider tests/test_krnl_packaging.py`, 2026-11-24 11:08: 2 passed | that command |
 | K8 | A run of 2^20 samples at 100 MHz under s16x1 lasts 0.21 s and needs 7,168 truth records written while it runs, 195,313 register writes a second | COMPUTED | 1,048,576 x 20 / 1e8; the plan, L36 and L37: 8,192 - 1,024; 5.0e6 / 128 x 5 | arithmetic |
 | K9 | The first build's pool memory is 10,747,904 bits under s16x1 | COMPUTED | 65,536 entries x 4 filters x 41 bits; 41 is `W_RECT` of `rtl/core/core.sv` line 86 at 16-bit samples, 1 row a filter and 128 taps: 32 + 8 + 1 | the build's utilisation report |

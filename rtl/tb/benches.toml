@@ -996,8 +996,39 @@ toplevel = "undertone_krnl"
 sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv"]
 module = "bench_krnl"
 profiles = ["s16x1", "s24x3"]
-identity = ["identity_e0", "identity_hidden", "identity_on_axi_ram"]
+identity = ["identity_e0", "identity_long_bursts", "identity_hidden", "identity_on_axi_ram"]
 limit = 80
+
+# Faults of long bursts, which only a queue of more than 8 records shows (VKRNL's four, round 3). The next
+# burst's address one slot on after a burst of 16; after any burst of more than 8; WLAST a beat early in a
+# burst of 16; bursts of up to 20.
+[[bench.mutant]]
+name = "a-slot-skipped-after-a-burst-of-16"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["issued <= issued + len;", "issued <= issued + len + (len == 8'd16);"]]
+must_fail = ["identity_long_bursts"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "a-slot-skipped-after-a-burst-over-8"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["issued <= issued + len;", "issued <= issued + len + (len > 8'd8);"]]
+must_fail = ["identity_long_bursts"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "wlast-early-in-a-burst-of-16"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["assign m_axi_gmem_wlast   = (beats_left == 5'd1);", "assign m_axi_gmem_wlast   = (beats_left == 5'd1) || (m_axi_gmem_awlen == 8'd15 && beats_left == 5'd2);"]]
+must_fail = ["identity_long_bursts"]
+kind = ""
+
+[[bench.mutant]]
+name = "bursts-of-20"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["localparam int BURST      = 16;", "localparam int BURST      = 20;"]]
+must_fail = ["identity_long_bursts"]
+kind = ""
 
 # The capability-bits gate's control, held without a second build: a core that advertises one tap more
 # than it takes. RTL-B's file, edited here as text inside the mutant only.
