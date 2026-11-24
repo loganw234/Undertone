@@ -982,3 +982,153 @@ file = "rtl/seam/seam.sv"
 edits = [["assign reg_rdata = src_rdata | inj_rdata | core_rdata;", "assign reg_rdata = src_rdata | inj_rdata;"]]
 must_fail = ["one_bus_three_blocks"]
 kind = "WORD"
+
+# ---------------------------------------------------------------------------------------------
+# Parcel FLAG (round 3): the detector core's overflow flag over all its sources and both directions.
+# docs/rtl/flag.md says what each test enumerates and what each mutant's evidence was. Two tops, each
+# under both profiles: core_small (three hidden units) and rtl/flag/core_twelve.sv (twelve). Every
+# mutant runs under one profile and edits rtl/core/ in a copy, so a change to those files refuses it
+# by name, MUTANT-DOES-NOT-APPLY.
+
+[[bench]]
+name = "flag-s16x1"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_flag"
+profiles = ["s16x1"]
+identity = ["flag_vclose_both_sources_at_once", "flag_vclose_overflow_upward", "flag_every_state", "flag_one_route", "flag_stays", "flag_far"]
+limit = 50
+
+# An overflow flag that is not sticky: each record carries only its own frame's bit (an earlier mutant).
+[[bench.mutant]]
+name = "overflow-not-sticky"
+file = "rtl/core/core.sv"
+edits = [["sticky     <= sticky | head_overflow;", "sticky     <= 1'b0;"]]
+must_fail = ["flag_stays"]
+kind = "WORD"
+
+# The mirror of the closing verifier's fault: a hidden value's fit tested on the high side only.
+[[bench.mutant]]
+name = "overflow-only-above"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1]) || !(|us[W_HEADX-1:W_HID-1]))) ovf = 1'b1;", "if (!us[W_HEADX-1] && (|us[W_HEADX-1:W_HID-1])) ovf = 1'b1;"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
+
+[[bench]]
+name = "flag-s24x3"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_flag"
+profiles = ["s24x3"]
+identity = ["flag_vclose_both_sources_at_once", "flag_vclose_overflow_upward", "flag_every_state", "flag_one_route", "flag_stays", "flag_far"]
+limit = 30
+
+# The closing verifier's first fault (L21): the flag as the exclusive-or of its two sources.
+[[bench.mutant]]
+name = "sources-are-a-parity"
+file = "rtl/core/core_head.sv"
+edits = [["out_overflow <= h3_ovf || !(", "out_overflow <= h3_ovf ^ !("]]
+must_fail = ["flag_vclose_both_sources_at_once", "flag_every_state"]
+kind = "WORD"
+
+# The closing verifier's second fault (L21): a hidden value's fit tested on the low side only.
+[[bench.mutant]]
+name = "overflow-only-below"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1]) || !(|us[W_HEADX-1:W_HID-1]))) ovf = 1'b1;", "if (us[W_HEADX-1] && !(&us[W_HEADX-1:W_HID-1])) ovf = 1'b1;"]]
+must_fail = ["flag_vclose_overflow_upward", "flag_every_state"]
+kind = "WORD"
+
+# An earlier mutant: the flag as the parity of the units that do not fit.
+[[bench.mutant]]
+name = "overflow-is-a-parity"
+file = "rtl/core/core_head.sv"
+edits = [["ovf = 1'b1;", "ovf = !ovf;"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
+
+# The score's fit tested on the low side only: the second source's own direction.
+[[bench.mutant]]
+name = "score-fit-only-below"
+file = "rtl/core/core_head.sv"
+edits = [["out_overflow <= h3_ovf || !((&ash[W_OUTX-1:W_HID-1]) || !(|ash[W_OUTX-1:W_HID-1]));", "out_overflow <= h3_ovf || (ash[W_OUTX-1] && !(&ash[W_OUTX-1:W_HID-1]));"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
+
+# Its mirror: the score's fit tested on the high side only.
+[[bench.mutant]]
+name = "score-fit-only-above"
+file = "rtl/core/core_head.sv"
+edits = [["out_overflow <= h3_ovf || !((&ash[W_OUTX-1:W_HID-1]) || !(|ash[W_OUTX-1:W_HID-1]));", "out_overflow <= h3_ovf || (!ash[W_OUTX-1] && (|ash[W_OUTX-1:W_HID-1]));"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
+
+# A hidden value's fit tested by two bits only, the extended value's top bit against the field's sign
+# bit. Right for every first excursion within the field's width of its edge; wrong past 2^64, which
+# on this top only a swap reaches.
+[[bench.mutant]]
+name = "fit-by-two-bits"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1]) || !(|us[W_HEADX-1:W_HID-1]))) ovf = 1'b1;", "if (us[W_HEADX-1] != us[W_HID-1]) ovf = 1'b1;"]]
+must_fail = ["flag_far"]
+kind = "WORD"
+
+[[bench]]
+name = "flag-twelve-s16x1"
+toplevel = "core_twelve"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/flag/core_twelve.sv"]
+module = "bench_flag"
+profiles = ["s16x1"]
+identity = ["flag_vclose_both_sources_at_once", "flag_vclose_overflow_upward", "flag_every_state", "flag_one_route", "flag_stays", "flag_far"]
+limit = 40
+
+# The status register's bit `overflow` reading the last frame's own bit, not the sticky flag.
+[[bench.mutant]]
+name = "status-overflow-not-sticky"
+file = "rtl/core/core.sv"
+edits = [["st[REG_STATUS_OVERFLOW_BIT]      = sticky;", "st[REG_STATUS_OVERFLOW_BIT]      = head_overflow;"]]
+must_fail = ["flag_status_reads_the_flag"]
+kind = "WORD"
+
+# The other side of fit-by-two-bits: a hidden value's fit window one bit short at its foot, so a value
+# in [2^63, 2^64) passes as fitting. Under this profile the window is then one bit and never fires.
+[[bench.mutant]]
+name = "fit-window-one-bit-short"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1]) || !(|us[W_HEADX-1:W_HID-1]))) ovf = 1'b1;", "if (!((&us[W_HEADX-1:W_HID]) || !(|us[W_HEADX-1:W_HID]))) ovf = 1'b1;"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
+
+[[bench]]
+name = "flag-twelve-s24x3"
+toplevel = "core_twelve"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/flag/core_twelve.sv"]
+module = "bench_flag"
+profiles = ["s24x3"]
+identity = ["flag_vclose_both_sources_at_once", "flag_vclose_overflow_upward", "flag_every_state", "flag_one_route", "flag_stays", "flag_far"]
+limit = 30
+
+# An earlier mutant: only hidden unit 0 can raise the flag.
+[[bench.mutant]]
+name = "overflow-from-unit-zero-only"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1])", "if ((j == 0) && !((&us[W_HEADX-1:W_HID-1])"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
+
+# An earlier mutant: every hidden unit but the build's last can raise the flag. The last is unit 11 here.
+[[bench.mutant]]
+name = "overflow-not-from-the-last-unit"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1])", "if ((j != B_HIDDEN-1) && !((&us[W_HEADX-1:W_HID-1])"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
+
+# Only the first three hidden units can raise the flag: right on the small top, wrong at twelve.
+[[bench.mutant]]
+name = "overflow-from-the-first-three-units-only"
+file = "rtl/core/core_head.sv"
+edits = [["if (!((&us[W_HEADX-1:W_HID-1])", "if ((j < 3) && !((&us[W_HEADX-1:W_HID-1])"]]
+must_fail = ["flag_every_state"]
+kind = "WORD"
