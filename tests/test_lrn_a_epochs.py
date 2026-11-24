@@ -14,7 +14,9 @@ shipped, with one comparison changed. Nothing shipped is changed.
 WHAT THIS DOES NOT SHOW (stated limits). The records here are made by hand, not by a core: that a
 core's records carry the epoch of the weights that made them is the swap gate's, and the
 hand-over's tests. Six cases; a check broken for an epoch no case uses, such as one that compared
-epochs modulo a number, would pass. And E1's own flow has one swap, so it never meets a threshold
+epochs modulo a number, would pass. So would a check that depends on a field no case varies:
+every case has one threshold, 7, with m = 12,000 and k = 120, the same three scores, 6, 7 and 8,
+and record indexes near A + 9,000. And E1's own flow has one swap, so it never meets a threshold
 of a later epoch than its records: this is a property of the function, held for whoever calls it
 next.
 """

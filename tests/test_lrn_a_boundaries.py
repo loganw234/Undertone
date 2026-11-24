@@ -16,16 +16,20 @@ by any of the ways this test lists. That is a reading of names. It is not a wall
 show that the learner CANNOT look the pulse up.
 
 The first control plants six faults, one at a time, in a copy, and each must be reported where it
-is. The second plants five ways of reading the pulse's own file with no import of this project,
-the round's verifier's among them: it put a function into the trainer that opens
-spec/pulses/e0.toml by path, and this test, as it then stood, passed.
+is. The second plants eight ways to the pulse with no import of this project, the round's two
+verifiers' among them. The first put a function into the trainer that opens spec/pulses/e0.toml
+by path, and this test, as it then stood, passed. The second imported a numpy reader by name and
+called it bare, and this test, as it stood after the first, passed again.
 
 WHAT THIS CANNOT SEE (stated limits): what `independence` cannot see either. A module loaded by
 path; a file copied in. And, because check 3 reads names against lists:
-  - a file read through a function the lists do not name. They hold the built-in `open`, numpy's
-    readers of text and binary files, and the methods `read`, `readline`, `readlines`,
-    `read_text` and `read_bytes`. A reader of another name, in numpy or in a module the import
-    list lets in, passes;
+  - a file read through a function the lists do not name. They hold the built-in `open`, six of
+    numpy's readers of text and binary files, and the methods `read`, `readline`, `readlines`,
+    `read_text` and `read_bytes`. A name on the reader list is refused in three places: read off
+    an object (`np.fromregex`), imported by name under its own name or another (`from numpy
+    import load as l`), and written bare; and `from <anything> import *` is refused whole. A
+    reader of ANOTHER name, in numpy or in a module the import list lets in, passes, however it
+    is reached: numpy has more than six;
   - a name reached without being written, by a road the lists do not name, or through an object
     a caller hands in. `getattr`, `globals`, `vars`, `__builtins__`, `__dict__`, `__globals__`
     and `__getattribute__` are refused by name; that is a list too;
@@ -150,6 +154,12 @@ def source_findings(root):
                             findings.add((rel, "imports %s from %s" % (alias.name, module)))
                         if alias.name in NEVER_NAMED or (alias.asname or "") in NEVER_NAMED:
                             findings.add((rel, "names %s" % alias.name))
+                        # A reader brought in by name is then called bare, or under another name, and no
+                        # attribute is ever read: so the import itself is refused, and a star import whole.
+                        if alias.name in NO_READER:
+                            findings.add((rel, "imports the reader %s from %s" % (alias.name, module)))
+                        if alias.name == "*":
+                            findings.add((rel, "imports everything from %s" % module))
                     if set(module.split(".")) & NEVER_NAMED:
                         findings.add((rel, "names %s" % module))
                 elif isinstance(node, ast.Attribute):
@@ -167,6 +177,8 @@ def source_findings(root):
                     findings.add((rel, "names %s" % node.id))
                 elif isinstance(node, ast.Name) and node.id in NO_BUILTIN:
                     findings.add((rel, "names the built-in %s" % node.id))
+                elif isinstance(node, ast.Name) and node.id in NO_READER:
+                    findings.add((rel, "names the reader %s" % node.id))
                 elif isinstance(node, (ast.FunctionDef, ast.ClassDef)) and node.name in NEVER_NAMED:
                     findings.add((rel, "names %s" % node.name))
     return findings
@@ -242,12 +254,14 @@ def test_lrn_a_boundaries_control__six_planted_faults_are_each_reported_where_th
 
 
 def test_lrn_a_boundaries_control__the_pulse_reached_with_no_import_of_this_project_is_reported(tmp_path):
-    """Five ways to the pulse that need no import statement naming this project, each planted alone.
+    """Eight ways to the pulse that need no import statement naming this project, each planted alone.
 
     The first is the round's verifier's (VLRNA, 2026-11-23): a function in the trainer that opens the
     pulse's own file by path. With that function planted, this file's tests passed, 3 of 3, as they
-    then stood. The check that sees it reads names against lists; the docstring at the top says
-    what the lists leave out."""
+    then stood. The last three are its second verifier's kind: a numpy reader imported BY NAME and
+    called bare, which the check, as it stood after the first, did not see, because it looked for
+    a reader's name only where an attribute is read. The check reads names against lists; the
+    docstring at the top says what the lists leave out."""
     T, H = "learn/trainer.py", "learn/handover.py"
     plants = (
         ("the pulse's file opened by path", T,
@@ -266,8 +280,18 @@ def test_lrn_a_boundaries_control__the_pulse_reached_with_no_import_of_this_proj
         ("the pulse's name put together at run time", H,
          "\n\ndef planted():\n    return getattr(C, \"PUL\" + \"SES\")\n",
          {(H, "names the built-in getattr")}),
+        # The second verifier's three: a reader brought in by name is called with no attribute read.
+        ("a numpy reader imported by name and called bare", T,
+         "\n\nfrom numpy import fromregex\n\n\ndef planted():\n    return fromregex(\"spec/pulses/e0.toml\", \"(-?[0-9]+)\", [(\"v\", \"i8\")])\n",
+         {(T, "imports the reader fromregex from numpy"), (T, "names the reader fromregex")}),
+        ("a numpy reader imported under another name", T,
+         "\n\nfrom numpy import load as l\n\n\ndef planted():\n    return l(\"spec/pulses/e0.toml\")\n",
+         {(T, "imports the reader load from numpy")}),
+        ("everything imported from numpy and a reader called bare", T,
+         "\n\nfrom numpy import *\n\n\ndef planted():\n    return loadtxt(\"spec/pulses/e0.toml\")\n",
+         {(T, "imports everything from numpy"), (T, "names the reader loadtxt")}),
     )
-    assert len(plants) == 5 and source_findings(ROOT) == set()
+    assert len(plants) == 8 and source_findings(ROOT) == set()
     for what, name, text, want in plants:
         root = tmp_path / ("copy%d" % len(os.listdir(tmp_path)))
         shutil.copytree(os.path.join(ROOT, "learn"), root / "learn", ignore=shutil.ignore_patterns("__pycache__"))
