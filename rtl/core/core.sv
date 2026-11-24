@@ -172,6 +172,11 @@ module core #(
     // the pipeline
     logic [ST_H4:ST_S1]            vld;
     logic [TAG_BITS-1:0]           tg [ST_S1:ST_H4];
+    // KEEP holds the delay line in the fabric's registers. Without it Vivado 2022.2 moved it into the DSP blocks'
+    // B registers, chained from block to block through their B cascade ports, one chain of up to 128 blocks for
+    // a row, over the SLR's DSP column of 110, and placement refused it (round 3, the lead; docs/rtl/core.md,
+    // limit 2). A synthesis attribute only: Icarus Verilog ignores it, and what the core computes is unchanged.
+    (* keep = "true" *)
     logic signed [SAMPLE_BITS-1:0] dl [0:CHANNELS*B_TAPS-1];   // channel c, position m at c*B_TAPS + m; position 0 is the newest
     logic signed [W_PROD-1:0]      s2_prod [0:NCOEF-1];
     logic signed [W_ROW-1:0]       s3_row [0:B_ROWS-1];
