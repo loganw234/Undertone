@@ -82,3 +82,15 @@ kind = "pytest"
 name = "truth-isolation"
 d0 = "truth isolation"
 kind = "pytest"
+
+# RTL-B: the detector core and its weight store in simulation (rtl/core/, docs/rtl/core.md). The first of
+# this gate's three parts, RTL in simulation; the host and the card are later rounds'. The stage runs every
+# bench of rtl/tb/benches.toml against the reference model on every score word. Its control stage is the
+# control on the JUDGE (tools/check_rtl.py) and plants nothing in the core's benches: the controls on those
+# are their mutants, which run inside the stage itself.
+[[gate]]
+name = "bit-identity"
+d0 = "bit identity"
+kind = "stage"
+test = "rtl-benches"
+control = "ctl-rtl-benches"
