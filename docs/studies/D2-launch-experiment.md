@@ -153,7 +153,7 @@ By the design, fixed before the fetch and not changed after it: GATR was scored 
 
 ## 11. Limits, each by what it concedes
 
-1. **Loud, not faint.** The four stations are within 50 km. Nothing here says a launch is seen where D1b found it marginal, 120 km and beyond, and that is where a label for a faint event would have to come from.
+1. **Loud, not faint.** The four stations are within 50 km. Nothing here says a launch is seen where D1b found it marginal, 120 km and beyond, and that is where a label for a faint event would have to come from. *Restated by the lead on 2026-11-24:* [study D3](D3-faint-launches.md) is that experiment, section 14's item 1: by a rule frozen before any scored record was opened, the same launches are seen at the four stations 78.5 to 275 km from the pad.
 2. **One vehicle, one pad, one year, and 35 of 46.** The 11 launches timed only to the minute are left out by the rule, and whether they differ from the 35 in anything but their time's form was not looked at. No other site.
 3. **A hit is power in a band.** What made it is not established by a hit. A static firing or a called-off countdown the catalogue does not list, an earthquake, wind or traffic can be in any window. The earthquake catalogue was not read (D1's control 7 was not run).
 4. **Not shown to be sound.** The window is D1's sound window, but arrival time against distance was not measured, the ground window was not scored, and near the pad the two windows overlap. That the energy came through the air is not established here.
