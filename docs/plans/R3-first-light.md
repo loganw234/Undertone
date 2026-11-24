@@ -1,6 +1,6 @@
-# Round 3: first light on the card - the draft work order (fifth draft, 2026-11-24)
+# Round 3: first light on the card - the work order (approved by Logan, 2026-11-24)
 
-Drafted by the lead on 2026-11-24 on Logan's word "Yes, draft it", given after round 2 was pushed. **This is the fifth draft, and it is not approved.** Four verifiers have read its drafts, each fresh, each on a copy with faults the lead planted, and each found all of them. VP3 read the first draft against its sources and found four wrong answers of the draft's own and twenty smaller points, among them three gaps in the design. VP3-2 read the second and found four wrong answers and nine smaller points, among them a fourth gap: how truth records reach the injector during a long run. VP3-3 read what the third draft changed and found three wrong answers, all small, and eight smaller points. VP3-4 read what the fourth changed and found two, both small: this paragraph's numbering of the drafts, and a field of the build's manifest that nothing checks. Each is answered here; the record of the four passes is in the round's folder and, in short, in `docs/VALIDATION.md`. **The fifth draft's own changes, which answer VP3-4, have been read by no verifier.** It ends with seven questions, each answerable in a few words.
+Drafted by the lead on 2026-11-24 on Logan's word "Yes, draft it", given after round 2 was pushed, and **approved by him the same day with every recommendation: his word closes this document.** This is the fifth draft. Four verifiers have read its drafts, each fresh, each on a copy with faults the lead planted, and each found all of them. VP3 read the first draft against its sources and found four wrong answers of the draft's own and twenty smaller points, among them three gaps in the design. VP3-2 read the second and found four wrong answers and nine smaller points, among them a fourth gap: how truth records reach the injector during a long run. VP3-3 read what the third draft changed and found three wrong answers, all small, and eight smaller points. VP3-4 read what the fourth changed and found two, both small: this paragraph's numbering of the drafts, and a field of the build's manifest that nothing checks. Each is answered here; the record of the four passes is in the round's folder and, in short, in `docs/VALIDATION.md`. **The fifth draft's own changes, which answer VP3-4, have been read by no verifier.** It ends with seven questions, each answerable in a few words.
 
 Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION. `<repos>` is the folder that holds this repository and its siblings.
 
@@ -176,3 +176,23 @@ Each has a recommendation and a real alternative. A few words answer each.
 7. **The push at the close?**
    - *(Recommended)* **The lead asks you again** before `main` moves and anything is pushed.
    - *The alternative:* a standing word now, to push once the closing verifier's pass is clean.
+
+## Logan's word (2026-11-24, verbatim)
+
+The lead had put the seven questions to him, each with its recommendation, as one question: "Approve round 3's plan with every recommendation?"
+
+> Approved, aim to work till roughly 6pm today, resuming 6am tomorrow.
+
+*The lead's reading.* Round 3 runs as this plan has it, with each question answered as recommended:
+
+1. Shape A: first light on the card.
+2. The small first build: 4 filters of one row each, 128 taps, twelve hidden units.
+3. 16-bit samples on one channel. This settles round 1's open question of which reading of "Proposed is approved" the first build takes.
+4. LCH-4, the faint launches, is in this round, as a parcel of wave 1.
+5. Every verifier is sent on Opus, by name.
+6. The card day is the lead's alone, in a booked daytime window; the lead tells him before it starts and after it ends.
+7. The lead asks him again before `main` moves and anything is pushed.
+
+**His hours.** The round's work, the lead's and every agent's, runs until about 18:00 today, 2026-11-24, and stops; it resumes at 06:00 on 2026-11-25. The lead's reading: no agent is left working past about 18:00, so a parcel or verifier that cannot finish by then is stopped by the lead at a point it can resume from, with what it has done in its ledger. Nothing runs on the desktop, the box or the card between those times on this round's account. 18:00 is also when the sibling project's standing hold on the card and the box begins (L26).
+
+His word is not leave to push.
