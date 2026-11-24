@@ -1321,3 +1321,20 @@ file = "rtl/krnl/undertone_krnl.sv"
 edits = [["own_word = RECORD_QUEUE;", "own_word = 2 * RECORD_QUEUE;"]]
 must_fail = ["queue_overflow_refused"]
 kind = ""
+
+# ---------------------------------------------------------------------------------------------
+# HOST (round 3): the host library (host/) driving the kernel, KRNL's packaged top at the first build's
+# maxima, through its coroutine driver over rtl/tb/host_sim.py; docs/host/host.md. Bit identity's second
+# part, the host, in simulation: every word the library hands its caller is the model's. One row, both
+# profiles, no RTL mutant: the faults this bench must see are the library's and the backend's, planted as
+# subclasses and wrappers in its control_* tests, each read against the record and field it predicts.
+# The limit is about three times the longer run of the row alone (25 s, docs/host/host.md, row H3).
+
+[[bench]]
+name = "host-first"
+toplevel = "undertone_krnl"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv"]
+module = "bench_host"
+profiles = ["s16x1", "s24x3"]
+identity = ["identity_e0", "identity_fed_and_swapped", "refusal_read_back_by_name"]
+limit = 80

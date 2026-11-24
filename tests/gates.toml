@@ -122,3 +122,12 @@ d0 = "capability bits"
 kind = "stage"
 test = "rtl-benches"
 control = "ctl-rtl-benches"
+
+# HOST, round 3: the capability bits on the host's side (host/, docs/host/host.md). A blob past what a build's
+# capability registers advertise is refused by the library, by the bound's name, before any write reaches a
+# backend; a blob at each bound is written. Tests in tests/test_host_capabilities.py; the control is a library
+# that writes before it holds the blob to the build. The kernel's own side is the row capability-bits (KRNL).
+[[gate]]
+name = "host-capabilities"
+d0 = "capability bits"
+kind = "pytest"
