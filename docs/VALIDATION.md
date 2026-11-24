@@ -1384,3 +1384,106 @@ This entry, and every correction in its commit: CLAUDE.md, the roadmap, the note
 - **The two streams and two mutants in the core's bench**: the lead's call, above.
 - **A gate that says when a committed long run is of an earlier definition**: a decision for the next round's plan.
 - **A check that reads what the simulator prints while it builds**: the foundation's, for the next round.
+
+## 2026-11-23 - round 2, the close: a narrow pass on the lead's corrections, five more of them, and what the round cost
+
+A second fresh verifier read the one commit of corrections. **No regression, and every planted fault found.** It also found five statements in the corrections themselves that the tree or the record does not bear. They are corrected in the commit that carries this entry, **which no verifier has read**. **`r2` is local. `main` has not moved and nothing is pushed: the lead asks Logan first.**
+
+### What ran
+
+- **VCLOSE-2**, fresh, on a sealed clone of the corrections' commit with three faults amended into it; 20:29:05 to 20:39:43 by its own clock, of a box of twenty-five minutes. It ran the gate's first size once (PASS, 1,112 tests, 2 minutes 59 seconds) and the tests' stage in a copy with one comment line of the definition changed, and read the rest. No simulator, by its brief.
+- **Its clone's gate was not run before it was sent**: the three plants were text of documents.
+
+### Measured
+
+- **Plants: 3 of 3.** The roadmap's corrected count of gates made fourteen; one of three accounts of stage E1's first run made to disagree with the other two; limit 23's note made to say the verifier's two streams are in the bench. In this round, 68 of 69: the 65 of 66 of the entry before, and these.
+- **No regression.**
+- **What the record's test prints, tried:** with the definition changed by one comment line the tests' stage prints the same line as on the unchanged tree; plain pytest prints "3 passed" and no note; with `-rA` the note; the judge refuses the six parts for the hash and for nothing else. The corrected claim holds.
+- **The account of stage E1's first run**, in the study's page and the test's docstring: the run was on `6a2431f`; the register map's commit is not an ancestor of it and is an ancestor of the merge; "half an hour" is 29 minutes 32 seconds.
+- **Limit 23's note, by reading:** the flag has two sources joined by an or, on one line; each of the two faults is one change in one place; 112 test runs is 92 and 20 by the documents' own rows.
+- **Limit 15, by reading:** each of the two lines begins an `always_comb` process that selects constant bits. The line the simulator prints was not the verifier's to confirm.
+- **The arithmetic of the entry before this one** holds: 65 of 66, the merges' counts, 14 and 82 making 96.
+
+### Wrong or short in the lead's corrections, and the answers
+
+1. **The entry before this one corrected the account of stage E1's first run in three places and left it standing in a fourth, this ledger.** The entry of the learner says the lead "made the first run on the parcel's commit and, in the hour after, entered the register map", and lists as a slip that "The lead changed the definition between a run and its merge". That is not the order. The register map was committed on the round's branch at 17:00:38. The run began at 17:02:26, on the parcel's commit, which did not have it. The merge at 17:42:37 put the two together. The slip is this: the lead started a long run on a tree whose definition was already not the one it would be merged under, two minutes after changing that definition. Corrected here; the ledger is not edited.
+2. **"The fifth pass" and "five passes each found one more fault"**, in the entry before this one, in limit 23's note and in the roadmap. Four verifier passes read the core: three on the parcel and the round's closing one. Each found the RTL right and a fault in the overflow flag that the bench let through: one, one, one, and two. That is five faults by verifiers, beside one the parcel found itself. The lead counted faults and wrote passes. Corrected in the two documents and here. The lead's call in the entry before does not rest on five against four: it rests on each pass finding another.
+3. **Limit 23's new sentence about the full top conceded less than its bench.** It said nothing there makes between two and eleven of twelve units overflow at once, which reads as if one and twelve were made. On the full top the flag is made to rise in two ways only: unit 0 alone, whose hidden value does not fit, and two units whose values fit and whose output sum does not. The one stream there with every unit expects no flag. The limit says so now. The lead had copied the earlier verifier's sentence without reading the bench.
+4. **The source's document still gave its parcel's own stage figures in its body, in the present tense**; the entry before marked only the register's row. Marked now.
+5. **Limit 15 said the simulator's line is printed "in every build that holds them" on the evidence of six builds.** The lead has now counted the last run of the gate's second size: 29 build logs hold each line, 4 unmutated and 25 a mutant's, which is every build the manifest gives each file; and no log of that run holds another line with `sorry:` or `warning:`. The limit says that. The entry before said "mutants aside", which was less than the logs show.
+
+And smaller, of the same kind:
+
+- **The entry before this one says seven wrong statements in its heading and lists ten**: seven numbered, and three it calls smaller.
+- **Its item 1 ends "the verifier's report came after it", which reads two ways.** The order was: the gate began at 19:36:49; the verifier was sent at 19:37:02; the gate printed PASS at 19:47:22; the verifier reported at 19:50:08; the merge was committed at 19:51:45, after both.
+- **The roadmap's line on the first RTL still said "each went past verifiers"** with nothing after it; only the table's row had been qualified. Both now name the core's last commit and the seam's re-pointed mutant.
+- **"This trap is all that says so"**, of the gate being green on a record of an earlier definition: three places say so. Now: nothing the gate prints says so.
+- **The roadmap named "the eleven gates of D0 that need no hardware" and then a twelfth held in software.** Reworded.
+- **The note in row C13 of the core's document put a measured figure in a computed row.** It cites the seam's row K17 now.
+- **The roadmap's list for Logan lacked one ruling**: two refusal mutants a module, in place of two a name. Added. Not added, and the lead's judgement: the verifiers' own departures and the two clones sent without a gate run of their own. They are records, in this ledger; no decision waits on them.
+- **Two times in CLAUDE.md that the tree cannot give**, 3 minutes 22 seconds and 5 minutes 20 seconds: they are the lead's gate runs, whose output is in the round's folder. CLAUDE.md says so now.
+
+### The verifier's own departures, by its report
+
+It read one file outside its two folders, the output of its own background command. It asked the TimeSheet before the gate and before each of six runs, FREE each time, and not before the lookups between them. Its 53 distinct tool inputs name no key, reflog, retired folder, worktree or report, and not the tip's id before the plants.
+
+### What the round cost
+
+By the wall clock, about eight and a half hours on 2026-11-23, from the round's TimeSheet notice at 12:17 to this entry at 20:45.
+
+Agents, as the harness reported each. A leg is one stretch of an agent's work between two reports to the lead. **What these token figures count is not established here**, and the lead's own use is not among them.
+
+| agent | legs | tool calls | time, summed | tokens, at its last leg |
+|---|---|---|---|---|
+| HEAD, the hidden layer | 3 | 130 | 45 min | 477,104 |
+| LCH-3, the launch experiment | 3 | 123 | 49 min | 486,326 |
+| LRN-A, the learner | 6 | 260 | 101 min | 653,537 |
+| RTL-A, the source and the injector | 5 | 372 | 144 min | 851,888 |
+| RTL-B, the detector core | 7 | 332 | 149 min | 933,174 |
+| SEAM-2, the three wired together | 1 | 181 | 54 min | 526,058 |
+| VP0, the foundation's first pass | 1 | 55 | 8 min | 207,196 |
+| VP0-2 | 1 | 90 | 19 min | 252,204 |
+| VP0-3 | 1 | 72 | 11 min | 207,581 |
+| VP0-4 | 1 | 50 | 9 min | 157,308 |
+| VP0-5 | 1 | 35 | 6 min | 133,169 |
+| VP0-6 | 1 | 63 | 10 min | 194,186 |
+| VHEAD | 1 | 39 | 8 min | 173,541 |
+| VHEAD-2 | 1 | 82 | 14 min | 251,660 |
+| VLCH3 | 1 | 43 | 8 min | 175,619 |
+| VLCH3-2 | 1 | 61 | 12 min | 173,423 |
+| VLRNA | 2 | 60 | 15 min | 234,929 |
+| VLRNA-2 | 1 | 33 | 7 min | 135,408 |
+| VLRNA-3 | 2 | 45 | 7 min | 112,682 |
+| VRTLA | 1 | 86 | 14 min | 266,763 |
+| VRTLA-2 | 1 | 50 | 11 min | 155,204 |
+| VRTLB | 1 | 71 | 13 min | 270,334 |
+| VRTLB-2 | 1 | 40 | 10 min | 131,991 |
+| VRTLB-3 | 1 | 43 | 7 min | 127,168 |
+| VSEAM2 | 1 | 122 | 14 min | 218,138 |
+| VCLOSE | 1 | 90 | 20 min | 302,391 |
+| VCLOSE-2 | 1 | 52 | 11 min | 221,498 |
+
+Twenty-seven agents, six parcels and twenty-one verifier passes: 48 legs, 2,680 tool calls, 12 hours 59 minutes summed, and 8,030,480 tokens with each agent counted at its last leg. The table is made by a script from the reports in the lead's own record; a report repeated when an agent was resumed for one word is left out.
+
+Machine time on the TimeSheet, beside the round's notice on the desktop from 12:17. Booked apart, as shared: the full run of stage E1 twice, six processes each, 10 minutes 39 seconds and 8 minutes 59 seconds; the head's synthesis on the Linux box, eleven runs in 18 minutes 15 seconds, after three notices there earlier in the day for single multipliers; and the gate's second size on the seam's merge twice, the first run failing at the stale mutant and the second 10 minutes 33 seconds. **The other runs of the second size ran under the notice alone, one of them 10 minutes 4 seconds, at 18:40**: it was the first to pass ten minutes, and the lead did not know it would. And the round's worst slip, in the entry of the foundation's fifth pass: thirteen minutes of gate runs inside another project's timing window.
+
+**Planted faults in the round: 69 planted, 68 reported.** The one miss is in the entry of the learner: a wrong sum in the hand-working written beside a frozen vector, by a verifier that reworked the vector's numbers with code of its own and did not read the sentence.
+
+### What this does not prove
+
+- **That a third pass would find nothing in these last corrections.** Two passes on the lead's closing text found ten slips and then five. The second list is shorter and smaller, and that is all that can be said.
+- **Anything the earlier entries say is not proved.** No card, no timing, no host library, no sensitivity in any fabric, one simulator.
+
+### Not seen by a verifier
+
+This entry, and the corrections in its commit: limit 23's note and row C13 in the core's document, one note in the source's, limit 15, two sentences of CLAUDE.md, one of the study's page, and five of the roadmap.
+
+### Open with Logan
+
+In [ROADMAP.md](ROADMAP.md), "Open with Logan at round 2's close": whether `main` moves and is pushed; what the head costs and which way down, if any; the lead's decisions in the round; the sample format of the first build; Raspberry Shake's licence; and what the next round's plan must take up.
+
+### Not done, and why
+
+- **`main` has not moved and nothing is pushed.** The lead asks first.
+- **The worktrees and branches are kept**, the lead's trial ones among them, under the ignored `Data/worktrees/`, until Logan has seen the round.
+- **The two streams and two mutants for the core's overflow flag, a gate that says when a long run's record is of an earlier definition, a check that reads the simulator's build log, a bound on one test, and benches run side by side**: each is in the roadmap's list for the next round's plan.
