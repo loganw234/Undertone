@@ -1,8 +1,12 @@
 """The detector core held against the reference model on every score word (rtl/core/core.sv).
 
-It runs once under each profile, on the top the manifest names. It reads what
-the build can hold from the capability registers, so the same tests run on the
-small top and on the definition's maxima.
+It runs once under each profile, on the top the manifest names: the small top,
+`core_small`, in both of this module's rows. It reads the build's bounds from
+the capability registers. NOTHING HAS RUN IT ON THE FULL TOP: its extremes and
+its counters each drive a stream as long as the build's largest pool, which at
+the definition's maxima is more than 65,000 frames, about eight minutes a
+profile in this simulator (docs/rtl/core.md, rows C16 and C17). The full top
+has a bench of its own, bench_core_max.py.
 
 Fifteen tests. SEVEN ARE THE IDENTITY TESTS the manifest names, each holding the core
 against the model through `harness.compare`:
