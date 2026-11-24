@@ -357,10 +357,11 @@ def test_host_library_a_refusal_while_not_running_ends_the_wait():
         host = Host(backend)
         assert refused(host.run, 1, TABLE, 10, [], polls=50) == "MEMORY_WRITE"
         pauses = sum(1 for op in backend.ops if type(op) is ops.Pause)
-        assert pauses <= pauses_most + 1, running_polls
-        # Limit 17: a refusal while the kernel still runs is waited on until done, every round of it. A library
-        # that ended the wait at the refused bit alone would make no pause here (VHOST-2's B3).
-        assert pauses >= pauses_most, (running_polls, pauses)
+        # Limit 17: a refusal while the kernel still runs is waited on until done, every round of it. The
+        # count is exact: one round of plain running, then one for each read that says running and refused,
+        # then done (or, with none running, the refused bit alone) ends it. A wait one round short, or one that
+        # ended at the refused bit alone (VHOST-2's B3), fails here (VHOST-3's C2).
+        assert pauses == pauses_most + 1, (running_polls, pauses)
         assert backend.words[L.offset("krn_refusal")] == 0
 
 

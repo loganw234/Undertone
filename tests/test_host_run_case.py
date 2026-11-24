@@ -35,8 +35,10 @@ class FakeBackend:
     """What run_case's Backend is to it, over the scripted kernel. `events` logs each operation, and "close"."""
 
     def __init__(self, fail_at=None, polls_running=3, ignore_base=False, fail_close=False, fail_fetch=False,
-                 latch_at_start=None, **_kw):
-        self.inner = fake.scripted_kernel("s16x1", polls_running=polls_running, ignore_base=ignore_base)
+                 latch_at_start=None, written=None, fail_reset=None, **_kw):
+        self.inner = fake.scripted_kernel("s16x1", polls_running=polls_running, ignore_base=ignore_base,
+                                          written=written)
+        self.fail_reset = fail_reset          # an exception class raised at the krn_reset write after the run
         if latch_at_start:
             plain = self.inner.on_write[L.offset("krn_start")]
 
@@ -56,13 +58,15 @@ class FakeBackend:
         self.n += 1
         if (self.fail_at is not None and self.n == self.fail_at) or (self.fail_fetch and type(op) is ops.Fetch):
             raise OSError("the fake backend failed")
+        if self.fail_reset is not None and op == ops.Write(L.offset("krn_reset"), 1) and self.n > 40:
+            raise self.fail_reset("the fake backend failed at the reset")
         self.events.append(op)
         return self.inner.do(op)
 
     def close(self):
         self.events.append("close")
         if self.fail_close:
-            raise OSError("the fake backend's close failed")
+            raise (self.fail_close if isinstance(self.fail_close, type) else OSError)("the fake backend's close failed")
 
 
 def files(tmp_path, schedule=()):
@@ -156,6 +160,16 @@ def test_host_run_case_a_deadline_resets_reads_the_answer_and_prints_no_pass(tmp
     assert made[0].inner.words[L.offset("krn_refusal")] == 0                 # the latch cleared
 
 
+def test_host_run_case_a_reset_behind_another_refusal_is_not_taken(tmp_path, monkeypatch, capsys):
+    """VHOST-3's C1: a kernel running with RECORD_QUEUE latched meets the deadline; the reset is refused and its
+    KERNEL_BUSY not latched behind the first refusal: the answer says "not taken", and nothing is cleared."""
+    made = using(monkeypatch, polls_running=10 ** 9, latch_at_start={"krn_refusal": "RECORD_QUEUE"})
+    assert run_case.main(files(tmp_path) + ["--polls", "5"]) == 3
+    report = json.loads((tmp_path / "out" / "report.json").read_text())
+    assert report["reset"]["answer"].startswith("not taken") and report["reset"]["krn_refusal"] == "RECORD_QUEUE"
+    assert made[0].inner.words[L.offset("krn_refusal")] == C.REFUSAL_CODES["RECORD_QUEUE"]
+
+
 def test_host_run_case_a_reset_of_a_kernel_not_running_is_taken(tmp_path, monkeypatch, capsys):
     """A refused run (the kernel no longer running): the reset is taken, and the report says so."""
     made = using(monkeypatch, latch_at_start={"inj_refusal": "INJECT_RANGE", "krn_refusal": "RUN_LENGTH"})
@@ -180,6 +194,7 @@ def test_host_run_case_control_a_close_before_the_reset_is_seen(tmp_path, monkey
     made = using(monkeypatch, polls_running=10 ** 9)
     run_case.main(files(tmp_path) + ["--polls", "5"])
     backend = made[0]
+    assert reset_then_close(backend), "the check does not pass the run as it was: it cannot be a control"
     close = backend.events.index("close")
     reset = max(i for i, e in enumerate(backend.events) if e == RESET)
     backend.events.insert(reset, backend.events.pop(close))       # the close moved before the reset
@@ -206,6 +221,42 @@ def test_host_run_case_a_failed_close_ends_failed_with_its_files(tmp_path, monke
     report = json.loads((tmp_path / "out" / "report.json").read_text())
     assert "close failed" in report["close_failed"] and report["records"] == 40 and report["run"]["records"] == 40
     assert len((tmp_path / "out" / "records.bin").read_bytes()) == 40 * L.RECORD_BYTES
+
+
+def test_host_run_case_a_failure_at_the_reset_wins(tmp_path, monkeypatch, capsys):
+    """VHOST-3's B2: a refusal, then a deadline, each followed by a reset that raises: FAILED, exit 1, with the
+    files, the earlier end kept in report.json; for an OSError and for an error of another kind."""
+    for error in (OSError, RuntimeError):
+        out = tmp_path / error.__name__
+        out.mkdir()
+        using(monkeypatch, fail_reset=error, latch_at_start={"inj_refusal": "INJECT_RANGE", "krn_refusal": "RUN_LENGTH"})
+        assert run_case.main(files(out)) == 1, error
+        assert lines_of(capsys)[-1].startswith("FAILED host.run_case: the reset")
+        report = json.loads((out / "out" / "report.json").read_text())
+        assert report["refused"]["name"] == "INJECT_RANGE" and report["reset"]["answer"].startswith("raised")
+        using(monkeypatch, fail_reset=error, polls_running=10 ** 9)
+        assert run_case.main(files(out) + ["--polls", "5", "--out", str(out / "deadline")]) == 1, error
+        assert lines_of(capsys)[-1].startswith("FAILED host.run_case: the reset")
+        report = json.loads((out / "deadline" / "report.json").read_text())
+        assert "has not said done" in report["deadline"] and (out / "deadline" / "trace.json").exists()
+
+
+def test_host_run_case_a_kernel_that_says_more_records_than_frames_ends_by_name(tmp_path, monkeypatch, capsys):
+    """VHOST-3's B3: krn_records reads 41 of a run of 40, nothing latched: RUN_LENGTH, by name, from the run and
+    again when its records are read; exit 2, the files written."""
+    using(monkeypatch, written=41)
+    assert run_case.main(files(tmp_path)) == 2
+    assert lines_of(capsys)[-1].startswith("REFUSED host.run_case RUN_LENGTH")
+    report = json.loads((tmp_path / "out" / "report.json").read_text())
+    assert report["refused"]["name"] == "RUN_LENGTH" and report["records_refused"]["name"] == "RUN_LENGTH"
+    assert (tmp_path / "out" / "records.bin").read_bytes() == b""
+
+
+def test_host_run_case_a_close_raising_another_kind_ends_failed(tmp_path, monkeypatch, capsys):
+    using(monkeypatch, fail_close=RuntimeError)
+    assert run_case.main(files(tmp_path)) == 1
+    assert lines_of(capsys)[-1].startswith("FAILED host.run_case: the backend's close: RuntimeError")
+    assert json.loads((tmp_path / "out" / "report.json").read_text())["records"] == 40
 
 
 def test_host_run_case_a_failure_after_a_refusal_wins(tmp_path, monkeypatch, capsys):

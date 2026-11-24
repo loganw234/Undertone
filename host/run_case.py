@@ -17,35 +17,48 @@ model, wherever it runs, and the records are compared with the model's there.
                         rounds of waiting for that, whichever is first: the swap is made either way, and
                         report.json's "swap" gives the index the core had reached
 
-Its arguments are checked before the backend opens: --polls below 1 is refused
-there, by argparse, with its usage line and exit 2. A failure to open the
-backend raises, writing nothing. Once the backend is open it writes, into
---out, however the run ends, and BEFORE the backend frees its buffers and
-closes the device:
+BEFORE THE BACKEND OPENS, nothing is written: argparse refuses a malformed
+argument, --polls below 1 among them, with its usage and "error:" on stderr
+and exit 2; a missing or unreadable input file raises Python's own error
+(FileNotFoundError, say), a traceback and exit 1; a failure to open the
+backend raises the same way. EXIT 2 IS BOTH ARGPARSE'S AND REFUSED'S: the code
+alone does not tell them apart; the line does (argparse's on stderr, REFUSED's
+on stdout).
+
+ONCE THE BACKEND IS OPEN it writes, into --out, however the run ends, and
+BEFORE the backend frees its buffers and closes the device:
   records.bin    each score record's canonical bytes (model.records.pack's), one after another, in order
   report.json    the identity read, the run's report, the swap's report if any, and how the run ended
   trace.json     every operation: call, its place in the call, kind, offset or size, result, ns before and after
-The files are not written when writing them fails, or when the process is
-killed; nothing else stops them.
+Every exception (every Exception of Python's) is caught there and ends the run
+by its kind. The files are not written when writing them fails, or on Ctrl-C
+(KeyboardInterrupt, which is not caught) or a killed process.
 
 It then prints ONE LINE beginning "PASS host.run_case", LAST, only when the
 run finished and every file is written. A run with no such line is a lost run,
 never a result: under hardware emulation a run can end with exit code 0 and
 no output (the lead, 2026-11-24 10:17). The other ends, each with its files
-written and no PASS line:
+written and no PASS line, its line last on stdout:
   REFUSED host.run_case <name>   a refusal by name, during the run or while reading its records: exit 2
   DEADLINE host.run_case         the kernel did not say done within --polls rounds: exit 3
-  FAILED host.run_case           the backend failed (XRT's own error), its close failed, or an error that
-                                 is none of these was raised: exit 1
-WHICH END WINS: a backend failure wins over a refusal met before it (exit 1,
-the refusal kept in report.json); a failure of the close wins over every
-other end, the files already written then.
+  FAILED host.run_case           the backend failed (XRT's own error), the reset or its reads raised, the
+                                 close raised, or any other exception: exit 1
+WHICH END WINS: a failure wins over every end met before it. A refusal or a
+deadline followed by a failure (while the records are read, at the reset, or
+at the close) ends FAILED, exit 1, the earlier end kept in report.json.
 
-AFTER ANY END BUT PASS it writes krn_reset, and then reads krn_refusal and
-krn_status and records in report.json what the kernel answered ("reset"):
-taken, or refused KERNEL_BUSY with the kernel still running, that latch then
-cleared. NOTHING THE HOST WRITES STOPS A RUNNING KERNEL: the kernel refuses a
-reset while its run goes (rtl/krnl/undertone_krnl.sv, its krn_reset row;
+AFTER ANY END BUT PASS it writes krn_reset, then reads krn_refusal and
+krn_status, and records in report.json ("reset") what the kernel answered:
+  "taken"                                  no refusal latched, the kernel not running
+  "refused KERNEL_BUSY: ..."               the kernel runs and refused the reset; that latch is then cleared
+                                           by a write of 0
+  "not taken: the kernel still runs ..."   another refusal was already latched while it runs, so the reset's
+                                           own KERNEL_BUSY is not latched behind it; nothing is cleared
+  "a refusal is latched, the kernel not running: ..."   and
+  "no refusal, and the kernel still says running"       answers the RTL does not give; nothing is cleared
+  "raised: ..."                            the write or a read raised: the run ends FAILED
+NOTHING THE HOST WRITES STOPS A RUNNING KERNEL: the kernel refuses a reset
+while its run goes (rtl/krnl/undertone_krnl.sv, its krn_reset row;
 docs/rtl/krnl.md section 5), and only the image's reload or the card's own
 reset stops it. A kernel still running when the backend frees its buffers
 may write into a buffer being freed (docs/host/host.md, limit 18).
@@ -156,18 +169,21 @@ def main(argv=None):
                 end = EXIT_REFUSED
                 said = said or "REFUSED host.run_case %s: %s" % (e.name, e.detail)
                 report["records_refused"] = {"name": e.name, "detail": e.detail}
-            except OSError as e:
-                end, said = EXIT_FAILED, "FAILED host.run_case: %s" % e
-                report["failed"] = str(e)
+            except Exception as e:      # XRT's error, or any other: a failure, which wins (exit 1)
+                end, said = EXIT_FAILED, "FAILED host.run_case: %s: %s" % (type(e).__name__, e)
+                report["failed"] = "%s: %s" % (type(e).__name__, e)
         if end != EXIT_PASS:
-            report["reset"] = _reset_and_read(lib)
+            report["reset"], failure = _reset_and_read(lib)
+            if failure is not None:     # a failure at the reset wins over the end met before it
+                end, said = EXIT_FAILED, "FAILED host.run_case: the reset: %s" % failure
+                report["failed"] = "the reset: %s" % failure
         _write_files(a.out, records, report, trace)
     finally:
         try:
             backend.close()
-        except OSError as e:
-            end, said = EXIT_FAILED, "FAILED host.run_case: the backend's close: %s" % e
-            report["close_failed"] = str(e)
+        except Exception as e:          # a failure of the close wins over every other end
+            end, said = EXIT_FAILED, "FAILED host.run_case: the backend's close: %s: %s" % (type(e).__name__, e)
+            report["close_failed"] = "%s: %s" % (type(e).__name__, e)
             _write_files(a.out, records, report, trace)
     if end != EXIT_PASS:
         print(said, flush=True)
@@ -176,26 +192,44 @@ def main(argv=None):
     return EXIT_PASS
 
 
+RUNNING_BUSY = "refused KERNEL_BUSY: the kernel still runs; the latch was cleared (a write of 0)"
+
+
 def _reset_and_read(lib):
-    """krn_reset written, then krn_refusal and krn_status read: what the kernel answered. A reset refused
-    KERNEL_BUSY (the kernel still running: nothing the host writes stops it) is cleared and said so."""
+    """krn_reset written, then krn_refusal and krn_status read: (what the kernel answered, None), or (the
+    answer so far, the failure) when any of those raised. The answer's forms:
+      "taken"                                     no refusal latched and the kernel not running
+      RUNNING_BUSY                                the kernel runs and refused the reset, KERNEL_BUSY; that latch
+                                                  is then cleared by a write of 0
+      "not taken: the kernel still runs, and ..." the kernel runs with another refusal already latched (the
+                                                  first is kept, so the reset's own KERNEL_BUSY is not latched);
+                                                  nothing is cleared
+      "a refusal is latched, the kernel not running: ..."   a reset the RTL would have taken clears every
+                                                  refusal, so this is not the RTL's answer; nothing is cleared
+      "no refusal, and the kernel still says running"       neither the RTL's answer; nothing is cleared
+      "raised: ..."                               the write or a read raised: a failure, which the caller ends as
+    Nothing the host writes stops a running kernel (docs/host/host.md, limit 18)."""
     out = {}
     try:
         lib.raw_write(L.offset("krn_reset"), 1)
         code = lib.raw_read(L.offset("krn_refusal"))
         status = lib.raw_read(L.offset("krn_status"))
-        out = {"krn_refusal": L.NAME_OF.get(code, code) if code else None, "krn_status": "0x%X" % status,
-               "running": bool(status & L.RUNNING)}
-        if code == L.C.REFUSAL_CODES["KERNEL_BUSY"]:
+        running = bool(status & L.RUNNING)
+        named = L.NAME_OF.get(code, code) if code else None
+        out = {"krn_refusal": named, "krn_status": "0x%X" % status, "running": running}
+        if code == L.C.REFUSAL_CODES["KERNEL_BUSY"] and running:
             lib.raw_write(L.offset("krn_refusal"), 0)
-            out["answer"] = "refused KERNEL_BUSY: the kernel still runs, and the latch was cleared"
+            out["answer"] = RUNNING_BUSY
+        elif code and running:
+            out["answer"] = "not taken: the kernel still runs, and %s was already latched" % named
         elif code:
-            out["answer"] = "a refusal is latched after the reset: %s" % L.NAME_OF.get(code, code)
+            out["answer"] = "a refusal is latched, the kernel not running: %s" % named
         else:
-            out["answer"] = "taken" if not status & L.RUNNING else "no refusal, and the kernel still says running"
-    except OSError as e:
-        out["answer"] = "raised: %s" % e
-    return out
+            out["answer"] = "taken" if not running else "no refusal, and the kernel still says running"
+        return out, None
+    except Exception as e:
+        out["answer"] = "raised: %s: %s" % (type(e).__name__, e)
+        return out, "%s: %s" % (type(e).__name__, e)
 
 
 def _write_files(folder, records, report, trace):

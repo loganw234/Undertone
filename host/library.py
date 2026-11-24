@@ -535,6 +535,9 @@ class Library:
         state = self.run_state
         if state is None or state.records is None:
             raise ValueError("no run has finished through this library")
+        if count is None and state.records > state.frames:
+            raise Refusal("RUN_LENGTH", "the kernel says it wrote %d records of a run of %d: past the buffer's slots, "
+                          "and none is read" % (state.records, state.frames))
         count = state.records - first if count is None else count
         if not _is_int(first, 0, INDEX_LIMIT - 1) or not _is_int(count, 0, INDEX_LIMIT - 1) or first + count > state.frames:
             raise ValueError("slots %r to %r of a run of %d" % (first, count, state.frames))
