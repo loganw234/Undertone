@@ -311,6 +311,7 @@ name = "smallest-sample-refused"
 file = "rtl/inject/inject.sv"
 edits = [["if (s < SMIN || s > SMAX) any_bad = 1'b1;", "if (s <= SMIN || s > SMAX) any_bad = 1'b1;"]]
 must_fail = ["refusal_inject_range"]
+kind = "WORD"
 
 # ---- Parcel RTL-B: the detector core and its weight store (docs/rtl/core.md) ----
 #
