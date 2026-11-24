@@ -444,7 +444,10 @@ def build_list(root):
             bad("%r is not a file of the tree" % (e["file"],))
         try:
             with open(os.path.join(root, e["file"]), encoding="utf-8") as f:
-                count = len(f.read().splitlines())       # a last line end ends the last line; it begins none
+                text = f.read()
+            # Lines as a simulator numbers them: ended by line feeds only, and a last line end begins no
+            # line. (splitlines, until VP0R3-2, also ended a line at a form feed and five other characters.)
+            count = text.count("\n") + (0 if text == "" or text.endswith("\n") else 1)
         except UnicodeDecodeError as err:
             bad("%s is not UTF-8 text: %s" % (e["file"], err))
         if type(e["line"]) is not int or not 1 <= e["line"] <= count:

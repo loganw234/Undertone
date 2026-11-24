@@ -268,6 +268,25 @@ def test_p0_a_build_list_that_cannot_be_read_exactly_is_refused_by_name(tmp_path
     assert str(e.value).startswith("BUILD-LIST-MALFORMED")
 
 
+@pytest.mark.parametrize("body, last", [
+    (b"module x;\nendmodule\n", 2), (b"module x;\nendmodule", 2), (b"module x;\nendmodule\x0c\n", 2),
+    (b"module x;\x0c\nendmodule\n", 2), (b"one\x1cstill one\n", 1),
+])
+def test_p0_a_build_list_line_is_a_line_by_line_feeds_alone(tmp_path, body, last):
+    """VP0R3-2 found a form feed taken as a line end. The last line by line feeds is accepted; one past it is not."""
+    os.makedirs(tmp_path / "rtl" / "x")
+    (tmp_path / "rtl" / "x" / "x.sv").write_bytes(body)
+    (tmp_path / "rtl" / "tb").mkdir()
+    for line, ok in ((last, True), (last + 1, False)):
+        (tmp_path / "rtl" / "tb" / "build_lines.toml").write_text(ENTRY.replace("line = 2", "line = %d" % line),
+                                                                    encoding="utf-8")
+        if ok:
+            assert check_rtl.build_list(str(tmp_path)) == {("rtl/x/x.sv", line, "words")}
+        else:
+            with pytest.raises(Refusal):
+                check_rtl.build_list(str(tmp_path))
+
+
 def test_p0_a_build_list_entry_naming_a_file_that_is_not_text_is_refused_by_name(tmp_path):
     """VP0R3 found Python's own UnicodeDecodeError here, where the list's refusal belongs."""
     os.makedirs(tmp_path / "rtl" / "x")
