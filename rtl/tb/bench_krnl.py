@@ -16,8 +16,10 @@ WHAT EACH TEST HOLDS
   identity_long_bursts       two long holds of the memory, so that bursts of 16 and of 9 to 15 beats
                              come by construction, one cut at a 4 KB page, under both profiles
   identity_hidden            a seeded shape at the build's taps and rows with all twelve hidden units
-  capabilities_are_accepted  each bound the build advertises: a shape at it taken, one past it refused by
-                             that bound's name (the capability-bits gate, in simulation)
+  capabilities_are_accepted  each capability register the core and the source answer: a configuration at
+                             the advertised value taken, one past it refused by that bound's name (the
+                             capability-bits gate, in simulation); no value compared with a number here
+  the_first_builds_maxima    the packaged top advertises the first build's maxima and the queue of 512
   identity_on_axi_ram        a run against cocotbext-axi's AxiRamWrite, a third party's write path, under
                              its own pause generators: the records read back are the model's, and done
                              read only after every answer, by a passive look at the bus
@@ -108,11 +110,23 @@ async def identity_hidden(dut):
 
 @cocotb.test()
 async def capabilities_are_accepted(dut):
+    """The capability-bits gate (krnl_host.capabilities_are_accepted), and nothing else: no value is compared
+    here with a number of the bench's own, so the gate's controls fail through the gate's check alone."""
     host, _mem = await k.begin(dut, base=0x1000, size=SLOT)
-    caps = await k.capabilities_are_accepted(host, PROFILE)
-    assert (caps["cap_filters"], caps["cap_rows"], caps["cap_taps"], caps["cap_hidden"]) == (4, 4, 128, 12), \
-        "the packaged top does not advertise the first build's maxima: %r" % caps
-    assert caps["cap_record_queue"] == 512, caps
+    await k.capabilities_are_accepted(host, PROFILE)
+
+
+@cocotb.test()
+async def the_first_builds_maxima(dut):
+    """The packaged top advertises the first build's maxima (the round's plan, question 2) and the
+    definition's pool and shifts, and the queue of 512 (rtl/krnl/undertone_krnl.sv's defaults)."""
+    host, _mem = await k.begin(dut, base=0x1000, size=SLOT)
+    caps = await host.capabilities()
+    want = {"cap_filters": 4, "cap_rows": 4, "cap_taps": 128, "cap_hidden": 12, "cap_pool": C.MAX_POOL,
+            "cap_score_shift": C.MAX_SCORE_SHIFT, "cap_hidden_shift": C.MAX_HIDDEN_SHIFT, "cap_record_queue": 512,
+            "cap_sample_bits": C.PROFILES[PROFILE]["sample_bits"], "cap_channels": C.PROFILES[PROFILE]["channels"]}
+    have = dict((name, caps[name]) for name in want)
+    assert have == want, "the packaged top advertises %r" % have
 
 
 # ------------------------------------------------------------------ the cross-check on a third party's memory

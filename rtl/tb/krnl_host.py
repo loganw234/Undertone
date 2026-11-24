@@ -376,14 +376,37 @@ async def try_configure(host, shape):
     return await host.take("refusal")
 
 
+async def try_weights(host, profile, words):
+    """After krn_reset: the smallest shape (one filter of one tap, no hidden layer: two weight words) taken by
+    `configure`, then `words` sent to the stream. Returns the core's refusal, cleared."""
+    shape = core_host.plain_shape(profile)
+    pairs = [(off(n), shape[n]) for n in SHAPE_SCALARS]
+    pairs += [(off("shape_masks", k), mask) for k, mask in enumerate(shape["masks"])]
+    pairs.append((off("configure"), core_host.words_in(shape)))
+    pairs += [(off("shadow_data"), w & WORD_MASK) for w in words]
+    await host.write(off("krn_reset"), 1)
+    await host.write_many(pairs)
+    return await host.take("refusal")
+
+
 async def capabilities_are_accepted(host, profile):
-    """For each bound the build advertises: a shape at the advertised value is taken, and one past it is
-    refused by that bound's name. Returns the capabilities read."""
+    """THE CAPABILITY-BITS GATE, through the kernel's port. For each capability register the core and the
+    source answer, a configuration at the advertised value is taken and one past it is refused by that
+    bound's name: the profile (sample bits, channels), the coefficient's range, filters, taps, rows (under
+    more than one channel; docs/rtl/core.md, limit 12), the pool, both shifts, hidden units, each rectifier
+    code 0 to 7, and the noise table's length. Not tried here: cap_blob_versions (the fabric sees no blob),
+    cap_inject_pending (1,024 truth records offered would be most of a run) and cap_record_queue (tried by
+    bench_krnl_small's overflow on its queue of 8). Nothing here compares a value with a number of its own:
+    a register that reads wrong is seen only through what the build then takes or refuses. Returns the
+    capabilities read."""
     caps = await host.capabilities()
     prof = C.PROFILES[profile]
-    assert caps["cap_sample_bits"] == prof["sample_bits"] and caps["cap_channels"] == prof["channels"], caps
     plain = core_host.plain_shape
     cases = [
+        ("sample bits", plain(profile, shape_sample_bits=caps["cap_sample_bits"]),
+         plain(profile, shape_sample_bits=caps["cap_sample_bits"] + 1), "PROFILE_UNKNOWN"),
+        ("channels", plain(profile, shape_channels=caps["cap_channels"]),
+         plain(profile, shape_channels=caps["cap_channels"] + 1), "PROFILE_UNKNOWN"),
         ("filters", plain(profile, shape_filters=caps["cap_filters"]),
          plain(profile, shape_filters=caps["cap_filters"] + 1), "SHAPE_FILTERS"),
         ("taps", plain(profile, shape_taps=caps["cap_taps"]), plain(profile, shape_taps=caps["cap_taps"] + 1), "SHAPE_TAPS"),
@@ -412,5 +435,22 @@ async def capabilities_are_accepted(host, profile):
             got = await try_configure(host, past)
             assert got == code(name), "a shape past the advertised %s was refused %s, not %s" % (
                 what, NAME_OF.get(got, got), name)
+    # The coefficient's range: a weight at each end of cap_coeff_bits taken, one past either end refused.
+    top = (1 << (caps["cap_coeff_bits"] - 1)) - 1
+    got = await try_weights(host, profile, [top, -top - 1])
+    assert got == 0, "weights at the advertised coefficient's ends were refused %s" % NAME_OF.get(got, got)
+    for word in (top + 1, -top - 2):
+        got = await try_weights(host, profile, [word])
+        assert got == code("WEIGHT_RANGE"), "a weight of %d, past the advertised coefficient, was refused %s, not " \
+            "WEIGHT_RANGE" % (word, NAME_OF.get(got, got))
+    # The noise table: a table of cap_noise_table entries declared, and one of one more refused.
+    await host.write(off("krn_reset"), 1)
+    await host.write(off("src_table_length"), caps["cap_noise_table"])
+    got = await host.take("src_refusal")
+    assert got == 0, "a table of the advertised %d entries was refused %s" % (caps["cap_noise_table"], NAME_OF.get(got, got))
+    await host.write(off("src_table_length"), caps["cap_noise_table"] + 1)
+    got = await host.take("src_refusal")
+    assert got == code("NOISE_RANGE"), "a table past the advertised length was refused %s, not NOISE_RANGE" % (
+        NAME_OF.get(got, got),)
     await host.write(off("krn_reset"), 1)
     return caps

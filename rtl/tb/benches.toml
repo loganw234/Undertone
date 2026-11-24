@@ -1039,6 +1039,15 @@ edits = [["reg_rdata <= B_TAPS;", "reg_rdata <= B_TAPS + 1;"]]
 must_fail = ["capabilities_are_accepted"]
 kind = ""
 
+# The gate's other half: a core that takes a shape one tap past what it advertises. RTL-B's file, edited
+# here as text inside the mutant only.
+[[bench.mutant]]
+name = "takes-one-tap-past-its-advertisement"
+file = "rtl/core/core.sv"
+edits = [["(shp_taps > B_TAPS)", "(shp_taps > B_TAPS + 1)"]]
+must_fail = ["capabilities_are_accepted"]
+kind = ""
+
 [[bench]]
 name = "krnl-max"
 toplevel = "krnl_max"
@@ -1113,6 +1122,29 @@ name = "w-waits-for-the-address"
 file = "rtl/krnl/undertone_krnl.sv"
 edits = [["wire             w_gate = 1'b1;", "wire             w_gate = aw_done;"]]
 must_fail = ["identity_w_before_aw"]
+kind = ""
+
+# The edge, at the places VKRNL found untried (round 3): the buffer's lower word taken while a run goes; the
+# base's alignment checked on bits 4 to 1 only; bursts issued after an answer of SLVERR.
+[[bench.mutant]]
+name = "buffer-taken-while-running"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["REG_KRN_BUFFER_OFFSET:          if (running) f_code = C_BUSY; else k_buffer[31:0]  <= w_q;", "REG_KRN_BUFFER_OFFSET:          k_buffer[31:0]  <= w_q;"]]
+must_fail = ["refused_at_the_edge"]
+kind = ""
+
+[[bench.mutant]]
+name = "alignment-checked-above-bit-0"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["k_buffer[SLOT_SHIFT-1:0] != '0", "k_buffer[SLOT_SHIFT-1:1] != '0"]]
+must_fail = ["refused_at_the_edge"]
+kind = ""
+
+[[bench.mutant]]
+name = "bursts-after-an-error"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["if (running && !mem_err && unissued != '0 && outs < OUTS) begin", "if (running && unissued != '0 && outs < OUTS) begin"]]
+must_fail = ["memory_error_refused"]
 kind = ""
 
 [[bench]]

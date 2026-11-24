@@ -74,7 +74,7 @@ LATE_FRAMES = 40
 RANGE_FRAMES = 70
 OVERFLOW_FRAMES = 30
 ERROR_FRAMES = 20
-EDGE_FRAMES = 10
+EDGE_FRAMES = 20
 RESET_FRAMES = 21
 
 
@@ -312,13 +312,26 @@ async def memory_error_refused(dut):
     this = case(ERROR_FRAMES, [], seed=SEED + 7)
     base = 0x90000
     host, mem = await k.begin(dut, base=base, size=this.frames * SLOT, seed=SEED + 7)
+    period = seam.period(PROFILE)
+    # The fourth burst is answered SLVERR, three records late; from its beat on the memory holds its address
+    # and data for four records, so that records wait in the queue, unissued, when the error comes.
     mem.error_burst = 3
-    out = await k.run_case(host, mem, this, base)
+    mem.late_beat, mem.late_clocks = 3, 3 * period
+
+    async def backlog(host_, mem_):
+        await until_beats(host_, mem_, 4, period * 10 + 4000)
+        mem_.hold_aw = mem_.hold_w = True
+        await clocks(host_, 4 * period)
+        mem_.hold_aw = mem_.hold_w = False
+
+    out = await k.run_case(host, mem, this, base, during=backlog)
     good = sum(b[2] for b in mem.bursts[:3])
     assert out["kernel"] == k.code("MEMORY_WRITE"), "the kernel's refusal is %s" % (k.refusal_names(out),)
     assert out["status"]["done"] == 1
     assert out["records"] == good, "krn_records reads %d; the bursts before the error hold %d" % (out["records"], good)
-    assert len(mem.bursts) < this.frames, "every record was still written after the error"
+    error_at = mem.answers[3]
+    later = [b for b in mem.bursts if b[3] > error_at]
+    assert not later, "%d burst(s) offered after the error's answer at clock %d: %r" % (len(later), error_at, later)
     expected, _ = seam.model_records(this)
     k.hold_memory(test, "the records answered OKAY", mem, base, expected[:good])
 
@@ -342,11 +355,12 @@ async def refused_at_the_edge(dut):
     state = await host.status()
     assert state == {"running": 0, "done": 0, "refused": 0}, state
 
-    # Each argument wrong in turn, the others right.
-    for detail, args, name in (("a length of zero", (base, EDGE_FRAMES * SLOT, 0), "STREAM_LENGTH"),
-                               ("a base half a slot off", (base + SLOT // 2, EDGE_FRAMES * SLOT, EDGE_FRAMES), "BUFFER_ALIGN"),
+    # Each argument wrong in turn, the others right. The base off by each bit below a slot's.
+    offs = [("a base %d byte(s) off" % (1 << b), (base + (1 << b), EDGE_FRAMES * SLOT, EDGE_FRAMES), "BUFFER_ALIGN")
+            for b in range(SLOT.bit_length() - 1)]
+    for detail, args, name in [("a length of zero", (base, EDGE_FRAMES * SLOT, 0), "STREAM_LENGTH")] + offs + [
                                ("a size one byte short", (base, EDGE_FRAMES * SLOT - 1, EDGE_FRAMES), "BUFFER_SIZE"),
-                               ("slots past 2^64", ((1 << 64) - (EDGE_FRAMES - 1) * SLOT, 1 << 40, EDGE_FRAMES), "BUFFER_SIZE")):
+                               ("slots past 2^64", ((1 << 64) - (EDGE_FRAMES - 1) * SLOT, 1 << 40, EDGE_FRAMES), "BUFFER_SIZE")]:
         await k.arguments(host, *args)
         await host.write(k.off("krn_start"), 1)
         await refused(name, detail)
@@ -378,15 +392,21 @@ async def refused_at_the_edge(dut):
     assert state == {"running": 0, "done": 0, "refused": 1}, state
     await refused("REGISTER_ACCESS", "the latched refusal")
 
-    # While a run goes: a start, an argument and a reset are each KERNEL_BUSY; the run is still the model's.
+    # While a run goes: a start, every word of the three arguments and a reset are each KERNEL_BUSY, and
+    # none is taken; the run is still the model's.
     this = case(EDGE_FRAMES, [], seed=SEED + 8)
+    words = [("%s word %d" % (n, w), k.off(n, w), 0x5A5A5A40) for n in ("krn_buffer", "krn_size", "krn_frames")
+             for w in range(2)]
 
     async def busy(host_, mem_):
-        for detail, at, value in (("a start", k.off("krn_start"), 1), ("an argument", k.off("krn_frames"), 3),
-                                  ("a reset", k.off("krn_reset"), 1)):
+        for detail, at, value in [("a start", k.off("krn_start"), 1)] + words + [("a reset", k.off("krn_reset"), 1)]:
             await host_.write(at, value)
             got = await host_.take("krn_refusal")
             assert got == k.code("KERNEL_BUSY"), "%s while running: %s" % (detail, k.NAME_OF.get(got, got))
+        state = await host_.status()
+        assert state["running"] == 1, "the run did not go on through the refused writes: %r" % state
+        have = (await host_.wide("krn_buffer"), await host_.wide("krn_size"), await host_.wide("krn_frames"))
+        assert have == (base, this.frames * SLOT, this.frames), "an argument changed while running: %r" % (have,)
 
     out = await k.run_case(host, mem, this, base, during=busy)
     expected, _ = seam.model_records(this)

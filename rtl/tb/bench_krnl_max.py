@@ -5,8 +5,8 @@ WHAT EACH TEST HOLDS
   identity_e0                stage E0's shape at a small sigma, one pulse, slots across a 4 KB page,
                              random holds of every channel and late answers: every record the model's,
                              from memory and as written; done only after every answer
-  capabilities_are_accepted  each bound the build advertises, the definition's: a shape at it taken, one
-                             past it refused by that bound's name
+  capabilities_are_accepted  the capability-bits gate at the definition's maxima (krnl_host's)
+  the_definitions_maxima     this top advertises the definition's maxima
 
 WHAT THIS BENCH DOES NOT SEE, each a stated limit of docs/rtl/krnl.md: a shape of the definition's
 largest size run through the kernel (the core's own bench, bench_core_max, runs it); a stream of more
@@ -32,8 +32,17 @@ async def identity_e0(dut):
 
 @cocotb.test()
 async def capabilities_are_accepted(dut):
+    """The capability-bits gate (krnl_host.capabilities_are_accepted), and nothing else."""
     host, _mem = await k.begin(dut, base=0x1000, size=C.MEMORY_SLOT_BYTES)
-    caps = await k.capabilities_are_accepted(host, PROFILE)
-    want = (C.MAX_FILTERS, C.MAX_ROWS, C.MAX_TAPS, C.MAX_HIDDEN, C.MAX_POOL)
-    have = (caps["cap_filters"], caps["cap_rows"], caps["cap_taps"], caps["cap_hidden"], caps["cap_pool"])
+    await k.capabilities_are_accepted(host, PROFILE)
+
+
+@cocotb.test()
+async def the_definitions_maxima(dut):
+    """This top advertises the definition's maxima."""
+    host, _mem = await k.begin(dut, base=0x1000, size=C.MEMORY_SLOT_BYTES)
+    caps = await host.capabilities()
+    want = (C.MAX_FILTERS, C.MAX_ROWS, C.MAX_TAPS, C.MAX_HIDDEN, C.MAX_POOL, C.MAX_SCORE_SHIFT, C.MAX_HIDDEN_SHIFT)
+    have = tuple(caps[n] for n in ("cap_filters", "cap_rows", "cap_taps", "cap_hidden", "cap_pool", "cap_score_shift",
+                                   "cap_hidden_shift"))
     assert have == want, "this top does not advertise the definition's maxima: %r" % (caps,)

@@ -42,7 +42,7 @@ In this project's map the core's rows begin at 0x10, where an ap_ctrl_hs kernel'
 
 So the kernel is user-managed, and **nothing sits below 0x10**: the four words there read 0, and a write there is refused, REGISTER_ACCESS.
 
-The kernel's rows are a block of their own, **`kernel` = [0xE00, 0xF00]**, taken from the end of the core's range. The core had no row there (its last is at 0x11C) and decodes its range from the package, so no line of the core changed.
+The kernel's rows are a block of their own, **`kernel` = [0xE00, 0xF00]**, taken from the end of the core's range. The core had no row there (its last row, `shadow_words` at 0x118, ends at 0x11C) and decodes its range from the package, so no line of the core changed.
 
 | row | offset | access | what |
 |---|---|---|---|
@@ -162,13 +162,32 @@ The bench rows:
 
 | row | top | tests |
 |---|---|---|
-| `krnl-first`, both profiles | `undertone_krnl` | `identity_e0` (E0's shape, slots across a 4 KB page, random holds, a memory whose AWREADY waits for WVALID, a swap written while the run goes and committed at a named index; under s16x1 at the seam's sigma, a table of 459 entries, with two pulses that touch), `identity_long_bursts`, `identity_hidden` (every row at every tap, all twelve hidden units), `capabilities_are_accepted`, `identity_on_axi_ram` |
-| `krnl-max`, both profiles | `krnl_max` | `identity_e0`, `capabilities_are_accepted` |
+| `krnl-first`, both profiles | `undertone_krnl` | `identity_e0` (E0's shape, slots across a 4 KB page, random holds, a memory whose AWREADY waits for WVALID, a swap written while the run goes and committed at a named index; under s16x1 at the seam's sigma, a table of 459 entries, with two pulses that touch), `identity_long_bursts`, `identity_hidden` (every row at every tap, all twelve hidden units), `capabilities_are_accepted`, `the_first_builds_maxima`, `identity_on_axi_ram` |
+| `krnl-max`, both profiles | `krnl_max` | `identity_e0`, `capabilities_are_accepted`, `the_definitions_maxima` |
 | `krnl-small-s16x1`, `krnl-small-s24x3` | `krnl_small` | `identity_small` (a burst held to meet a page's edge, random holds, the last answer late; then the comparison handed a model one record late must report WORD at 0), `identity_w_before_aw` (a memory whose AWREADY waits for WVALID), `truth_isolation` (3/1 and 6/2 at one index, the same samples, the same digests), `truth_while_running`, `chain_refusal_ends_the_run`, `queue_overflow_refused`, `memory_error_refused`, `refused_at_the_edge`, `reset_between_runs` |
 
-**The capability-bits gate.** `capabilities_are_accepted` reads every capability register through the port. For each bound it configures a shape at the advertised value, with the others small, and requires it taken; then one past it, which must be refused by that bound's name. The bounds are filters, taps, pool, the score shift, hidden units, the hidden shift, and rows under s24x3 only (core.md, limit 12). Each rectifier code from 0 to 7 is taken or refused as `cap_rectifiers` says. Each case begins with `krn_reset`, since a configured core has no way back.
+**The capability-bits gate.** `capabilities_are_accepted` (in `krnl_host`, run on the packaged top and at the definition's maxima) reads every capability register through the port. Each case begins with `krn_reset`, since a configured core has no way back. For each register the core and the source answer, it configures something at the advertised value with everything else small, and requires it taken; then one past it, which must be refused by that bound's name:
+- the profile, `cap_sample_bits` and `cap_channels`: PROFILE_UNKNOWN;
+- `cap_filters`, `cap_taps`, `cap_pool`, `cap_score_shift`, `cap_hidden`, `cap_hidden_shift`: each its own name;
+- `cap_rows`, under s24x3 only (core.md, limit 12): SHAPE_ROWS;
+- `cap_rectifiers`: each code from 0 to 7 taken or refused, SHAPE_RECTIFIER, as its bits say;
+- `cap_coeff_bits`: a weight at each end of the range taken, one past either end refused, WEIGHT_RANGE;
+- `cap_noise_table`: a table of that many entries declared, one more refused, NOISE_RANGE.
 
-**The mutants**: nineteen runs, each read by its evidence (K6):
+Three registers are read and not tried here:
+- `cap_blob_versions`: the fabric sees no blob (core.md, limit 6);
+- `cap_inject_pending`: offering 1,024 truth records would be most of a run;
+- `cap_record_queue`: tried only on the small top, by `queue_overflow_refused` and its mutant `advertises-a-deeper-queue`.
+
+**No value is compared here with a number of the bench's own.** A register that reads wrong is seen only through what the build then takes or refuses, so the gate's two controls fail through the gate's check alone:
+- `advertises-a-longer-filter`: a shape at the advertised taps is refused;
+- `takes-one-tap-past-its-advertisement`: a shape past them is taken.
+
+That the packaged top advertises the first build's maxima is a test of its own, `the_first_builds_maxima`; `the_definitions_maxima` is its partner on the large top. Until commit 6e48999 that comparison sat inside the gate's test, and VKRNL showed the control then failed on it alone. Two more faults were tried by hand, each failing the gate where predicted (K24):
+- `cap_coeff_bits` one more: "weights at the advertised coefficient's ends were refused WEIGHT_RANGE";
+- `cap_noise_table` one more: "a table of the advertised 32768 entries was refused NOISE_RANGE".
+
+**The mutants**: twenty-four runs, each read by its evidence (K6):
 
 | mutant | row | what it plants | must fail | what its evidence says |
 |---|---|---|---|---|
@@ -182,6 +201,10 @@ The bench rows:
 | `writes-one-twice` | krnl-small-s24x3 | record 5's beat sent and sent again as the next | `identity_small` | WORD at record 6: index 5 where the model has 6 |
 | `advertises-a-deeper-queue` | krnl-small-s24x3 | `cap_record_queue` reads twice the depth | `queue_overflow_refused` | `krn_records` 13 where the advertisement predicts 21 (5 taken and a queue of 16) |
 | `advertises-a-longer-filter` | krnl-first, both profiles | a copy of `rtl/core/core.sv` reads `cap_taps` as one more | `capabilities_are_accepted` | "a shape at the advertised taps was refused SHAPE_TAPS", under each profile |
+| `takes-one-tap-past-its-advertisement` | krnl-first, both profiles | a copy of `rtl/core/core.sv` takes a shape one tap past `cap_taps` | `capabilities_are_accepted` | "a shape past the advertised taps was refused none, not SHAPE_TAPS", under each profile |
+| `buffer-taken-while-running` | krnl-small-s16x1 | `krn_buffer`'s lower word taken while a run goes | `refused_at_the_edge` | "krn_buffer word 0 while running: none" |
+| `alignment-checked-above-bit-0` | krnl-small-s16x1 | the base's alignment checked on bits 4 to 1 only | `refused_at_the_edge` | "a base 1 byte(s) off: refused RUN_START, not BUFFER_ALIGN" |
+| `bursts-after-an-error` | krnl-small-s16x1 | bursts still issued after an answer of SLVERR | `memory_error_refused` | "1 burst(s) offered after the error's answer at clock 1218" |
 | `a-slot-skipped-after-a-burst-of-16` | krnl-first, both profiles | the next burst's address one slot on after a burst of 16 | `identity_long_bursts` | WORD at record 19, the pattern in the slot, under each profile: the first burst of 16 was slots 3 to 18 |
 | `a-slot-skipped-after-a-burst-over-8` | krnl-first, both profiles | the same after any burst of more than 8 | `identity_long_bursts` | WORD at record 19, the pattern in the slot, under each profile |
 | `wlast-early-in-a-burst-of-16` | krnl-first, both profiles | WLAST a beat early in a burst of 16 | `identity_long_bursts` | the memory model's faults "beat 17: WLAST 1 on beat 14 of 16" and "beat 35: ...", under each profile |
@@ -246,19 +269,26 @@ Each is stated by the behaviour it concedes.
 5. **Truth from the host at a long run's rate is not simulated.** No run here holds more than one truth record written while it runs, nor needs more than the injector's store of 1,024, which a run of 65,536 frames would.
 6. **The memory model is this parcel's reading of AXI4**, cross-checked by `identity_on_axi_ram` against cocotbext-axi's `AxiRamWrite` once a profile. The rule it holds the kernel to, that a master raises neither valid waiting on a ready, is remembered and not read (K22). It imposes two orders a slave may impose: data only once its address is taken, always; an address only while data is offered, in the tests that ask. It never takes data before its address, so a kernel whose data needed to go first is not exercised. It never reorders answers. A master that broke the rule only for some bursts (those of more than one beat, say) is not planted: the tests in that mode would see it only if such a burst came in them.
 7. **Done is polled every 12 clocks.** Done is sticky, so a done that rose is seen. What is held is that when it was first read every burst was answered, not the clock it rose at.
-8. **The drain is 128 clocks**, twice the chain's latency of 63 by the blocks' documents. A chain whose latency grew past 128 would end every run RUN_LENGTH, loudly, on every identity test; it would not pass silently.
+8. **The drain is 128 clocks**, twice the chain's latency of 63 by the blocks' documents. A drain too short ends a run before the chain's last records are out, and the run ends RUN_LENGTH with those slots unwritten. Which tests see a drain only a little short is measured, not argued:
+   - a drain of 1 clock fails `identity_small` (K17);
+   - drains of 30 to 66 clocks pass `identity_small`, and are caught by `truth_isolation`, `truth_while_running` and `reset_between_runs` (VKRNL, K25).
+   
+   So a chain whose latency grew past 128 would be refused loudly by those tests, and not by every identity test.
 9. **A record arriving at the edge that frees a slot of a full queue is refused.** The queue's count is read before that edge's beat leaves.
-10. **After MEMORY_WRITE the queued records are abandoned.** `krn_records` counts only the records answered OKAY before the first error. One error test runs: the fourth burst answered SLVERR, with no stall.
+10. **After MEMORY_WRITE the queued records are abandoned.** `krn_records` counts only the records answered OKAY before the first error. One error test runs: the fourth burst answered SLVERR, three records late, while the memory holds its address and data so that records wait unissued. It holds that no burst is offered after the error's answer. A burst offered before the answer is still completed, as AXI requires, and is not counted.
 11. **Up to 16 bursts may be unanswered**; no test asserts that sixteen ever were.
 12. **The edge's refusals, the stall, the error, the chain's refusal, the reset and the truth during a run are held on the small top.** The kernel's lines there are the packaged top's, at other parameters. On the packaged top they are not run.
 13. **A burst meeting a page's edge is held by `identity_small` and `identity_long_bursts`**, where holds make a burst of several beats end there. On the other tests the memory model's check holds the page rule on whatever bursts happen. Bursts of 9 to 16 beats are made by construction in `identity_long_bursts` alone.
 14. **A record arriving with no run going** (RUN_LENGTH) is not reachable without a fault and is not run. Neither are an answer nobody asked for (MEMORY_WRITE) and a source that stops before its count.
-15. **Each record of an identity test is counted twice in the stage's total**: once from memory and once as written.
+15. **The stage's total counts most records twice.** A run held whole by `hold_run` counts each record once from memory and once as written. `identity_on_axi_ram`'s and the second run of `truth_while_running` are held from memory alone, and count once.
 16. **A mutant shows the bench sees its fault under one profile**, but for the capability mutant, which runs under both. One mutant adds logic of its own, `truth-reaches-the-core` (a register and an XOR on one line). Its evidence is at the record it predicts (K6), which is what holds it.
 17. **`advertises-a-longer-filter` edits RTL-B's file**, `rtl/core/core.sv`, as text inside the mutant. It stops applying when that line changes, and the stage then refuses it by name.
 18. **The swap through the kernel is at one index**, in `identity_e0`: other gains of E0's shape, at index 80 under s16x1 and 50 under s24x3.
 19. **The first build's pool memory is 65,536 entries** (the definition's `max_pool`) of 164 bits under s16x1, 10,747,904 bits, uncounted by the round's plan, which counts DSP slices. What it costs is the build's report's to say.
 20. **The streams are short and the sigmas mostly small**, to keep the run time under four minutes (K4). The seam's sigma, a table of 459 entries, is run in one test, `identity_e0` under s16x1.
+21. **A host can clear `krn_refusal` while a run goes**, by the rule every block's refusal register has. If it clears a refusal the run latched (RECORD_QUEUE, say), the run's end latches nothing more, since the run is halted. The run then ends with `done` and a refusal of 0, and only `krn_records` against `krn_frames` says it was short. A host reads `krn_records` after every run; nothing here holds that it does (VKRNL, K25).
+22. **The routing of writes to one block is not observable by any bench.** Each block decodes its own range and does nothing outside it, so a kernel that sent every write to all three blocks, as the seam's top does, would pass everything here. That the truth rows never reach the core's port rests on the RTL's reading (`hit_core` and its two siblings in `undertone_krnl.sv`), not on a test (VKRNL, K25).
+23. **The edge's refusals are tried word by word, and the gate by trial**, as section 6 says. While a run goes, every word of the three arguments, `krn_start` and `krn_reset` are tried. The base is tried 1, 2, 4, 8 and 16 bytes off. Only `cap_blob_versions`, `cap_inject_pending` and, on the large tops, `cap_record_queue` are read without trial.
 
 ## 10. Register
 
@@ -268,10 +298,10 @@ Each is stated by the behaviour it concedes.
 |---|---|---|---|---|
 | K1 | A score record is 168 bits, 21 bytes, in a slot of 32: 11 bytes of zeros after it | READ | `spec/undertone.toml`, `[records]` and `[memory]` | the definition |
 | K2 | A queue of 512 covers a memory that takes nothing for 10,240 clocks (102.4 us at 100 MHz) under s16x1 and 30,720 under s24x3 | COMPUTED | 512 x 20 and 512 x 60 clocks a record (the plan, L12); 10,240 x 10 ns | arithmetic |
-| K3 | On a copy holding this parcel's four rows, the stage passed: 32 tests in 6 runs of 4 benches, 2,728 records identical to the model's, 19 mutant runs each failed as named, 25 build logs read and the 50 lines in them each on the committed list | MEASURED | the stage on a copy, 2026-11-24 11:33:39 to 11:34:16, with `identity_long_bursts` and its four mutants: its OK line | the gate's second size, whose line for the stage holds these rows' with the others' |
-| K4 | The twenty-five runs of those rows took 130 s summed, each run's own time by the runner's count, six side by side; the longest was 20 s, `krnl-small-s24x3.s24x3`. An earlier run of sixteen of them, on a busier desktop (10:38), summed to 223 s, its longest 37 s | MEASURED | the same run of the stage: its `runner.log`, the lines "ran ... in N s", added; the earlier, that run's | another run; another load |
-| K5 | cocotb's own count of the simulated nanoseconds a wall second, for each run's whole test list, was 22,016 and 21,143 on `krnl-first` (s16x1, s24x3), 14,592 and 16,995 on `krnl-max`, 23,420 and 29,715 on `krnl-small`: about 1,500 to 3,000 clocks a second at 10 ns, the AXI4-Lite writes that load each run among them | MEASURED | the same run: the TESTS line of cocotb's summary in each run's log | another run; another load |
-| K6 | Each of the nineteen mutant runs failed at the record and field section 6's table gives | MEASURED | the same run, and the run of the row `krnl-first` alone at 11:32:44: each mutant run's log, read for its failure; the ten first mutants' evidence is the same as at 10:38, when the writer waited for AWREADY | the gate's second size: each fails as named there; its place is in its evidence |
+| K3 | On a copy holding this parcel's four rows, the stage passed: 36 tests in 6 runs of 4 benches, 2,728 records identical to the model's, 24 mutant runs each failed as named, 30 build logs read and the 60 lines in them each on the committed list | MEASURED | the stage on a copy, 2026-11-24 11:45:09 to 11:46:01, with every test and mutant of this page: its OK line | the gate's second size, whose line for the stage holds these rows' with the others' |
+| K4 | The thirty runs of those rows took 198 s summed, each run's own time by the runner's count, six side by side; the longest was 24 s, `krnl-small-s24x3.s24x3`. An earlier run of sixteen of them, on a busier desktop (10:38), summed to 223 s, its longest 37 s | MEASURED | the same run of the stage: its `runner.log`, the lines "ran ... in N s", added; the earlier, that run's | another run; another load |
+| K5 | cocotb's own count of the simulated nanoseconds a wall second, for each run's whole test list, was 16,462 and 15,372 on `krnl-first` (s16x1, s24x3), 10,761 and 10,884 on `krnl-max`, 17,282 and 25,665 on `krnl-small`: about 1,000 to 2,600 clocks a second at 10 ns, the AXI4-Lite writes that load each run among them | MEASURED | the same run: the TESTS line of cocotb's summary in each run's log | another run; another load |
+| K6 | Each of the twenty-four mutant runs failed at the record and field section 6's table gives | MEASURED | the same run: each mutant run's log, read for its failure; the ten first mutants' evidence is the same as at 10:38, when the writer waited for AWREADY | the gate's second size: each fails as named there; its place is in its evidence |
 | K7 | The packaging and the top's header agree with the definition, and the check reports each of fourteen planted faults | MEASURED | `python -m pytest -q -p no:cacheprovider tests/test_krnl_packaging.py`, 2026-11-24 11:08: 2 passed | that command |
 | K8 | A run of 2^20 samples at 100 MHz under s16x1 lasts 0.21 s and needs 7,168 truth records written while it runs, 195,313 register writes a second | COMPUTED | 1,048,576 x 20 / 1e8; the plan, L36 and L37: 8,192 - 1,024; 5.0e6 / 128 x 5 | arithmetic |
 | K9 | The first build's pool memory is 10,747,904 bits under s16x1 | COMPUTED | 65,536 entries x 4 filters x 41 bits; 41 is `W_RECT` of `rtl/core/core.sv` line 86 at 16-bit samples, 1 row a filter and 128 taps: 32 + 8 + 1 | the build's utilisation report |
@@ -289,3 +319,5 @@ Each is stated by the behaviour it concedes.
 | K21 | With a port's width in the top's header parted from the package's (the slave's read address of 13 bits; the master's data of 512 bits), the simulation stopped at elaboration: "undertone_krnl: a port's width written in the port list is not the definition's" | MEASURED | the stage on a copy with the row `krnly` and those two mutants, 2026-11-24 11:09:23 to 11:09:36: "2 mutant run(s) each failed as named", each run's log a FATAL from `undertone_krnl.sv` with that message; the rows are `scratch/KRNL/extra2.toml` | nothing in the tree: these mutants are not in the manifest |
 | K22 | AXI4, section A3.3.1: a master must not wait for AWREADY or WREADY before raising AWVALID or WVALID; a slave may wait for AWVALID or WVALID, or both, before raising AWREADY, and likewise before raising WREADY | BELIEVED | remembered by this parcel, by the verifier VKRNL and by the lead; the specification was not read on 2026-11-24 | AMD's or Arm's AXI4 specification, section A3.3.1 |
 | K23 | The writer of commits a0e443b to bf7fa06 raised WVALID only after AWREADY. With `krnl_mem` changed only so that AWREADY waits for WVALID, every test of `krnl-small-s16x1` hung: no beat taken, the queue full, done never raised | READ | the round's ledger, `lead.md`, entry 11:22, VKRNL's measurement on a copy | the mutant `w-waits-for-the-address`, which plants that writer and fails `identity_w_before_aw` at its bound (section 6) |
+| K24 | With `cap_coeff_bits` read as one more, `capabilities_are_accepted` failed: "weights at the advertised coefficient's ends were refused WEIGHT_RANGE"; with `cap_noise_table` read as one more: "a table of the advertised 32768 entries was refused NOISE_RANGE"; and with `cap_taps` one more, `the_first_builds_maxima` failed on its own comparison | MEASURED | the stage on a copy with the row `krnlz` and those three mutants, 2026-11-24 11:46:18 to 11:46:28: "3 mutant run(s) each failed as named", each log read; the rows are `scratch/KRNL/extra3.toml` | nothing in the tree: these mutants are not in the manifest |
+| K25 | The verifier VKRNL found, on commit 29c843b: no burst of more than 8 beats in any bench; the capability control failing on the bench's literal maxima alone; KERNEL_BUSY tried on one word, BUFFER_ALIGN on one offset, and no burst after MEMORY_WRITE held only as fewer bursts than frames; identity_on_axi_ram's done check unable to fail; drains of 30 to 66 clocks passing identity_small; a host's clear of krn_refusal during a run; the routing of writes unobservable | READ | the lead's message to this parcel of 2026-11-24, VKRNL's report in substance (the round's folder, `reports/VKRNL.md`) | that report |

@@ -74,7 +74,8 @@ class Memory:
         self.aw_waits_for_w = False     # AWREADY only while WVALID is high, as a slave may (AXI4 A3.3.1, BELIEVED)
         self.late_beat, self.late_clocks = None, 0
         self.error_burst = None
-        self.bursts = []        # (clock, address, beats)
+        self.bursts = []        # (clock taken, address, beats, clock first offered)
+        self._offered = None
         self.beats = []         # (clock, address, the 32 bytes)
         self.answers = []       # clock of each answer taken
         self.faults = []
@@ -106,13 +107,17 @@ class Memory:
             await RisingEdge(self.clk)
             self.clock += 1
             # ---- the handshakes at this edge ----
-            if self._drive["awready"] and self._one("awvalid"):
+            awvalid = self._one("awvalid")
+            if awvalid and self._offered is None:
+                self._offered = self.clock              # the first edge this address was seen offered
+            if self._drive["awready"] and awvalid:
                 addr = self._sig("awaddr").value.to_unsigned()
                 beats = self._sig("awlen").value.to_unsigned() + 1
                 size = self._sig("awsize").value.to_unsigned()
                 burst = self._sig("awburst").value.to_unsigned()
                 n = len(self.bursts)
-                self.bursts.append((self.clock, addr, beats))
+                self.bursts.append((self.clock, addr, beats, self._offered))
+                self._offered = None
                 if (1 << size) != SLOT or burst != 1 or beats > MAX_BEATS:
                     self.faults.append("burst %d: size %d, type %d, %d beats" % (n, size, burst, beats))
                 if addr % SLOT or (addr % PAGE) + beats * SLOT > PAGE:
