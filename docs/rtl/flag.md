@@ -99,8 +99,9 @@ Each is stated by the behaviour it concedes.
 8. **A hidden value past 2^64.** Under `s16x1` on these builds no hidden value reaches 2^64, since the hidden sum is 65 bits. Under `s24x3` the first excursion without a swap is within one step of the edge. E6's two swap cases, both on unit 0, are the only far hidden values. So a two-bit fit test is seen only by them, and only under `s24x3`.
 9. **Stickiness from a hidden source** is shown under `s24x3` only: under `s16x1` its return needs about 690 more frames. From the score it is shown under both.
 10. **The status bit is read at the end of a stream,** with nothing in flight, not at every clock.
-11. **A mutant shows the bench sees its fault under one profile,** the one section 5 gives.
-12. **Nothing here is evidence about sensitivity.**
+11. **The flag across a swap is not driven here.** E6's swap is the case's own first excursion; no case raises the flag and then swaps. A flag cleared by a swap passes this bench, and is `bench_core_max`'s `bit_identity_boundaries`, "the flag stays, across a swap", and not this page's.
+12. **A mutant shows the bench sees its fault under one profile,** the one section 5 gives.
+13. **Nothing here is evidence about sensitivity.**
 
 What this changes in [core.md](core.md)'s limit 23 is for the lead to restate. On the small top every state of the four sources is driven at the first excursion, by construction, under `s24x3`. At twelve units, on a top of its own, the structure of E2 is driven. The closing verifier's two faults now each have a mutant that fails a named test. The full top's own sentence stands: nothing new runs on `core`.
 
@@ -118,3 +119,4 @@ What this changes in [core.md](core.md)'s limit 23 is for the lead to restate. O
 | F8 | A hidden sum of the small top and of `core_twelve` is 65 bits under `s16x1` and 73 under `s24x3`, so the fit's window is 2 bits and 10 | COMPUTED | `rtl/core/core.sv`, W_HEAD: 32 + 18 + clog2(5 x 1,024 x 6) and 40 + 18 + the same; `rtl/core/core_head.sv`, W_HEADX | the RTL's widths changing |
 | F9 | At its first excursion without a swap a hidden value leaves its field by less than one step of at most 2^19 x 2^E x 6: about 2^53.6 under `s16x1` and 2^61.6 under `s24x3`, so never past 2^64 | COMPUTED | G at most 2^19 in magnitude; n grows by at most 6 an output in this family | a case of the family whose excursion is larger |
 | F10 | The rows' limits are 50, 30, 40 and 30 seconds, about three times the longest run of each measured | DECISION | F3 and F4; the lead's ruling at the word to build | the lead |
+| F11 | In the gate's second size on the tree of this parcel's first commit, the stage `rtl-benches` held 200 tests in 18 runs of 17 benches, 83,627 records and 109 mutant runs, which is round 2's 172, 14, 13, 63,946 and 96 with F4's 28, 4, 4, 19,681 and 13 added; this parcel's runs took 81 seconds of it | MEASURED | `bash verify/run.sh --with rtl`, run 20261124-102804-655d303, 2026-11-24 10:28 to 10:37: the stage's OK line, and the lines "ran flag-... in n s" of the stage's `runner.log`, summed; round 2's figures from [the plan](../plans/R3-first-light.md), row L2 | a rerun |
