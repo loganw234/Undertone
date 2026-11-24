@@ -746,3 +746,154 @@ file = "rtl/core/core.sv"
 edits = [["spec_hash[((reg_addr - REG_SPEC_HASH_OFFSET) / WBYTES)*WORD +: WORD]", "spec_hash[(REG_SPEC_HASH_WORDS - 1 - (reg_addr - REG_SPEC_HASH_OFFSET) / WBYTES)*WORD +: WORD]"]]
 must_fail = ["identity_block_reads_back"]
 kind = "WORD"
+
+# ---------------------------------------------------------------------------------------------
+# Parcel SEAM-2: the three blocks wired together. docs/rtl/seam.md says what each mutant shows.
+# One row a profile, so that the bench runs under both and a mutant runs under one.
+# Every mutant but one is a mutant of the top's wiring; `ratio-as-written` is a mutant of the
+# injector, in a copy, since the ratio exists nowhere else.
+
+[[bench]]
+name = "seam-s16x1"
+toplevel = "seam"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/seam/seam_core.sv", "rtl/seam/seam.sv"]
+module = "bench_seam"
+profiles = ["s16x1"]
+identity = ["bit_identity_first_frames", "bit_identity_chain", "truth_isolation", "bit_identity_swap", "bit_identity_hand_over"]
+
+# The injector bypassed: the core reads the source's frames.
+[[bench.mutant]]
+name = "injector-bypassed"
+file = "rtl/seam/seam.sv"
+edits = [[".in_valid(inj_valid),", ".in_valid(src_valid),"], [".in_frame(inj_frame),", ".in_frame(src_frame),"]]
+must_fail = ["bit_identity_first_frames"]
+kind = "WORD"
+
+# A frame late between the source and the injector: the data a clock after its valid.
+[[bench.mutant]]
+name = "joint-one-data-late"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic [W-1:0] late_frame;\n    always_ff @(posedge clk) late_frame <= src_frame;"], [".in_frame(src_frame),", ".in_frame(late_frame),"]]
+must_fail = ["bit_identity_first_frames"]
+kind = "WORD"
+
+# The other way round between the injector and the core: the valid a clock after its data. The
+# injector holds its frame, so every word is right and comes a clock late: the clocks' test sees it.
+[[bench.mutant]]
+name = "joint-two-valid-late"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic late_valid;\n    always_ff @(posedge clk) late_valid <= inj_valid;"], [".in_valid(inj_valid),", ".in_valid(late_valid),"]]
+must_fail = ["the_chains_clocks"]
+kind = "WORD"
+
+# Truth read by the core's side: the top reads the truth records' indexes off the bus as they are
+# written and puts one bit made of them into the lowest bit of the core's frame.
+[[bench.mutant]]
+name = "truth-on-the-cores-side"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic leak;\n    always_ff @(posedge clk) begin\n        if (rst) leak <= 1'b0;\n        else if (reg_valid && reg_we && reg_addr == REG_INJ_TRUTH_INDEX_OFFSET) leak <= leak ^ reg_wdata[0];\n    end"], [".in_frame(inj_frame),", ".in_frame(inj_frame ^ {{(W-1){1'b0}}, leak}),"]]
+must_fail = ["truth_isolation"]
+kind = "WORD"
+
+# A truth record's ratio as written, not its value, reaching the samples: the delta from the numerator alone.
+[[bench.mutant]]
+name = "ratio-as-written"
+file = "rtl/inject/inject.sv"
+edits = [["s2_den <= active ? head_den : 32'd1;", "s2_den <= 32'd1;"]]
+must_fail = ["truth_isolation"]
+kind = "WORD"
+
+# A swap that does not happen: the commit's upper word never reaches the core.
+# Written as an assign with every comparison in its own brackets, and not as an expression in the
+# port's own brackets: docs/rtl/seam.md, section 5, says what the other way did under Icarus.
+[[bench.mutant]]
+name = "swap-does-not-happen"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic core_valid;\n    assign core_valid = reg_valid && !(reg_we && (reg_addr == (REG_COMMIT_AT_OFFSET + 4)));"], [".out_record(out_record),\n        .reg_valid(reg_valid),", ".out_record(out_record),\n        .reg_valid(core_valid),"]]
+must_fail = ["bit_identity_swap"]
+kind = "WORD"
+
+# The source's reg_rdata left off the bus.
+[[bench.mutant]]
+name = "source-off-the-bus"
+file = "rtl/seam/seam.sv"
+edits = [["assign reg_rdata = src_rdata | inj_rdata | core_rdata;", "assign reg_rdata = inj_rdata | core_rdata;"]]
+must_fail = ["one_bus_three_blocks"]
+kind = "WORD"
+
+# A wire that loses one high bit: at the core's input, the bit below the sign of the first channel's
+# sample carries the sign. Every sample that fits one bit fewer is right; only a pulse near the top
+# of the range is not, which only the long stream has.
+[[bench.mutant]]
+name = "a-high-bit-lost-at-joint-two"
+file = "rtl/seam/seam.sv"
+edits = [[".in_frame(inj_frame),", ".in_frame({inj_frame[W-1:SAMPLE_BITS-1], inj_frame[SAMPLE_BITS-1], inj_frame[SAMPLE_BITS-3:0]}),"]]
+must_fail = ["bit_identity_chain"]
+kind = "WORD"
+
+# The learner's hand-over one frame late: the commit's index reaches the core one higher.
+[[bench.mutant]]
+name = "hand-over-a-frame-late"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic [BUS_WORD_BITS-1:0] core_wdata;\n    assign core_wdata = (reg_we && (reg_addr == REG_COMMIT_AT_OFFSET)) ? (reg_wdata + 32'd1) : reg_wdata;"], [".reg_wdata(reg_wdata),\n        .reg_rdata(core_rdata)", ".reg_wdata(core_wdata),\n        .reg_rdata(core_rdata)"]]
+must_fail = ["bit_identity_hand_over"]
+kind = "WORD"
+
+[[bench]]
+name = "seam-s24x3"
+toplevel = "seam"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/seam/seam_core.sv", "rtl/seam/seam.sv"]
+module = "bench_seam"
+profiles = ["s24x3"]
+identity = ["bit_identity_first_frames", "bit_identity_chain", "truth_isolation", "bit_identity_swap", "bit_identity_hand_over"]
+
+# A frame late between the injector and the core: the data a clock after its valid.
+[[bench.mutant]]
+name = "joint-two-data-late"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic [W-1:0] late_frame;\n    always_ff @(posedge clk) late_frame <= inj_frame;"], [".in_frame(inj_frame),", ".in_frame(late_frame),"]]
+must_fail = ["bit_identity_first_frames"]
+kind = "WORD"
+
+# The other way round between the source and the injector: the valid a clock after its data.
+[[bench.mutant]]
+name = "joint-one-valid-late"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic late_valid;\n    always_ff @(posedge clk) late_valid <= src_valid;"], [".in_valid(src_valid),", ".in_valid(late_valid),"]]
+must_fail = ["the_chains_clocks"]
+kind = "WORD"
+
+# One block's reg_rdata left off the bus: the injector's, whose refusal register would then read
+# "no refusal" whatever it held.
+[[bench.mutant]]
+name = "inject-off-the-bus"
+file = "rtl/seam/seam.sv"
+edits = [["assign reg_rdata = src_rdata | inj_rdata | core_rdata;", "assign reg_rdata = src_rdata | core_rdata;"]]
+must_fail = ["one_bus_three_blocks"]
+kind = "WORD"
+
+# A swap a frame late: the commit's index reaches the core one higher.
+[[bench.mutant]]
+name = "swap-a-frame-late"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic [BUS_WORD_BITS-1:0] core_wdata;\n    assign core_wdata = (reg_we && (reg_addr == REG_COMMIT_AT_OFFSET)) ? (reg_wdata + 32'd1) : reg_wdata;"], [".reg_wdata(reg_wdata),\n        .reg_rdata(core_rdata)", ".reg_wdata(core_wdata),\n        .reg_rdata(core_rdata)"]]
+must_fail = ["bit_identity_swap"]
+kind = "WORD"
+
+# A swap to the weights the core already has: once the core has been started, the shadow's stream
+# never reaches it; the commit does. The epoch is then right at every record, and only the scores
+# say the weights are not the new ones.
+[[bench.mutant]]
+name = "shadow-never-written"
+file = "rtl/seam/seam.sv"
+edits = [["logic [W-1:0] inj_frame;", "logic [W-1:0] inj_frame;\n    logic started;\n    logic core_valid;\n    always_ff @(posedge clk) begin\n        if (rst) started <= 1'b0;\n        else if (reg_valid && reg_we && (reg_addr == REG_START_OFFSET)) started <= 1'b1;\n    end\n    assign core_valid = reg_valid && !(started && reg_we && ((reg_addr == REG_SHADOW_BEGIN_OFFSET) || (reg_addr == REG_SHADOW_DATA_OFFSET)));"], [".out_record(out_record),\n        .reg_valid(reg_valid),", ".out_record(out_record),\n        .reg_valid(core_valid),"]]
+must_fail = ["bit_identity_swap"]
+kind = "WORD"
+
+# The core's reg_rdata left off the bus.
+[[bench.mutant]]
+name = "core-off-the-bus"
+file = "rtl/seam/seam.sv"
+edits = [["assign reg_rdata = src_rdata | inj_rdata | core_rdata;", "assign reg_rdata = src_rdata | inj_rdata;"]]
+must_fail = ["one_bus_three_blocks"]
+kind = "WORD"
