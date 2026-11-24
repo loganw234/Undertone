@@ -103,3 +103,17 @@ d0 = "bit identity"
 kind = "stage"
 test = "rtl-benches"
 control = "ctl-rtl-benches"
+
+# KRNL (round 3): the kernel (rtl/krnl/, docs/rtl/krnl.md). A build advertises exactly what it accepts:
+# the benches bench_krnl and bench_krnl_max read every capability register through the kernel's AXI4-Lite
+# port and require a shape at each advertised bound taken and one past it refused by that bound's name, at
+# the first build's maxima and at the definition's. The stage's control stage plants faults in the JUDGE;
+# this gate's own control is the mutant `advertises-a-longer-filter` of the bench row krnl-first, a core
+# that advertises one tap more than it takes, which must fail. Held in simulation, without a second build;
+# on the card, by the card day's reading of the image's capability registers.
+[[gate]]
+name = "capability-bits"
+d0 = "capability bits"
+kind = "stage"
+test = "rtl-benches"
+control = "ctl-rtl-benches"

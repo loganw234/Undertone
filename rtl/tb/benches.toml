@@ -982,3 +982,120 @@ file = "rtl/seam/seam.sv"
 edits = [["assign reg_rdata = src_rdata | inj_rdata | core_rdata;", "assign reg_rdata = src_rdata | inj_rdata;"]]
 must_fail = ["one_bus_three_blocks"]
 kind = "WORD"
+
+# ---------------------------------------------------------------------------------------------------
+# KRNL (round 3): the kernel, rtl/krnl/undertone_krnl.sv, driven only through its AXI4-Lite port and its
+# memory; docs/rtl/krnl.md. Three tops: the packaged one at the first build's maxima, the same at the
+# definition's maxima, and the same at small maxima with a queue of 8 (two rows, one a profile, so that
+# each of its mutants runs under one). Each mutant is read by its evidence against the record and field
+# docs/rtl/krnl.md's table predicts, not by its verdict alone.
+
+[[bench]]
+name = "krnl-first"
+toplevel = "undertone_krnl"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv"]
+module = "bench_krnl"
+profiles = ["s16x1", "s24x3"]
+identity = ["identity_e0", "identity_hidden", "identity_on_axi_ram"]
+limit = 80
+
+# The capability-bits gate's control, held without a second build: a core that advertises one tap more
+# than it takes. RTL-B's file, edited here as text inside the mutant only.
+[[bench.mutant]]
+name = "advertises-a-longer-filter"
+file = "rtl/core/core.sv"
+edits = [["reg_rdata <= B_TAPS;", "reg_rdata <= B_TAPS + 1;"]]
+must_fail = ["capabilities_are_accepted"]
+kind = ""
+
+[[bench]]
+name = "krnl-max"
+toplevel = "krnl_max"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_max.sv"]
+module = "bench_krnl_max"
+profiles = ["s16x1", "s24x3"]
+identity = ["identity_e0"]
+limit = 40
+
+[[bench]]
+name = "krnl-small-s16x1"
+toplevel = "krnl_small"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
+module = "bench_krnl_small"
+profiles = ["s16x1"]
+identity = ["identity_small", "truth_isolation", "truth_while_running", "reset_between_runs"]
+limit = 110
+
+# A record writer that drops one record: record 5 counted and not queued.
+[[bench.mutant]]
+name = "drops-one-record"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["push = 1'b1;", "push = (rec_in != 64'd5);"]]
+must_fail = ["identity_small"]
+kind = "WORD"
+
+# A record writer that steps its address wrongly: each burst's next address advances one slot short.
+[[bench.mutant]]
+name = "address-steps-wrong"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["issued <= issued + len;", "issued <= issued + len - 1'b1;"]]
+must_fail = ["identity_small"]
+kind = "WORD"
+
+# A done raised before the last write is answered: the run's end waits for no answer.
+[[bench.mutant]]
+name = "done-before-answer"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["wr == WR_IDLE && outs == '0", "wr == WR_IDLE"], ["&& !m_axi_gmem_bvalid && (unissued", "&& (unissued"]]
+must_fail = ["identity_small"]
+kind = ""
+
+# A queue that overflows without the refusal: the record is dropped and nothing is latched.
+[[bench.mutant]]
+name = "queue-overflows-silently"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["r_code = C_QUEUE;", "r_code = '0;"]]
+must_fail = ["queue_overflow_refused"]
+kind = ""
+
+# An answer other than OKAY not read.
+[[bench.mutant]]
+name = "error-answer-ignored"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["if (outs == '0 || m_axi_gmem_bresp != 2'b00) begin", "if (outs == '0) begin"]]
+must_fail = ["memory_error_refused"]
+kind = ""
+
+# A kernel that routes a truth row to the core: the lowest bit of the last numerator written to the
+# injector, put into the lowest bit of every frame the core takes.
+[[bench.mutant]]
+name = "truth-reaches-the-core"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["assign core_frame = inj_frame;", "logic snoop = 1'b0; always @(posedge ap_clk) if (bus_valid && bus_we && bus_addr == REG_INJ_TRUTH_AMPLITUDE_NUM_OFFSET) snoop <= bus_wdata[0]; assign core_frame = inj_frame ^ {{(W-1){1'b0}}, snoop};"]]
+must_fail = ["truth_isolation"]
+kind = ""
+
+[[bench]]
+name = "krnl-small-s24x3"
+toplevel = "krnl_small"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
+module = "bench_krnl_small"
+profiles = ["s24x3"]
+identity = ["identity_small", "truth_isolation", "truth_while_running", "reset_between_runs"]
+limit = 120
+
+# A record writer that writes one twice: record 5's beat sent, and sent again as the next.
+[[bench.mutant]]
+name = "writes-one-twice"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["if (pop) rp <= rp + 1'b1;", "if (pop && !(rp == 5 && answered < 8)) rp <= rp + 1'b1;"]]
+must_fail = ["identity_small"]
+kind = "WORD"
+
+# A queue that advertises twice its depth.
+[[bench.mutant]]
+name = "advertises-a-deeper-queue"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["own_word = RECORD_QUEUE;", "own_word = 2 * RECORD_QUEUE;"]]
+must_fail = ["queue_overflow_refused"]
+kind = ""
