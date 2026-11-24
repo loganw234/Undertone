@@ -58,45 +58,51 @@
 //
 // WHAT IT DOES NOT DO, each a stated limit of docs/rtl/krnl.md: it reads no memory, so truth records
 // come from the host through the injector's rows; it holds no run past a refusal of its own; it does
-// not stop the source; it has never been synthesised or placed, and Icarus Verilog is the only tool
-// that has read it.
+// not stop the source; it has never been synthesised or placed. Vivado's IP packager read its first
+// version once and refused it (the package's names in its port list); this version has been read by
+// Icarus Verilog alone.
 `timescale 1ns / 1ps
 
+// THE PORT LIST AND THE PARAMETERS' DEFAULTS ARE PLAIN NUMBERS, never the package's names. Vivado's
+// IP packager reads `undertone_pkg::NAME` there as a parameter named undertone_pkg and refuses to
+// package (round 3, the lead's trial of 2026-11-24 11:06). Each number is the definition's:
+// tests/test_krnl_packaging.py holds every one to spec/constants.py, and the initial block below
+// stops a simulation whose port widths part from the package's. The body may use the package.
 module undertone_krnl #(
-    parameter int SAMPLE_BITS    = 16,
+    parameter int SAMPLE_BITS    = 16,        // the first build's profile, s16x1
     parameter int CHANNELS       = 1,
     // the first build's maxima (the round's plan, question 2); none may pass the definition's
     parameter int B_FILTERS      = 4,
     parameter int B_TAPS         = 128,
     parameter int B_ROWS         = 4,
-    parameter int B_POOL         = undertone_pkg::MAX_POOL,
-    parameter int B_SCORE_SHIFT  = undertone_pkg::MAX_SCORE_SHIFT,
+    parameter int B_POOL         = 65536,     // the definition's max_pool
+    parameter int B_SCORE_SHIFT  = 31,        // the definition's max_score_shift
     parameter int B_HIDDEN       = 12,
-    parameter int B_HIDDEN_SHIFT = undertone_pkg::MAX_HIDDEN_SHIFT,
+    parameter int B_HIDDEN_SHIFT = 31,        // the definition's max_hidden_shift
     // the queue between the core and memory, in records: a power of two
     parameter int RECORD_QUEUE   = 512
 ) (
     input  logic                                        ap_clk,
     input  logic                                        ap_rst_n,     // active low, synchronous
-    // the AXI4-Lite slave
-    input  logic [undertone_pkg::BUS_ADDRESS_BITS-1:0]  s_axi_control_awaddr,
+    // the AXI4-Lite slave: [bus] address_bits 12, word_bits 32
+    input  logic [11:0]                                 s_axi_control_awaddr,
     input  logic                                        s_axi_control_awvalid,
     output logic                                        s_axi_control_awready,
-    input  logic [undertone_pkg::BUS_WORD_BITS-1:0]     s_axi_control_wdata,
-    input  logic [undertone_pkg::BUS_WORD_BITS/8-1:0]   s_axi_control_wstrb,
+    input  logic [31:0]                                 s_axi_control_wdata,
+    input  logic [3:0]                                  s_axi_control_wstrb,
     input  logic                                        s_axi_control_wvalid,
     output logic                                        s_axi_control_wready,
     output logic [1:0]                                  s_axi_control_bresp,
     output logic                                        s_axi_control_bvalid,
     input  logic                                        s_axi_control_bready,
-    input  logic [undertone_pkg::BUS_ADDRESS_BITS-1:0]  s_axi_control_araddr,
+    input  logic [11:0]                                 s_axi_control_araddr,
     input  logic                                        s_axi_control_arvalid,
     output logic                                        s_axi_control_arready,
-    output logic [undertone_pkg::BUS_WORD_BITS-1:0]     s_axi_control_rdata,
+    output logic [31:0]                                 s_axi_control_rdata,
     output logic [1:0]                                  s_axi_control_rresp,
     output logic                                        s_axi_control_rvalid,
     input  logic                                        s_axi_control_rready,
-    // the AXI4 master: writes only; its read channels are tied off
+    // the AXI4 master: writes only; its read channels are tied off. Data: [memory] slot_bytes 32, a slot a beat
     output logic [0:0]                                  m_axi_gmem_awid,
     output logic [63:0]                                 m_axi_gmem_awaddr,
     output logic [7:0]                                  m_axi_gmem_awlen,
@@ -108,8 +114,8 @@ module undertone_krnl #(
     output logic [3:0]                                  m_axi_gmem_awqos,
     output logic                                        m_axi_gmem_awvalid,
     input  logic                                        m_axi_gmem_awready,
-    output logic [8*undertone_pkg::MEMORY_SLOT_BYTES-1:0] m_axi_gmem_wdata,
-    output logic [undertone_pkg::MEMORY_SLOT_BYTES-1:0] m_axi_gmem_wstrb,
+    output logic [255:0]                                m_axi_gmem_wdata,
+    output logic [31:0]                                 m_axi_gmem_wstrb,
     output logic                                        m_axi_gmem_wlast,
     output logic                                        m_axi_gmem_wvalid,
     input  logic                                        m_axi_gmem_wready,
@@ -129,7 +135,7 @@ module undertone_krnl #(
     output logic                                        m_axi_gmem_arvalid,
     input  logic                                        m_axi_gmem_arready,
     input  logic [0:0]                                  m_axi_gmem_rid,
-    input  logic [8*undertone_pkg::MEMORY_SLOT_BYTES-1:0] m_axi_gmem_rdata,
+    input  logic [255:0]                                m_axi_gmem_rdata,
     input  logic [1:0]                                  m_axi_gmem_rresp,
     input  logic                                        m_axi_gmem_rlast,
     input  logic                                        m_axi_gmem_rvalid,
@@ -169,6 +175,13 @@ module undertone_krnl #(
                 || REG_KRN_BUFFER_WORDS != 2 || REG_KRN_SIZE_WORDS != 2 || REG_KRN_FRAMES_WORDS != 2
                 || REG_KRN_RECORDS_WORDS != 2 || REG_SRC_FRAMES_WORDS != 2 || WORD != 32) begin
             $fatal(1, "undertone_krnl: the queue is not a power of two, or the definition no longer fits this kernel");
+        end
+        // The port list's numbers against the package's (see the note above the module).
+        if ($bits(s_axi_control_awaddr) != BUS_ADDRESS_BITS || $bits(s_axi_control_araddr) != BUS_ADDRESS_BITS
+                || $bits(s_axi_control_wdata) != BUS_WORD_BITS || $bits(s_axi_control_rdata) != BUS_WORD_BITS
+                || $bits(s_axi_control_wstrb) != BUS_WORD_BITS / 8 || $bits(m_axi_gmem_wdata) != DATA
+                || $bits(m_axi_gmem_rdata) != DATA || $bits(m_axi_gmem_wstrb) != MEMORY_SLOT_BYTES) begin
+            $fatal(1, "undertone_krnl: a port's width written in the port list is not the definition's");
         end
     end
 
