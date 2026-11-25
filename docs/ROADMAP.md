@@ -280,6 +280,8 @@ The lead's answer that day: by the card's own time about 1,000 to 10,000 an hour
 
 *The lead's reading:* round 4's draft gains one measured row on the card day: a timed run of ten swaps, each part's time taken, so that the rate an hour is MEASURED for that host code. It is a measurement of scheduling, in the plan he has yet to approve, not approval of it.
 
+*Restated by the lead after round 4's third plan pass, whose verifier found both wrong:* the answer's first figure did not follow from its own reason. A test on 10,000 injections at about 0.26 s gives about 14,000 an hour by the card's time alone, and about 9,000 with each run's overhead as round 3's runs had it. The "1,000" was a whole case with Python's start, about 700 to 900 an hour. And the timed run of ten swaps cannot be done as said: the host library reads a run's records only once the run has ended. So the draft now times ten runs in a row, one a generation, and the rate is COMPUTED from their measured parts. A swap inside one run needs a library change that round 4 does not make. Logan is told the correction.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
