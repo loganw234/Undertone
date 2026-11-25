@@ -1,6 +1,6 @@
 # Round 4: stage E0 on the card, and a software stage of the question - the draft plan
 
-Drafted by the lead on 2026-11-25 on Logan's word "Yes, push. Then begin the round 4 draft", given when round 3 was pushed. **This is the fifth draft, after four verifier passes; the fifth draft's own corrections have not been read by a verifier. It is not approved: nothing of round 4 starts before Logan approves it.** It goes past a verifier before it comes to him, as rounds 2 and 3 did.
+Drafted by the lead on 2026-11-25 on Logan's word "Yes, push. Then begin the round 4 draft", given when round 3 was pushed. This is the fifth draft, after four verifier passes; the fifth draft's own corrections were not read by a verifier. **Approved by Logan on 2026-11-25 with two changes: the verifiers on Sonnet, and tracks A and B in parallel where they do not conflict. His word, and the lead's reading of it, are at the end; where they differ from the text above, his word governs.**
 
 Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION. An ESTIMATE or SURVEY figure drives no decision here until it is measured.
 
@@ -153,3 +153,34 @@ As round 3, with what it taught. Each is from Logan's word or from something `do
 7. **Verifiers on Opus again?**
    - *(Recommended)* **Yes**, as in round 3, named in every dispatch.
    - *The alternative:* another model you name.
+
+## Logan's word (2026-11-25, verbatim)
+
+The lead had put the seven questions to him, each with its recommendation, as one question: "Approve round 4's plan with every recommendation, or change some?"
+
+> Approved except verifiers on Sonnet, parcels on Opus. If possible we can do A and B in parallel, though if it would conflict too much it's acceptable to do A then B.
+
+*The lead's reading.* Round 4 runs as this plan has it, with each question answered as recommended but two:
+
+1. Tracks A and B, **in parallel where they do not conflict**, in place of "A, then B".
+2. Round 1's own E0 stream on the card, in pieces with offset seeds.
+3. A change of pulse shape.
+4. The overlap of `e1` with `e0` proposed by E2L's design and ruled by the lead before any run, and told to him then.
+5. The card day the lead's alone, in a booked daytime window, with word to him before and after.
+6. The lead asks him again before `main` moves and anything is pushed.
+7. **Verifiers on Sonnet**, named in every dispatch; **parcels on Opus**, as before.
+
+**What "in parallel" changes.** The one conflict between the tracks is the definition: the card's image carries round 3's, and the library refuses any other (L14). So the second pulse goes onto a branch of track B's own, not onto `r4`, until track A's card day has its tree. The waves become:
+
+| wave | what | whose | waits for |
+|---|---|---|---|
+| 0 | the round's branch `r4`, cut from `r4-plan`'s tip (`main` and this plan), as `r3` was cut from `r3-plan`'s | the lead | approval |
+| 1 | E0C, design then build, on `r4`, on round 3's definition; E2L, design | parcels | wave 0 |
+| 1b | the definition's `e1`, the lead's, on the second size, from E2L's ruled design, on a branch `r4-e1` cut from `r4`; E2L builds on it | the lead, then E2L | E2L's design ruled |
+| 2 | E0C merged into `r4`; the card day for stage E0 and the ten timed runs, from a snapshot of that merge | the lead | E0C ready |
+| 3 | E2L merged into `r4`, bringing `e1`; stage E2's full run; stage E1's run made again | the lead | E0C merged, and E2L ready |
+| 4 | the round's close | the lead | wave 3 |
+
+The card day needs only its snapshot, so it may run before or after E2L merges; its committed record then skips by name once `e1` is in `r4`, as track A says. If the two tracks meet another conflict, the lead serialises them, A then B, as his word allows, and says so in the ledger.
+
+His word is not leave to push.

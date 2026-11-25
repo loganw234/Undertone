@@ -6,7 +6,7 @@ The name is the thing it listens for: a faint signal under the noise. The projec
 
 ## Where it stands (2026-11-25)
 
-**Round 3, first light on the card, is done. The detector has run on the card, and every score word it put out equals the reference model's.** Round 4's plan is being drafted. The work is done in rounds, each with a plan the owner approves:
+**Round 3, first light on the card, is done. The detector has run on the card, and every score word it put out equals the reference model's.** Round 4, approved on 2026-11-25, is running: stage E0 on the card, and stage E2, induced drift, in software. The work is done in rounds, each with a plan the owner approves:
 
 - **Round 1 (2026-11-23): the reference model and the statistics, in software.** A plain integer Python model of the noise source, the injector, the detector core, the weight store and the scorer (`model/`), and a second, independent authority for sensitivity (`stats/`). As a matched filter the model reproduces the textbook curve at five amplitudes.
 - **Round 2 (2026-11-23): the fabric in simulation, and a learner in software.** SystemVerilog for the noise source, the injector, and the detector core with its weight store and a hidden layer in its head, each held against the model word for word in a simulation image of the project's own, and the three wired together ([docs/rtl/README.md](docs/rtl/README.md)). A learner that starts blank (`learn/`) reaches the matched filter's efficiency at stage E1 in software, 0.4949 against 0.5003 ([E1-software.md](docs/studies/E1-software.md)).
@@ -44,7 +44,7 @@ Sensitivity has a second authority, deliberately not the model: `stats/`, a text
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Where the project stands, the owner's decisions in his words, the plan of record, the routes for later, and how rounds are held. |
 | [docs/VALIDATION.md](docs/VALIDATION.md) | The append-only ledger: what ran, when, and what it does and does not show. |
 | [docs/studies/D0-rough-design.md](docs/studies/D0-rough-design.md) | The rough design, approved 2026-11-21. The owner's answers to its six questions close it. |
-| `docs/plans/` | Each round's plan: [round 1](docs/plans/R1-reference-model.md), [round 2](docs/plans/R2-fabric-in-simulation-and-the-learner.md), [round 3](docs/plans/R3-first-light.md); round 4's draft, not approved, [R4](docs/plans/R4-card-e0-and-drift.md). |
+| `docs/plans/` | Each round's plan: [round 1](docs/plans/R1-reference-model.md), [round 2](docs/plans/R2-fabric-in-simulation-and-the-learner.md), [round 3](docs/plans/R3-first-light.md); [round 4](docs/plans/R4-card-e0-and-drift.md). |
 | `docs/model/`, `docs/rtl/`, `docs/host/` | How the model, the RTL and the host library work, each page with its register of claims and its limits. The RTL starts at [docs/rtl/README.md](docs/rtl/README.md). |
 | `docs/studies/` | The studies: the launch data (D1 to D3), stage E1 in software, the head's synthesis, the card's platform, the card day. |
 | [CLAUDE.md](CLAUDE.md) | Notes for an agent working here: the front door and what has already bitten. |
