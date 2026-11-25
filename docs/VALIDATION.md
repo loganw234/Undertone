@@ -1988,7 +1988,7 @@ All of it: the card day's page and its scripts; the E1 record, its test's hashes
 
 ## 2026-11-25 - round 3: the closing verifier on the tip: every planted fault found, four wrong statements of the lead's and an overclaim, no regression, and the answers
 
-A fresh verifier read the lead's work of the round, none of which a verifier had read before: BUILD, the card day, stage E1 made again, the closing documents and the merges. **No regression, every card record it recomputed is the model's, and it remade every case byte for byte.** It found all five planted faults. It also found four statements of the lead's the record does not bear and one that says more than its evidence. All are corrected in the commit that carries this entry, with most of its smaller points. Logan's word, given while it ran, is to push once the verifiers return the round ready.
+A fresh verifier read the lead's work of the round, none of which a verifier had read before: BUILD, the card day, stage E1 made again, the closing documents and the merges. **No regression, every card record it recomputed is the model's, and it remade every case byte for byte.** It found all five planted faults. It also found four statements of the lead's the record does not bear and one that says more than its evidence. All are corrected in the commit that carries this entry, with most of its smaller points. Logan's word, given while it ran, is to push once the verifiers return the round ready. *Restated by the lead after the second narrow pass:* his words name "the verifier", and this pass did not return ready. The lead's reading was bounded after the first narrow pass, and after the second the lead asks him before pushing (the entries below).
 
 ### What ran
 
@@ -2042,7 +2042,7 @@ The commit that carries this entry: the corrections above, and Logan's word in t
 
 ### Logan's word, while it ran
 
-"Once the verifier returns ready you are clear to push and begin drafting round 4". The lead's reading is in the ROADMAP: `main` moves to `r3`'s tip and is pushed once the narrow pass on these corrections finds no regression and no wrong answer.
+"Once the verifier returns ready you are clear to push and begin drafting round 4". The lead's reading is in the ROADMAP: `main` moves to `r3`'s tip and is pushed once the narrow pass on these corrections finds no regression and no wrong answer. *Restated by the lead after the second narrow pass:* that reading was bounded in the next entry, and set aside in the one after it, where the lead asks Logan before pushing.
 
 ## 2026-11-25 - round 3: a narrow pass on the lead's corrections: its planted faults found, three more wrong statements, and the reading of Logan's word bounded
 
@@ -2056,7 +2056,7 @@ A fresh verifier read the commit of the lead's answers to the closing verifier, 
 
 - **Plants: 3 of 3**: the round's plant count made 32 of 32; row C13's corrected range made [3968, 131072); trap 19's 150 MHz link made 6 h 16 min. **In round 3, 34 of 34.**
 - **No regression.** VCLOSE3's B1 to B5, the faults planted in its own clone, are each right in the tree: the script's hash, the swap time, the E1 test's seven hashes, the run's end time and row R10's arithmetic.
-- **By its own commands**: every figure the corrections add, against the evidence, the report, git or arithmetic. All agree but the three planted and the three below.
+- **By its own commands**: every figure the corrections add, against the evidence, the report, git or arithmetic. All agree but the three planted and the three below. *Restated by the lead after the second narrow pass:* all it could check. It marked three as resting on the lead's word, not on its evidence: the 75-minute box, the 08:01:15 and the 2m48.365s.
 
 ### Wrong, the lead's, and the answers
 
@@ -2083,3 +2083,32 @@ The verifier's point: when Logan said "Once the verifier returns ready", the ver
 ### Changed after the last pass, and not seen by a verifier
 
 The commit that carries this entry. A second narrow pass reads it.
+
+## 2026-11-25 - round 3: a second narrow pass: its planted faults found, no regression, no other wrong figure, and the push put to Logan
+
+A fresh verifier read `9f79354`, the lead's answers to the first narrow pass. **No regression. It found its two planted faults and no other wrong figure in the tree.** It found three things left standing, answered in the commit that carries this entry. Like the first narrow pass, it read the lead's reading of Logan's word as more leave than his words give. **So the lead asks him before pushing**, and does not push on that reading.
+
+### What ran
+
+- **VCLOSE3-3**, fresh, on Opus, on a sealed clone of `9f79354` with two faults amended in. Its evidence was as before, with VCLOSE3-2's report added; not the lead's ledger. Its first run stopped on an API error before it reported; it was resumed and ran 10:17:35 to about 10:23 by its own clock, of a box of 30 minutes. It ran the first size once: PASS, 1,284 tests, none skipped.
+
+### Measured
+
+- **Plants: 2 of 2**: the first narrow pass's end time made 09:58:37, and row C2's count of docstring lines made four. **In round 3, 36 of 36.**
+- **No regression.** VCLOSE3-2's own plants are each right in the tree: row C13's range, trap 19's 150 MHz link, the round's count.
+- **Every other figure the corrections add agrees** with the evidence, the reports, git or arithmetic, but the third link's nice level, which rests on the lead's script.
+
+### Left standing, and the answers
+
+1. **The two earlier entries' readings of Logan's word**, the plural "once the verifiers return the round ready" and the unbounded one, had no note pointing at the bound. Each now has one.
+2. **The ROADMAP's route 1 said a timing query on the 100 MHz design "would show what an RTL change has to cover"** at 200 MHz. It is a list to start from, since a design placed for 200 MHz may differ. Restated.
+3. **Trap 19's nice 10 for the third link** cited nothing in the tree. It is the lead's `box_build.sh`, whose output opens with its own lines, and the trap now names it.
+And the first narrow pass's entry said every figure agreed, where that pass had marked three as resting on the lead's word. Restated.
+
+### The push
+
+The verifier's point, made twice: Logan's words were "once the verifier returns ready", and the verifier he meant, the closing pass, did not; the lead's reading carried his leave across to later passes. **The lead puts the push to him: the round as it stands, its last commit read by no verifier, with these three passes' record.**
+
+### Changed after the last pass, and not seen by a verifier
+
+The commit that carries this entry: the three answers above, and this entry.
