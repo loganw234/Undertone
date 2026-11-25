@@ -44,7 +44,7 @@ Sensitivity has a second authority, deliberately not the model: `stats/`, a text
 | [docs/ROADMAP.md](docs/ROADMAP.md) | Where the project stands, the owner's decisions in his words, the plan of record, the routes for later, and how rounds are held. |
 | [docs/VALIDATION.md](docs/VALIDATION.md) | The append-only ledger: what ran, when, and what it does and does not show. |
 | [docs/studies/D0-rough-design.md](docs/studies/D0-rough-design.md) | The rough design, approved 2026-11-21. The owner's answers to its six questions close it. |
-| `docs/plans/` | Each round's plan: [round 1](docs/plans/R1-reference-model.md), [round 2](docs/plans/R2-fabric-in-simulation-and-the-learner.md), [round 3](docs/plans/R3-first-light.md). |
+| `docs/plans/` | Each round's plan: [round 1](docs/plans/R1-reference-model.md), [round 2](docs/plans/R2-fabric-in-simulation-and-the-learner.md), [round 3](docs/plans/R3-first-light.md); round 4's draft, not approved, [R4](docs/plans/R4-card-sensitivity-and-drift.md). |
 | `docs/model/`, `docs/rtl/`, `docs/host/` | How the model, the RTL and the host library work, each page with its register of claims and its limits. The RTL starts at [docs/rtl/README.md](docs/rtl/README.md). |
 | `docs/studies/` | The studies: the launch data (D1 to D3), stage E1 in software, the head's synthesis, the card's platform, the card day. |
 | [CLAUDE.md](CLAUDE.md) | Notes for an agent working here: the front door and what has already bitten. |
