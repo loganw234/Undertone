@@ -12,7 +12,7 @@ tests/test_build_manifest.py on excerpts of real output.
 
 THE MANIFEST is one `key: value` a line. Fields written from the tool's own output, each with where it came
 from: the image's SHA-256 and size; the kernel clock the image carries (`xclbinutil --info`, its "Scalable
-Clocks", KERNEL_CLK); for -t hw, the worst slack of the whole design and every clock's row of the routed
+Clocks", DATA_CLK); for -t hw, the worst slack of the whole design and every clock's row of the routed
 timing summary's Intra Clock Table, as printed, and the kernel's row of the per-kernel utilisation report, as
 printed. Fields the build script hands in: the commit, the tree's hash, the clock asked for, the target, the
 platform, the part, the times.
@@ -58,11 +58,17 @@ def tree_hash(root):
     return h.hexdigest()
 
 
-SCALABLE = re.compile(r"Name:\s+KERNEL_CLK\s*\n\s*Index:\s+\d+\s*\n\s*Type:\s+KERNEL\s*\n\s*Frequency:\s+(\d+)\s+MHz")
+# The kernel's clock is the scalable clock named DATA_CLK, of type DATA: on this platform it is
+# ulp_ucs_aclk_kernel_00, the clock `--kernel_frequency` sets and v++ lowers when it does not close. The one
+# named KERNEL_CLK, of type KERNEL, is ulp_ucs_aclk_kernel_01, at 500 MHz in every image of round 3's (read on
+# 2026-11-25 with `xclbinutil --info` on the third link's image and the sweep's two). Until 2026-11-25 this read
+# KERNEL_CLK, and the third link's manifest said 500 where its kernel runs at 100.
+SCALABLE = re.compile(r"Name:\s+DATA_CLK\s*\n\s*Index:\s+\d+\s*\n\s*Type:\s+DATA\s*\n\s*Frequency:\s+(\d+)\s+MHz")
 
 
 def kernel_clock_mhz(info):
-    """The kernel clock an image carries, from `xclbinutil --info`'s "Scalable Clocks". None when it is not there."""
+    """The kernel's clock an image carries, in whole MHz as `xclbinutil --info`'s "Scalable Clocks" prints DATA_CLK.
+    None when it is not there, or is there twice."""
     found = SCALABLE.findall(info)
     return int(found[0]) if len(found) == 1 else None
 
