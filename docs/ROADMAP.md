@@ -163,6 +163,24 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 *The lead's reading:* round 3 starts, with all seven answered as recommended: shape A, first light on the card; the small first build; 16-bit samples on one channel, which settles which reading of "Proposed is approved" the first build takes; LCH-4, the faint launches, in this round; every verifier on Opus, by name; the card day the lead's alone, in a booked daytime window, with word to him before and after; and the lead asks him again before `main` moves and anything is pushed. His hours: the round's work, the lead's and every agent's, stops at about 18:00 on 2026-11-24 and resumes at 06:00 on 2026-11-25. His word is in the plan, with the reading of each answer. It is not leave to push.
 
+**2026-11-24, on the card and the sibling.** Unasked, while the round ran:
+
+> I don't believe they are utilizing the U50 for anything today until the nightly booking but if you have questions about the build tooling or U50 you can ask the cft-fp256 session
+
+*The lead's reading:* the card may be booked today, in daytime, before cft-fp256's nightly booking; the lead may ask that project's lead about Vitis, the build and the card. It asked that day, and its answers are in the round's ledger: the card left unheld and healthy by 17:45, the image loaded by the host and never programmed by hand, the kernel clock's period read from the routed summary, one heavy link at a time.
+
+**2026-11-24, on the clock.** Unasked, after the build at 100 MHz was planned:
+
+> If it passes well we can also try higher frequencies simply to see where we cap out at. But this is a decent starting point
+
+*The lead's reading:* the first build stays at 100 MHz, the card day's image. If it closes with room, builds at higher kernel clocks find where this design stops closing, one link at a time on the box, each MEASURED by its own routed timing summary; after the card day, and not a change to the first light's target.
+
+**2026-11-24, on a third link.** The first two links for the card failed in placement, a chain of DSP blocks taller than a column; the lead had asked "Add the delay-line attribute to the core and build a third time?":
+
+> Try the third build, if that still fails we send back for changes
+
+*The lead's reading:* one more link, with the attribute `keep` on the core's delay line, the lead's edit, gated on the second size; if it fails too, no fourth by the lead, and the fix goes to a parcel.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
