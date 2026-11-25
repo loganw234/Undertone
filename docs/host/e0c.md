@@ -89,7 +89,9 @@ A piece is ESTIMATE 20 to 35 s whole on the box: 1.28 s of the card, parsing 6.4
 4. **Against round 1**: every field of the card's part against round 1's part k in `vectors/e0c/round1/`, but the definition's hash. EQUAL, or DIFFERS naming the fields.
 5. **The judge**: round 1's own `not_as_stated` on the five parts, then `stats.tolerance.check_efficiency(found, n, 0.01, d)` and `check_count(noise_crossings, n, 0.01)` for each amplitude, with real found, card only and real only beside them: the cost of quantisation on the same stream.
 
-The last line is `== E0 CARD VERDICT: PASS, ...` only when every piece is IDENTICAL, every part is as stated and equals round 1's, nothing is flagged, every score read is the statistics package's, and every amplitude is inside the tolerance. Otherwise it is `FAIL`, after the lines that say why. Then the flip control (section 9). `compare` writes `card-e0.json` with the parts, the pieces' reports and the definition's hash.
+The E0 line is `== E0 CARD VERDICT: PASS, ...` only when every piece is IDENTICAL, every part is as stated and equals round 1's, nothing is flagged, every score read is the statistics package's, and every amplitude is inside the tolerance. Otherwise it is `FAIL`, after the lines that say why. Each of those conditions, broken alone, is a FAIL in a test (section 10).
+
+**Then the flip control**, round 3's, on amplitude 2's piece 0: `== E0C FLIP CONTROL: SEEN` only when the flip's run is IDENTICAL to the flipped blob's own model run and DIFFERENT from e0's; otherwise `NOT AS IT MUST BE`. **A missing flip run fails the card day**: with no folder `flip-a2p0`, the line is `== E0C FLIP CONTROL: NOT RUN: ...` and `compare` exits 1 whatever E0's line says. The exit code is 0 only when E0's verdict and the flip's are both passes (`e0c.card_day`). `compare` writes `card-e0.json` with the parts, the pieces' reports and the definition's hash.
 
 **The card day's committed record**, when the lead commits one, names that hash. `e0c.stale(record)` returns `E0C-CARD-STALE` once `spec/` moves past it, so its test can skip by that name, as `tests/test_e1_full_run.py` does (CLAUDE.md, trap 18; the lead's ruling).
 
@@ -123,11 +125,11 @@ Round 1's five parts are frozen byte for byte from `<repos>/AOTPU/Data/runs/2026
 2. Copy `<cases>` to the box, and the snapshot of `host/`, `model/`, `spec/` and `hw/e0c/` with the shim built there.
 3. On the box, detached: `setsid nohup bash hw/e0c/box_e0.sh <host tree> <build folder> <cases> > <log> 2>&1 < /dev/null &`. It reads health before and after. It runs the 20 pieces, printing IDENTICAL or DIFFERENT for each by its hash. It runs the flip on amplitude 2's piece 0, which must differ from e0's hash, then the ten timed runs. It writes a SHA256SUMS of its outputs.
 4. Copy back each piece's `records.bin` and `report.json`, the flip's, `timed/timed.json`, the log and SHA256SUMS. Check each file's SHA-256 on both machines.
-5. On the desktop: `python hw/e0c/e0c.py compare <cases> <run folder>`, which judges E0 and the flip (`== E0 CARD VERDICT`, `== E0C FLIP CONTROL`), and `python hw/e0c/e0c.py timed-judge <cases> <run folder>/timed` (`== E0C TIMED VERDICT`).
+5. On the desktop: `python hw/e0c/e0c.py compare <cases> <run folder>`, which judges E0 and the flip (`== E0 CARD VERDICT`, `== E0C FLIP CONTROL`) and exits 0 only when both pass, a missing flip run among the failures; and `python hw/e0c/e0c.py timed-judge <cases> <run folder>/timed` (`== E0C TIMED VERDICT`).
 
 ## 10. The tests and the controls
 
-`python -m pytest -q -p no:cacheprovider tests/test_e0c_*.py`: 33 tests. Each control below was run, and its output is as printed.
+`python -m pytest -q -p no:cacheprovider tests/test_e0c_*.py`: 40 tests (37 functions, three of them run under both profiles). Each control below was run, and its output is as printed.
 
 | what | test | it shows |
 |---|---|---|
@@ -137,7 +139,8 @@ Round 1's five parts are frozen byte for byte from `<repos>/AOTPU/Data/runs/2026
 | a schedule shifted a span short | `test_control_replay__e0c_a_schedule_shifted_a_span_short_differs_at_its_first_at_index_read` | the first read that differs is the first trial's at-index read |
 | **named:** a cut off the grid | `test_control_replay__e0c_a_cut_off_the_grid_is_refused_by_name` | first frames 128 m + 1 and 128 m - 1 at two m, and 64, refused PIECE_CUT; so are a first piece not at 0, an empty piece, an overlap, a stream not of whole spans, and a read's window leaving its span. 65,535 spans are taken and 65,536 refused, PIECE_LENGTH |
 | a records file not its piece's | `test_e0c_a_records_file_that_is_not_its_pieces_is_refused_by_name` | one record short, RUN_LENGTH; shifted by one record, RECORD_ORDER |
-| the short form in pieces (gate `statistics`) | `test_gate_statistics__e0c_the_short_form_in_pieces_reads_round_1s_scores_and_is_inside` | "found 1999 of 4000, -0.06 se, INSIDE; noise 30": every read the continuous short form's |
+| the reading offsets | `test_e0c_the_reading_offsets_are_round_1s_and_cv5s` | `e0c.OFFSETS`, which expect and compare share, against round 1's own reading in `test_seam_e0.measure` (by place in a span) and against CV5 on the model: a lone e0 in a zero stream peaks at truth + 63 alone, and the signal-free read is 0 |
+| the short form in pieces (gate `statistics`) | `test_gate_statistics__e0c_the_short_form_in_pieces_reads_round_1s_scores_and_is_inside` | "found 1999 of 4000, -0.06 se, INSIDE; noise 30": every read, made with the shipped `OFFSETS`, is `measure`'s |
 | **named:** coefficients reversed | `test_control_statistics__e0c_coefficients_the_wrong_way_round_in_pieces_fall_outside` | "found 0 of 4000, -63.3 se, OUTSIDE" |
 | **named:** read one sample late | `test_control_statistics__e0c_a_score_read_one_sample_late_in_pieces_falls_outside` | "found 1696 of 3997, -9.6 se, OUTSIDE; 3 late reads fall past their piece's end and are not made, the last trial of pieces 0 to 2"; the 3,997 made are the continuous stream's late reads of those trials |
 | the box's path end to end (no gate row) | `test_e0c_bit_identity_the_cards_records_through_run_case_are_the_models` | three pieces through `run_piece` and `host.run_case` over the stand-in: each IDENTICAL; the card's counts the model's; at 24 trials the statistics refuse to judge, TOLERANCE_UNDEFINED, and that is the only failure |
@@ -146,12 +149,18 @@ Round 1's five parts are frozen byte for byte from `<repos>/AOTPU/Data/runs/2026
 | a crossing | `test_e0c_a_crossing_is_strictly_above_the_threshold` | a score equal to the threshold does not cross (CV3) |
 | the collector off | `test_e0c_run_piece_turns_the_collector_off_before_run_case` | `run_piece.py`'s main block is `gc.disable()` and then `run_case`; `timed.json` records the collector's state as read after each generation |
 | the flip | `test_e0c_the_flip_control_is_seen_and_a_card_that_ignored_the_flip_is_not` | seen; a card that ran e0's blob for it is NOT AS IT MUST BE |
+| the flip's two conditions, each alone | `test_e0c_control_the_flip_is_seen_only_when_the_run_is_the_flips_and_the_flip_reaches_a_record` | a run of a third blob, DIFFERENT from both expectations, is NOT AS IT MUST BE; with the flip's expectation made e0's, a run IDENTICAL to both is NOT AS IT MUST BE |
+| a card day without its flip | `test_e0c_control_a_card_day_without_its_flip_run_fails` | with E0's verdict a pass, no flip run folder exits 1, "== E0C FLIP CONTROL: NOT RUN"; with it, 0 |
+| the judge's conditions, each alone | `test_e0c_control_the_judge_fails_on_each_of_its_conditions_alone` | with round 1's record not given and the counts inside: a flag, a score read not the statistics package's, one piece DIFFERENT among twenty, and a part not as stated each FAIL |
+| compare holds the set | `test_e0c_control_compare_refuses_pieces_that_are_not_the_stated_cut` | `compare` itself refuses a piece missing, or one with another seed, PIECE_SET |
 | the flip's rule | `test_e0c_the_flip_is_round_3s` | tap 28, -131071 to -126975, the only tap changed |
 | the set of pieces | `test_e0c_pieces_that_are_not_the_stated_cut_are_refused_by_name` | a piece missing, one with another seed, one extra: each PIECE_SET |
 | the judge at the stated scale | `test_e0c_the_judge_at_the_stated_scale_passes_round_1s_counts` and its control `test_control_statistics__e0c_the_judge_fails_a_count_that_is_not_round_1s` | parts with round 1's counts PASS; a count changed (found, noise crossings), the stream's hash, or the seed each FAIL, naming the field; with no round 1 record to compare, a found count 3,000 low is OUTSIDE, and noise crossings 1,500 high are OUTSIDE |
 | the box imports | `test_e0c_nothing_the_box_runs_imports_from_tests_or_needs_more_than_the_standard_library`, `test_e0c_the_box_check_sees_an_import_from_tests` | the two box scripts reach `host/`, `model/`, `spec/` and the standard library alone; a planted import of `tests/`, of `e0c.py` or of numpy is reported |
 | the timed runs | `test_e0c_bit_identity_ten_timed_generations_run_and_score_as_the_model_does` | ten generations over the stand-in at 150 trials, each part present, each sum its parts', each count and SHA-256 the model's, the collector off in each; the signal-free reads cross there twice in all (row X26), which a wrong offset for them can change, but need not |
 | a generation that ran another set | `test_e0c_control_a_generation_that_ran_another_set_is_reported` | sets 3 and 4 exchanged: generations 3 and 4 DIFFERENT |
+| timed-judge's conditions, each alone | `test_e0c_control_timed_judge_fails_on_each_of_its_conditions` | in a copy of a passing timed.json: a generation not ended done, one fewer generation, one more, a found count, a noise count, or a records hash changed: each FAIL |
+| the timed score's index check | `test_e0c_control_timed_score_refuses_a_record_read_at_another_index` | a record at a read place carrying another index is refused, RECORD_ORDER |
 | an end that is not done | `test_e0c_a_generation_that_does_not_end_done_stops_the_ten` | a deadline stops the ten after generation 0, the kernel reset and the backend closed |
 | the premise, and the records | `tests/test_e0c_premise.py` | section 7; a field changed in a copy is reported; each frozen file's SHA-256 is its note's |
 

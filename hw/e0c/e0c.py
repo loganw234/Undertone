@@ -5,7 +5,8 @@
     python hw/e0c/e0c.py expect  <folder> --flip          the model's run of the flip's piece (amplitude 2's piece 0)
     python hw/e0c/e0c.py expect  <folder> --timed         the model's run of each of the ten timed sets
     python hw/e0c/e0c.py compare <folder> <runs folder>   the card's records against the model's; the reads, the counts,
-                                                          round 1's counts, and the judge
+                                                          round 1's counts, and the judge; then the flip control.
+                                                          Exit 0 only when both pass: a missing flip run fails
     python hw/e0c/e0c.py timed-judge <folder> <timed out> the ten timed runs' records and counts against the model's
     python hw/e0c/e0c.py premise <part.json> <round 1's part.json>   a rerun of a full part against round 1's
     (--n N --seed-base S --pieces P  on cases, expect and compare: a short form; the stated run has neither)
@@ -540,6 +541,20 @@ def compare(folder, runs, n=E0.FULL_N, seed_base=E0.FULL_SEED, pieces=PIECES, am
     return code, parts, reports
 
 
+def card_day(folder, runs, n=E0.FULL_N, seed_base=E0.FULL_SEED, pieces=PIECES, amplitudes=None, out=print):
+    """`compare` and the flip control together: the card day's exit code, 0 only when both pass. A flip run that is
+    missing FAILS the card day, named on its own line: the control is part of the day, not an option of it."""
+    code, parts, reports = compare(folder, runs, n, seed_base, pieces, amplitudes, out)
+    write_json(os.path.join(runs, "card-e0.json"), {"parts": parts, "pieces": reports, "spec_sha256": C.SPEC_SHA256})
+    flip_run = os.path.join(runs, "flip-a%dp%d" % FLIP)
+    if os.path.isdir(flip_run):
+        flip = compare_flip(folder, flip_run, out)
+    else:
+        out("== E0C FLIP CONTROL: NOT RUN: no run folder %s; the card day's verdict fails without it" % flip_run)
+        flip = 1
+    return max(code, flip)
+
+
 def compare_flip(folder, run_dir, out=print):
     """Round 3's control on the card: the flipped blob's run must DIFFER from e0's expectation of its piece and be
     IDENTICAL to the flipped blob's own. Returns 0 when it is both."""
@@ -623,15 +638,7 @@ def main(argv):
             expect_amplitude(a.paths[0], a.amplitude, a.block)
         return 0
     if a.what == "compare":
-        code, parts, reports = compare(a.paths[0], a.paths[1], a.n, a.seed_base, a.pieces)
-        write_json(os.path.join(a.paths[1], "card-e0.json"), {"parts": parts, "pieces": reports,
-                                                               "spec_sha256": C.SPEC_SHA256})
-        flip_run = os.path.join(a.paths[1], "flip-a%dp%d" % FLIP)
-        if os.path.isdir(flip_run):
-            code = max(code, compare_flip(a.paths[0], flip_run))
-        else:
-            print("the flip control: no run folder %s" % flip_run)
-        return code
+        return card_day(a.paths[0], a.paths[1], a.n, a.seed_base, a.pieces)
     if a.what == "timed-judge":
         return timed_judge(a.paths[0], a.paths[1])
     return premise(a.paths[0], a.paths[1])

@@ -14,12 +14,17 @@ Short case: the timed stream at 150 injections (19,328 frames), seed 2026112402,
 before the start (the stand-in runs the model once, at krn_start), and the signal-free reads cross often enough
 that a wrong offset for them shows in the counts.
 """
+import contextlib
+import io
 import json
 import os
 import shutil
 
+import pytest
+
 import test_seam_e0 as E0
 from spec import constants as C
+from model.refusal import Refusal
 
 from hw.e0c import e0c, timed
 from hw.e0c.kernel_model import ModelKernel
@@ -48,6 +53,72 @@ def factory_for(tdir, polls_running=2):
         made_.append(ModelKernel(case["profile"], next(blobs), tuple(case["sigma"]), polls_running=polls_running))
         return made_[-1]
     return factory, made_
+
+
+def run_once(tmp_path_factory):
+    """One run of the ten over the stand-in, kept for the tests that change its output in a copy."""
+    m = made(tmp_path_factory)
+    if "out" not in m:
+        tdir = os.path.join(m["folder"], "timed")
+        factory, _k = factory_for(tdir)
+        out = str(m["base"] / "once")
+        with contextlib.redirect_stdout(io.StringIO()):
+            assert timed.main(["--cases", tdir, "--out", out, "--polls", "50"], factory=factory) == 0
+        m["out"] = out
+    return m
+
+
+def test_e0c_control_timed_judge_fails_on_each_of_its_conditions(tmp_path_factory, tmp_path):
+    """timed-judge passes only when every generation ended done, there are as many generations as sets, and each
+    generation's records and both counts are the model's. Each is broken alone, in a copy of a passing run's
+    timed.json, its records' SHA-256s left the model's, and each must FAIL."""
+    m = run_once(tmp_path_factory)
+    good = json.load(open(os.path.join(m["out"], "timed.json"), encoding="utf-8"))
+
+    def judged(change):
+        t = json.loads(json.dumps(good))
+        change(t)
+        d = tmp_path / change.__name__
+        d.mkdir()
+        (d / "timed.json").write_text(json.dumps(t), encoding="utf-8")
+        lines = []
+        return e0c.timed_judge(m["folder"], str(d), out=lines.append), lines
+
+    def nothing(t):
+        pass
+
+    def not_done(t):
+        t["generations"][3]["end"] = "deadline"
+
+    def one_fewer(t):
+        del t["generations"][-1]
+
+    def one_more(t):
+        t["generations"].append(dict(t["generations"][-1]))
+
+    def found_off(t):
+        t["generations"][6]["found"] += 1
+
+    def noise_off(t):
+        t["generations"][6]["noise_crossings"] += 1
+
+    def records_off(t):
+        t["generations"][6]["records_sha256"] = "0" * 64
+
+    assert judged(nothing)[0] == 0
+    for change in (not_done, one_fewer, one_more, found_off, noise_off, records_off):
+        code, lines = judged(change)
+        assert code == 1 and lines[-1] == "== E0C TIMED VERDICT: FAIL", change.__name__
+
+
+def test_e0c_control_timed_score_refuses_a_record_read_at_another_index():
+    case = {"trials": 2, "first_index": 64, "spacing": 128, "offsets": {"at": 63, "noise": -1}}
+    recs = [{"index": i, "epoch": 0, "flags": 0, "score": 0} for i in range(3 * 128)]
+    assert timed.score(recs, case, 10) == (0, 0)
+    recs[64 + 128 + 63] = dict(recs[64 + 128 + 63], index=64 + 128 + 64)
+    with pytest.raises(Refusal) as e:
+        timed.score(recs, case, 10)
+    assert e.value.name == "RECORD_ORDER"
 
 
 def test_e0c_the_ten_sets_are_the_stated_rule():

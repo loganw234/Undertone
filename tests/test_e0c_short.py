@@ -19,9 +19,26 @@ from model import run, source, weights
 from stats import tolerance
 
 from hw.e0c import pieces as P
+from hw.e0c.e0c import OFFSETS
 
 PIECES = 4
 _made = {}
+
+
+def test_e0c_the_reading_offsets_are_round_1s_and_cv5s():
+    """hw/e0c/e0c.py's OFFSETS against two things it does not share. Round 1's reading (tests/test_seam_e0.py,
+    `measure`): the at-index score is the record at place SPACING - 1 of its span, the signal-free one at place
+    FIRST - 1, the late one at place 0 of the next span; a trial's truth record is at place FIRST. And CV5, on the
+    model directly: a lone e0 at amplitude 1 in a stream otherwise zero has its largest score at truth + OFFSETS["at"],
+    and the signal-free read's score there is 0, no pulse sample under it."""
+    assert OFFSETS == {"at": E0.SPACING - 1 - E0.FIRST, "noise": E0.FIRST - 1 - E0.FIRST, "late": E0.SPACING - E0.FIRST}
+    truth, length = 200, 400
+    frames = [(0,)] * length
+    sched = [{"index": truth, "pulse_id": C.PULSE_IDS["e0"], "amplitude_num": 1, "amplitude_den": 1}]
+    recs, _t = run.detect(frames, sched, length, weights.matched_filter(E0.PROFILE, E0.E0, (1,)))
+    scores = [r["score"] for r in recs]
+    assert scores.index(max(scores)) == truth + OFFSETS["at"] and scores.count(max(scores)) == 1
+    assert scores[truth + OFFSETS["noise"]] == 0 and all(s == 0 for s in scores[:truth + OFFSETS["noise"] + 1])
 
 
 def made():
@@ -60,8 +77,10 @@ def test_gate_statistics__e0c_the_short_form_in_pieces_reads_round_1s_scores_and
     f, got = m["f"], m["got"]
     assert [p.first for p in m["cut"]] == [0, 128000, 256000, 384000] and m["cut"][-1].frames == 128128
     assert [p.trials for p in m["cut"]] == [1000] * 4
-    r = read_all(m["runs"], (E0.TAPS - 1, -1))
-    at, quiet = r[E0.TAPS - 1], r[-1]
+    # the shipped offsets (hw/e0c/e0c.py's OFFSETS, which expect and compare share), held against round 1's own
+    # reading in tests/test_seam_e0.py's `measure`, which picks records by their place in a span, not by offset
+    r = read_all(m["runs"], (OFFSETS["at"], OFFSETS["noise"]))
+    at, quiet = r[OFFSETS["at"]], r[OFFSETS["noise"]]
     assert None not in at and None not in quiet
     assert at == got["at_index"] and quiet == got["noise"], "every read in pieces is the continuous stream's"
     found, made_, not_made = P.count(at, f["threshold"])
@@ -82,7 +101,7 @@ def test_control_statistics__e0c_coefficients_the_wrong_way_round_in_pieces_fall
     for piece, frames, _data in m["runs"]:
         recs, _t = run.detect(frames, [], piece.frames, wrong)
         data = b"".join(P.RECORD.pack(*[r[name] for name in P.SCORE_FIELDS]) for r in recs)
-        at += P.reads(data, piece, E0.SPACING, E0.FIRST, (E0.TAPS - 1,))[E0.TAPS - 1]
+        at += P.reads(data, piece, E0.SPACING, E0.FIRST, (OFFSETS["at"],))[OFFSETS["at"]]
     found, made_, not_made = P.count(at, f["threshold"])
     v = tolerance.check_efficiency(found, made_, E0.PFA, f["d"])
     print("CONTROL E0C in pieces, coefficients reversed: found %d of %d, %+.1f se, %s"
@@ -93,7 +112,7 @@ def test_control_statistics__e0c_coefficients_the_wrong_way_round_in_pieces_fall
 def test_control_statistics__e0c_a_score_read_one_sample_late_in_pieces_falls_outside():
     m = made()
     f = m["f"]
-    late = read_all(m["runs"], (E0.TAPS,))[E0.TAPS]
+    late = read_all(m["runs"], (OFFSETS["late"],))[OFFSETS["late"]]
     found, made_, not_made = P.count(late, f["threshold"])
     v = tolerance.check_efficiency(found, made_, E0.PFA, f["d"])
     print("CONTROL E0C in pieces, read one sample late: found %d of %d, %+.1f se, %s; %d late reads fall past their "

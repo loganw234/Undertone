@@ -153,6 +153,64 @@ def test_e0c_the_flip_control_is_seen_and_a_card_that_ignored_the_flip_is_not(tm
     assert "NOT AS IT MUST BE" in lines[-1]
 
 
+def test_e0c_control_the_flip_is_seen_only_when_the_run_is_the_flips_and_the_flip_reaches_a_record(tmp_path_factory,
+                                                                                                     tmp_path):
+    """compare_flip's two conditions, each broken alone. (1) The run is not the flipped blob's own model run: a
+    card that ran a third blob (bit 11 of the same tap flipped) differs from both expectations, and is not seen.
+    (2) The flip reaches no record: with the flip's expectation made equal to e0's, a run of e0's blob is the flip's
+    own model run and is not seen either."""
+    m = made(tmp_path_factory)
+    flip_case = os.path.join(m["folder"], "flip", "a2p0")
+    third, _where = P.flipped(open(os.path.join(m["folder"], "e0", "case.blob"), "rb").read(), bit=11)
+    third_path = tmp_path / "third.blob"
+    third_path.write_bytes(third)
+    assert run_on_stand_in(m["folder"], flip_case, str(third_path), str(tmp_path / "third")) == 0
+    lines = []
+    assert e0c.compare_flip(m["folder"], str(tmp_path / "third"), out=lines.append) == 1
+    assert "own model run DIFFERENT; against e0's DIFFERENT" in lines[0] and "NOT AS IT MUST BE" in lines[-1]
+    folder = str(tmp_path / "cases")
+    shutil.copytree(m["folder"], folder)
+    shutil.copy(os.path.join(folder, "e0", "a2p0", "expected.json"), os.path.join(folder, "flip", "a2p0", "expected.json"))
+    shutil.copy(os.path.join(folder, "e0", "case.blob"), os.path.join(folder, "flip", "case.blob"))
+    lines = []
+    assert e0c.compare_flip(folder, os.path.join(m["runs"], "a2p0"), out=lines.append) == 1
+    assert "own model run IDENTICAL; against e0's IDENTICAL" in lines[0] and "NOT AS IT MUST BE" in lines[-1]
+
+
+def test_e0c_control_a_card_day_without_its_flip_run_fails(tmp_path_factory, tmp_path, monkeypatch):
+    """With E0's own verdict PASS (compare stood in for, returning 0), the card day exits 1 when the flip's run
+    folder is missing, and names it; with the flip's run there and seen, 0."""
+    m = made(tmp_path_factory)
+    monkeypatch.setattr(e0c, "compare", lambda *a, **kw: (0, [], []))
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    lines = []
+    assert e0c.card_day(m["folder"], str(runs), out=lines.append) == 1
+    assert lines[-1].startswith("== E0C FLIP CONTROL: NOT RUN: no run folder")
+    shutil.copytree(os.path.join(m["runs"], "flip-a2p0"), str(runs / "flip-a2p0"))
+    lines = []
+    assert e0c.card_day(m["folder"], str(runs), out=lines.append) == 0
+    assert lines[-1].startswith("== E0C FLIP CONTROL: SEEN")
+
+
+def test_e0c_control_compare_refuses_pieces_that_are_not_the_stated_cut(tmp_path_factory, tmp_path):
+    """compare itself holds the set of pieces (check_set), not only check_set's own test."""
+    m = made(tmp_path_factory)
+    for change in ("missing", "seed"):
+        folder = str(tmp_path / change)
+        shutil.copytree(m["folder"], folder)
+        if change == "missing":
+            shutil.rmtree(os.path.join(folder, "e0", "a2p1"))
+        else:
+            path = os.path.join(folder, "e0", "a2p2", "piece.json")
+            info = json.load(open(path, encoding="utf-8"))
+            e0c.write_json(path, dict(info, seed=info["base_seed"]))
+        with pytest.raises(E0CRefusal) as e:
+            e0c.compare(folder, m["runs"], n=N, seed_base=E0.GATE_SEED, pieces=PIECES, amplitudes=[K],
+                        out=lambda line: None)
+        assert e.value.name == "PIECE_SET", change
+
+
 def test_e0c_pieces_that_are_not_the_stated_cut_are_refused_by_name(tmp_path_factory, tmp_path):
     m = made(tmp_path_factory)
     for change in ("missing", "seed", "extra"):
@@ -260,6 +318,44 @@ def test_control_statistics__e0c_the_judge_fails_a_count_that_is_not_round_1s():
     s.update((f, _round1()[0][f]) for f in e0c.SUMMARY_FIELDS if f != "stream_sha256")
     assert e0c.summary_against_round1(s, _round1()[0]) == []
     assert e0c.summary_against_round1(dict(s, found=s["found"] + 1), _round1()[0]) == ["found"]
+
+
+def _identical_reports():
+    return [{"case": "a%dp%d" % (k, p), "kind": "e0", "run": None,
+             "identity": {"identical": True, "records": 6400000, "expected_records": 6400000, "blocks_differ": 0,
+                          "first": None, "trailing_bytes": 0}} for k in range(5) for p in range(4)]
+
+
+def test_e0c_control_the_judge_fails_on_each_of_its_conditions_alone():
+    """Each condition of the card's PASS, broken alone, with round 1's record not given (so that its comparison
+    cannot be what fails) and the counts round 1's (inside the tolerance): a flag raised; a score read that is not
+    the statistics package's; a piece DIFFERENT; a part not as stated, with round 1's `not_as_stated` asked."""
+    def run(change=None, as_stated=None):
+        parts, reports = _card_parts_as_round1(), _identical_reports()
+        if change:
+            change(parts, reports)
+        lines = []
+        return e0c.judge(parts, reports, None, as_stated, out=lines.append), lines
+
+    def flag(parts, reports):
+        parts[2]["flags"] = 2
+
+    def stats(parts, reports):
+        parts[2]["scores_identical_to_stats"] = False
+
+    def different(parts, reports):
+        reports[9]["identity"] = dict(reports[9]["identity"], identical=False, blocks_differ=1,
+                                      first={"record": 4097, "field": "score", "card": 1, "model": 0})
+
+    def threshold(parts, reports):
+        parts[2]["threshold"] += 1
+
+    assert run()[0] == 0 and run(as_stated=E0.not_as_stated)[0] == 0
+    for change, as_stated in ((flag, None), (stats, None), (different, None), (threshold, E0.not_as_stated)):
+        code, lines = run(change, as_stated)
+        assert code == 1 and lines[-1] == "== E0 CARD VERDICT: FAIL", change.__name__
+    code, lines = run(different)
+    assert sum(1 for x in lines if "DIFFERENT" in x) == 1 and sum(1 for x in lines if "IDENTICAL" in x) == 19
 
 
 def test_e0c_a_card_record_names_its_definition_and_is_stale_by_name_once_it_moves():
