@@ -169,12 +169,14 @@ names = [
 # Reference pulses, as integer data, by path under spec/.
 [pulses]
 e0 = "pulses/e0.toml"
+e1 = "pulses/e1.toml"
 
 # The number a truth record's pulse_id field carries for each pulse. Declared,
 # never "position in sorted order": adding a pulse must not renumber the rest.
 # Every pulse has one, and no two share one.
 [pulse_ids]
 e0 = 0
+e1 = 1
 
 # The number the fabric reports for a refusal. 0 means "none" and is no name's.
 # Declared, never "position in the list": adding a name must not renumber the

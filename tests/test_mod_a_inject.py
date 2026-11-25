@@ -327,10 +327,11 @@ def test_mod_a_a_second_pulse_reaches_its_own_samples_and_keeps_its_own_length(m
 
 
 def test_mod_a_an_unknown_pulse_or_a_malformed_record_is_refused_by_name():
-    assert sorted(C.PULSE_IDS.values()) == [0] and inject.pulse(0) == C.PULSES["e0"]
+    assert sorted(C.PULSE_IDS.values()) == [0, 1] and inject.pulse(0) == C.PULSES["e0"]   # e1 since round 4
+    assert inject.pulse(1) == C.PULSES["e1"]
     for bad in (True, False, 0.0, None, "e0", -1, 65536):
         refused("PULSE_UNKNOWN", lambda: inject.pulse(bad))
-    for bad in (1, 2, 65535):
+    for bad in (2, 3, 65535):
         refused("PULSE_UNKNOWN", lambda: inject.schedule([rec(0, pulse_id=bad)], 100))
         refused("PULSE_UNKNOWN", lambda: inject.scaled_pulse(bad, 1, 1))
     for bad in (rec(0, den=0), rec(-1), rec(0, num=2 ** 31), rec(0, pulse_id=65536), rec(0, num=1.5),

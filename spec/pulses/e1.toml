@@ -1,0 +1,16 @@
+# The second pulse, of stage E2's drift, as integers. Proposed by parcel E2L and ruled by the lead
+# (round 4's ledger, 2026-11-25): e0's recipe in tools/make_pulse.py, 64 samples under the same Hann
+# window, peak factor 1000, rounded half to even, with e0's 4-cycle sine replaced by one half of it
+# plus sqrt(3)/2 of an 8-cycle sine. Its overlap with e0 is 0.499949 and its norm 0.99996 of e0's.
+# This file is the fact. Nothing regenerates it.
+name = "e1"
+samples = [
+        0,     2,    12,    24,    20,    -9,   -45,   -49,
+        0,    79,   117,    41,  -159,  -392,  -504,  -372,
+        0,   452,   745,   708,   353,  -113,  -406,  -350,
+        0,   378,   475,   143,  -485, -1058, -1213,  -803,
+        0,   799,  1201,  1042,   475,  -139,  -460,  -365,
+        0,   333,   384,   106,  -330,  -657,  -686,  -412,
+        0,   332,   445,   341,   136,   -34,   -96,   -64,
+        0,    37,    31,     6,   -11,   -11,    -3,     0,
+]
