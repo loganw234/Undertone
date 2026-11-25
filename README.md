@@ -28,7 +28,7 @@ The name is the thing it listens for: a faint signal under the noise. The projec
 
 Eleven checks, each with a negative control that plants a list of faults and must see every one reported: twenty-two stages, and no cache. Four hold the documents: relative links resolve, no committable file carries a personal path, every row of a claims register names its basis, no text file carries a CR byte. Four hold the build: the generated copies equal the one definition, the tests pass, the model and the statistics import nothing from each other, and every gate has a test and a negative control that carry its name. Three run in the simulation image, built once with `python tools/sim_image.py build`: the image holds what is pinned, a simulator and a compiler read the generated copies as the numbers the Python copy holds, and every bench passes while every mutant of the RTL fails as named. Each check's file states what it cannot see.
 
-A run of the first size says so on its verdict line; only a bare `== VERDICT: PASS` means every stage ran. Today the first size passes with one check skipped by name, `E1-RECORD-STALE`: stage E1's committed record was made under an earlier definition, and is to be made again.
+A run of the first size says so on its verdict line; only a bare `== VERDICT: PASS` means every stage ran. When stage E1's committed record was made under an earlier definition, the first size passes with one check skipped by name, `E1-RECORD-STALE`, and `--require-all` fails on it. The record was made again under the current definition on 2026-11-25, so today nothing is skipped.
 
 ## The authority
 
