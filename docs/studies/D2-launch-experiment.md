@@ -202,7 +202,7 @@ For the lead to restate; this parcel edits none of them.
 
 None of this was done.
 
-1. **The faint rungs**: the same 35 launches at D1b's farther stations, 78 to 275 km, with the rule and a new split fixed first. That is the experiment the project's question needs.
+1. **The faint rungs**: the same 35 launches at D1b's farther stations, 78 to 275 km, with the rule and a new split fixed first. That is the experiment the project's question needs. *Restated by the lead after round 3's closing verifier:* this one was done, as study D3 ([D3](D3-faint-launches.md)), in round 3. The section's "None of this was done" holds for the others.
 2. **Onset against distance**, with the definition of an onset fixed first, to say sound or ground.
 3. **The 11 launches timed to the minute**, with a window a minute wider.
 4. **Windows marked by the earthquake catalogue**, dropped alike from launch and control counts, to see whether a count moves.

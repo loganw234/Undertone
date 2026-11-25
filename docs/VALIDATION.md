@@ -1670,7 +1670,7 @@ Everything under "Limits" in D3, and first these. "Faint" means far: at CI.MPP t
 
 ### The lead's slips
 
-- **Two errors of the lead's, found by the parcel at its design stop.** The brief said D1b found the window's close too short "at 120 km"; D1b says it of the four stations out to 78.5 km. The plan says "Fetching, for LCH-4: EarthScope as before"; D2 fetched from SCEDC only. The plan is to be restated at the round's close; until then the ledger's entry of 09:29 is the correction.
+- **Two errors of the lead's, found by the parcel at its design stop.** The brief said D1b found the window's close too short "at 120 km"; D1b says it of the four stations out to 78.5 km. The plan says "Fetching, for LCH-4: EarthScope as before"; D2 fetched from SCEDC only. The plan is to be restated at the round's close; until then the ledger's entry of 09:29 is the correction. *Restated by the lead after the closing verifier:* the plan is not edited, since Logan's word closes it. Both corrections stand here and in the ledger.
 
 ### The parcel's own departures, by its report
 
@@ -1840,7 +1840,7 @@ BUILD is the lead's. **The first two links for the card failed in placement. The
 - **The third synthesis: 729 DSP blocks, none in a mode with BCIN or PCIN**; 329,499 LUTs (37.80%), 196,089 of them as memory (48.63% of the part's LUTs that can be memory), 37,946 registers, 58 block RAM tiles, 0 URAM. The whole routed design: 453,752 LUTs (52.11%), every DSP in SLR0. The plan's L18 had 724 slices by arithmetic, which did not count the injector's one product or the core's products of configuration values.
 - **The third link's image**: 45,567,801 bytes, SHA-256 `fce0e2397f16407d...`. It carries DATA_CLK, the kernel's clock, at 100 MHz: "Requested Freq: 100 MHz Achieved Freq: 100 MHz". v++ scaled nothing.
 - **Routed: the kernel's clock met, with a worst slack of 0.122 ns**, TNS 0, over 1,695,906 endpoints, and a hold slack of 0.010 ns. Its worst path, at a requirement of 10.000 ns, runs from the pool's write pointer, `u_core/pool_wp_reg[5]`, to the write address of the pool's memory, which synthesis put in distributed RAM: a data path of 9.628 ns, 99.179% route, 0 logic levels. **Not the one-stage sums that the plan named as the likeliest place to fail.** The design's own worst slack, 0.055 ns, is on a clock of the platform's.
-- **The sweep, each by its own link's files.** At 200 MHz asked: "Achieved Freq: 108.2 MHz". Routed at 5.000 ns: WNS -4.242 ns, 358,115 of 1,703,147 endpoints failing. The worst path, from `u_core/shp_filters_reg[7]` to `u_core/hid_b_reg[688]`, 9.218 ns over 26 logic levels, the lead BELIEVES, from reading `rtl/core/core.sv` and not from a timing query, is the register interface's checks on a write. The pool's paths met, after the placer had replicated the write pointer. At 150 MHz asked: "Achieved Freq: 127.4 MHz". Routed at 6.667 ns: WNS -1.177 ns, 106,725 of 1,700,220 endpoints failing. The worst path runs from the platform's kernel reset to the write enables of the pool's memory, 7.691 ns, 96.203% route, 4 logic levels. **Three links, three different worst paths.**
+- **The sweep, each by its own link's files.** At 200 MHz asked: "Achieved Freq: 108.2 MHz". Routed at 5.000 ns: WNS -4.242 ns, 358,115 of 1,703,147 endpoints failing. The worst path, from `u_core/shp_filters_reg[7]` to `u_core/hid_b_reg[688]`, 9.218 ns over 26 logic levels, the lead BELIEVES, from reading `rtl/core/core.sv` and not from a timing query, is the register interface's checks on a write. The pool's paths met, after the placer had replicated the write pointer. *Corrected by the lead after the closing verifier:* that sentence was the lead's misreading at 03:51. The two paths into the pool's memory at +0.009 ns are listed under "Min Delay Paths", so 0.009 is a hold slack. Their replicated cells are `s4_rect_reg`'s, not the write pointer's. The report's ten setup paths for the kernel's clock all start at `shp_filters_reg[7]`, so whether the pool's setup paths met at 200 MHz is not known. At 150 MHz asked: "Achieved Freq: 127.4 MHz". Routed at 6.667 ns: WNS -1.177 ns, 106,725 of 1,700,220 endpoints failing. The worst path runs from the platform's kernel reset to the write enables of the pool's memory, 7.691 ns, 96.203% route, 4 logic levels. **Three links, three different worst paths.**
 
 ### Measured: the library under emulation, and the manifest
 
@@ -1870,6 +1870,8 @@ BUILD is the lead's. **The first two links for the card failed in placement. The
 - **That the 200 MHz path is the register writes' checks**, or that a register stage or the pool in URAM would take any of the three paths away: BELIEVED, not tested.
 - **That the pool is most of the 196,089 LUTs used as memory**: BELIEVED. The report gives the kernel's total.
 - **That an image carries the commit it was built from.** D0's provenance gate asks that; this round holds it in the manifest's word.
+- *Added by the lead after the closing verifier:* **that the manifest's reader reads the right clock.** The check reads the image's clock with the same reader that wrote the manifest's field, so a wrong reader passes both the check and its control, as the KERNEL_CLK reader did. Only the test, on two images' text, holds the reader. `hw/manifest.py`'s docstring now says so.
+- *Added by the lead after the closing verifier:* **the kernel's utilisation in the manifest.** The third link's manifest says `kernel_util_report: unread`: no report of the name the reader looks for was found, under Vitis 2022.2. Why not is not known. The utilisation figures here are the synthesis report's, read on the box.
 - **Anything about the card or about sensitivity.** The sweep's images are not the card day's.
 
 ### The lead's slips
@@ -1908,7 +1910,7 @@ The card day ran in one booked window, in two parts of 11 and 23 seconds, on the
 
 ### Measured: the card
 
-- **The identity block**: id 0x554E4454 ("UNDT"), version 1, and the definition's SHA-256 `0a9242e5...`, r3's own; `spec/` has not changed since `31aaec1`. The 13 capabilities the image says equal the build's.
+- **The identity block**: id 0x554E4454 ("UNDT"), version 1, and the definition's SHA-256 `0a9242e5...`, r3's own; `spec/` has not changed since `31aaec1`. The 13 capabilities the image says equal the build's. *Corrected by the lead after the closing verifier:* the block carries 15. The 13 the build asked for were compared and are each the build's; `cap_rectifiers` and `cap_blob_versions` were not compared.
 - **The manifest**: "OK manifest: the image's SHA-256 and kernel clock are the manifest's", and its control, "CONTROL-DETECTED". After each part the card showed the image's UUID loaded.
 - **Raw shapes**: for eight capabilities, a shape at each left refusal 0, and one just past each was refused by the fabric under its own name: SHAPE_FILTERS, SHAPE_TAPS, SHAPE_POOL, SHAPE_SHIFT, SHAPE_HIDDEN, SHAPE_HIDDEN_SHIFT, and PROFILE_UNKNOWN for the sample's bits and for its channels.
 
@@ -1923,7 +1925,7 @@ The card day ran in one booked window, in two parts of 11 and 23 seconds, on the
 - **Truth records during the run.** In part one all 1,023 went in before the start. In part two each case's 8,191 went 1,024 before the start and 7,167 while the run went, never less than 110,316 frames ahead of the core. In every run the record queue held at most one record.
 - **The host's time to make a swap**, from the call of its first shadow write to the return of the read that accepts the commit, in Python through `xrt::ip`, batched: 102,332 and 453,233 ns for the 66-word swap, 484,101 and 421,869 ns for the 573-word swap. **The same swap varied more than fourfold, and the larger was once the quicker.** So the host made a swap in 0.1 to 0.5 ms, and these four say no more.
 - **What each swap spanned**: at most 693, 2,519, 2,344 and 2,194 frames, by the reads of `next_index` on either side of it. COMPUTED against their times: 171 to 206 ns a frame in the shortest window and 198 to 202 in the other three, about 20 clocks at 100 MHz, as krnl.md's row K8 assumes. Four windows of under half a millisecond, not a measured rate.
-- **A partial sync on the card's XRT 2.19 moved [offset, offset + size)**, unlike the emulator's 2.14. The backend syncs from byte 0 either way.
+- **A partial sync on the card's XRT 2.19 moved [offset, offset + size)**, unlike the emulator's 2.14. The backend syncs from byte 0 either way. *Corrected by the lead after the closing verifier:* the probe's range, [3968, 135040), ends at the buffer's end. So it shows that the card's XRT moved the range through the buffer's end, not the emulator's [offset, size), and left [0, offset) as it was. It cannot tell [offset, offset + size) from [offset, end).
 - **The card's health.** `xbutil validate` exits 1 on this card, "Mac address exceed IP4 maximum value", before any test: the fault cft-fp256 recorded on 2026-09-08. So before part one only "present and ready" was read. After each part: HEALTHY, the image's UUID loaded, 15.17 W and then 15.03 W, the FPGA at 38 C and then 35 C, the HBM at 33 C and then 30 C, nothing holding the card's device files. After part two no process of the lead's remained on the box.
 
 ### Measured: stage E1 again
@@ -1944,7 +1946,7 @@ The card day ran in one booked window, in two parts of 11 and 23 seconds, on the
 - **W1, "the first build, with a kernel around the chain, closes timing on the card's part at 100 MHz", BELIEVED: held at the third link, not at the first.** The third link's image carries DATA_CLK at 100 MHz, requested and achieved, and the kernel's clock met with 0.122 ns of slack at 10.000 ns (the entry before). The first two links made no image. The third needed one attribute added to the core's RTL, which Icarus Verilog ignores, on Logan's word. The plan's suspect, the one-stage sums, was not among the worst paths. 150 and 200 MHz did not close.
 - **W2, "every score word the card puts out, for stage E0's stream and a shape with the hidden layer, each for as many samples as the card day runs, equals the model's", BELIEVED: held**, MEASURED by the card day's comparison of every record, at 2^17 and at 2^20 frames, with and without a swap, the control seen twice. One profile, one seed, one clock.
 - **W3, "a weight swap written from the host lands at its named index on the card, and the host's time to make one is measured", DECISION: held.** Each swap landed at its index, held by the records on either side of 65,536, 98,304, 524,288 and 786,432 being the model's. The host's time was measured four times, 102,332 to 484,101 ns. What it gives is a range, not a typical figure, and nothing of the fabric's own time.
-- **W4, "by a rule fixed before any record is fetched, launches are seen at stations 78 to 275 km more often than control windows are", BELIEVED: held**, by study D3, at all four stations, by Fisher's exact test at 0.0025 a station, neither control rejecting. For 23 scored launches of 2024 from one pad; a rate over the year; nothing about the detector. The plan's row itself is restated at the round's close.
+- **W4, "by a rule fixed before any record is fetched, launches are seen at stations 78 to 275 km more often than control windows are", BELIEVED: held**, by study D3, at all four stations, by Fisher's exact test at 0.0025 a station, neither control rejecting. For 23 scored launches of 2024 from one pad; a rate over the year; nothing about the detector. *Corrected by the lead after the closing verifier:* the plan's row is read here and is not edited, since Logan's word closes the plan. This entry's earlier line said it was restated.
 
 ### What this does not prove
 
@@ -1983,3 +1985,61 @@ All of it: the card day's page and its scripts; the E1 record, its test's hashes
 - **The round's cost**, in the lead's and the agents' time: written after the closing pass.
 - **Stage E0 on the card with its statistics, and stage E1 on the card**: other rounds.
 - **`main` has not moved, and nothing is pushed.** The lead asks Logan first.
+
+## 2026-11-25 - round 3: the closing verifier on the tip: every planted fault found, four wrong statements of the lead's and an overclaim, no regression, and the answers
+
+A fresh verifier read the lead's work of the round, none of which a verifier had read before: BUILD, the card day, stage E1 made again, the closing documents and the merges. **No regression, every card record it recomputed is the model's, and it remade every case byte for byte.** It found all five planted faults. It also found four statements of the lead's the record does not bear and one that says more than its evidence. All are corrected in the commit that carries this entry, with most of its smaller points. Logan's word, given while it ran, is to push once the verifiers return the round ready.
+
+### What ran
+
+- **VCLOSE3**, fresh, on Opus, on a sealed clone of `ae5053e`. The round's last three commits were squashed into one and five faults amended in; the clone had no remote, one branch and an empty reflog. Its evidence was copies of the round's data folder (the card day's run folders and cases, stage E1's third run, the build's box outputs with excerpts of its reports taken from the box that morning) and the parcels' and verifiers' reports. It was not given the lead's ledger. 09:16:48 to 09:33:50 by its own clock, of a box of 75 minutes.
+- **It ran each size of the gate once in the clone.** The first size: PASS, 1,284 tests, none skipped. The second: the bare PASS. `rtl-benches` gave 256 tests in 26 runs of 22 benches, 87,549 records identical to the model's, 133 mutant runs each failed as named, 159 build logs read and 122 lines in them on the list, the same as `ade0925`'s gate; the controls detected 3, 927 and 23 planted faults.
+- **It asked the lead three questions** while it worked. Each was answered with the record's fact only: which file ran, which command made the part-one health reports, and where a 200 MHz figure came from. The lead re-read that 200 MHz report on the box to answer the third.
+
+### Measured
+
+- **Plants: 5 of 5**: a swap time in the card day's page, its row C10 and the card-day entry here, 412,869 for 421,869; a card script not the file that ran, by row C2's hash; the third E1 run's end time made 08:25:41; the ROADMAP's row R10 made 5.76 x 10^12 bytes; and the E1 record's test made to skip the judge output's hash, which the gate passes. **In round 3, 31 of 31.**
+- **No regression.** The merges: `ade0925` and `56fa753` each equal git's own merge of their parents; `98afaf2` and `ea7fed4` differ from that only by the lead's restatements at the merge; at `aac9959` the bench manifest is ours and then theirs appended, the union of both parsed; `tests/gates.toml` is the union at every merge.
+- **By the verifier's own commands:** the ten card runs' records each equal their expected file, the control's equal the flipped blob's in both parts, and its 130,998 and 1,048,235 differing records are the model's counts. Every case, 56 files, remade byte for byte by the committed `card.py`. The truth records, slacks, queue peaks, swap spans and health figures as the page gives them. The frame rate 171.3 to 206.1 and 198.2 to 202.3 ns. The build's figures in krnl.md's K26 to K30, the ROADMAP's R1 to R3 and R7, and the build entry here, against the excerpts. Stage E1's six parts equal to the evidence, and to the second run's but in `spec_sha256`.
+- **No sentence reads sensitivity from the card, or fabric from stage E1.**
+
+### Wrong or more than the evidence, the lead's, and the answers
+
+1. **A hold slack read as setup, in two documents.** The ROADMAP's route 1 said the pool's paths "met with 0.009 ns to spare" at 200 MHz, and the build entry here said "the pool's paths met, after the placer had replicated the write pointer". The 0.009 ns is the hold slack of two paths into the pool's memory, listed under "Min Delay Paths", and their copied cells are `s4_rect_reg`'s. The ten setup paths shown all start at the shape register. So whether the pool's setup paths met at 200 MHz is not known. It was the lead's misreading at 03:51, which the ledger carried. Corrected in both.
+2. **The plan's row W4 said to be restated, twice, and the plan not edited.** Corrected: the plan is closed by Logan's word, and its row is read in the card-day entry.
+3. **D2's section 14 still said none of its list was done**, though study D3 is its item 1, and D3's section 12 asked for it. It was the same slip the lead had corrected in D3's section 13. Restated.
+4. **The ROADMAP said thirteen of D0's gates have a registry row, and capability bits none.** The registry has 15 rows for 14 gates; two are for capability bits. Restated.
+5. **The sync probe's range was claimed as [offset, offset + size)**, in five places: the card day's page twice, host.md, the backend's docstring and the card-day entry here. Its range ends at the buffer's end, so it shows only that the card's XRT moved through the buffer's end, not to `size`, and left [0, offset). Corrected in each.
+
+And, of its smaller points, each answered in the same commit:
+- part one's after-run health reports were the lead's by hand, which the page did not say;
+- row C2's hashes of the scripts are the lead's commands, not the logs';
+- the identity block carries 15 capabilities, 13 of them compared;
+- the manifest's check shares its reader with the manifest's writer, a limit `hw/manifest.py` now states;
+- the third link's manifest has its utilisation field "unread", and why is not known;
+- krnl.md's limit 19 "would not fit" is arithmetic, not a trial;
+- trap 19's link time leaves out the sweep's;
+- the ROADMAP's route 1 still had the 150 MHz link "routing";
+- its question 2 lists some of the lead's calls, and now says so;
+- the README overstated the raw-shape test, and gave 127 for 127.4 MHz.
+`box_card.sh`'s header gives a usage that is not how it ran, which the page's limit 9 now says.
+
+### Not answered, and why
+
+- **That both parts ran detached** rests on the lead's ledger, since neither log records how it was started. It is said so, and left.
+- **The case-making time, "2 min 48 s"**, is `time`'s 2m48.365s, where the clock's 08:05:04 to 08:07:53 gives 2 min 49 s. Both stand.
+- **The CARD commit's message** overstates the raw shapes as the README did. A commit message cannot be changed; this entry is the correction.
+
+### The lead's slips
+
+- **The hold-slack misreading** went from the ledger into two documents, and was found only by a verifier asking for its source.
+- **The probe's range was read as the call's**, at the card day and in every document after.
+- **Correcting D3's section 13, the lead did not look for the same sentence in D2.**
+
+### Changed after the last pass, and not seen by a verifier
+
+The commit that carries this entry: the corrections above, and Logan's word in the ROADMAP. A narrow pass on them is next.
+
+### Logan's word, while it ran
+
+"Once the verifier returns ready you are clear to push and begin drafting round 4". The lead's reading is in the ROADMAP: `main` moves to `r3`'s tip and is pushed once the narrow pass on these corrections finds no regression and no wrong answer.

@@ -26,6 +26,11 @@ What it cannot see (stated limits): the commit, the tree's hash, the slack and t
 script's word and the reports' text, and nothing here checks them against the image; the image's identity
 block carries the definition's hash, which the card day reads, and not the commit. A report's format is
 Vitis 2022.2's as read on 2026-11-24; another version's may not be read, and then the field says "unread".
+The check reads the image's clock with the same reader that wrote the manifest's field, so a reader of the wrong
+clock writes it and checks it alike, and passes both the check and its control: the fault mended in 68989eb.
+Only tests/test_build_manifest.py, on two images' text as printed, holds the reader itself. And a field can say
+"unread" under 2022.2 too: the third link's `kernel_util_report` does, since no file named `kernel_util_routed`
+was found where this reader looks; why not is not known (the round's closing verifier, 2026-11-25).
 """
 import argparse
 import hashlib
