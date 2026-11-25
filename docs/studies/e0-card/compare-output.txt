@@ -1,0 +1,38 @@
+E0 on the card: profile s16x1, sigma 1477/1, Pfa 0.01, the matched filter for e0, in pieces
+  bit identity, piece by piece (the model's authority):
+  a0p0     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130323 frames, queue peak 1
+  a0p1     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130235 frames, queue peak 1
+  a0p2     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130283 frames, queue peak 1
+  a0p3     IDENTICAL: 6400128 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130247 frames, queue peak 1
+  a1p0     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130283 frames, queue peak 1
+  a1p1     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130307 frames, queue peak 1
+  a1p2     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130269 frames, queue peak 1
+  a1p3     IDENTICAL: 6400128 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130133 frames, queue peak 1
+  a2p0     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130295 frames, queue peak 1
+  a2p1     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130251 frames, queue peak 1
+  a2p2     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130250 frames, queue peak 1
+  a2p3     IDENTICAL: 6400128 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130263 frames, queue peak 1
+  a3p0     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130217 frames, queue peak 1
+  a3p1     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130133 frames, queue peak 1
+  a3p2     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130166 frames, queue peak 1
+  a3p3     IDENTICAL: 6400128 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130242 frames, queue peak 1
+  a4p0     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130228 frames, queue peak 1
+  a4p1     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130248 frames, queue peak 1
+  a4p2     IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130171 frames, queue peak 1
+  a4p3     IDENTICAL: 6400128 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130259 frames, queue peak 1
+  the reads from the card's records, against round 1's record:
+  1/2       found 24442, noise 1929, flags 0, identical to stats yes, real found 24442, card only 0, real only 0; late 20826 of 199997 read (3 not read); EQUAL to round 1's part 0
+  3/4       found 55857, noise 1974, flags 0, identical to stats yes, real found 55857, card only 0, real only 0; late 47019 of 199997 read (3 not read); EQUAL to round 1's part 1
+  1/1       found 99743, noise 2008, flags 0, identical to stats yes, real found 99743, card only 0, real only 0; late 85161 of 199997 read (3 not read); EQUAL to round 1's part 2
+  5/4       found 144075, noise 2041, flags 0, identical to stats yes, real found 144075, card only 0, real only 0; late 127870 of 199997 read (3 not read); EQUAL to round 1's part 3
+  3/2       found 175622, noise 1987, flags 0, identical to stats yes, real found 175622, card only 0, real only 0; late 163011 of 199997 read (3 not read); EQUAL to round 1's part 4
+  the parts against the experiment as round 1 states it: as stated
+  the judge (D8 and the tolerance, stats/):
+  1/2       24442 of 200000, efficiency 0.12221, D8 0.1224, -0.30 se, tolerance 0.00293, INSIDE; noise 1929, -1.60 se, INSIDE
+  3/4       55857 of 200000, efficiency 0.27929, D8 0.2805, -1.22 se, tolerance 0.00402, INSIDE; noise 1974, -0.58 se, INSIDE
+  1/1       99743 of 200000, efficiency 0.49872, D8 0.5002, -1.33 se, tolerance 0.00447, INSIDE; noise 2008, +0.18 se, INSIDE
+  5/4       144075 of 200000, efficiency 0.72037, D8 0.7198, +0.53 se, tolerance 0.00402, INSIDE; noise 2041, +0.92 se, INSIDE
+  3/2       175622 of 200000, efficiency 0.87811, D8 0.8778, +0.46 se, tolerance 0.00293, INSIDE; noise 1987, -0.29 se, INSIDE
+== E0 CARD VERDICT: PASS, every record of every piece the model's, every count round 1's where given, every amplitude inside D8's tolerance
+the flip control, a2p0: against the flipped blob's own model run IDENTICAL; against e0's DIFFERENT, first {"record": 35, "field": "score", "card": 198242912, "model": 189330016}, 98 block(s) differ
+== E0C FLIP CONTROL: SEEN, the flip reaches the records and the card ran the flipped blob

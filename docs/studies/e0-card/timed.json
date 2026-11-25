@@ -1,0 +1,404 @@
+{
+ "launched_ns": 1795642739183684438,
+ "started_ns": 1795642739202382708,
+ "python_start_ns": 18698270,
+ "imports_ns": 19859489,
+ "collector": "disabled",
+ "frames": 1280128,
+ "trials": 10000,
+ "seed": 2026112302,
+ "generations": [
+  {
+   "generation": 0,
+   "blob": "gen0.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 129863
+   },
+   "found": 0,
+   "noise_crossings": 104,
+   "records": 1280128,
+   "records_sha256": "745105e90a1f40d00836c3a68a81e2f4eeec5a18f29028b66e894d0c60f6ccab",
+   "kept_ns": 1006287114,
+   "parts_ns": {
+    "ready": 25155,
+    "open": 206204163,
+    "identity": 1066474,
+    "reset": 48116,
+    "load": 494381,
+    "start": 96906043,
+    "finish": 256049969,
+    "records": 2222573800,
+    "score": 12734874,
+    "close": 22086760
+   },
+   "sum_ns": 2818189735,
+   "trace_ns": {
+    "allocate": 9757927,
+    "fill": 7614396,
+    "run": 256036208,
+    "fetch": 52703754,
+    "status_reads": 8639
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 1,
+   "blob": "gen1.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130557
+   },
+   "found": 0,
+   "noise_crossings": 98,
+   "records": 1280128,
+   "records_sha256": "944822e8ed6edfe070fca82266da320594d7c09b6f59b81b26258b52e786d214",
+   "kept_ns": 995166206,
+   "parts_ns": {
+    "ready": 60823,
+    "open": 222543856,
+    "identity": 1011394,
+    "reset": 38875,
+    "load": 220820,
+    "start": 92826321,
+    "finish": 256045525,
+    "records": 2237992666,
+    "score": 12614609,
+    "close": 26353653
+   },
+   "sum_ns": 2849708542,
+   "trace_ns": {
+    "allocate": 9722246,
+    "fill": 7516107,
+    "run": 256034269,
+    "fetch": 52664751,
+    "status_reads": 8861
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 2,
+   "blob": "gen2.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130600
+   },
+   "found": 0,
+   "noise_crossings": 94,
+   "records": 1280128,
+   "records_sha256": "b495cf9a352339fad0836330ea121204f0db7c400711c44957709c7cc3f235f6",
+   "kept_ns": 987491847,
+   "parts_ns": {
+    "ready": 57028,
+    "open": 204788503,
+    "identity": 975696,
+    "reset": 40697,
+    "load": 232170,
+    "start": 95645859,
+    "finish": 256046480,
+    "records": 2231802299,
+    "score": 12467993,
+    "close": 27474484
+   },
+   "sum_ns": 2829531209,
+   "trace_ns": {
+    "allocate": 10175168,
+    "fill": 7725344,
+    "run": 256037392,
+    "fetch": 53605429,
+    "status_reads": 8870
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 3,
+   "blob": "gen3.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130562
+   },
+   "found": 1,
+   "noise_crossings": 97,
+   "records": 1280128,
+   "records_sha256": "1bb89f32fefbcdcd16ff8df0708556c5d40b8fdae3c567b0e52cfabae639e70a",
+   "kept_ns": 1031299695,
+   "parts_ns": {
+    "ready": 58557,
+    "open": 224492189,
+    "identity": 998460,
+    "reset": 37201,
+    "load": 200476,
+    "start": 92990978,
+    "finish": 256045223,
+    "records": 2237243159,
+    "score": 14909189,
+    "close": 26762911
+   },
+   "sum_ns": 2853738343,
+   "trace_ns": {
+    "allocate": 9742641,
+    "fill": 7569007,
+    "run": 256038181,
+    "fetch": 52816989,
+    "status_reads": 9212
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 4,
+   "blob": "gen4.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130495
+   },
+   "found": 278,
+   "noise_crossings": 81,
+   "records": 1280128,
+   "records_sha256": "3dbf5c82e53ae2794cd6028e8961b6558116fa90e2839af97f794578248daf67",
+   "kept_ns": 982900566,
+   "parts_ns": {
+    "ready": 56532,
+    "open": 163766454,
+    "identity": 1012617,
+    "reset": 57839,
+    "load": 262869,
+    "start": 94629387,
+    "finish": 256048944,
+    "records": 2219061007,
+    "score": 13470906,
+    "close": 19485608
+   },
+   "sum_ns": 2767852163,
+   "trace_ns": {
+    "allocate": 10170345,
+    "fill": 7695928,
+    "run": 256038601,
+    "fetch": 52409686,
+    "status_reads": 9067
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 5,
+   "blob": "gen5.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130493
+   },
+   "found": 3529,
+   "noise_crossings": 83,
+   "records": 1280128,
+   "records_sha256": "dd1b101a95a717243ac7eb333cf5db8c63920a55abb7444d1ac5d7cfb84a3094",
+   "kept_ns": 986491167,
+   "parts_ns": {
+    "ready": 55423,
+    "open": 256877458,
+    "identity": 975967,
+    "reset": 38972,
+    "load": 211882,
+    "start": 95961331,
+    "finish": 256047971,
+    "records": 2276963451,
+    "score": 11713543,
+    "close": 26385935
+   },
+   "sum_ns": 2925231933,
+   "trace_ns": {
+    "allocate": 9744606,
+    "fill": 7571346,
+    "run": 256039044,
+    "fetch": 56372655,
+    "status_reads": 8768
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 6,
+   "blob": "gen6.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130535
+   },
+   "found": 4739,
+   "noise_crossings": 83,
+   "records": 1280128,
+   "records_sha256": "c514eab7c4102dc85374fc366feff1823edfb602646a4f36e45a6f81b505350b",
+   "kept_ns": 976502423,
+   "parts_ns": {
+    "ready": 57931,
+    "open": 167563265,
+    "identity": 1010397,
+    "reset": 39007,
+    "load": 204199,
+    "start": 92743693,
+    "finish": 256041723,
+    "records": 2218546113,
+    "score": 12699315,
+    "close": 19185521
+   },
+   "sum_ns": 2768091164,
+   "trace_ns": {
+    "allocate": 9852341,
+    "fill": 7646260,
+    "run": 256033616,
+    "fetch": 52613835,
+    "status_reads": 9234
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 7,
+   "blob": "gen7.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130569
+   },
+   "found": 4954,
+   "noise_crossings": 87,
+   "records": 1280128,
+   "records_sha256": "0aec07ad2650b322d46caac405cef4f12ca60d7680355dbd603f837d146dfe9f",
+   "kept_ns": 995430803,
+   "parts_ns": {
+    "ready": 55820,
+    "open": 173283674,
+    "identity": 963342,
+    "reset": 57385,
+    "load": 280923,
+    "start": 96353750,
+    "finish": 256043629,
+    "records": 2226633682,
+    "score": 11676689,
+    "close": 22759603
+   },
+   "sum_ns": 2788108497,
+   "trace_ns": {
+    "allocate": 10048022,
+    "fill": 7747194,
+    "run": 256035538,
+    "fetch": 53300606,
+    "status_reads": 9064
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 8,
+   "blob": "gen8.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130518
+   },
+   "found": 5041,
+   "noise_crossings": 88,
+   "records": 1280128,
+   "records_sha256": "9e6b790fce81446591e030059a01aa1aaff1fc97808fc809ddc540d6fe6b7380",
+   "kept_ns": 987356785,
+   "parts_ns": {
+    "ready": 56969,
+    "open": 222117589,
+    "identity": 980217,
+    "reset": 37501,
+    "load": 266883,
+    "start": 92654606,
+    "finish": 256046032,
+    "records": 2232066919,
+    "score": 12510121,
+    "close": 23703988
+   },
+   "sum_ns": 2840440825,
+   "trace_ns": {
+    "allocate": 9821375,
+    "fill": 7593392,
+    "run": 256038871,
+    "fetch": 52833677,
+    "status_reads": 9011
+   },
+   "collector": "disabled"
+  },
+  {
+   "generation": 9,
+   "blob": "gen9.blob",
+   "end": "done",
+   "run": {
+    "frames": 1280128,
+    "records": 1280128,
+    "queue_peak": 1,
+    "truth_before_start": 1024,
+    "truth_while_running": 8976,
+    "least_slack": 130546
+   },
+   "found": 5061,
+   "noise_crossings": 86,
+   "records": 1280128,
+   "records_sha256": "731ec9771061e265295a8b0ebd10e321f8f04490ba95876d969a8d57379461f5",
+   "kept_ns": 1000793456,
+   "parts_ns": {
+    "ready": 52382,
+    "open": 238455434,
+    "identity": 1017170,
+    "reset": 59216,
+    "load": 294538,
+    "start": 92744517,
+    "finish": 256048762,
+    "records": 2221255669,
+    "score": 12702516,
+    "close": 19878559
+   },
+   "sum_ns": 2842508763,
+   "trace_ns": {
+    "allocate": 9833957,
+    "fill": 7750648,
+    "run": 256040094,
+    "fetch": 52980336,
+    "status_reads": 9047
+   },
+   "collector": "disabled"
+  }
+ ],
+ "total_ns": 28283401174,
+ "spec_sha256": "0a9242e51c6d861e5165ab445ccbc3438be590d1b523047d0c1a7b7fe5b4888c"
+}

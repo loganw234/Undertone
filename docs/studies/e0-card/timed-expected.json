@@ -1,0 +1,105 @@
+{
+ "sets": [
+  {
+   "blob": "gen0.blob",
+   "sha256": "745105e90a1f40d00836c3a68a81e2f4eeec5a18f29028b66e894d0c60f6ccab",
+   "found": 0,
+   "noise_crossings": 104,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen1.blob",
+   "sha256": "944822e8ed6edfe070fca82266da320594d7c09b6f59b81b26258b52e786d214",
+   "found": 0,
+   "noise_crossings": 98,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen2.blob",
+   "sha256": "b495cf9a352339fad0836330ea121204f0db7c400711c44957709c7cc3f235f6",
+   "found": 0,
+   "noise_crossings": 94,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen3.blob",
+   "sha256": "1bb89f32fefbcdcd16ff8df0708556c5d40b8fdae3c567b0e52cfabae639e70a",
+   "found": 1,
+   "noise_crossings": 97,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen4.blob",
+   "sha256": "3dbf5c82e53ae2794cd6028e8961b6558116fa90e2839af97f794578248daf67",
+   "found": 278,
+   "noise_crossings": 81,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen5.blob",
+   "sha256": "dd1b101a95a717243ac7eb333cf5db8c63920a55abb7444d1ac5d7cfb84a3094",
+   "found": 3529,
+   "noise_crossings": 83,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen6.blob",
+   "sha256": "c514eab7c4102dc85374fc366feff1823edfb602646a4f36e45a6f81b505350b",
+   "found": 4739,
+   "noise_crossings": 83,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen7.blob",
+   "sha256": "0aec07ad2650b322d46caac405cef4f12ca60d7680355dbd603f837d146dfe9f",
+   "found": 4954,
+   "noise_crossings": 87,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen8.blob",
+   "sha256": "9e6b790fce81446591e030059a01aa1aaff1fc97808fc809ddc540d6fe6b7380",
+   "found": 5041,
+   "noise_crossings": 88,
+   "reads": [
+    10000,
+    10000
+   ]
+  },
+  {
+   "blob": "gen9.blob",
+   "sha256": "731ec9771061e265295a8b0ebd10e321f8f04490ba95876d969a8d57379461f5",
+   "found": 5061,
+   "noise_crossings": 86,
+   "reads": [
+    10000,
+    10000
+   ]
+  }
+ ],
+ "spec_sha256": "0a9242e51c6d861e5165ab445ccbc3438be590d1b523047d0c1a7b7fe5b4888c"
+}

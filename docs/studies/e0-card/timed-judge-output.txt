@@ -1,0 +1,13 @@
+the timed runs: 10 generations, 10 sets expected
+  gen 0 gen0.blob  IDENTICAL; found 0, noise 104 (the model's 0, 104) EQUAL; sum 2818.190 ms
+  gen 1 gen1.blob  IDENTICAL; found 0, noise 98 (the model's 0, 98) EQUAL; sum 2849.709 ms
+  gen 2 gen2.blob  IDENTICAL; found 0, noise 94 (the model's 0, 94) EQUAL; sum 2829.531 ms
+  gen 3 gen3.blob  IDENTICAL; found 1, noise 97 (the model's 1, 97) EQUAL; sum 2853.738 ms
+  gen 4 gen4.blob  IDENTICAL; found 278, noise 81 (the model's 278, 81) EQUAL; sum 2767.852 ms
+  gen 5 gen5.blob  IDENTICAL; found 3529, noise 83 (the model's 3529, 83) EQUAL; sum 2925.232 ms
+  gen 6 gen6.blob  IDENTICAL; found 4739, noise 83 (the model's 4739, 83) EQUAL; sum 2768.091 ms
+  gen 7 gen7.blob  IDENTICAL; found 4954, noise 87 (the model's 4954, 87) EQUAL; sum 2788.108 ms
+  gen 8 gen8.blob  IDENTICAL; found 5041, noise 88 (the model's 5041, 88) EQUAL; sum 2840.441 ms
+  gen 9 gen9.blob  IDENTICAL; found 5061, noise 86 (the model's 5061, 86) EQUAL; sum 2842.509 ms
+  mean generation 2828.340 ms: 1273 generations an hour (COMPUTED from the measured parts, the open included); 1386 an hour with open and close taken out (COMPUTED, not measured)
+== E0C TIMED VERDICT: PASS, every generation's records and counts the model's
