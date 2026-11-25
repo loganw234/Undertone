@@ -101,6 +101,7 @@ MAY_IMPORT = {
     "learn/errors.py": {},
     "learn/trainer.py": {"fractions": {"Fraction"}, "numpy": None, "learn.errors": {"LearnRefusal"}},
     "learn/handover.py": {"spec": {"constants"}, "model": {"weights"}, "learn.errors": {"LearnRefusal"}},
+    "learn/adaptive.py": {"collections": {"deque"}, "learn.trainer": {"MeanDifference", "train"}, "learn.errors": {"LearnRefusal"}},
 }
 FROM_THE_MODEL = {"quantise", "pack", "unpack"}
 NEVER_NAMED = {"PULSES", "PULSE_IDS", "scaled_pulse", "matched_filter", "inject", "source", "detector", "run"}

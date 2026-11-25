@@ -1,0 +1,47 @@
+{
+  "what": "The injection set of each form of stage E2 in software, fixed and hashed before any run: comparison rule 1 of the design D0, section 8.",
+  "how_worked": "By a script that imports hashlib, json, struct and sys and nothing of this project (E2L's make_sets.py, in the round's scratch folder, not in the tree), run on 2026-11-25 before any run of E2's experiment; the two digests were written in the round's ledger, E2L.md, at that time. The same arithmetic is written again in tests/test_e2l_drift.py, which the gate runs against this file and against model.records.digest.",
+  "a_set": "Its truth records in order. The training trials first: record i at index 64 + 128 * i for i below 2048, in 16 blocks of 128; pulse_id 0 (e0) while its index is below the change, 131,072, and 1 (e1) from it on. Then the test trials: record i at index B + 64 + 128 * i, with B = 262,144 + 64 * calibration_scores, every one pulse_id 1. Every record: amplitude 1/1.",
+  "a_record": "18 bytes, little-endian: index as 8 unsigned, pulse_id as 2 unsigned, amplitude_num as 4 signed, amplitude_den as 4 unsigned.",
+  "a_digest": "SHA-256 over the ASCII bytes of 'undertone-records', one zero byte, the ASCII bytes of 'truth', one zero byte, then every record's 18 bytes.",
+  "first_record_by_hand": "Index 64 is hex 40, so 40 00 00 00 00 00 00 00; pulse 0 is 00 00; numerator 1 is 01 00 00 00; denominator 1 is 01 00 00 00.",
+  "first_record_hex": "400000000000000000000100000001000000",
+  "first_e1_record_by_hand": "Index 131,136 is hex 02 00 40, so 40 00 02 00 00 00 00 00; pulse 1 is 01 00; numerator and denominator 1 as above.",
+  "first_e1_record_hex": "400002000000000001000100000001000000",
+  "sets": {
+    "short": {
+      "training_blocks": 16,
+      "trials_a_block": 128,
+      "calibration_scores": 8000,
+      "test_trials": 4000,
+      "A": 262144,
+      "B": 774144,
+      "length": 1286144,
+      "change_index": 131072,
+      "e0_records": 1024,
+      "last_e0_index": 131008,
+      "e1_records": 5024,
+      "first_e1_index": 131136,
+      "records": 6048,
+      "last_index": 1286080,
+      "sha256": "dde5210c7325985a5493a3df3256b718ffaa6243c6fe15dba477cef4bee11c32"
+    },
+    "full": {
+      "training_blocks": 16,
+      "trials_a_block": 128,
+      "calibration_scores": 200000,
+      "test_trials": 100000,
+      "A": 262144,
+      "B": 13062144,
+      "length": 25862144,
+      "change_index": 131072,
+      "e0_records": 1024,
+      "last_e0_index": 131008,
+      "e1_records": 101024,
+      "first_e1_index": 131136,
+      "records": 102048,
+      "last_index": 25862080,
+      "sha256": "beb3d9ceffbed498e38724725b5aa1c28ec19f6b8ac0088fdc5efb40860f680b"
+    }
+  }
+}
