@@ -193,6 +193,42 @@ def test_e0c_control_a_card_day_without_its_flip_run_fails(tmp_path_factory, tmp
     assert lines[-1].startswith("== E0C FLIP CONTROL: SEEN")
 
 
+def test_e0c_control_a_card_day_whose_e0_verdict_fails_fails_with_its_flip_seen(tmp_path_factory, tmp_path, monkeypatch):
+    """The other way round from the test above: E0's verdict a FAIL (compare stood in for, returning 1) and the flip
+    SEEN, the card day still exits 1. Its exit is 0 only when both pass."""
+    m = made(tmp_path_factory)
+    monkeypatch.setattr(e0c, "compare", lambda *a, **kw: (1, [], []))
+    runs = tmp_path / "runs"
+    runs.mkdir()
+    shutil.copytree(os.path.join(m["runs"], "flip-a2p0"), str(runs / "flip-a2p0"))
+    lines = []
+    assert e0c.card_day(m["folder"], str(runs), out=lines.append) == 1
+    assert lines[-1].startswith("== E0C FLIP CONTROL: SEEN")
+
+
+def test_e0c_the_card_days_record_is_what_compare_judged(tmp_path_factory, tmp_path):
+    """card_day over a real compare, not a stand-in: card-e0.json holds compare's own parts and the pieces' reports,
+    as compare returns them, and the tree's definition hash. At 24 trials E0's verdict is a FAIL (the statistics
+    refuse to judge, TOLERANCE_UNDEFINED), the flip is SEEN, and the card day exits 1."""
+    m = made(tmp_path_factory)
+    runs = str(tmp_path / "runs")
+    shutil.copytree(m["runs"], runs)
+    lines = []
+    assert e0c.card_day(m["folder"], runs, n=N, seed_base=E0.GATE_SEED, pieces=PIECES, amplitudes=[K],
+                        out=lines.append) == 1
+    assert "== E0 CARD VERDICT: FAIL" in lines and lines[-1].startswith("== E0C FLIP CONTROL: SEEN")
+    record = json.load(open(os.path.join(runs, "card-e0.json"), encoding="utf-8"))
+    assert set(record) == {"parts", "pieces", "spec_sha256"} and record["spec_sha256"] == C.SPEC_SHA256
+    code, parts, reports = e0c.compare(m["folder"], runs, n=N, seed_base=E0.GATE_SEED, pieces=PIECES, amplitudes=[K],
+                                       out=lambda line: None)
+    assert code == 1
+    assert record["parts"] == json.loads(json.dumps(parts)) and record["pieces"] == json.loads(json.dumps(reports))
+    assert [p["part"] for p in record["parts"]] == [K] and record["parts"][0]["n"] == N
+    assert [r["case"] for r in record["pieces"]] == ["a2p0", "a2p1", "a2p2"]
+    assert all(r["identity"]["identical"] and r["reads"]["trials"] == 8 for r in record["pieces"])
+    assert e0c.stale(record) is None
+
+
 def test_e0c_control_compare_refuses_pieces_that_are_not_the_stated_cut(tmp_path_factory, tmp_path):
     """compare itself holds the set of pieces (check_set), not only check_set's own test."""
     m = made(tmp_path_factory)

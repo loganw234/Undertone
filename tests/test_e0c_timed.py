@@ -121,6 +121,25 @@ def test_e0c_control_timed_score_refuses_a_record_read_at_another_index():
     assert e.value.name == "RECORD_ORDER"
 
 
+def test_e0c_timed_score_counts_a_crossing_strictly_above_the_threshold_at_both_reads():
+    """CV3 in the box's own scorer: a score equal to the threshold does not cross, at the at-index read and at the
+    signal-free read; one above it does, at each."""
+    case = {"trials": 3, "first_index": 64, "spacing": 128, "offsets": {"at": 63, "noise": -1}}
+    recs = [{"index": i, "epoch": 0, "flags": 0, "score": 0} for i in range(4 * 128)]
+
+    def put(trial, name, score):
+        i = case["first_index"] + case["spacing"] * trial + case["offsets"][name]
+        recs[i] = dict(recs[i], score=score)
+
+    put(0, "at", 10)
+    put(0, "noise", 10)
+    assert timed.score(recs, case, 10) == (0, 0)
+    put(1, "at", 11)
+    assert timed.score(recs, case, 10) == (1, 0)
+    put(2, "noise", 11)
+    assert timed.score(recs, case, 10) == (1, 1)
+
+
 def test_e0c_the_ten_sets_are_the_stated_rule():
     assert e0c.timed_blob(9) == E0.facts(2)["blob"], "set 9 is E0's own matched filter"
     blobs = [e0c.timed_blob(g) for g in range(10)]

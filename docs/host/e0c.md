@@ -129,7 +129,7 @@ Round 1's five parts are frozen byte for byte from `<repos>/AOTPU/Data/runs/2026
 
 ## 10. The tests and the controls
 
-`python -m pytest -q -p no:cacheprovider tests/test_e0c_*.py`: 40 tests (37 functions, three of them run under both profiles). Each control below was run, and its output is as printed.
+`python -m pytest -q -p no:cacheprovider tests/test_e0c_*.py`: 43 tests (40 functions, three of them run under both profiles). Each control below was run, and its output is as printed.
 
 | what | test | it shows |
 |---|---|---|
@@ -151,6 +151,8 @@ Round 1's five parts are frozen byte for byte from `<repos>/AOTPU/Data/runs/2026
 | the flip | `test_e0c_the_flip_control_is_seen_and_a_card_that_ignored_the_flip_is_not` | seen; a card that ran e0's blob for it is NOT AS IT MUST BE |
 | the flip's two conditions, each alone | `test_e0c_control_the_flip_is_seen_only_when_the_run_is_the_flips_and_the_flip_reaches_a_record` | a run of a third blob, DIFFERENT from both expectations, is NOT AS IT MUST BE; with the flip's expectation made e0's, a run IDENTICAL to both is NOT AS IT MUST BE |
 | a card day without its flip | `test_e0c_control_a_card_day_without_its_flip_run_fails` | with E0's verdict a pass, no flip run folder exits 1, "== E0C FLIP CONTROL: NOT RUN"; with it, 0 |
+| a card day whose E0 fails | `test_e0c_control_a_card_day_whose_e0_verdict_fails_fails_with_its_flip_seen` | E0's verdict a FAIL and the flip SEEN: the card day exits 1 |
+| the card day's record | `test_e0c_the_card_days_record_is_what_compare_judged` | `card_day` over a real `compare`: `card-e0.json` holds exactly compare's parts and the pieces' reports, and the tree's definition hash; at 24 trials E0's FAIL with the flip SEEN exits 1 |
 | the judge's conditions, each alone | `test_e0c_control_the_judge_fails_on_each_of_its_conditions_alone` | with round 1's record not given and the counts inside: a flag, a score read not the statistics package's, one piece DIFFERENT among twenty, and a part not as stated each FAIL |
 | compare holds the set | `test_e0c_control_compare_refuses_pieces_that_are_not_the_stated_cut` | `compare` itself refuses a piece missing, or one with another seed, PIECE_SET |
 | the flip's rule | `test_e0c_the_flip_is_round_3s` | tap 28, -131071 to -126975, the only tap changed |
@@ -161,6 +163,7 @@ Round 1's five parts are frozen byte for byte from `<repos>/AOTPU/Data/runs/2026
 | a generation that ran another set | `test_e0c_control_a_generation_that_ran_another_set_is_reported` | sets 3 and 4 exchanged: generations 3 and 4 DIFFERENT |
 | timed-judge's conditions, each alone | `test_e0c_control_timed_judge_fails_on_each_of_its_conditions` | in a copy of a passing timed.json: a generation not ended done, one fewer generation, one more, a found count, a noise count, or a records hash changed: each FAIL |
 | the timed score's index check | `test_e0c_control_timed_score_refuses_a_record_read_at_another_index` | a record at a read place carrying another index is refused, RECORD_ORDER |
+| the timed score's crossing | `test_e0c_timed_score_counts_a_crossing_strictly_above_the_threshold_at_both_reads` | a score equal to the threshold does not cross at either read; one above it does, at each (CV3) |
 | an end that is not done | `test_e0c_a_generation_that_does_not_end_done_stops_the_ten` | a deadline stops the ten after generation 0, the kernel reset and the backend closed |
 | the premise, and the records | `tests/test_e0c_premise.py` | section 7; a field changed in a copy is reported; each frozen file's SHA-256 is its note's |
 
