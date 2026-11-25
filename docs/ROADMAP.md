@@ -181,6 +181,12 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 *The lead's reading:* one more link, with the attribute `keep` on the core's delay line, the lead's edit, gated on the second size; if it fails too, no fourth by the lead, and the fix goes to a parcel.
 
+**2026-11-24, on a sweep tonight.** The third link routed at 100 MHz with a router's estimate of 0.055 ns to spare, too late for the card that day, whose session moved to the next morning:
+
+> Since the card cant run tonight, go ahead with an overnight frequency sweep, seeing if 100mhz is actually the limit or if Vivado just closed timing tight. The cft project showed similar tight timing at varying speeds
+
+*The lead's reading:* the sweep comes before the card day, not after it, and changes nothing the card day runs: links of the same commit at higher kernel clocks, on the box, one at a time behind the third, at the lowest priority under cft-fp256's night on the box's CPUs, the card untouched. 200 MHz first, then two clocks chosen by what closed. A clock closes when the image carries the clock asked for; v++ lowers a kernel clock that fails, and the clock it lowers to is MEASURED too. Each result is the routed timing summary of its own link: it says where Vivado closed a design, not how that design behaves on the card.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
