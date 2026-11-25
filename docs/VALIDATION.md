@@ -2360,6 +2360,10 @@ These answers and this entry. A second narrow pass reads them next.
 
 **`main` has not moved, and nothing of round 4 is pushed.** By his answer to the plan's question 6, the lead asks Logan before `main` moves to `r4` and is pushed.
 
+### Logan's answer
+
+Asked "Shall I push round 4 now: yes, or not yet?", after the lead had told him the round's results, its slips, and that the last commit was read by no verifier, Logan answered: "Yes push, nice job". `main` moved to `r4`'s tip and was pushed, with the commit that records this as the tip. No verifier has read that commit.
+
 ### Changed after the last pass, and not seen by a verifier
 
 The two restatements above, the ROADMAP's lines on this pass, and this entry, in the round's last commit.
