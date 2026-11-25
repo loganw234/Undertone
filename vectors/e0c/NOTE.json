@@ -1,0 +1,13 @@
+{
+ "what": "Records, not known answers. Round 1's five full parts of stage E0 in software, and the premise's rerun of part 2 under round 4's tree. What judges the card is the stated cut of hw/e0c/pieces.py and the model's own expect run (hw/e0c/e0c.py expect); these files are what the card's counts are compared with, and what the premise is compared against.",
+ "basis": "READ",
+ "files": [
+  {"file": "round1/part0.json", "basis": "READ", "source": "<repos>/AOTPU/Data/runs/2026-11-21-r1-model/reports/e0/part0.json", "source_sha256": "7316da9c2fb5ec16a79329e809f66ccff2695c8e6005002f9f218ad1c1942722", "made_by": "python tests/test_seam_e0.py --full --amplitude 0, the lead, round 1, 2026-11-23, at 29ab2a0 (docs/VALIDATION.md, that day's wave-2 entry)"},
+  {"file": "round1/part1.json", "basis": "READ", "source": "<repos>/AOTPU/Data/runs/2026-11-21-r1-model/reports/e0/part1.json", "source_sha256": "f4b2b1219040c0c7ad2c33146a600e01d9ca8a7cdba55052145317ed0114ee50", "made_by": "the same, --amplitude 1"},
+  {"file": "round1/part2.json", "basis": "READ", "source": "<repos>/AOTPU/Data/runs/2026-11-21-r1-model/reports/e0/part2.json", "source_sha256": "3b28f79d4f2f993a814c2eb5716a1d3e295c064cb82c020f7c22cf6407be6c95", "made_by": "the same, --amplitude 2"},
+  {"file": "round1/part3.json", "basis": "READ", "source": "<repos>/AOTPU/Data/runs/2026-11-21-r1-model/reports/e0/part3.json", "source_sha256": "546f4a4fa90a9a19d8a29d82ac6e52c47e0d2ccebb48483b584c68a0096cd0ef", "made_by": "the same, --amplitude 3"},
+  {"file": "round1/part4.json", "basis": "READ", "source": "<repos>/AOTPU/Data/runs/2026-11-21-r1-model/reports/e0/part4.json", "source_sha256": "33cc9cba2b026d3f4a795c225fbec60c7896688d789948bc04ea80cd21814930", "made_by": "the same, --amplitude 4"},
+  {"file": "premise/part2.json", "basis": "MEASURED", "source": "parcel E0C, 2026-11-25 12:27:59 to 12:32:45, in its worktree at 59dc834: timeout 580 python tests/test_seam_e0.py --full --amplitude 2 --out part2.json", "source_sha256": "984c46819d41ec1fdb4a1c4a84d69aed9439e2a358c26e925253cc489f9ffbc4", "made_by": "round 1's own script, unchanged, under round 4's tree; held against round1/part2.json by tests/test_e0c_premise.py"}
+ ],
+ "copied": "each round1 file byte for byte, its SHA-256 the source's (sha256sum, 2026-11-25 12:34); each has 0 CR bytes"
+}

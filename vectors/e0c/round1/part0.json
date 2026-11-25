@@ -1,0 +1,31 @@
+{
+ "part": 0,
+ "amplitude": [
+  1,
+  2
+ ],
+ "n": 200000,
+ "seed": 2026112300,
+ "profile": "s16x1",
+ "sigma": [
+  1477,
+  1
+ ],
+ "pfa": 0.01,
+ "spacing": 128,
+ "length": 25600128,
+ "sigma_exact": 1477.0,
+ "d": 1.1634366331048804,
+ "expected": 0.1224327580952651,
+ "threshold": 1595666164,
+ "found": 24442,
+ "noise_crossings": 1929,
+ "flags": 0,
+ "scores_identical_to_stats": true,
+ "real_d": 1.1634366343894817,
+ "real_found": 24442,
+ "model_only": 0,
+ "real_only": 0,
+ "stream_sha256": "4fb2f5703f36a4a9a066bc9573b2264d0bf7e7e3affb4c8aa97fc5607d393dcc",
+ "spec_sha256": "209d3009cd0ba3db510d2a102a05d45c862ac1ee9008aadc612daf2ab4ee066f"
+}
