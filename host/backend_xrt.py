@@ -33,7 +33,8 @@ its offset into the host's copy, and a Fill also sends the host's copy of the
 bytes before its offset to the device, which the library does only at offset
 0, before a start. Whether the card's XRT 2.19 reads the call either way is
 the lead's to probe on the card. The fake shim's tests hold the backend under
-both readings.
+both readings. On the card, 2026-11-25, XRT 2.19 moved [offset, offset +
+size) and left the rest (docs/studies/CARD-first-light.md, row C13).
 
 THE MEMORY GROUP is found by the shim from the xclbin: the kernel's argument
 whose register offset is `krn_buffer`'s, by OFFSET and never by name (XRT

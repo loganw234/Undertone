@@ -6,7 +6,7 @@ The name is the thing it listens for: a faint signal under the noise. The projec
 
 ## Where it stands (2026-11-25)
 
-**Round 3, first light on the card, is running. The first bitstream for the card is built, and nothing has run on the card yet.** The work is done in rounds, each with a plan the owner approves:
+**Round 3, first light on the card, is closing. The detector has run on the card, and every score word it put out equals the reference model's.** The work is done in rounds, each with a plan the owner approves:
 
 - **Round 1 (2026-11-23): the reference model and the statistics, in software.** A plain integer Python model of the noise source, the injector, the detector core, the weight store and the scorer (`model/`), and a second, independent authority for sensitivity (`stats/`). As a matched filter the model reproduces the textbook curve at five amplitudes.
 - **Round 2 (2026-11-23): the fabric in simulation, and a learner in software.** SystemVerilog for the noise source, the injector, and the detector core with its weight store and a hidden layer in its head, each held against the model word for word in a simulation image of the project's own, and the three wired together ([docs/rtl/README.md](docs/rtl/README.md)). A learner that starts blank (`learn/`) reaches the matched filter's efficiency at stage E1 in software, 0.4949 against 0.5003 ([E1-software.md](docs/studies/E1-software.md)).
@@ -15,9 +15,10 @@ The name is the thing it listens for: a faint signal under the noise. The projec
   - a host library (`host/`), one code over two backends, the kernel in simulation and XRT on the card, held against the model in simulation and tried in the Vitis hardware emulator ([host.md](docs/host/host.md));
   - the core's overflow flag tested over all its sources and both directions at once ([flag.md](docs/rtl/flag.md));
   - the first build for the U50, made on 2026-11-24: the kernel's clock closes at 100 MHz, with 0.122 ns of slack on its worst path. An overnight sweep asked for 150 and 200 MHz, and the tools lowered the clock to 127 and 108.2 MHz. Faster clocks are a goal for later, with the other routes considered, in [the roadmap](docs/ROADMAP.md);
+  - the card day, 2026-11-25: on the U50, driven by the host library through XRT, five cases of stage E0's stream ran at 2^17 and at 2^20 frames. They cover the matched filter and a shape with the hidden layer, each also with a weight swap the host wrote while the run went. Every score word equals the model's, byte for byte, and a flipped coefficient bit, the control, was seen in both of its runs. The fabric refused each shape past a build's limit by its name ([CARD-first-light.md](docs/studies/CARD-first-light.md));
   - real data: by a rule frozen before any scored record was opened, rocket launches are seen in public seismic records more often than control windows at all four stations 78.5 to 275 km from the pad ([D3](docs/studies/D3-faint-launches.md)). Within 50 km of the pad they are loud ([D2](docs/studies/D2-launch-experiment.md)).
 
-**Not yet shown:** anything on the card, and anything about learning in the fabric. A result here rests on one of two authorities and says which: bit identity with the model is not evidence about sensitivity, and a sensitivity result in software is not evidence about the fabric.
+**Not yet shown:** sensitivity on the card, and anything about learning in the fabric. The card day is bit identity, and the card ran weights the host gave it. A result here rests on one of two authorities and says which: bit identity with the model is not evidence about sensitivity, and a sensitivity result in software is not evidence about the fabric.
 
 ## Does it still hold?
 
@@ -45,7 +46,7 @@ Sensitivity has a second authority, deliberately not the model: `stats/`, a text
 | [docs/studies/D0-rough-design.md](docs/studies/D0-rough-design.md) | The rough design, approved 2026-11-21. The owner's answers to its six questions close it. |
 | `docs/plans/` | Each round's plan: [round 1](docs/plans/R1-reference-model.md), [round 2](docs/plans/R2-fabric-in-simulation-and-the-learner.md), [round 3](docs/plans/R3-first-light.md). |
 | `docs/model/`, `docs/rtl/`, `docs/host/` | How the model, the RTL and the host library work, each page with its register of claims and its limits. The RTL starts at [docs/rtl/README.md](docs/rtl/README.md). |
-| `docs/studies/` | The studies: the launch data (D1 to D3), stage E1 in software, the head's synthesis, the card's platform. |
+| `docs/studies/` | The studies: the launch data (D1 to D3), stage E1 in software, the head's synthesis, the card's platform, the card day. |
 | [CLAUDE.md](CLAUDE.md) | Notes for an agent working here: the front door and what has already bitten. |
 | [PROVENANCE.md](PROVENANCE.md) | What the project has read from outside, and on what terms. |
 | [reports/](reports/Adaptive%20FPGA%20ML%20for%20signal%20detection.md) | The literature survey of 2026-11-21. Uncontrolled: read it as leads, not evidence. |
@@ -53,7 +54,7 @@ Sensitivity has a second authority, deliberately not the model: `stats/`, a text
 | `spec/` | The one definition of the shared facts, and its three generated copies: Python, a SystemVerilog package, a C header. |
 | `model/`, `stats/`, `learn/` | The reference model, the statistics, and the learner. |
 | `rtl/` | The RTL, and its cocotb benches and mutants under `rtl/tb/`. |
-| `host/`, `hw/` | The host library, and the kernel's packaging and build for the card. |
+| `host/`, `hw/` | The host library, and the kernel's packaging and build for the card; `hw/card/`, the card day's scripts as they ran. |
 | `docker/` | The simulation image: Icarus Verilog and cocotb. |
 | `tests/`, `vectors/` | The tests, the gate registry, and frozen known answers with their checksums. |
 | `verify/run.sh`, `tools/` | The gate runner, its checks, and the generators. |
