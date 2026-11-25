@@ -2296,7 +2296,7 @@ The card day's page, record and test; the merge `60f4391`; the three records of 
 ### The lead's slips
 
 - **While answering, the lead first wrote "half an hour"** for the time between the card's record and the merge. It was fourteen minutes, 14:52:48 to 15:06:53, and was corrected before the commit.
-- **The first answer to (b)4 added four comment lines to `inject.sv`'s header, and the second size failed** (run 20261125-152120-97ee003, 15:21 to 15:28). The lines moved a line that `rtl/tb/build_lines.toml` and `tests/test_p0_rtl_gate.py` name by number, from 276 to 280. Then 61 bench builds printed a known simulator line the list no longer named, and the foundation's test of the list failed, so the model-tests control could not fail either. Nothing of the design had changed. The answer was made one line, changed in place, and the second size run again. **A comment in a file the build-line list names is not free to add lines.** *Restated after the narrow pass, which could not see it:* the second size again, run 20261125-152919-97ee003, 15:29:19 to 15:36:49, was PASS, with the two E0C-CARD-STALE skips; rtl-benches had 256 tests, 87,551 records identical and 133 mutant runs each failed as named. The answers were committed as `6604e3c` at 15:37.
+- **The first answer to (b)4 added four comment lines to `inject.sv`'s header, and the second size failed** (run 20261125-152120-97ee003, 15:21 to 15:28). The lines moved a line that `rtl/tb/build_lines.toml` and `tests/test_p0_rtl_gate.py` name by number, from 276 to 280. Then 61 bench builds printed a known simulator line the list no longer named, and the foundation's test of the list failed, so the model-tests control could not fail either. Nothing of the design had changed. The answer was made one line, changed in place, and the second size run again. **A comment in a file the build-line list names is not free to add lines.** *Restated after the narrow pass, which could not see it:* the second size again, run 20261125-152919-97ee003, 15:29:19 to 15:36:49, was PASS, with the two E0C-CARD-STALE skips; rtl-benches had 256 tests, 87,551 records identical and 133 mutant runs each failed as named. The answers were committed as `6604e3c` at 15:37 (15:36:57 by `git log`).
 
 ### Changed after the last pass, and not seen by a verifier
 
@@ -2328,3 +2328,38 @@ These answers, the commit `97ee003` (round 4's entries above and the ROADMAP), a
 ### Changed after the last pass, and not seen by a verifier
 
 These answers and this entry. A second narrow pass reads them next.
+
+## 2026-11-25 - round 4: a second narrow pass: its planted faults found, nothing else wrong in what it read, one small omission answered, and the push put to Logan
+
+### What ran
+
+- **VNARROW4 again**, by the method the same verifier, on a sealed clone of `r4` at `461ab93` with two faults the lead planted, 15:45:55 to 15:46:20 by its own clock. That is 4 tool calls and 36 s, as the harness reported. It read `git diff HEAD~1 HEAD` against `git log`, `git diff --stat 31aaec1 HEAD`, its own report, the expect run's output and the ledger. It ran no test.
+
+### Measured
+
+- **Plants: 2 of 2:** the round's tally in the entry above made 16 of 17, and "one comment line" on the card page made two. **Round 4: 17 of 19**, found in seven passes:
+
+  | pass | found |
+  |---|---|
+  | VE0C | 3 of 3 |
+  | VE2L | 2 of 3 |
+  | VE0C-2 | 2 of 3 |
+  | its re-check | 2 of 2 |
+  | VCLOSE4 | 3 of 3 |
+  | VNARROW4 | 3 of 3 |
+  | this pass | 2 of 2 |
+
+- **Each of its four earlier points answered rightly,** each restatement keeping its earlier text. No earlier sentence was deleted.
+
+### Left standing, and the answers
+
+- **The card page named the generated package's change for `e1` as its samples and the definition's hash, and not its two new constants,** `PULSE_E1_ID` and `PULSE_E1_LENGTH`. Restated.
+- **"`6604e3c` at 15:37"** is 15:36:57 by `git log`. Restated with both.
+
+### The push
+
+**`main` has not moved, and nothing of round 4 is pushed.** By his answer to the plan's question 6, the lead asks Logan before `main` moves to `r4` and is pushed.
+
+### Changed after the last pass, and not seen by a verifier
+
+The two restatements above, the ROADMAP's lines on this pass, and this entry, in the round's last commit.
