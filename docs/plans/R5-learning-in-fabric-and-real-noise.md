@@ -1,6 +1,6 @@
 # Round 5: learning in the fabric, and real noise - the draft plan
 
-Drafted by the lead on 2026-11-25 on Logan's word after round 4's push: "Begin drafting round 5's plan, the faster host and 200mhz goal can wait till later. Focus on proving things for now rather than speed". This is the second draft, after one verifier pass (VP5, on Sonnet), whose findings are answered below. Nothing of round 5 starts before his approval.
+Drafted by the lead on 2026-11-25 on Logan's word after round 4's push: "Begin drafting round 5's plan, the faster host and 200mhz goal can wait till later. Focus on proving things for now rather than speed". This is the third draft, after two verifier passes (VP5 and its re-check, on Sonnet), whose findings are answered below. The third draft's own changes were not read by a verifier. Nothing of round 5 starts before his approval.
 
 Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION. An ESTIMATE or SURVEY figure drives no decision here until it is measured.
 
@@ -50,14 +50,14 @@ Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION.
 ## What round 5 could be
 
 **A. Learning in the fabric, in simulation: D0's phase B.** The rule of L3 built in RTL beside the core.
-- It takes each truth record's two windows from the delay line as they pass (L9), and adds each to a sum, with its count. **That is D0's "applied per labelled window": the sums change at every window.**
+- It takes each truth record's two windows from the delay line as they pass (L9), and adds each to a sum, with its count. **The learner's state changes at every window; its weights change only where the host names an index.** D0's phase B, "an update rule in the fabric, applied per labelled window", reads as the weights changing at every window. So this is a restatement of D0's phase B, and question 2 asks him.
 - The weights change only at an index the host names. There the learner makes the set of L7, writes it into the shadow, and the host's commit takes it.
 - In simulation, held against the model word for word, as rounds 2 and 3 held the chain.
 
 *Shows:* that the rule the project learns by runs in fabric and gives the model's weights exactly, and D0's learner gate gets its row and its control. *Does not show:* anything on the card, or any new fact about sensitivity, since the weights equal the model's and E1's result already holds for them. **What is not known in advance:** what it costs in fabric, and whether an update finishes in the time between windows (T2, T3).
 
 **B. Stage E3 in software: real noise.** Round 4's B'. Recorded seismic noise through the model's replay source, with injections of `e0`, the learner of E1 against the matched filter, at a false-alarm rate measured from signal-free scores. *Shows:* whether the learner reaches the matched filter's efficiency on real noise, which D8 cannot predict (L22). *Does not show:* anything in fabric, or that a real faint event is found. Its costs:
-- **A judge.** `paired_cost` exists (L23), but on real noise two of its assumptions must be earned: that the injections are independent, and that a threshold taken from signal-free stretches gives the stated false-alarm rate where the injections are. The judge adds the threshold's own error, and measures each model's false-alarm rate on held-out signal-free stretches, which on real noise is measured, not assumed.
+- **A judge.** `paired_cost` exists (L23), but on real noise two of its assumptions must be earned: that the injections are independent, and that a threshold taken from signal-free stretches gives the stated false-alarm rate where the injections are. The judge measures each model's false-alarm rate on held-out signal-free stretches, which on real noise is measured, not assumed. **It also adds the threshold's own error.** `stats.tolerance` has a term for it, but takes its slope from D8's deflection, which assumes Gaussian scores (`stats/tolerance.py`, `roc_slope`). So on real noise the term is measured from the scores themselves, by a method E3S's design names and the lead rules: the density of the signal-free scores and of the signal scores at the threshold, or a resampling of whole stretches. Its control is a stream where the term is known.
 - **A rule for the noise,** frozen and hashed before any record is fetched: which stations, which days, how much, and how stretches holding an earthquake or another event are kept out. D0, section 2, warns that a recorded stream's content is unknown.
 - **A sample format** (L20, L21). One of three:
   - HHZ alone scaled into `s16x1` by a fixed shift;
@@ -89,7 +89,9 @@ Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION.
   - a label-0 window that would start before frame 0 is refused or skipped by a rule the design states, as the trainer's WINDOW_OUTSIDE_PERIOD (L9);
   - a label-0 window another pulse touches, as WINDOW_NOT_FREE;
   - an update that is not finished when its commit is named, by a name of its own.
-  **Every new name is a change to the definition.**
+  **Every new name is a change to the definition.** Two consequences:
+  - **The fabric skips and counts a refused window, where the trainer raises.** So the model's set equals `MeanDifference`'s over the windows both accept, and the plan holds no more than that.
+  - **The model has frames and no clocks** (`docs/rtl/core.md`, limit 4). So it can only say when an update finishes if it carries the fabric's update time, in frames, as a constant of the definition. LRN-B's model takes that time as a parameter, and its value is ruled after RTL-L's design measures it. Until then the count of updates refused for time has no model side.
 - **What the fabric needs that the core has not got:**
   - the truth records' indexes, which the injector has (and only the index: the trainer reads no pulse id and no amplitude);
   - the delay line's whole window in one clock, or a copy of it;
@@ -98,7 +100,7 @@ Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION.
   - the peak;
   - an exact division a tap with the model's rounding;
   - **a way into the shadow beside the host's registers** (L11). The core refuses a shadow write while a commit is scheduled. So the design says who writes the shadow when, and what is refused when both would.
-- **A change to the definition, and what it costs.** New registers, counters and refusal names change `spec/undertone.toml`. Then the records of E1, E2 and E0C's premise go stale and are made again at the round's end, about 7 to 8 minutes each (L17). **E0C's card-day record stays stale by design.**
+- **A change to the definition, and what it costs.** New registers, counters, refusal names and the update's time change `spec/undertone.toml`. **The round makes one change to the definition, in LRN-B's.** If E3S's sample format needs a new profile, that choice is ruled before LRN-B's change is made and goes into it, so the reruns of wave 3 are made once, under the round's last definition. Then the records of E1, E2 and E0C's premise go stale and are made again at the round's end, about 7 to 8 minutes each (L17). **E0C's card-day record stays stale by design.**
 - **D0's truth isolation, restated.** The learner reads the truth records' indexes, so a truth record reaches the score through the weights. The plan proposes this restatement: **no path from a truth record to any output record except through a set the learner makes and a commit the host names.** In observable form:
   - the same samples with different truth records give identical outputs up to the first named commit;
   - after it, the outputs equal the model's run with the learner's set.
@@ -160,7 +162,7 @@ Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION.
 
 | # | claim | basis | source or command | falsified by |
 |---|---|---|---|---|
-| T1 | The learner's sums for T = 64 taps under `s16x1` are two of 64 words of 64 bits, about 8 kbit; under `s24x3`, three channels, about 25 kbit; a stored D, or a snapshot of the sums while an update runs, adds as much again | COMPUTED | 2 x 64 x 64 = 8,192 bits, x 3 = 24,576, from L3, L7 and L21 | RTL-L's design |
+| T1 | The learner's sums for T = 64 taps under `s16x1` are two of 64 words of 64 bits, about 8 kbit; under `s24x3`, three channels, about 25 kbit. A snapshot of the sums while an update runs adds as much again; a stored D, about 96 bits a value, adds about three-quarters as much: 6,144 bits under `s16x1` and 18,432 under `s24x3` | COMPUTED | 2 x 64 x 64 = 8,192 bits, x 3 = 24,576; 64 x 96 = 6,144, x 3 = 18,432; from L3, L7 and L21 | RTL-L's design |
 | T2 | One update divides once a tap of each channel. Each quotient is at most COEFF_MAX, so a divider that makes one quotient bit a clock needs about 16 clocks a tap: about 1,000 clocks for the division under `s16x1` and 3,100 under `s24x3`. The multiplies, the peak's search and the shadow's writes come on top, perhaps as much again | ESTIMATE | 64 x 16 = 1,024 and 192 x 16 = 3,072; the quotient's bound from L5, every value's magnitude at most m; the rest of the update not yet designed | RTL-L's design and its benches |
 | T3 | At 20 clocks a frame under `s16x1` and 60 under `s24x3`, an update is then about 50 to 100 frames under either. Against L10's 64 frames between windows, the sums change while an update runs, so the design either snapshots them (T1) or holds windows back, and says which | ESTIMATE | T2, over the source's rate of `docs/rtl/source.md`; L10 | RTL-L's benches |
 | T4 | A stretch of real noise as long as E1's full part, 25.6 million frames, is about 71 hours at 100 samples a second | COMPUTED | 25,600,000 / 100 / 3,600, from L19 | arithmetic |
@@ -186,9 +188,9 @@ As round 4, with what it taught:
 ## Questions for Logan
 
 1. **Which tracks?** *(Recommended)* A and B in parallel: learning in the fabric, in simulation, and stage E3 in software on real noise. Or A alone; or B alone; or C, stage E2 on the card, with its link.
-2. **Phase B's rule.** *(Recommended)* The same rule as phase A, the difference of class means. The fabric adds each labelled window to its sums as it passes, and makes a new set only where the host names it, so the fabric's weights equal the model's and E1's result holds for them unchanged. Or a rule that changes the weights at every window with a step size, which is a new rule for the model, with its own stage E1, and the fixed-point loss D0's row S4 surveys.
+2. **Phase B's rule.** *(Recommended)* The same rule as phase A, the difference of class means. The fabric adds each labelled window to its sums as it passes, and makes a new set only where the host names it, so the fabric's weights equal the model's and E1's result holds for them unchanged. That reads D0's phase B as the learner's state changing at every window and its weights at named indexes. Or a rule that changes the weights at every window with a step size, which is a new rule for the model, with its own stage E1, and the fixed-point loss D0's row S4 surveys.
 3. **Truth isolation with a learner in the fabric.** *(Recommended)* Restate the gate. The same samples with different truth records give identical outputs until the first named commit, and after it the model's outputs with the learned set. Its control plants an unnamed commit, a self-triggered one, truth reaching an output without a commit, and a learner reading more of the truth record than its index. Or keep the gate as written for the detector, and hold the learner's path by the learner gate alone.
-4. **The learner gate's counter.** *(Recommended)* Restate it. With no step size nothing is lost below a bit, so the gate counts windows taken and refused, and updates refused for time, each equal to the model's. Or keep D0's counter, which then always reads zero.
+4. **The learner gate's counter.** *(Recommended)* Restate it. With no step size nothing is lost below a bit, so the gate counts windows taken and refused, and updates refused for time, each equal to the model's. Or keep D0's counter, which then always reads zero: the gate then holds the weights alone, and the counts are held by RTL-L's benches against the model, not by the gate's row.
 5. **Real noise.** *(Recommended)* SCEDC's records at stations study D3 used, on days chosen by a rule fixed before any fetch. Or another archive or station he names.
 6. **Models.** *(Recommended)* Parcels on Opus and verifiers on Sonnet, as round 4. Or verifiers on Opus.
 
