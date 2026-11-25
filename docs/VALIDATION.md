@@ -2116,3 +2116,147 @@ The commit that carries this entry: the three answers above, and this entry.
 ### Logan's answer
 
 Asked "Shall I push round 3 now (yes / not yet)?", he answered: "Yes, push. Then begin the round 4 draft". **`main` was moved to `r3`'s tip and pushed**, with the commit that records his word as the tip. That commit, which also states the push in the ROADMAP, was read by no verifier.
+
+## 2026-11-25 - round 4 opens; its two parcels, E0C and E2L, built on Opus and verified on Sonnet; the definition's pulse e1
+
+Round 4's plan, [plans/R4-card-e0-and-drift.md](plans/R4-card-e0-and-drift.md), was approved by Logan on 2026-11-25. His words: "Approved except verifiers on Sonnet, parcels on Opus. If possible we can do A and B in parallel, though if it would conflict too much it's acceptable to do A then B."
+- **Track A** is stage E0 on the card.
+- **Track B** is stage E2 in software, a drift by a change of pulse shape.
+
+The round ran on the local branch `r4`, cut at `59dc834` at 12:05.
+
+### What ran
+
+- **Two parcels on Opus, each designed first and ruled by the lead before it built:**
+  - **E0C**, the host side of stage E0 on the card: the cut of round 1's stream into 20 pieces with offset seeds, the model's expectations, the comparison, the judge, the flip control and ten timed runs (`hw/e0c/`, [host/e0c.md](host/e0c.md)). Dispatched at 12:08, ruled at 12:27, READY at `e5960e7` at 13:18.
+  - **E2L**, stage E2 in software: two forgetting learners on round 2's rule (`learn/adaptive.py`), the experiment of five models, its judge, short form and controls ([model/e2l.md](model/e2l.md)). Ruled at 12:3x, READY at `804c49c` at 13:25.
+- **The definition's second pulse `e1`, the lead's** (`108abba`, on the branch `r4-e1`, 12:57, on the second size):
+  - 64 integers of E2L's design, with cos(e0, e1) = 0.499949;
+  - `pulse_ids` e1 = 1;
+  - the tests and one bench that assumed a single pulse.
+  It was kept off `r4` until track A's card day, because the card's image carries round 3's definition and the library refuses an image whose definition is not its tree's.
+- **Four verifier passes on Sonnet, each on a sealed clone with faults the lead planted:**
+  - **VE0C** on E0C, 13:18 to 13:31;
+  - **VE2L** on E2L, 13:25 to 13:35;
+  - **VE0C-2**, a narrow pass on E0C's fixes, 13:52 to 13:59;
+  - **its re-check** of E0C's last tests, 14:07 to 14:11.
+  Their reports are in the round's folder, which is not committed.
+- **Merges onto `r4`:** E0C by fast-forward to `5661550` at 13:59 and to `986cf76` at 14:11; E2L, which carries `e1`, as `60f4391` at 15:06, after track A's card day. Each was committed on the size its change needs; the merge of `e1` on the second size.
+
+### Measured: the verifiers
+
+- **Plants: 3 of 3, then 2 of 3, then 2 of 3, then 2 of 2.** This round so far, 9 of 11. **The two missed:**
+  - VE2L's: a weakened assertion in the control for a drift one trial late. It ran the test and matched its printed counts, and never planted a fault that empties the late case's reasons. The lead showed, in a copy, that the parcel's own unweakened control fails on a detector blind to a late drift, and that the weakened one passes it.
+  - VE0C-2's: an exit code in a paragraph next to one it checked.
+- **No regression in any pass.**
+- **What the passes found that was the parcels':**
+  - **VE0C: three wrong answers of E0C's.**
+    - The judge's and the timed judge's conditions were not each held by a test: with any one removed, every test passed, so PASS could print over a piece whose records differ from the model's.
+    - The reading offsets were shared by `expect` and `compare`, with nothing holding them apart.
+    - A missing flip run exited 0 under a PASS line.
+    E0C answered each with a test that fails on the fault named, and with `card_day`, under which a missing flip run fails the day (`5661550`).
+  - **VE0C-2: two claims of E0C's that no test held,** though the code was right in both: the card day's exit code held one way only, and the timed scorer's strict crossing. **No test read the record the card day writes**; the lead's plant there showed it. E0C added three tests and changed no code (`986cf76`).
+  - **VE2L: no wrong answer of E2L's.** It found the two 1,907s of the short form to be a coincidence of counts from different blobs, as the parcel's page says.
+
+### The lead's calls in this stretch, each a departure or a decision, for Logan
+
+- **The fabric's pulses are a subset of the definition's.** `rtl/inject/inject.sv` knows `e0` alone and refuses `e1` by name, PULSE_UNKNOWN, where the model takes it. The RTL does not change this round, and the change is stated in [rtl/source.md](rtl/source.md), limit 7. Teaching the injector `e1` is a later round's, when stage E2 runs on the card.
+- **Four other parcels' test files and one bench edited by the lead,** each for the one assumption of a single pulse: P0's spec and generator tests, MOD-A's injector test, HOST's library test, and RTL-A's injector bench.
+- **The expect run on E0C's fix commit, beside the narrow pass,** not after the merge as the plan had it. The merge was a fast-forward to that commit, and the later commits touched no code the run uses (`git diff --stat` empty on `hw/`, `host/`, `model/`, `spec/`, `stats/`).
+- **E0C's code merged before VE0C-2's test gaps were closed.** The gaps were in tests only, the code was right in both, and the card day ran from the merged code.
+- **E1, E2 and the premise run on an export of E2L's commit,** at once, while the merge was gated. Nothing they read differs between that commit and the merge.
+
+## 2026-11-25 - round 4, the card day: stage E0 on the U50, every record of 20 pieces the model's and every count round 1's; and stages E1 and E2 and the premise under e1
+
+**Stage E0 on the card: PASS.** Round 1's E0 stream ran on the U50 as 20 pieces, four an amplitude, on round 3's image at 100 MHz. Every record of every piece equals the reference model's, by block hashes fixed before the card ran. At each of the five amplitudes, the counts read from the card's own records equal round 1's part field by field, and are inside D8's tolerance by `stats/`. The flipped-bit control was seen. Ten timed generations each equal the model's: 2,828 ms a generation, 1,273 an hour with this host code. **Stage E2 in software: PASS**: each named model recovers events the frozen model misses. Stage E1 made a fourth time under `e1`: the same result. The record: [studies/CARD-e0.md](studies/CARD-e0.md), [studies/E2-software.md](studies/E2-software.md), [studies/E1-software.md](studies/E1-software.md).
+
+### What ran
+
+- **The expect run,** on the desktop, booked, from 14:10:13 to 14:18:31: seven processes at once on `5661550`. The model's expectations for the 20 pieces, the flip and the timed sets, hashed before the card ran. Each amplitude's model run in pieces is EQUAL to round 1's part: the premise at full scale.
+- **The box readied** from 14:19, under cft-fp256's shared booking, by its lead's word:
+  - the cases and a snapshot of `host/`, `model/`, `spec/` and `hw/e0c/` copied, all 86 case files' SHA-256 equal;
+  - the shim compiled, byte for byte round 3's.
+  Nothing opened a device.
+- **The card day,** begun early: cft-fp256 freed the card at 14:30:44. The lead booked 14:33 to 15:00 ahead of the 15:00 to 17:15 window, and told Logan by a push before the start. `hw/e0c/box_e0.sh` ran detached from 14:32:03 to 14:39:45:
+  - health before;
+  - the 20 pieces, about 19 to 22 s each;
+  - the flip;
+  - the ten timed runs;
+  - health after.
+- **Copied back,** 2,822,461,773 bytes, all 43 files' SHA-256 equal to the box's. The card's and the box's bookings were released at 14:43, and cft-fp256's lead was told.
+- **The judge,** on the desktop from 14:43:44 to 14:43:58, on `r4` at `986cf76`.
+- **`0cf211a`, the card day's record,** on round 3's definition, on the first size: 1,331 tests, nothing skipped.
+- **Three runs in software under `e1`,** booked, from 14:52:06: E1's six parts, E2's full part and the premise, on an export of `804c49c`. They ran 7 to 8 minutes each.
+- **`60f4391`, the merge** of E2L with `e1`, on the second size (run 20261125-150022-0cf211a): 1,360 tests, 4 skipped by name, the four expected; rtl-benches 256 tests, 87,551 records identical, 133 mutant runs each failed as named.
+- **`695d609`, the three records,** on the first size (run 20261125-150907-60f4391): 1,364 tests, 2 skipped by name, both E0C-CARD-STALE.
+
+### Measured: stage E0 on the card
+
+| amplitude | found of 200,000 | D8 | se | noise | se |
+|---|---|---|---|---|---|
+| 1/2 | 24,442 | 0.1224 | -0.30 | 1,929 | -1.60 |
+| 3/4 | 55,857 | 0.2805 | -1.22 | 1,974 | -0.58 |
+| 1/1 | 99,743 | 0.5002 | -1.33 | 2,008 | +0.18 |
+| 5/4 | 144,075 | 0.7198 | +0.53 | 2,041 | +0.92 |
+| 3/2 | 175,622 | 0.8778 | +0.46 | 1,987 | -0.29 |
+
+- **Every piece IDENTICAL**, every record the model's.
+- **At every amplitude:** flags 0; every score read is the statistics package's own; the real-coefficient filter found the same trials; the part is EQUAL to round 1's; and each count is INSIDE.
+- **The flip:** the card's run is IDENTICAL to the flipped blob's model run, and DIFFERENT from e0's from record 35, in all 98 blocks.
+- **The injector was never short:** at least 130,133 frames ahead of the core, with the queue's peak at 1.
+- **The timed runs:** each generation IDENTICAL, its counts the model's. A mean of 2,828 ms:
+  - the records' read and Python parse 2,232 ms (79%);
+  - the card's run 256 ms (9%);
+  - open 208 ms; start 94 ms.
+- **The card read HEALTHY** before and after, round 3's image loaded after, 15.06 W, FPGA 36 C.
+
+### Measured: stage E2, E1 and the premise, under e1
+
+- **E2:**
+  - the frozen model finds 0.12339 after the drift;
+  - **the adaptive at g = 8, 0.48796:** a gain of +0.36457 at z +109.2, inside the e1 filter's figure at -3.90 se;
+  - **the reset at g = 8, 0.48054:** a gain of +0.35715 at z +106.3, outside it at -6.26 se, as the design expected before the run;
+  - every gain is within 2.48 se of the first-order prediction.
+  The run was 7 min 44 s.
+- **E1:** each part equals the third run's in every field but the definition's hash, and the judge's output is unchanged. The skip E1-RECORD-STALE ended.
+- **The premise:** round 1's own script for amplitude 1/1, under `e1`, equals round 1's part in every field but the hash. **Adding `e1` left `e0`'s stream as it was.** The skip E0C-PREMISE-STALE ended.
+
+### Which authority this rests on
+
+- **Stage E0 on the card:** two authorities. Bit identity rests on the reference model, every record. The counts rest on `stats/`, D8 and its tolerance. **Because every record is the model's, the card's sensitivity is round 1's sensitivity in software, reproduced word for word; it is no new evidence about the detector.**
+- **Stages E1 and E2:** `stats/`, and for E2's gains the paired derivation LRN-A wrote for E1, which assumes Gaussian scores. Sensitivity in software, not evidence about any fabric.
+
+### The plan's rows, read against what was measured
+
+- **W1, BELIEVED: held.** Every record of every piece equals the model's at five amplitudes, and each amplitude's count equals round 1's, on round 1's stream in pieces.
+- **W2, DECISION: held.** The recovery of the adaptive and reset models against the frozen one is measured, at an equal false-alarm rate, in labelled windows after the change.
+- **W3, BELIEVED: held, in two inner checks where it said one.** Both sizes pass at the round's end. The card day's record test skips by name, E0C-CARD-STALE, in two of its tests, one for the records and one for the timed runs.
+- **T3, an ESTIMATE of a minute and a half of one core a piece:** the model made each piece in about two minutes, four in 8 min 10 s, one process an amplitude with seven running.
+- **T5, about 2.7 GB of records:** 2,688,013,440 bytes for the 20 pieces, and 2,822,461,773 copied back with the flip's.
+- **T7, the generations an hour, ESTIMATE:**
+  - about 14,000 by the card's own time: the card's run was 256 ms, so 3,600 / 0.256 holds as the bound;
+  - about 9,000 with each run's own overhead: not measured as such; with open and close taken out, 1,386 an hour, COMPUTED;
+  - about 700 to 900 as whole cases: measured one run a generation in one process, the open included, at 1,273.
+  The row's last clause, "with the host's scoring ... not known", is now measured for the scoring: 13 ms.
+- **T4, one to two days:** the round's work ran on one day, from 12:05 to the records' commit at 15:13, after a morning of the plan.
+
+### What this does not prove
+
+- **Learning in the fabric.** The card ran weights the host gave it.
+- **Stage E2 on the card.** The fabric refuses `e1`, and a new image is needed.
+- **Sensitivity on the card beyond round 1's.**
+- **Another clock, profile or sample format on the card,** or the definition's maxima.
+- **The collector's pauses on the box.** It was off in every piece, and how long a collection would take there is not measured.
+- **A faster host.** The rate without open and close, and the bound near the card's own time, are COMPUTED and ESTIMATE.
+- **A fault the model and the RTL share.**
+
+### The lead's slips
+
+- **Ledger headings written without `date`** in the round's first hour (12:3x, 12:4x), and one entry, headed 15:10, appended at 15:09:38.
+- **The card day began at 14:32:03, a minute before its booking's 14:33.** The card had been released by its holder at 14:30:44, and nothing else was booked.
+- **A first draft of E2's record test held the refusal too strictly,** and failed on the judge's real refusal under a changed definition. It was corrected before the commit, and watched failing on two planted faults.
+- **E0C twice edited a line inside an earlier entry of its own ledger,** instead of appending. It recorded both itself.
+
+### Changed after the last pass, and not seen by a verifier
+
+The card day's page, record and test; the merge `60f4391`; the three records of `695d609`; these entries and the ROADMAP. The closing verifier reads them next.
