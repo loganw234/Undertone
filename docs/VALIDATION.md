@@ -1682,7 +1682,7 @@ The lead's restatements at the merge: D3's limits 19 to 21, PROVENANCE.md, D2's 
 
 ### Not done, and why
 
-- **What D3's section 12 lists for the lead to restate**: done at the round's close, in the commit that carries these entries: D1's row W3, D1b's row Q2a, and D2's limits 8 and 18. The plan's row W4 is read in the last entry below; the plan is closed by Logan's word and is not edited.
+- **What D3's section 12 lists for the lead to restate**: done at the round's close, in the commit that carries these entries: D1's row W3, D1b's row Q2a, and D2's limits 8 and 18. The plan's row W4 is read in the last entry below; the plan is closed by Logan's word and is not edited. *Corrected by the lead after the narrow pass:* not all of it then. D2's section 14, item 1, which the list also names, was restated only after the closing verifier found it (`54cd64d`).
 - **A wider experiment**: the season fixed first, other stations and bearings, onset against distance, the earthquake catalogue. None was done (D3, section 13).
 
 ## 2026-11-24 - round 3, in simulation: the overflow flag over every source, the kernel around the chain, and the host library; three parcels merged after six verifier passes
@@ -2043,3 +2043,43 @@ The commit that carries this entry: the corrections above, and Logan's word in t
 ### Logan's word, while it ran
 
 "Once the verifier returns ready you are clear to push and begin drafting round 4". The lead's reading is in the ROADMAP: `main` moves to `r3`'s tip and is pushed once the narrow pass on these corrections finds no regression and no wrong answer.
+
+## 2026-11-25 - round 3: a narrow pass on the lead's corrections: its planted faults found, three more wrong statements, and the reading of Logan's word bounded
+
+A fresh verifier read the commit of the lead's answers to the closing verifier, `54cd64d`. **No regression. It found its three planted faults and three wrong statements of the lead's**, small ones, each corrected in the commit that carries this entry. It also said the lead's reading of Logan's word goes beyond the words on which pass is "the verifier". The lead's answer is below.
+
+### What ran
+
+- **VCLOSE3-2**, fresh, on Opus, on a sealed clone of `54cd64d` with three faults amended into it, in files it already changed. Its evidence was the same as VCLOSE3's, with VCLOSE3's report added, and it was not given the lead's ledger. 09:42:19 to 09:51:37 by its own clock, of a box of 40 minutes. It ran the first size once: PASS, 1,284 tests, none skipped.
+
+### Measured
+
+- **Plants: 3 of 3**: the round's plant count made 32 of 32; row C13's corrected range made [3968, 131072); trap 19's 150 MHz link made 6 h 16 min. **In round 3, 34 of 34.**
+- **No regression.** VCLOSE3's B1 to B5, the faults planted in its own clone, are each right in the tree: the script's hash, the swap time, the E1 test's seven hashes, the run's end time and row R10's arithmetic.
+- **By its own commands**: every figure the corrections add, against the evidence, the report, git or arithmetic. All agree but the three planted and the three below.
+
+### Wrong, the lead's, and the answers
+
+1. **The ROADMAP's route 1 said the timing query would settle whether the pool's paths met at 200 MHz.** The query is on the third link's design, at 100 MHz, and the sweep's designs were not kept. Corrected: only a 200 MHz link made again, its design kept, would.
+2. **Row C4 still said 13 capabilities**, where the page's text and the entry above had been corrected to 15, 13 of them compared. Corrected.
+3. **The LCH-4 entry above said D3's list was all done in the closing commit**, while D2's section 14 was restated only in `54cd64d`. Corrected.
+
+And of its smaller points:
+- the logs' `manifest.py` hash is 68989eb's, and the tree's file differs from it now in five docstring lines, which row C2 now says;
+- the count of the closing verifier's findings was "five wrong statements" in the ROADMAP and "four and an overclaim" here, and is now said one way;
+- trap 19 gave nice 19 to all three links, where the third ran at nice 10;
+- the ROADMAP's route 3 said two copies do not fit, flat, where its basis is arithmetic.
+Each is answered. The CARD commit's message is left, as above.
+
+### The reading of Logan's word
+
+The verifier's point: when Logan said "Once the verifier returns ready", the verifier was the closing pass, VCLOSE3, and it did not return ready. The lead's reading moves the condition onto the narrow passes, and with no bound. **The lead's answer: one more narrow pass, on the commit that carries this entry. If it returns with no regression and no wrong answer, `main` moves to `r3`'s tip and is pushed. If it does not, the lead asks Logan before anything is pushed.** He is told how his word was read when the push is reported. The ROADMAP's reading is restated so.
+
+### The lead's slips
+
+- **A correction written without its consequence followed through**: the timing query named as the answer, when the same bullet says what it can run on.
+- **A correction made in the page's text and the entry, and not in its register row.**
+
+### Changed after the last pass, and not seen by a verifier
+
+The commit that carries this entry. A second narrow pass reads it.
