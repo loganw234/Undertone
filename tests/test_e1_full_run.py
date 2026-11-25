@@ -4,7 +4,9 @@ verdict is what the tree's own judge says of them.
 The run was the lead's, on 2026-11-23: six parts, about ten minutes of one core each, on seeds named before
 the experiment was written (docs/studies/E1-software.md). The gate cannot make it again. Restated by the lead
 on 2026-11-25: the committed parts are now a third run's, made on round 3's branch under the definition of
-the kernel's block, the same as the second run's in every field but that definition's hash. What a reader has
+the kernel's block, the same as the second run's in every field but that definition's hash. Restated by the lead
+again on 2026-11-25, in round 4: the committed parts are now a FOURTH run's, made on an export of 804c49c under the
+definition with the pulse e1, the same as the third run's in every field but that definition's hash. What a reader has
 is seven committed files under docs/studies/e1/: the six parts the run wrote, and what the judge printed
 for them. If a part is changed afterwards, or the judge is, the page's figures no longer follow from the
 tree, and nothing would notice.
@@ -47,13 +49,17 @@ OUTPUT = "judge-output.txt"
 # them in one field of each part, the definition's hash, and in nothing else; so do the first run's, of
 # 17:02 that day. The judge's output is the same for all three, byte for byte once its line ends are made
 # line feeds (docs/studies/E1-software.md).
+# Restated by the lead again on 2026-11-25, in round 4: the six parts are now the FOURTH run's, made on a git archive
+# export of 804c49c from 14:52:06 that day, under the definition with the pulse e1. They differ from the third run's
+# in one field of each part, the definition's hash, and in nothing else; the judge's output is unchanged. The third
+# run's hashes were 462add11..., 5af8c98f..., 83429623..., 600bb529..., 4bba664f... and e5f259e4....
 SHA256 = {
-    "c0.json": "462add11ca6df07cc3b4fb48d0eed0d037217028487d8921d7073758b0048abc",
-    "c1.json": "5af8c98ffa864391865b8177aea7c5492fe59d000bdef7268a7f244d6840e531",
-    "c2.json": "83429623228f0e539e560215043473cc2a25db67f4106ddaa1a33eb4e97cbde9",
-    "c3.json": "600bb5292447af5a1dd0001d58c73a9909ffb2b6021caac2a5b1d82822b3329c",
-    "c4.json": "4bba664fc281e06d8fd509ea859ea4b511823f30016b8ac1cfbb89b62f344f81",
-    "c5.json": "e5f259e4a0add61c58809ae383c16a9cdf31ee22175a346f9f0e1910ea5a69d2",
+    "c0.json": "25b71f3b0c7cf2ccab90329fbecf8c1ab1c62a4a6fd372634e542d2ce533a5d0",
+    "c1.json": "1161c38846d511626329a5cf2a9b871b83f490d7c5feaaa114e83d779e05dd04",
+    "c2.json": "8042d527cfa4120729faa292f9d56e6f8e55030a918198a03faa2db42951b2a4",
+    "c3.json": "99cd8b20ffc5d31df6a229fa40c85a02f2d3cfe2952e3023fd9b05d7947873db",
+    "c4.json": "3ea394c80c49fdc05f9bd231ae22f6de3b582fcde0cd959d8519a97585aed1f9",
+    "c5.json": "e0b898589ea47ee48720951fa06ca1a96e4c02ee4134bdd26225b93cd8366a03",
     "judge-output.txt": "6691abfacb69aee9c02abfc2f4a705e0157b024e3acafacf23d58edaf6f80f0e",
 }
 VERDICT = "== E1 SOFTWARE VERDICT: PASS, the reported model is inside the tolerance of E0's efficiency"

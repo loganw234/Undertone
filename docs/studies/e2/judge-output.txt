@@ -1,0 +1,32 @@
+E2 in software: profile s16x1, sigma 1477/1, Pfa 0.01, amplitude 1/1; the frozen filter's d is 2.3269 on e0 and 1.1633 on e1; the e1 filter's 2.3268
+  part full, seed 2026112700: 100000 held-out injections of e1, 300000 signal-free reads, k 3000
+  the frozen model found 12339 of 100000 (0.12339); against its own D8 0.1224 +0.56 se INSIDE; against the e1 filter's 0.5002 -119.81 se OUTSIDE
+  the e1 filter    found 50447 of 100000 (0.50447); against its own D8 0.5002 +1.35 se INSIDE; against the e1 filter's 0.5002 +1.35 se INSIDE
+  the adaptive model, g = labelled windows after the change / 256:
+    g 0 (   0 windows) blocks 0-7: found 10958 (0.10958), own 0.1099 -0.18 se INSIDE; best 0.5002 -124.20 se OUTSIDE; gain over frozen -0.01381 se 0.00096 (z -14.4); predicted -0.01256 (-1.31 se)
+    g 1 ( 256 windows) blocks 1-8: found 15302 (0.15302), own 0.1533 -0.14 se INSIDE; best 0.5002 -110.39 se OUTSIDE; gain over frozen +0.02963 se 0.00114 (z +26.0); predicted +0.03087 (-1.09 se)
+    g 2 ( 512 windows) blocks 2-9: found 20695 (0.20695), own 0.2100 -1.31 se INSIDE; best 0.5002 -93.24 se OUTSIDE; gain over frozen +0.08356 se 0.00163 (z +51.3); predicted +0.08760 (-2.48 se)
+    g 3 ( 768 windows) blocks 3-10: found 28301 (0.28301), own 0.2851 -0.77 se INSIDE; best 0.5002 -69.06 se OUTSIDE; gain over frozen +0.15962 se 0.00219 (z +73.0); predicted +0.16269 (-1.41 se)
+    g 4 (1024 windows) blocks 4-11: found 35111 (0.35111), own 0.3519 -0.25 se INSIDE; best 0.5002 -47.41 se OUTSIDE; gain over frozen +0.22772 se 0.00261 (z +87.3); predicted +0.22943 (-0.66 se)
+    g 5 (1280 windows) blocks 5-12: found 41460 (0.41460), own 0.4170 -0.77 se INSIDE; best 0.5002 -27.22 se OUTSIDE; gain over frozen +0.29121 se 0.00293 (z +99.4); predicted +0.29453 (-1.14 se)
+    g 6 (1536 windows) blocks 6-13: found 45713 (0.45713), own 0.4577 -0.17 se INSIDE; best 0.5002 -13.70 se OUTSIDE; gain over frozen +0.33374 se 0.00312 (z +107.0); predicted +0.33523 (-0.48 se)
+    g 7 (1792 windows) blocks 7-14: found 47748 (0.47748), own 0.4773 +0.06 se INSIDE; best 0.5002 -7.23 se OUTSIDE; gain over frozen +0.35409 se 0.00325 (z +108.9); predicted +0.35486 (-0.24 se)
+    g 8 (2048 windows) blocks 8-15: found 48796 (0.48796), own 0.4863 +0.51 se INSIDE; best 0.5002 -3.90 se INSIDE; gain over frozen +0.36457 se 0.00334 (z +109.2); predicted +0.36392 (+0.20 se)
+    one reading, at the tolerance's resolution: every snapshot from 2048 labelled windows after the change on is inside the e1 filter's figure
+  the reset model, g = labelled windows after the change / 256:
+    g 0 (   0 windows) blocks 4-7: found 10605 (0.10605), own 0.1065 -0.30 se INSIDE; best 0.5002 -125.33 se OUTSIDE; gain over frozen -0.01734 se 0.00108 (z -16.0); predicted -0.01589 (-1.34 se)
+    g 1 ( 256 windows) blocks 4-8: found 18747 (0.18747), own 0.1880 -0.26 se INSIDE; best 0.5002 -99.44 se OUTSIDE; gain over frozen +0.06408 se 0.00151 (z +42.6); predicted +0.06562 (-1.02 se)
+    g 2 ( 512 windows) blocks 4-9: found 25617 (0.25617), own 0.2588 -1.02 se INSIDE; best 0.5002 -77.60 se OUTSIDE; gain over frozen +0.13278 se 0.00202 (z +65.6); predicted +0.13640 (-1.79 se)
+    g 3 ( 768 windows) blocks 4-10: found 31206 (0.31206), own 0.3137 -0.60 se INSIDE; best 0.5002 -59.83 se OUTSIDE; gain over frozen +0.18867 se 0.00238 (z +79.2); predicted +0.19132 (-1.11 se)
+    g 4 (1024 windows) blocks 4-11: found 35111 (0.35111), own 0.3519 -0.25 se INSIDE; best 0.5002 -47.41 se OUTSIDE; gain over frozen +0.22772 se 0.00261 (z +87.3); predicted +0.22943 (-0.66 se)
+    g 5 (1280 windows) blocks 12-12: found 43137 (0.43137), own 0.4274 +1.28 se INSIDE; best 0.5002 -21.89 se OUTSIDE; gain over frozen +0.30798 se 0.00333 (z +92.4); predicted +0.30499 (+0.90 se)
+    g 6 (1536 windows) blocks 12-13: found 47256 (0.47256), own 0.4689 +1.17 se INSIDE; best 0.5002 -8.79 se OUTSIDE; gain over frozen +0.34917 se 0.00336 (z +103.9); predicted +0.34647 (+0.80 se)
+    g 7 (1792 windows) blocks 12-14: found 47288 (0.47288), own 0.4720 +0.28 se INSIDE; best 0.5002 -8.69 se OUTSIDE; gain over frozen +0.34949 se 0.00335 (z +104.2); predicted +0.34957 (-0.02 se)
+    g 8 (2048 windows) blocks 12-15: found 48054 (0.48054), own 0.4785 +0.64 se INSIDE; best 0.5002 -6.26 se OUTSIDE; gain over frozen +0.35715 se 0.00336 (z +106.3); predicted +0.35612 (+0.31 se)
+    one reading, at the tolerance's resolution: every snapshot from none of these on is inside the e1 filter's figure
+  the adaptive less the reset model at each g: 0 +0.0035 (se 0.0008); 1 -0.0345 (se 0.0012); 2 -0.0492 (se 0.0013); 3 -0.0290 (se 0.0012); 4 +0.0000 (se 0.0000); 5 -0.0168 (se 0.0032); 6 -0.0154 (se 0.0026); 7 +0.0046 (se 0.0020); 8 +0.0074 (se 0.0016)
+  the instrument: flags 0; the adaptive's reads identical to the statistics': [True]; the core equal to each replay on the first 256 trials: yes; the drift as the frozen model sees it: 1024 e0 trials to index 131008, 101024 e1 from 131136; peaks {'frozen on e1': 63, 'e1 filter on e1': 63}; a rate of 0.01 in 300000 reads is COUNTED
+  THE REPORTED MODEL, named before the run: the adaptive model at g = 8 (2048 labelled windows after the change): found 48796 of 100000, 0.48796; against the e1 filter's figure 0.5002 -3.90 se INSIDE; gain over the frozen model +0.36457 se 0.00334 (z +109.2); predicted +0.36392 (+0.20 se)
+  THE REPORTED MODEL, named before the run: the reset model at g = 8 (2048 labelled windows after the change): found 48054 of 100000, 0.48054; against the e1 filter's figure 0.5002 -6.26 se OUTSIDE; gain over the frozen model +0.35715 se 0.00336 (z +106.3); predicted +0.35612 (+0.31 se)
+  the parts against the experiment as this file states it: as stated
+== E2 SOFTWARE VERDICT: PASS, each named model recovers events the frozen model misses
