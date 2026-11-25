@@ -2172,7 +2172,7 @@ The round ran on the local branch `r4`, cut at `59dc834` at 12:05.
 
 ### What ran
 
-- **The expect run,** on the desktop, booked, from 14:10:13 to 14:18:31: seven processes at once on `5661550`. The model's expectations for the 20 pieces, the flip and the timed sets, hashed before the card ran. Each amplitude's model run in pieces is EQUAL to round 1's part: the premise at full scale.
+- **The expect run,** on the desktop, booked, from 14:10:13 to 14:18:31: seven processes at once on `5661550`. *Restated after the narrow pass:* those are its script's own lines. The cases were made from 14:10:06 to 14:10:13, and each of the seven processes ran from 14:10:14 by its own log, the last ending 14:18:29. The model's expectations for the 20 pieces, the flip and the timed sets, hashed before the card ran. Each amplitude's model run in pieces is EQUAL to round 1's part: the premise at full scale.
 - **The box readied** from 14:19, under cft-fp256's shared booking, by its lead's word:
   - the cases and a snapshot of `host/`, `model/`, `spec/` and `hw/e0c/` copied, all 86 case files' SHA-256 equal;
   - the shim compiled, byte for byte round 3's.
@@ -2296,8 +2296,35 @@ The card day's page, record and test; the merge `60f4391`; the three records of 
 ### The lead's slips
 
 - **While answering, the lead first wrote "half an hour"** for the time between the card's record and the merge. It was fourteen minutes, 14:52:48 to 15:06:53, and was corrected before the commit.
-- **The first answer to (b)4 added four comment lines to `inject.sv`'s header, and the second size failed** (run 20261125-152120-97ee003, 15:21 to 15:28). The lines moved a line that `rtl/tb/build_lines.toml` and `tests/test_p0_rtl_gate.py` name by number, from 276 to 280. Then 61 bench builds printed a known simulator line the list no longer named, and the foundation's test of the list failed, so the model-tests control could not fail either. Nothing of the design had changed. The answer was made one line, changed in place, and the second size run again. **A comment in a file the build-line list names is not free to add lines.**
+- **The first answer to (b)4 added four comment lines to `inject.sv`'s header, and the second size failed** (run 20261125-152120-97ee003, 15:21 to 15:28). The lines moved a line that `rtl/tb/build_lines.toml` and `tests/test_p0_rtl_gate.py` name by number, from 276 to 280. Then 61 bench builds printed a known simulator line the list no longer named, and the foundation's test of the list failed, so the model-tests control could not fail either. Nothing of the design had changed. The answer was made one line, changed in place, and the second size run again. **A comment in a file the build-line list names is not free to add lines.** *Restated after the narrow pass, which could not see it:* the second size again, run 20261125-152919-97ee003, 15:29:19 to 15:36:49, was PASS, with the two E0C-CARD-STALE skips; rtl-benches had 256 tests, 87,551 records identical and 133 mutant runs each failed as named. The answers were committed as `6604e3c` at 15:37.
 
 ### Changed after the last pass, and not seen by a verifier
 
 These answers, the commit `97ee003` (round 4's entries above and the ROADMAP), and this entry. A narrow pass reads them next.
+
+## 2026-11-25 - round 4: a narrow pass on the record and the answers: its planted faults found, no wrong figure of the lead's, four places that said less or later than they should, and the answers
+
+### What ran
+
+- **VNARROW4**, on Sonnet, on a sealed clone of `r4` at `6604e3c` with three faults the lead planted, 15:37:40 to 15:40 by its own clock. That is 21 tool calls and 2 min 37 s, as the harness reported. It read `97ee003` and `6604e3c` whole, against the result pages, the records, the logs, `git log` and the ledger. The record tests in its clone: 31 passed, 2 skipped by name, E0C-CARD-STALE.
+
+### Measured
+
+- **Plants: 3 of 3:** a noise count in the card's table here, a pulse id in `host.md`'s limit 20, and a commit time on the card's page. **Round 4: 15 of 17.** One of the three was weaker than it should have been: it sat in a line `97ee003` added, so the tip's own diff showed it as changed.
+- **No wrong figure of the lead's.** Every figure of round 4's entries and the ROADMAP's lines it checked matches its source. That covers commit ids and times, test counts, the card's counts and se, the flip, the timed parts and rates, the records' bytes, E2's figures and the plants' tally.
+- **No earlier sentence was deleted** in the two commits. `inject.sv`'s header line, replaced one for one, is quoted in `source.md`'s table.
+- **Nothing else in the tree describes PULSE_UNKNOWN or the fabric's pulses as before `e1`.**
+
+### More or later than the evidence, the lead's, and the answers
+
+- **The ROADMAP's round 4 lines still said the closing verifier was next.** Restated, the earlier text kept.
+- **This file said the second size was run again, without its result.** The verifier's evidence stopped at the failed run. Restated with the run, its verdict and the commit.
+- **No page said that the tree now differs from the source the card's image was built from,** beyond the definition. Restated in the card page's limit 9, measured by `git diff --stat 31aaec1 HEAD`:
+  - one comment line of `inject.sv`'s header among the design's own files;
+  - the generated package's change for `e1`.
+  The lead's first wording of that answer named the comment line alone, and was widened before the commit when the diff showed the package.
+- **The expect run's start, 14:10:13,** is its script's line. Restated with the cases' and the processes' own times.
+
+### Changed after the last pass, and not seen by a verifier
+
+These answers and this entry. A second narrow pass reads them next.
