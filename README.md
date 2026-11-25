@@ -6,7 +6,7 @@ The name is the thing it listens for: a faint signal under the noise. The projec
 
 ## Where it stands (2026-11-25)
 
-**Round 3, first light on the card, is closing. The detector has run on the card, and every score word it put out equals the reference model's.** The work is done in rounds, each with a plan the owner approves:
+**Round 3, first light on the card, is done. The detector has run on the card, and every score word it put out equals the reference model's.** Round 4's plan is being drafted. The work is done in rounds, each with a plan the owner approves:
 
 - **Round 1 (2026-11-23): the reference model and the statistics, in software.** A plain integer Python model of the noise source, the injector, the detector core, the weight store and the scorer (`model/`), and a second, independent authority for sensitivity (`stats/`). As a matched filter the model reproduces the textbook curve at five amplitudes.
 - **Round 2 (2026-11-23): the fabric in simulation, and a learner in software.** SystemVerilog for the noise source, the injector, and the detector core with its weight store and a hidden layer in its head, each held against the model word for word in a simulation image of the project's own, and the three wired together ([docs/rtl/README.md](docs/rtl/README.md)). A learner that starts blank (`learn/`) reaches the matched filter's efficiency at stage E1 in software, 0.4949 against 0.5003 ([E1-software.md](docs/studies/E1-software.md)).

@@ -2112,3 +2112,7 @@ The verifier's point, made twice: Logan's words were "once the verifier returns 
 ### Changed after the last pass, and not seen by a verifier
 
 The commit that carries this entry: the three answers above, and this entry.
+
+### Logan's answer
+
+Asked "Shall I push round 3 now (yes / not yet)?", he answered: "Yes, push. Then begin the round 4 draft". **`main` was moved to `r3`'s tip and pushed**, with the commit that records his word as the tip. That commit, which also states the push in the ROADMAP, was read by no verifier.
