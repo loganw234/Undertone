@@ -38,6 +38,37 @@ His answers are below, verbatim, under "Logan's words, as given". What they leav
 
 Settled by those answers: the push of round 1; the package index's terms.
 
+## Routes for later
+
+Written on Logan's word of 2026-11-25 ("make a note of the general 200mhz goal as well as the potential future routes to explore"). **None is planned or approved.** A round's plan takes one up only with his word. Each figure has a row in the register at the end of this section.
+
+1. **A kernel clock of about 200 MHz: his goal.** The first build runs at 100 MHz (R1). The overnight sweep asked for 200, and v++ lowered the kernel's clock to 108.2 MHz (R2). A link at 150 MHz was still routing when this was written; its result is in round 3's ledger. What stands in the way, in the order the timing reports show it:
+   - **The register writes' checks.** In one clock, `configure`'s word count is worked out from the shape registers and compared with the word written, and the result gates every write that is taken, the weight registers' among them (R3, R4). The shape registers change only when written, so the count can be worked out a clock early and held in a register. This is a change to the register interface, not to the detector's datapath. It touches the order in which one write's faults are named, which the benches hold against the model.
+   - **The pool's write address**, the worst path at 100 MHz (R1). At 200 MHz Vivado copied that net to spread its load, and its paths met with 0.009 ns to spare. Route 2 below would remove it.
+   - **Not measured: what fails behind those two.** A row's 128 products are summed in one stage ([rtl/core.md](rtl/core.md), section 10, limit 2). At 200 MHz that may need more stages, which changes the core's latency of eleven clocks and every bench that holds it.
+   - **The first step is a timing query, not a change.** The third link's routed design is kept on the box. A query on it that lists every kernel path longer than 5 ns would show what an RTL change has to cover. The sweep's own routed designs were not kept.
+   - **What the clock buys.** The core takes one sample a clock (R5), and each sample writes a 32-byte record (R6). For on-card noise, the card's part of a stage takes seconds at either clock, and the host's reading and scoring of records is the slower part. For a real sensor the clock does not matter (R9).
+2. **The pool out of LUT memory and into URAM.** The kernel holds about half the chip's LUT memory, almost all of it the pool, and uses none of its URAM (R7). Moving the pool would make room for route 3 and remove the worst path at 100 MHz. It changes the RTL and not the model. URAM's read takes more clocks than a LUT memory's, so the pool's forwarding ([rtl/core.md](rtl/core.md), section 3) would change with it: BELIEVED.
+3. **Two models on one stream: his concept.** One source and one injector would feed two detector cores on the same clock, and their records would pair up by index. A clock for each would add a crossing between the two and no speed, since a core takes at most one sample a clock. Two copies of today's kernel do not fit, because of their LUT memory (R8). After route 2 they would.
+   - **What it is for:** a frozen copy beside a learning copy, both judged against the injector's labels at an equal false-alarm rate, with the learning copy swapped in when it wins. The weight swap for that exists. Stage E2 of [D0](studies/D0-rough-design.md), section 8, already plans several models on one stream.
+   - **What it is not for:** one model's detections used as labels for the other. Labels come from the injector, never from a detector (D0, section 8 and row S6). Taking that up would be a hypothesis of its own, with its own control.
+   - **When it earns its room.** The noise source is seeded, so two runs one after the other see the identical stream, and they give the same paired comparison with one core. Two cores at once pay off on a stream that cannot be replayed, such as a live sensor.
+4. **Records thresholded on the card.** Every sample writes a record, so one hour at 100 MHz is more records than a host can take (R10). Writing only records above a threshold, with counts of the rest, would let a long run measure a lower false-alarm rate than one buffer allows (D0, row D10). It changes the record format and the definition.
+5. **One multiplier for many taps.** A real sensor gives about 100 samples a second (R9). At 100 MHz one multiplier could serve many taps in turn, so a much larger model would fit on the same card. It would be a different core, for a real-data stage. No figure for it has been worked.
+
+| # | claim | basis | source or command | falsified by |
+|---|---|---|---|---|
+| R1 | The third link asked 100 MHz and achieved 100 MHz. The kernel clock's routed worst slack is +0.122 ns, on a path from the pool's write pointer to the pool memory's write address, with 0 logic levels | MEASURED | round 3's ledger, 2026-11-24 18:02: the image's info file and the routed timing summary | a reading of the same reports that differs |
+| R2 | The sweep's 200 MHz link of the same commit: v++ lowered the kernel's clock to 108.2 MHz; its routed worst slack is -4.242 ns against 5.000 ns | MEASURED | round 3's ledger, 2026-11-25 03:51: the info file's "Achieved Freq: 108.2 MHz" and the routed timing summary | a reading of the same reports that differs |
+| R3 | That link's ten worst kernel paths begin at the shape register `shp_filters` and end at the weight registers; the worst is 26 logic levels and 9.218 ns | MEASURED | the same timing summary | a reading of the same report that differs |
+| R4 | Those paths are the register writes' checks, which gate every write taken | BELIEVED | [rtl/core/core.sv](../rtl/core/core.sv), the write's checks and `wcode`, read by the lead | a timing query that names the cells on the path |
+| R5 | At one sample a clock the core takes 10^8 samples a second at 100 MHz and 2 x 10^8 at 200 MHz | COMPUTED | D0, row D5; [rtl/core.md](rtl/core.md), a frame taken at every rising edge | arithmetic |
+| R6 | At 32 bytes a record, that is 3.2 GB/s and 6.4 GB/s of records | COMPUTED | [rtl/krnl.md](rtl/krnl.md), section 2, a slot of 32 bytes; R5 | arithmetic |
+| R7 | The kernel alone, after synthesis in the third link: 329,499 LUTs, 37.80 percent of the chip's; 196,089 of them as memory, 48.63 percent of the chip's LUT memory; 729 DSP slices of 5,952; 0 URAM of 640 | MEASURED | the third link's synthesis utilisation report for the kernel, kept on the box | a reading of the same report that differs |
+| R8 | Two copies of that kernel need 392,178 LUTs as memory of the chip's 403,200, 97.3 percent, before the platform's own | COMPUTED | 2 x 196,089 / 403,200, from R7 | arithmetic |
+| R9 | A seismometer of the kind the project has looked at gives about 100 samples a second | BELIEVED | from memory, not read | the stations' own metadata |
+| R10 | One hour at 100 MHz is 3.6 x 10^11 samples and 1.152 x 10^13 bytes of records | COMPUTED | 3,600 x 10^8, then x 32, from R5 and R6 | arithmetic |
+
 ## Logan's words, as given
 
 Kept verbatim, with their dates. The lead's reading follows each, marked as the lead's.
@@ -186,6 +217,24 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 > Since the card cant run tonight, go ahead with an overnight frequency sweep, seeing if 100mhz is actually the limit or if Vivado just closed timing tight. The cft project showed similar tight timing at varying speeds
 
 *The lead's reading:* the sweep comes before the card day, not after it, and changes nothing the card day runs: links of the same commit at higher kernel clocks, on the box, one at a time behind the third, at the lowest priority under cft-fp256's night on the box's CPUs, the card untouched. 200 MHz first, then two clocks chosen by what closed. A clock closes when the image carries the clock asked for; v++ lowers a kernel clock that fails, and the clock it lowers to is MEASURED too. Each result is the routed timing summary of its own link: it says where Vivado closed a design, not how that design behaves on the card.
+
+**2026-11-25, on the clock as a goal.** The lead had told him that the 200 MHz link did not close, that v++ lowered the kernel's clock to 108.2 MHz, and that its worst path is the register writes' checks, not the detector's datapath:
+
+> Would we likely be able to go faster if we resolved the issue in RTL? Not right now, but in the future. Ideally Id like to reach ~200mhz just as a goal, but what sort of performance does the frequency translate to for the intended usecase?
+
+*The lead's reading:* about 200 MHz is his goal for the kernel's clock, in a later round and not this one. It is not a requirement of any stage, and nothing of round 3 changes for it. The lead's answer that day: the core takes one sample a clock, so the clock is samples a second; for on-card noise, a stage's time on the card is seconds at either clock; for a real sensor the clock does not matter. It is route 1 of "Routes for later", above.
+
+**2026-11-25, on two models at once.** After that answer:
+
+> The U50 has 2 clocks correct? I was curious if it would be conceptually possible to place 2 'tiles', one for each clock to allow both to run in parallel to process the same data through 2 models to allow the two to compare to aid learning? Just a concept
+
+*The lead's reading:* a concept, not a request for work. The lead's answer that day: the platform gives a kernel two clocks, but two models on one stream belong on one clock, and a second copy does not fit until the pool leaves LUT memory. A frozen copy beside a learning copy, both judged on the injector's labels, fits the design; one model's detections as the other's labels does not. It is route 3 of "Routes for later", above, with route 2 before it.
+
+**2026-11-25, asking for this note:**
+
+> Go ahead and make a note of the general 200mhz goal as well as the potential future routes to explore like this one
+
+*The lead's reading:* the goal and the routes are written into this file, under "Routes for later", each with what stands in its way and its figures' bases. That section is the note. It plans nothing, and approves nothing.
 
 ## Standing rules
 
