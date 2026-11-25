@@ -79,7 +79,8 @@ SCHEDULES = (
     ([rec(0, num=1 << 31)], 64, "RECORD_FIELD"),
     ([rec(-1)], 64, "RECORD_FIELD"),
     ([rec(0, den=0)], 64, "RECORD_FIELD"),
-    ([rec(0, pulse_id=1)], 64, "PULSE_UNKNOWN"),
+    ([rec(0, pulse_id=1)], 64, None),               # e1, since round 4: the model takes it
+    ([rec(0, pulse_id=2)], 64, "PULSE_UNKNOWN"),
     ([rec(0), rec(63)], 200, "INJECT_OVERLAP"),
     ([rec(100), rec(0)], 200, "INJECT_OVERLAP"),
     ([rec(1)], 64, "INJECT_PAST_END"),

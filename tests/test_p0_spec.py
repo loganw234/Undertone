@@ -108,7 +108,7 @@ def test_p0_an_injected_sample_is_rounded_by_the_rule_the_coefficients_are():
 
 
 def test_p0_every_pulse_has_one_id_that_fits_the_truth_records_field():
-    assert C.PULSE_IDS == {"e0": 0}
+    assert C.PULSE_IDS == {"e0": 0, "e1": 1}    # e1 since round 4, for stage E2's drift
     assert set(C.PULSE_IDS) == set(C.PULSES)
     assert len(set(C.PULSE_IDS.values())) == len(C.PULSE_IDS)
     width = dict((f[0], (f[1], f[2])) for f in C.RECORDS["truth"])["pulse_id"]

@@ -349,12 +349,23 @@ async def refusal_record_field(dut):
 async def refusal_pulse_unknown(dut):
     test = "refusal_pulse_unknown"
     b = await begin(dut)
-    assert sorted(C.PULSE_IDS.values()) == [E0], "this bench knows one pulse"
-    await refused_at_the_write(b, test, "pulse_id 1", [rec(5, 1, 1, pulse_id=E0 + 1)], "PULSE_UNKNOWN")
+    # The fabric holds e0 alone. Since round 4 the definition also declares e1, for stage E2's drift in software:
+    # the model takes it, and this injector refuses it by name, as it refuses a pulse the definition does not
+    # declare. A stated limit of the injector (docs/rtl/source.md): the fabric's pulses are a subset of the
+    # definition's, as a build's maxima are of the definition's.
+    assert sorted(C.PULSE_IDS) == ["e0", "e1"], "this bench knows e0 and e1"
+    e1, undeclared = C.PULSE_IDS["e1"], max(C.PULSE_IDS.values()) + 1
+    # The model takes e1, so the expectation here is this design's, not the model's, as the injector's other half
+    # in refusal_inject_overlap is: refused at the write, by name, and no frame out.
+    _rtl, _lat, name, out = await run_case(b, test, "e1, declared and not held by the fabric", steady(40),
+                                           [rec(5, 1, 1, pulse_id=e1)], expected=([], "PULSE_UNKNOWN"))
+    assert name == "PULSE_UNKNOWN" and out == [], (name, len(out))
+    await refused_at_the_write(b, test, "a pulse_id no pulse is declared for", [rec(5, 1, 1, pulse_id=undeclared)],
+                               "PULSE_UNKNOWN")
     await refused_at_the_write(b, test, "the largest pulse_id", [rec(5, 1, 1, pulse_id=(1 << TRUTH["pulse_id"]) - 1)],
                                "PULSE_UNKNOWN")
     await refused_at_the_write(b, test, "an unknown pulse that also overlaps: the pulse first",
-                               [rec(100, 1, 1), rec(50, 1, 1, pulse_id=E0 + 1)], "PULSE_UNKNOWN", frames=steady(300))
+                               [rec(100, 1, 1), rec(50, 1, 1, pulse_id=undeclared)], "PULSE_UNKNOWN", frames=steady(300))
     _rtl, _lat, name, out = await run_case(b, test, "the declared pulse", steady(100), [rec(5, 4, 1)])
     assert name is None and out != steady(100)
 

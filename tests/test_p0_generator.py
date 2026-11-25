@@ -108,7 +108,7 @@ BAD = [
     ("an upper-case rectifier name", [("abs = 1 ", "ABS = 1 ")], "NAME"),
     ("a rectifier section with no mode", [("pass = 0    # the filter's sum goes on unchanged\nabs = 1     # its magnitude goes on\n", "")], "RECTIFIER"),
     ("a pulse with no id", [("[pulse_ids]\ne0 = 0", "[pulse_ids]")], "PULSE_IDS"),
-    ("an id for a pulse that is not declared", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = 0\ne1 = 1")], "PULSE_IDS"),
+    ("an id for a pulse that is not declared", [("[pulse_ids]\ne0 = 0\ne1 = 1", "[pulse_ids]\ne0 = 0\ne1 = 1\ne9 = 9")], "PULSE_IDS"),
     ("a pulse id too large for the truth record's field", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = 65536")], "PULSE_IDS"),
     ("a negative pulse id", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = -1")], "PULSE_IDS"),
     ("a pulse id that is a string", [("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = \"0\"")], "PULSE_IDS"),
@@ -204,22 +204,24 @@ def test_p0_a_pulse_sample_at_either_end_of_the_narrowest_profile_is_accepted(tm
 
 
 def second_pulse(tmp_path, tag, second_id):
-    root = tree(tmp_path / tag, [("e0 = \"pulses/e0.toml\"", "e0 = \"pulses/e0.toml\"\ne1 = \"pulses/e1.toml\""),
-                                 ("[pulse_ids]\ne0 = 0", "[pulse_ids]\ne0 = 0\ne1 = %s" % second_id)])
-    with open(os.path.join(root, "spec", "pulses", "e1.toml"), "w", encoding="utf-8", newline="\n") as f:
-        f.write("name = \"e1\"\nsamples = [0, 5, -5, 0]\n")
+    # The definition holds e0 and, since round 4, e1; the pulse this test adds is a third, e9.
+    root = tree(tmp_path / tag, [("e1 = \"pulses/e1.toml\"", "e1 = \"pulses/e1.toml\"\ne9 = \"pulses/e9.toml\""),
+                                 ("[pulse_ids]\ne0 = 0\ne1 = 1", "[pulse_ids]\ne0 = 0\ne1 = 1\ne9 = %s" % second_id)])
+    with open(os.path.join(root, "spec", "pulses", "e9.toml"), "w", encoding="utf-8", newline="\n") as f:
+        f.write("name = \"e9\"\nsamples = [0, 5, -5, 0]\n")
     return root
 
 
 def test_p0_two_pulses_get_two_ids_and_cannot_share_one(tmp_path):
     d, pulses, _digest = gen_spec.load(second_pulse(tmp_path, "apart", "7"))
-    assert d["pulse_ids"] == {"e0": 0, "e1": 7} and pulses["e1"] == [0, 5, -5, 0]
+    assert d["pulse_ids"] == {"e0": 0, "e1": 1, "e9": 7} and pulses["e9"] == [0, 5, -5, 0]
     text = gen_spec.render(d, pulses, _digest)
-    assert "PULSE_IDS = {\n    \"e0\": 0,\n    \"e1\": 7,\n}" in text
-    assert gen_spec.load(second_pulse(tmp_path, "top", "65535"))[0]["pulse_ids"]["e1"] == 65535
-    with pytest.raises(gen_spec.Refused) as e:
-        gen_spec.load(second_pulse(tmp_path, "shared", "0"))
-    assert str(e.value).split(":")[0] == "PULSE_IDS"
+    assert "PULSE_IDS = {\n    \"e0\": 0,\n    \"e1\": 1,\n    \"e9\": 7,\n}" in text
+    assert gen_spec.load(second_pulse(tmp_path, "top", "65535"))[0]["pulse_ids"]["e9"] == 65535
+    for shared in ("0", "1"):
+        with pytest.raises(gen_spec.Refused) as e:
+            gen_spec.load(second_pulse(tmp_path, "shared" + shared, shared))
+        assert str(e.value).split(":")[0] == "PULSE_IDS"
 
 
 def test_p0_a_bound_at_either_end_of_its_range_is_accepted(tmp_path):
