@@ -34,7 +34,7 @@ Round 3 ran on the branch `r3`. By his word on the plan the lead asks him before
    - the box's build started before HOST was READY and KRNL merged;
    - a second link with one setting changed, taken as BUILD's own work, not a design change;
    - the card day's second part at 2^20 frames.
-3. **What round 4 is.** The plan's own next step after bit identity is stage E0 on the card, with its statistics: sensitivity on the card. Logan's 200 MHz goal and the other routes are under "Routes for later". Stage E2, the learner in the fabric, is D0's phase B. Nothing is drafted. *Restated by the lead on 2026-11-25:* on his word "Then begin the round 4 draft", the draft is [plans/R4-card-sensitivity-and-drift.md](plans/R4-card-sensitivity-and-drift.md), on the local branch `r4-plan`. It recommends stage E0 on the card and stage E2 in software, and is not approved. (Stage E2 is D0's induced drift; this item's "the learner in the fabric" is phase B, not E2.)
+3. **What round 4 is.** The plan's own next step after bit identity is stage E0 on the card, with its statistics: sensitivity on the card. Logan's 200 MHz goal and the other routes are under "Routes for later". Stage E2, the learner in the fabric, is D0's phase B. Nothing is drafted. *Restated by the lead on 2026-11-25:* on his word "Then begin the round 4 draft", the draft is [plans/R4-card-e0-and-drift.md](plans/R4-card-e0-and-drift.md), on the local branch `r4-plan`. It recommends stage E0 on the card and stage E2 in software, and is not approved. (Stage E2 is D0's induced drift; this item's "the learner in the fabric" is phase B, not E2.)
 4. **Raspberry Shake's licence.** Held, by his word.
 
 ### Open with Logan at round 2's close (2026-11-23)
@@ -270,6 +270,16 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 *The lead's reading:* `main` moves to `r3`'s tip, a fast-forward, and is pushed, with the commit that records this word as the tip. Then the lead drafts round 4's plan, on a local branch, past a verifier, for his approval. It is his word for round 3's push, not a standing word for later ones, and not approval of round 4.
 
+**2026-11-25, on generations an hour, while round 4's second draft was with its verifier.**
+
+> As a rough estimate, how many generations could we likely trial per hour? Just considering scheduling for the U50
+
+The lead's answer that day: by the card's own time about 1,000 to 10,000 an hour, since a swap is 0.1 to 0.5 ms and a test on 10,000 injections about 0.26 s; with the host reading, scoring and training between them, about 100 to 1,000, an ESTIMATE, the host's code being the limit and untimed. The lead offered to add a timed measurement to track A's card day. He answered:
+
+> Yes add it
+
+*The lead's reading:* round 4's draft gains one measured row on the card day: a timed run of ten swaps, each part's time taken, so that the rate an hour is MEASURED for that host code. It is a measurement of scheduling, in the plan he has yet to approve, not approval of it.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
@@ -300,7 +310,7 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 | round | what | state |
 |---|---|---|
-| `2026-11-25-r4-plan` | the draft plan for round 4, [plans/R4-card-sensitivity-and-drift.md](plans/R4-card-sensitivity-and-drift.md) | drafting from 2026-11-25 on the local branch `r4-plan`, cut from `main` at round 3's push, on Logan's word "Then begin the round 4 draft"; not approved; not pushed |
+| `2026-11-25-r4-plan` | the draft plan for round 4, [plans/R4-card-e0-and-drift.md](plans/R4-card-e0-and-drift.md) | drafting from 2026-11-25 on the local branch `r4-plan`, cut from `main` at round 3's push, on Logan's word "Then begin the round 4 draft"; not approved; not pushed |
 | `2026-11-24-r3` | round 3: first light on the card, and the faint launches | run on 2026-11-24 and 25 on the local branch `r3`, cut from `r3-plan`'s tip: four parcels merged (LCH-4, FLAG, KRNL, HOST), each past verifiers on Opus, and the lead's wave 0, past two passes of its own. HOST's last change, its syncs from byte 0, merged with no verifier. The lead's BUILD, the card day and stage E1 made again are read by the round's closing verifier only. It found every planted fault, no regression, and four wrong statements of the lead's and one that said more than its evidence, each corrected. A narrow pass on those found three more, corrected; a second found none but its planted faults, and its three loose ends are answered in the last commit, which no verifier has read. **Pushed on Logan's word of 2026-11-25: `main` is `r3`'s tip.** The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-24-r3-plan` | the draft plan for round 3, [plans/R3-first-light.md](plans/R3-first-light.md), and four verifier passes over its drafts | drafted 2026-11-24 on the local branch `r3-plan`, on Logan's word "Yes, draft it"; approved by Logan on 2026-11-24 with every recommendation; its commits are in `r3`'s history and went out with round 3's push |
 | `2026-11-23-r2` | round 2: the fabric in simulation, the learner, the head, the launch experiment | run on 2026-11-23, on the local branch `r2`: six parcels merged (HEAD, LCH-3, LRN-A, RTL-A, RTL-B, SEAM-2) and the lead's foundation, each past verifiers on sealed clones with planted faults, **but for the detector core's last commit, a mutant of the seam's that the lead re-pointed, and the lead's closing documents, which only the round's closing verifier read**: it found wrong statements in the documents, corrected since, and two more faults the core's bench lets through, left as a stated limit; a narrow pass on those corrections found five more slips in them, corrected in the commit that closes the round in the ledger, which no verifier has read, nor the one after it, which records his word to push; stage E1's full run in software and the head's synthesis, both the lead's. **Pushed on Logan's word of 2026-11-23: `main` is `r2`'s tip.** The record is in [VALIDATION.md](VALIDATION.md) |
