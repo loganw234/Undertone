@@ -1,6 +1,6 @@
 # Round 5: learning in the fabric, and real noise - the draft plan
 
-Drafted by the lead on 2026-11-25 on Logan's word after round 4's push: "Begin drafting round 5's plan, the faster host and 200mhz goal can wait till later. Focus on proving things for now rather than speed". This is the third draft, after two verifier passes (VP5 and its re-check, on Sonnet), whose findings are answered below. The third draft's own changes were not read by a verifier. Nothing of round 5 starts before his approval.
+Drafted by the lead on 2026-11-25 on Logan's word after round 4's push: "Begin drafting round 5's plan, the faster host and 200mhz goal can wait till later. Focus on proving things for now rather than speed". This is the third draft, after two verifier passes (VP5 and its re-check, on Sonnet), whose findings are answered below. The third draft's own changes were not read by a verifier. **Approved by Logan on 2026-11-25 with every recommendation. His word, and the lead's reading of it, are at the end; where they differ from the text above, his word governs.**
 
 Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION. An ESTIMATE or SURVEY figure drives no decision here until it is measured.
 
@@ -195,3 +195,26 @@ As round 4, with what it taught:
 6. **Models.** *(Recommended)* Parcels on Opus and verifiers on Sonnet, as round 4. Or verifiers on Opus.
 
 The push at the round's close is asked as every round's is: the lead asks him before `main` moves.
+
+## Logan's word (2026-11-25, verbatim)
+
+The lead had put the six questions to him, each with its recommendation, as one question: "Approve round 5's plan with every recommendation?"
+
+> Approve all
+
+*The lead's reading.* Round 5 runs as this plan has it, each question answered as recommended:
+
+1. Tracks A and B, in parallel: learning in the fabric, in simulation, and stage E3 in software on real noise.
+2. Phase B's rule is phase A's, the difference of class means. The learner's state changes at every window, and its weights at indexes the host names.
+3. D0's truth isolation gate is restated as above, with its observable form and its four planted paths.
+4. D0's learner gate counts windows taken and refused, and updates refused for time, each equal to the model's.
+5. Real noise from SCEDC, at stations study D3 used, on days chosen by a rule fixed before any fetch.
+6. **Parcels on Opus and verifiers on Sonnet,** named in every dispatch.
+
+The waves run as written above. His word is not leave to push.
+
+Then, the same evening:
+
+> We will begin work on it starting tomorrow morning. But prep now is fine
+
+*The lead's reading:* wave 0 is made tonight: the branch, the round's folder, the briefs and the worktrees. No parcel is dispatched and nothing of the round is run before 2026-11-26's morning.
