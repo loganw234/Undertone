@@ -33,7 +33,7 @@
 // record that is refused ENDS THE RUN: no frame is offered from then on.
 //     the pulse_id word does not fit its field, or the
 //     denominator is 0                                     RECORD_FIELD
-//     the pulse_id names no declared pulse                 PULSE_UNKNOWN
+//     the pulse_id names no pulse held here, e0 alone      PULSE_UNKNOWN
 //     it starts before the end of the record before it,
 //     or before the frame the injector has reached         INJECT_OVERLAP
 //     the store is full                                    INJECT_PENDING

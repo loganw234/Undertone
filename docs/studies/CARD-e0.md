@@ -1,6 +1,6 @@
 # Stage E0 on the card
 
-Round 4's card day, the lead's, on 2026-11-25, 14:32 to 14:40, in a booked daytime window. It is track A of the plan ([R4-card-e0-and-drift.md](../plans/R4-card-e0-and-drift.md)): round 1's stage E0 stream, run on the U50 in pieces, every record compared with the reference model's, and the counts read from the card's own records judged as round 1's were. It ran on round 3's image (the kernel of [krnl.md](../rtl/krnl.md), built at 100 MHz from `31aaec1`, the image of [CARD-first-light.md](CARD-first-light.md)), driven by the host library through XRT from `amd-arc-box`. The host side is parcel E0C's, [e0c.md](../host/e0c.md); the box ran a snapshot of r4 at `5661550` (`host/`, `model/`, `spec/`, `hw/e0c/`).
+Round 4's card day, the lead's, on 2026-11-25, 14:32 to 14:40, in a booked daytime window. *Restated by the lead after the round's closing verifier:* it began at 14:32:03, a minute before its booking's start at 14:33; the card's holder had released it at 14:30:44, and nothing else was booked on it (the round's ledger, 14:33). It is track A of the plan ([R4-card-e0-and-drift.md](../plans/R4-card-e0-and-drift.md)): round 1's stage E0 stream, run on the U50 in pieces, every record compared with the reference model's, and the counts read from the card's own records judged as round 1's were. It ran on round 3's image (the kernel of [krnl.md](../rtl/krnl.md), built at 100 MHz from `31aaec1`, the image of [CARD-first-light.md](CARD-first-light.md)), driven by the host library through XRT from `amd-arc-box`. The host side is parcel E0C's, [e0c.md](../host/e0c.md); the box ran a snapshot of r4 at `5661550` (`host/`, `model/`, `spec/`, `hw/e0c/`).
 
 **What rests on what.** Two results with two authorities (D0, section 2):
 - **Bit identity rests on the model.** Every record of every piece is the model's own run of the same piece, word for word.
@@ -70,7 +70,7 @@ Ten runs in a row, one a generation. Each is the device opened, a stored set of 
 - each file's SHA-256;
 - the tree's judge, given only the record and round 1's frozen parts, reprints the committed output up to E0's verdict, byte for byte;
 - the timed judge reprints its output.
-It skips by name, `E0C-CARD-STALE`, once the definition moves past round 3's, as stage E1's record test does (CLAUDE.md, trap 18).
+It skips by name, `E0C-CARD-STALE`, once the definition moves past round 3's, as stage E1's record test does (CLAUDE.md, trap 18). *Restated by the lead after the round's closing verifier:* the definition moved past round 3's at round 4's merge of `e1`, `60f4391`, fourteen minutes after the record was committed (14:52:48 and 15:06:53). **From that commit on, the two judge tests skip and only the five files' hashes are held.** The judges' reprint was held on round 3's definition, at `0cf211a`'s gate.
 
 ## Limits
 
@@ -103,4 +103,4 @@ It skips by name, `E0C-CARD-STALE`, once the definition moves past round 3's, as
 | CE13 | A host that parsed in compiled code and kept the device open would make about 14,000 generations an hour, bounded by the card's 256 ms | ESTIMATE | CE12's card share, 3,600 s / 0.256 s | a run of such a host |
 | CE14 | The card read HEALTHY before and after; after, round 3's image F6B95DCF-E412-CEF2-7DE7-827DEE594773 and its compute unit; 15.98 W and 15.06 W; FPGA 36 C | MEASURED | `xbutil examine -r dynamic-regions`, `electrical`, `thermal`, in the log | those reports |
 | CE15 | The 2,822,461,773 bytes copied back equal the box's, all 43 files of its SHA256SUMS | MEASURED | `sha256sum -c SHA256SUMS` on the desktop; the ledger, 14:43 | those files |
-| CE16 | The tree's judge, given the committed record and round 1's frozen parts, reprints the committed output up to E0's verdict byte for byte; the timed judge reprints its output | MEASURED | `tests/test_e0c_card_record.py` | that test |
+| CE16 | The tree's judge, given the committed record and round 1's frozen parts, reprints the committed output up to E0's verdict byte for byte; the timed judge reprints its output. *Restated by the lead after the round's closing verifier:* so measured on round 3's definition, at `0cf211a`'s gate (run 20261125-144931-986cf76). From `60f4391` the two tests skip by name, E0C-CARD-STALE, and the reprint is not held | MEASURED | `tests/test_e0c_card_record.py` | that test, on round 3's definition |

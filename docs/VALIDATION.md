@@ -2260,3 +2260,44 @@ The round ran on the local branch `r4`, cut at `59dc834` at 12:05.
 ### Changed after the last pass, and not seen by a verifier
 
 The card day's page, record and test; the merge `60f4391`; the three records of `695d609`; these entries and the ROADMAP. The closing verifier reads them next.
+
+## 2026-11-25 - round 4: the closing verifier on the tip: every planted fault found, no defect in code or tests, two wrong statements of the lead's and two overclaims, and the answers
+
+### What ran
+
+- **VCLOSE4**, on Sonnet, on a sealed clone of `r4` at `695d609` with three faults the lead planted, 15:14 to 15:18 by its own clock. That is 41 tool calls and 4 min 49 s, as the harness reported. It read the card day's, E2's and E1's pages against the run logs, mutated the three record tests, and read the definition's change and the merge. Its first size in the clone was PASS, 1,364 tests, 2 skipped by name, E0C-CARD-STALE.
+- It did not read the round's VALIDATION entries or the ROADMAP, committed after it was dispatched (`97ee003`).
+
+### Measured
+
+- **Plants: 3 of 3:** a count in E2's result table, a bound in E2's text, and a time in E1's restatement. This round so far, 12 of 14.
+- **No defect in code or tests.** Its own faults, planted in copies:
+  - the card record's test fails on a count, a piece's identity, the committed output, a timed count, the collector's state and the flip's line, once the record is made current;
+  - E2's and E1's record tests fail on a count, skip by name on a changed hash, and fail on a changed hash with a count changed too, so a stale skip cannot hide another change;
+  - E1's test fails when one part alone carries another hash.
+- **The premise, the definition and the merge held:**
+  - the premise vector is its NOTE's and round 1's but the hash;
+  - `e1`'s integers and their sums are as stated;
+  - `git diff 804c49c 60f4391` is additions only, and the merge holds `108abba`'s files byte for byte.
+- **Every timing and rate figure of the card's page recomputes as printed.**
+
+### Wrong or more than the evidence, the lead's, and the answers
+
+- **PULSE_UNKNOWN was still described as "names no declared pulse"** in `rtl/inject/inject.sv`'s header and in [rtl/source.md](rtl/source.md)'s refusal table, though the fabric now refuses the declared `e1` by that name. Only limit 7 and the bench said so. Both are restated: the table with the earlier text kept, and `inject.sv`'s header line changed in place, one line for one, the old wording quoted in the table. It was committed on the second size.
+- **The library's pre-check takes `pulse_id` 1 since `e1`, where the kernel refuses it,** and no document said so. Answered by [host/host.md](host/host.md)'s limit 20: the library passes it, and the fabric refuses it at the injector, PULSE_UNKNOWN. **No test runs the library against a kernel with `pulse_id` 1.** That is stated and not tested. `krnl.md` is not changed: the refusal is the injector's, and `host.md` points to it.
+- **The card's page put row CE16 and its test's paragraph in the present tense,** though from `60f4391` the test's two judge tests skip. Both are restated: the reprint was held on round 3's definition at `0cf211a`'s gate, and from the merge only the five files' hashes are held.
+- **The card's page said "in a booked daytime window"** where the run began a minute before its booking. Restated with the times.
+
+### Not answered, and why
+
+- **The efficiencies' se figures:** the verifier's recomputation differs from the judge's by up to 0.04 se. The page quotes the judge, `stats.tolerance`; the cause is not checked by the lead.
+- **The short form's reading at g = 6** was not re-run by the verifier. E2's page states it from E2L's page.
+
+### The lead's slips
+
+- **While answering, the lead first wrote "half an hour"** for the time between the card's record and the merge. It was fourteen minutes, 14:52:48 to 15:06:53, and was corrected before the commit.
+- **The first answer to (b)4 added four comment lines to `inject.sv`'s header, and the second size failed** (run 20261125-152120-97ee003, 15:21 to 15:28). The lines moved a line that `rtl/tb/build_lines.toml` and `tests/test_p0_rtl_gate.py` name by number, from 276 to 280. Then 61 bench builds printed a known simulator line the list no longer named, and the foundation's test of the list failed, so the model-tests control could not fail either. Nothing of the design had changed. The answer was made one line, changed in place, and the second size run again. **A comment in a file the build-line list names is not free to add lines.**
+
+### Changed after the last pass, and not seen by a verifier
+
+These answers, the commit `97ee003` (round 4's entries above and the ROADMAP), and this entry. A narrow pass reads them next.
