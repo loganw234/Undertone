@@ -226,7 +226,7 @@ None of this was done.
 1. **The season, fixed first**: the same stations with the split and the test made by season, November to March against April to October, with the hypothesis written before any record is opened. Section 8's description says where to look; it cannot be the test.
 2. **The 2026 ladder's stations at these distances**, CI.BCH, CI.LAT and CI.SUN (D1, section 3), and stations at other bearings from the pad.
 3. **Onset against distance**, with the definition of an onset fixed first, to say sound or ground.
-4. **D1's close**, as a second analysis reported as chosen after looking, to see whether the redrawn close changed any reading.
+4. **D1's close**, as a second analysis reported as chosen after looking, to see whether the redrawn close changed any reading. *Restated by the lead at round 3's close, 2026-11-25:* this one was done, by the verifier and not by the parcel, and is limit 21. Every station still reads seen with D1's close kept. The section's "None of this was done" holds for the other five.
 5. **The 11 launches timed to the minute**, with a window a minute wider; **another year**; **windows marked by the earthquake catalogue**, dropped alike from both counts.
 6. **The two launches missed at three stations**, 2024-091 and 2024-149: what differed on those days.
 

@@ -2,8 +2,13 @@
 
 The lead's file. It holds Logan's decisions as he gave them, the plan of record, and how rounds are held. A parcel does not edit it.
 
-## Where the project stands (2026-11-23)
+## Where the project stands (2026-11-25)
 
+- **Round 3 (2026-11-24 and 25), first light on the card, on the local branch `r3`; not pushed.** Its work is done, and its closing verifier is next.
+  - **Four parcels merged after verifiers on Opus:** LCH-4 (study D3, the faint launches), FLAG (the overflow flag over every source), KRNL (the kernel around the chain) and HOST (the host library). Wave 0, the lead's repairs of the gate, went past two passes of its own.
+  - **The lead's BUILD** made one image for the U50 at 100 MHz. Its first two links failed in placement. The third, with one attribute on the core's delay line, closed with 0.122 ns to spare. Asked for 150 and 200 MHz overnight, v++ gave 127.4 and 108.2 ([rtl/krnl.md](rtl/krnl.md), section 7).
+  - **The card day:** every score word of ten runs on the U50 equals the reference model's, byte for byte, and a flipped-bit control was seen in both of its runs ([studies/CARD-first-light.md](studies/CARD-first-light.md)). Stage E1 in software was made again under round 3's definition, with the same result.
+  - **Not yet shown:** sensitivity on the card, and learning in the fabric. The record is in [VALIDATION.md](VALIDATION.md), round 3's entries.
 - **Design:** [D0, the rough design](studies/D0-rough-design.md), approved by Logan on 2026-11-21 with all six of its questions answered as recommended.
 - **Plan of record:** [round 3, first light on the card](plans/R3-first-light.md), approved by Logan on 2026-11-24 with every recommendation. It runs on the local branch `r3`; nothing of it is pushed. Before it: [round 2, the fabric in simulation and the learner](plans/R2-fabric-in-simulation-and-the-learner.md), approved by Logan on 2026-11-23 with one change. Its work was done on the branch `r2`, each piece past verifiers but for what the round's row in the table below names, and `main` was moved to `r2`'s tip and pushed on Logan's word of 2026-11-23. Before it: [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work was done and verified on the branch `r1`, and `main` was moved to `r1`'s tip and pushed on Logan's word of 2026-11-23.
 - **Licence:** MIT, by Logan's test of 2026-11-23: the easiest option for others to reuse the work.
@@ -15,6 +20,22 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 - **The launch experiment, [study D2](studies/D2-launch-experiment.md) (2026-11-23):** by a rule frozen before any scored record was opened, 23 Falcon 9 launches of 2024 were seen at the three nearest stations with full records in 66 of 69 launch windows, against none of 204 control windows; a fourth station has records for seven and hit at all seven. A verifier's own scorer agrees on every one of 548 windows. **Within 50 km the launch is loud, not faint**: this shows the source can label a loud event near the pad, and says nothing yet of a faint one farther out, which is what the project wants a label for.
 - **Looked at, once:** one rocket launch in public seismic records. By the rule fixed before the data was fetched it is seen at three stations, 16.5, 49.9 and 78.5 km from the pad, and not at 181 or 275 km. At a fourth, 32.6 km, the launch-day figure is as large as at the others, and the rule reads "cannot tell" because one control day has a ten-second stretch in the window. One launch and two control days; not a rate. [D1b](studies/D1b-first-look.md).
 - **Committed and pushed:** the setup, under Logan's word of 2026-11-21, up to `d13281f`; and round 1, under his word of 2026-11-23 at its close ("1. Push"). The remote is the public repository `loganw234/Undertone` on GitHub.
+
+### Open with Logan at round 3's close (2026-11-25)
+
+Round 3 ran on the branch `r3`. By his word on the plan the lead asks him before `main` moves and anything is pushed. What the round leaves for him:
+
+1. **Whether `main` moves to `r3` and is pushed**, once the closing verifier's pass and the narrow pass on the lead's corrections are clean.
+2. **The lead's decisions in the round, each his to overturn.** Each is in VALIDATION.md under "The lead's calls" of its entry:
+   - the kernel under Vitis's user-managed protocol, with its registers a block of their own at 0xE00, where the plan put its control below 0x10;
+   - the first build keeping the definition's largest pool, which is most of its LUT memory (BELIEVED);
+   - two verifiers' findings against parcels' documents restated by the lead, not sent back;
+   - no fourth verifier on HOST, and HOST's last change, its syncs from byte 0, merged with no verifier;
+   - the box's build started before HOST was READY and KRNL merged;
+   - a second link with one setting changed, taken as BUILD's own work, not a design change;
+   - the card day's second part at 2^20 frames.
+3. **What round 4 is.** The plan's own next step after bit identity is stage E0 on the card, with its statistics: sensitivity on the card. Logan's 200 MHz goal and the other routes are under "Routes for later". Stage E2, the learner in the fabric, is D0's phase B. Nothing is drafted.
+4. **Raspberry Shake's licence.** Held, by his word.
 
 ### Open with Logan at round 2's close (2026-11-23)
 
@@ -47,7 +68,7 @@ Written on Logan's word of 2026-11-25 ("make a note of the general 200mhz goal a
    - **The pool's write address**, the worst path at 100 MHz (R1). At 200 MHz Vivado copied that net to spread its load, and its paths met with 0.009 ns to spare. Route 2 below would remove it.
    - **Not measured: what fails behind those two.** A row's 128 products are summed in one stage ([rtl/core.md](rtl/core.md), section 10, limit 2). At 200 MHz that may need more stages, which changes the core's latency of eleven clocks and every bench that holds it.
    - **The first step is a timing query, not a change.** The third link's routed design is kept on the box. A query on it that lists every kernel path longer than 5 ns would show what an RTL change has to cover. The sweep's own routed designs were not kept.
-   - **What the clock buys.** The core takes one sample a clock (R5), and each sample writes a 32-byte record (R6). For on-card noise, the card's part of a stage takes seconds at either clock, and the host's reading and scoring of records is the slower part. For a real sensor the clock does not matter (R9).
+   - **What the clock buys.** The core takes one sample a clock (R5), and each sample writes a 32-byte record (R6). For on-card noise, the card's part of a stage takes seconds at either clock, and the host's reading and scoring of records is the slower part. For a real sensor the clock does not matter (R9). *Restated by the lead on 2026-11-25:* the core can take a sample a clock, but the chain as built takes one every 20 clocks under 16-bit one-channel samples, because the noise source offers a frame every 20 (round 3's plan, L12), and the card day measured about 200 ns a frame at 100 MHz (R11). So the chain takes 5 x 10^6 samples a second at 100 MHz and 10^7 at 200, not 10^8 and 2 x 10^8. For on-card noise a stage's card time is still seconds at either clock.
 2. **The pool out of LUT memory and into URAM.** The kernel holds about half the chip's LUT memory, almost all of it the pool, and uses none of its URAM (R7). Moving the pool would make room for route 3 and remove the worst path at 100 MHz. It changes the RTL and not the model. URAM's read takes more clocks than a LUT memory's, so the pool's forwarding ([rtl/core.md](rtl/core.md), section 3) would change with it: BELIEVED.
 3. **Two models on one stream: his concept.** One source and one injector would feed two detector cores on the same clock, and their records would pair up by index. A clock for each would add a crossing between the two and no speed, since a core takes at most one sample a clock. Two copies of today's kernel do not fit, because of their LUT memory (R8). After route 2 they would.
    - **What it is for:** a frozen copy beside a learning copy, both judged against the injector's labels at an equal false-alarm rate, with the learning copy swapped in when it wins. The weight swap for that exists. Stage E2 of [D0](studies/D0-rough-design.md), section 8, already plans several models on one stream.
@@ -62,12 +83,13 @@ Written on Logan's word of 2026-11-25 ("make a note of the general 200mhz goal a
 | R2 | The sweep's 200 MHz link of the same commit: v++ lowered the kernel's clock to 108.2 MHz; its routed worst slack is -4.242 ns against 5.000 ns | MEASURED | round 3's ledger, 2026-11-25 03:51: the info file's "Achieved Freq: 108.2 MHz" and the routed timing summary | a reading of the same reports that differs |
 | R3 | That link's ten worst kernel paths begin at the shape register `shp_filters` and end at the weight registers; the worst is 26 logic levels and 9.218 ns | MEASURED | the same timing summary | a reading of the same report that differs |
 | R4 | Those paths are the register writes' checks, which gate every write taken | BELIEVED | [rtl/core/core.sv](../rtl/core/core.sv), the write's checks and `wcode`, read by the lead | a timing query that names the cells on the path |
-| R5 | At one sample a clock the core takes 10^8 samples a second at 100 MHz and 2 x 10^8 at 200 MHz | COMPUTED | D0, row D5; [rtl/core.md](rtl/core.md), a frame taken at every rising edge | arithmetic |
-| R6 | At 32 bytes a record, that is 3.2 GB/s and 6.4 GB/s of records | COMPUTED | [rtl/krnl.md](rtl/krnl.md), section 2, a slot of 32 bytes; R5 | arithmetic |
+| R5 | At one sample a clock the core takes 10^8 samples a second at 100 MHz and 2 x 10^8 at 200 MHz. *Restated by the lead on 2026-11-25:* that is the core alone. The chain as built takes a frame every 20 clocks under s16x1 and every 60 under s24x3, the source's rate: 5 x 10^6 a second at 100 MHz and 10^7 at 200, under s16x1 | COMPUTED | D0, row D5; [rtl/core.md](rtl/core.md), a frame taken at every rising edge. The restatement: round 3's plan, L12, from `docs/rtl/source.md`; 10^8 / 20 and 2 x 10^8 / 20 | arithmetic |
+| R6 | At 32 bytes a record, that is 3.2 GB/s and 6.4 GB/s of records. *Restated by the lead on 2026-11-25:* at the chain's rate under s16x1, 160 MB/s and 320 MB/s | COMPUTED | [rtl/krnl.md](rtl/krnl.md), section 2, a slot of 32 bytes; R5 | arithmetic |
 | R7 | The kernel alone, after synthesis in the third link: 329,499 LUTs, 37.80 percent of the chip's; 196,089 of them as memory, 48.63 percent of the chip's LUT memory; 729 DSP slices of 5,952; 0 URAM of 640 | MEASURED | the third link's synthesis utilisation report for the kernel, kept on the box | a reading of the same report that differs |
 | R8 | Two copies of that kernel need 392,178 LUTs as memory of the chip's 403,200, 97.3 percent, before the platform's own | COMPUTED | 2 x 196,089 / 403,200, from R7 | arithmetic |
 | R9 | A seismometer of the kind the project has looked at gives about 100 samples a second | BELIEVED | from memory, not read | the stations' own metadata |
-| R10 | One hour at 100 MHz is 3.6 x 10^11 samples and 1.152 x 10^13 bytes of records | COMPUTED | 3,600 x 10^8, then x 32, from R5 and R6 | arithmetic |
+| R10 | One hour at 100 MHz is 3.6 x 10^11 samples and 1.152 x 10^13 bytes of records. *Restated by the lead on 2026-11-25:* at the chain's rate under s16x1, 1.8 x 10^10 samples and 5.76 x 10^11 bytes, 72 times the card's 8 GB of HBM, so route 4's reason stands | COMPUTED | 3,600 x 10^8, then x 32, from R5 and R6; the restatement 3,600 x 5 x 10^6, then x 32, and 5.76 x 10^11 / 8 x 10^9; the 8 GB from [studies/P03-platform.md](studies/P03-platform.md) | arithmetic |
+| R11 | On the card, at 100 MHz under s16x1, about 200 ns a frame, 20 clocks: 171 to 206 ns in the shortest of four windows and 198 to 202 in the other three | COMPUTED | [studies/CARD-first-light.md](studies/CARD-first-light.md), row C12 | the reads' times |
 
 ## Logan's words, as given
 
@@ -222,7 +244,7 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 > Would we likely be able to go faster if we resolved the issue in RTL? Not right now, but in the future. Ideally Id like to reach ~200mhz just as a goal, but what sort of performance does the frequency translate to for the intended usecase?
 
-*The lead's reading:* about 200 MHz is his goal for the kernel's clock, in a later round and not this one. It is not a requirement of any stage, and nothing of round 3 changes for it. The lead's answer that day: the core takes one sample a clock, so the clock is samples a second; for on-card noise, a stage's time on the card is seconds at either clock; for a real sensor the clock does not matter. It is route 1 of "Routes for later", above.
+*The lead's reading:* about 200 MHz is his goal for the kernel's clock, in a later round and not this one. It is not a requirement of any stage, and nothing of round 3 changes for it. The lead's answer that day: the core takes one sample a clock, so the clock is samples a second; for on-card noise, a stage's time on the card is seconds at either clock; for a real sensor the clock does not matter. *Restated by the lead on 2026-11-25:* the first part of that answer was wrong for the chain as built. Its source offers a frame every 20 clocks under 16-bit samples, so at 100 MHz the chain takes 5 x 10^6 samples a second, not 10^8, and the card day measured about 20 clocks a frame (R5, R11). The rest stands. Logan was told the correction that day. It is route 1 of "Routes for later", above.
 
 **2026-11-25, on two models at once.** After that answer:
 
@@ -266,7 +288,7 @@ The sixth, what round 2 is, he did not answer then. Asked next whether the lead 
 
 | round | what | state |
 |---|---|---|
-| `2026-11-24-r3` | round 3: first light on the card, and the faint launches | running from 2026-11-24 on the local branch `r3`, cut from `r3-plan`'s tip; not pushed |
+| `2026-11-24-r3` | round 3: first light on the card, and the faint launches | run on 2026-11-24 and 25 on the local branch `r3`, cut from `r3-plan`'s tip: four parcels merged (LCH-4, FLAG, KRNL, HOST), each past verifiers on Opus, and the lead's wave 0, past two passes of its own. HOST's last change, its syncs from byte 0, merged with no verifier. The lead's BUILD, the card day and stage E1 made again are read by the round's closing verifier only; the closing verifier is next. Not pushed. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-24-r3-plan` | the draft plan for round 3, [plans/R3-first-light.md](plans/R3-first-light.md), and four verifier passes over its drafts | drafted 2026-11-24 on the local branch `r3-plan`, on Logan's word "Yes, draft it"; approved by Logan on 2026-11-24 with every recommendation; its commits are in `r3`'s history; not pushed |
 | `2026-11-23-r2` | round 2: the fabric in simulation, the learner, the head, the launch experiment | run on 2026-11-23, on the local branch `r2`: six parcels merged (HEAD, LCH-3, LRN-A, RTL-A, RTL-B, SEAM-2) and the lead's foundation, each past verifiers on sealed clones with planted faults, **but for the detector core's last commit, a mutant of the seam's that the lead re-pointed, and the lead's closing documents, which only the round's closing verifier read**: it found wrong statements in the documents, corrected since, and two more faults the core's bench lets through, left as a stated limit; a narrow pass on those corrections found five more slips in them, corrected in the commit that closes the round in the ledger, which no verifier has read, nor the one after it, which records his word to push; stage E1's full run in software and the head's synthesis, both the lead's. **Pushed on Logan's word of 2026-11-23: `main` is `r2`'s tip.** The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-23-r2-plan` | the draft plan for round 2, and a verifier's three passes over its three drafts | drafted 2026-11-23 on the local branch `r2-plan`; approved by Logan on 2026-11-23 with one change; its commits are in `r2`'s history and went out with round 2's push. The record is in [VALIDATION.md](VALIDATION.md) |
