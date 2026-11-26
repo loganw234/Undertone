@@ -1,0 +1,71 @@
+{
+ "what": "Stage E3's injection sets, one a station and the short form's, each with its digest, worked by docs/studies/e3/e3sets.py, which imports nothing of model/.",
+ "how_worked": "schedule and digest as e3sets.py's docstring; held to model.records.digest by tests/test_e3s_experiment.py",
+ "stations": {
+  "MPP": {
+   "sha256": "de72651151d719be328eef915b5ad25f9151dbee0723f350f5cf82fabea1e1c9",
+   "records": 167936,
+   "amplitude_num": 3569,
+   "amplitude_den": 65536,
+   "block_frames": 65536,
+   "training_blocks": 128,
+   "held_out_blocks": 400,
+   "training_records": 65536,
+   "held_out_injections": 102400,
+   "first_index": 64,
+   "last_index": 34602944
+  },
+  "CDM": {
+   "sha256": "e161a99ede0faf9bd69a4e6a433df1c59a7042ceaa7daabcb0d9f2f26fb915d4",
+   "records": 167936,
+   "amplitude_num": 3101,
+   "amplitude_den": 65536,
+   "block_frames": 65536,
+   "training_blocks": 128,
+   "held_out_blocks": 400,
+   "training_records": 65536,
+   "held_out_injections": 102400,
+   "first_index": 64,
+   "last_index": 34602944
+  },
+  "HDH": {
+   "sha256": "6b9034a69d316c92ea2cf5d17272ef8b8638a9e38e263cd688f57fdb1eb7b69f",
+   "records": 167936,
+   "amplitude_num": 932,
+   "amplitude_den": 65536,
+   "block_frames": 65536,
+   "training_blocks": 128,
+   "held_out_blocks": 400,
+   "training_records": 65536,
+   "held_out_injections": 102400,
+   "first_index": 64,
+   "last_index": 34602944
+  },
+  "SRN": {
+   "sha256": "315fbac69476af50859d4b7b9b179096a33e79c9fd54d779266c52a43a9503e5",
+   "records": 167936,
+   "amplitude_num": 7465,
+   "amplitude_den": 65536,
+   "block_frames": 65536,
+   "training_blocks": 128,
+   "held_out_blocks": 400,
+   "training_records": 65536,
+   "held_out_injections": 102400,
+   "first_index": 64,
+   "last_index": 34602944
+  }
+ },
+ "short": {
+  "sha256": "4cbe1a946aee5b73f12420541679cb96df6fd11cce586f54d08a309f9cafc3e8",
+  "records": 12288,
+  "amplitude_num": 65201,
+  "amplitude_den": 65536,
+  "block_frames": 16384,
+  "training_blocks": 32,
+  "held_out_blocks": 128,
+  "training_records": 4096,
+  "held_out_injections": 8192,
+  "first_index": 64,
+  "last_index": 2621376
+ }
+}
