@@ -164,6 +164,15 @@ names = [
     "IMAGE_SPEC",
     "NOISE_TABLE",
     "RECORD_SLOT",
+    # The learner's (round 5, parcel LRN-B). A commit, a shadow write or an
+    # update offered while an update is named and not finished. A learner the
+    # model is asked to make past the definition's [learn] bounds; the fabric
+    # raises that one nowhere, since a build's bounds are checked when it is
+    # built. The fabric's learner also raises SWAP_SHAPE, SWAP_PENDING and
+    # SWAP_INDEX for an update, and QUANTISE_INPUT for an update that makes no
+    # set.
+    "UPDATE_UNFINISHED",
+    "LEARN_BOUND",
 ]
 
 # Reference pulses, as integer data, by path under spec/.
@@ -237,6 +246,8 @@ RUN_LENGTH = 50
 IMAGE_SPEC = 51
 NOISE_TABLE = 52
 RECORD_SLOT = 53
+UPDATE_UNFINISHED = 54
+LEARN_BOUND = 55
 
 # Bounds the fabric has and the model does not: the model takes any noise
 # table its profile's samples can index, and a schedule of any length. Both are
@@ -259,6 +270,22 @@ max_inject_pending = 1024
 [memory]
 slot_bytes = 32
 
+# The learner of phase B (round 5, parcel LRN-B's design, ruled by the lead).
+# Both are the lead's DECISIONS, and D0 states neither.
+#   count_bits     a label's count of windows taken is this many bits,
+#                  unsigned: a label takes at most 2^count_bits - 1 windows,
+#                  and a window past that is skipped and counted
+#                  (lrn_skip_full). The sums' and the update's widths follow
+#                  from it and a profile's sample bits.
+#   update_frames  the fabric's update time, in frames: an update named at
+#                  index u is finished when the next index is u +
+#                  update_frames, and until then a commit, a shadow write or
+#                  another update is refused, UPDATE_UNFINISHED. A requirement
+#                  on the fabric, which RTL-L's design shows it meets.
+[learn]
+count_bits = 32
+update_frames = 256
+
 # The register map's frame: what the host reads and writes, and how.
 #   A register is one word of word_bits at a byte offset that is a multiple of
 #   the word's bytes, under address_bits of address. No register sits below
@@ -278,7 +305,8 @@ magic = 0x554E4454
 # ignored and a read answers zero. Inside it every write is taken or refused
 # by name, REGISTER_ACCESS when no other name fits, and never dropped.
 [blocks]
-core = [0x010, 0xE00]
+core = [0x010, 0xD00]
+learner = [0xD00, 0xE00]
 kernel = [0xE00, 0xF00]
 source = [0xF00, 0xF80]
 inject = [0xF80, 0x1000]
@@ -340,6 +368,24 @@ inject = [0xF80, 0x1000]
 #   krn_records            records written and answered, in order, from slot 0
 #   krn_queue_peak         the most records the kernel's queue held in the run
 #   cap_record_queue       the build's depth of that queue
+#
+# From 0xD00: the learner's block, drawn at the design stop of parcel LRN-B
+# (round 5), taken from the end of the core's range, where the core has no row.
+#   lrn_update_at   the index of an update; the write of its upper word names it
+#   lrn_status      bits, in [register_bits.lrn_status]
+#   lrn_refusal     the learner's refusal, under the rule every block has
+#   lrn_count0, lrn_count1   windows taken of label 0 and of label 1: the counts
+#   lrn_skip_start  label-0 windows skipped because they would start before
+#                   frame 0
+#   lrn_skip_busy   windows skipped because another truth record's span touches
+#                   them
+#   lrn_skip_full   windows skipped because their label's count is at its most
+#   lrn_made, lrn_unmade   updates finished that made a set, and that made none
+#   lrn_early       commits refused, UPDATE_UNFINISHED
+#   lrn_cap_count_bits, lrn_cap_update_frames   the build's value of each
+#                   [learn] bound. Not named cap_*: the host library reads every
+#                   cap_* register when it opens a device, and reads these from
+#                   the round that wires the learner into the kernel
 [registers]
 id = [0x10, "ro", 1]
 spec_version = [0x14, "ro", 1]
@@ -378,6 +424,19 @@ epoch = [0x108, "ro", 1]
 next_index = [0x10C, "ro", 2]
 shadow_count = [0x114, "ro", 1]
 shadow_words = [0x118, "ro", 1]
+lrn_update_at = [0xD00, "rw", 2]
+lrn_status = [0xD08, "ro", 1]
+lrn_refusal = [0xD0C, "rw", 1]
+lrn_count0 = [0xD10, "ro", 1]
+lrn_count1 = [0xD14, "ro", 1]
+lrn_skip_start = [0xD18, "ro", 2]
+lrn_skip_busy = [0xD20, "ro", 2]
+lrn_skip_full = [0xD28, "ro", 2]
+lrn_made = [0xD30, "ro", 2]
+lrn_unmade = [0xD38, "ro", 2]
+lrn_early = [0xD40, "ro", 2]
+lrn_cap_count_bits = [0xD48, "ro", 1]
+lrn_cap_update_frames = [0xD4C, "ro", 1]
 krn_buffer = [0xE00, "rw", 2]
 krn_size = [0xE08, "rw", 2]
 krn_frames = [0xE10, "rw", 2]
@@ -424,6 +483,17 @@ refused_again = 9
 
 [register_bits.src_status]
 running = 0
+
+#   lrn_status: an update is named and the next index has not reached it; it
+#   is made and not finished; the last update to finish made a set; it made
+#   none; a refusal is latched; more than one since it was cleared.
+[register_bits.lrn_status]
+named = 0
+running = 1
+made = 2
+unmade = 3
+refused = 4
+refused_again = 5
 
 #   krn_status: a run is going; the last run is done (it stays until the next
 #   start or krn_reset, and is not cleared by a read); a refusal is latched.

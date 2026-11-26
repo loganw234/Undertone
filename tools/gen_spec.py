@@ -52,6 +52,8 @@ make sense is REFUSED by name. What is checked, exactly:
     wholly inside one block;
   - the memory's slot_bytes is a power of two, and at least the score
     record's bytes (round 3, parcel KRNL);
+  - the learner's two bounds are ints in their ranges: count_bits from 1 to
+    32, update_frames from 0 to 2^20 (round 5, parcel LRN-B);
   - a register that has named bits is declared, is one word and can be read;
     a bit is inside the word, and no bit of a register is used twice;
   - a pulse's file is under spec/pulses/, names itself as the definition names
@@ -92,6 +94,7 @@ KEYS = {
     "bus": {"word_bits", "address_bits", "first_offset", "magic"},
     "fabric": {"max_noise_table", "max_inject_pending"},
     "memory": {"slot_bytes"},
+    "learn": {"count_bits", "update_frames"},
 }
 TOP = set(KEYS) | {"profile", "flags", "rectifier", "pulses", "pulse_ids", "refusal_codes", "registers",
                    "blocks", "register_bits"}
@@ -101,7 +104,8 @@ RANGE = {"spec_version": (1, 10 ** 6), "sample_bits": (2, 32), "channels": (1, 1
          "max_rows": (1, 1024), "max_pool": (1, 2 ** 24), "max_score_shift": (0, 63),
          "max_hist_bins": (1, 65536), "max_hidden": (1, 1024), "max_hidden_shift": (0, 63),
          "word_bits": (32, 32), "address_bits": (4, 16), "first_offset": (0, 65532), "magic": (1, 2 ** 31 - 1),
-         "max_noise_table": (1, 2 ** 20), "max_inject_pending": (1, 65536), "slot_bytes": (1, 4096)}
+         "max_noise_table": (1, 2 ** 20), "max_inject_pending": (1, 65536), "slot_bytes": (1, 4096),
+         "count_bits": (1, 32), "update_frames": (0, 2 ** 20)}
 LOWER = re.compile(r"[a-z][a-z0-9_]*\Z")
 UPPER = re.compile(r"[A-Z][A-Z0-9_]*\Z")
 
@@ -233,6 +237,8 @@ def validate(d, root):
             raise Refused("REGISTERS: %s and %s overlap" % (an, bn))
     for key in sorted(KEYS["fabric"]):
         number("fabric", key, d["fabric"][key])
+    for key in sorted(KEYS["learn"]):
+        number("learn", key, d["learn"][key])
     slot = number("memory", "slot_bytes", d["memory"]["slot_bytes"])
     score_bytes = sum(f[1] for f in d["records"]["score"]) // 8
     if slot & (slot - 1) or slot < score_bytes:
@@ -349,6 +355,8 @@ def render(d, pulses, digest):
           "MAX_NOISE_TABLE = %d" % d["fabric"]["max_noise_table"],
           "MAX_INJECT_PENDING = %d" % d["fabric"]["max_inject_pending"],
           "MEMORY_SLOT_BYTES = %d" % d["memory"]["slot_bytes"],
+          "LEARN_COUNT_BITS = %d" % d["learn"]["count_bits"],
+          "LEARN_UPDATE_FRAMES = %d" % d["learn"]["update_frames"],
           "",
           "RECTIFIERS = {"]
     for name in sorted(d["rectifier"], key=lambda n: d["rectifier"][n]):
@@ -437,6 +445,9 @@ def numbers(d, pulses):
         ("MAX_INJECT_PENDING", d["fabric"]["max_inject_pending"])]))
     groups.append(("the memory a kernel writes records to: the bytes of one record's slot",
                    [("MEMORY_SLOT_BYTES", d["memory"]["slot_bytes"])]))
+    groups.append(("the learner's two bounds: the bits of a label's count of windows, and the update's time in frames",
+                   [("LEARN_COUNT_BITS", d["learn"]["count_bits"]),
+                    ("LEARN_UPDATE_FRAMES", d["learn"]["update_frames"])]))
     groups.append(("the rectifier's codes", [
         ("RECTIFIER_%s" % n.upper(), d["rectifier"][n])
         for n in sorted(d["rectifier"], key=lambda n: d["rectifier"][n])]))

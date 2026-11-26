@@ -5,7 +5,7 @@ of verify/run.sh fails when this file and the definition disagree.
 """
 
 SPEC_VERSION = 1
-SPEC_SHA256 = "8444d9d5a25a120909651e2f6b3b2397b34ef729323df4fe9c09fca1eab8f524"
+SPEC_SHA256 = "85e63d4def6d9b0bc697860b5a77ecf2bf6a52444a89d8a6edc6f0b0832de725"
 
 PROFILES = {
     "s16x1": {"sample_bits": 16, "channels": 1, "sample_min": -32768, "sample_max": 32767},
@@ -26,6 +26,8 @@ MAX_HIST_BINS = 4096
 MAX_NOISE_TABLE = 32767
 MAX_INJECT_PENDING = 1024
 MEMORY_SLOT_BYTES = 32
+LEARN_COUNT_BITS = 32
+LEARN_UPDATE_FRAMES = 256
 
 RECTIFIERS = {
     "pass": 0,
@@ -118,6 +120,8 @@ REFUSALS = (
     "IMAGE_SPEC",
     "NOISE_TABLE",
     "RECORD_SLOT",
+    "UPDATE_UNFINISHED",
+    "LEARN_BOUND",
 )
 
 PULSES = {
@@ -203,12 +207,15 @@ REFUSAL_CODES = {
     "IMAGE_SPEC": 51,
     "NOISE_TABLE": 52,
     "RECORD_SLOT": 53,
+    "UPDATE_UNFINISHED": 54,
+    "LEARN_BOUND": 55,
 }
 
 BUS = {"word_bits": 32, "address_bits": 12, "first_offset": 16, "magic": 0x554E4454}
 
 BLOCKS = {
-    "core": (0x010, 0xE00),
+    "core": (0x010, 0xD00),
+    "learner": (0xD00, 0xE00),
     "kernel": (0xE00, 0xF00),
     "source": (0xF00, 0xF80),
     "inject": (0xF80, 0x1000),
@@ -252,6 +259,19 @@ REGISTERS = {
     "next_index": (0x10C, "ro", 2),
     "shadow_count": (0x114, "ro", 1),
     "shadow_words": (0x118, "ro", 1),
+    "lrn_update_at": (0xD00, "rw", 2),
+    "lrn_status": (0xD08, "ro", 1),
+    "lrn_refusal": (0xD0C, "rw", 1),
+    "lrn_count0": (0xD10, "ro", 1),
+    "lrn_count1": (0xD14, "ro", 1),
+    "lrn_skip_start": (0xD18, "ro", 2),
+    "lrn_skip_busy": (0xD20, "ro", 2),
+    "lrn_skip_full": (0xD28, "ro", 2),
+    "lrn_made": (0xD30, "ro", 2),
+    "lrn_unmade": (0xD38, "ro", 2),
+    "lrn_early": (0xD40, "ro", 2),
+    "lrn_cap_count_bits": (0xD48, "ro", 1),
+    "lrn_cap_update_frames": (0xD4C, "ro", 1),
     "krn_buffer": (0xE00, "rw", 2),
     "krn_size": (0xE08, "rw", 2),
     "krn_frames": (0xE10, "rw", 2),
@@ -281,6 +301,7 @@ REGISTERS = {
 
 REGISTER_BITS = {
     "status": {"running": 0, "loading": 1, "commit": 2, "settling": 3, "closed": 4, "partial": 5, "whole": 6, "overflow": 7, "refused": 8, "refused_again": 9},
+    "lrn_status": {"named": 0, "running": 1, "made": 2, "unmade": 3, "refused": 4, "refused_again": 5},
     "krn_status": {"running": 0, "done": 1, "refused": 2},
     "src_status": {"running": 0},
 }

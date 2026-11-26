@@ -67,13 +67,20 @@ def test_p0_the_package_and_the_header_carry_the_same_names_and_the_same_values(
                "REG_SRC_STATUS_RUNNING_BIT": 0, "REG_COMMIT_AT_WORDS": 2, "REG_SHADOW_DATA_READABLE": 0,
                "REG_SHADOW_DATA_WRITABLE": 1, "REG_SHAPE_MASKS_OFFSET": 168, "REG_SHAPE_MASKS_WORDS": 16,
                "REG_REFUSAL_WRITABLE": 1, "REG_SRC_SEED_OFFSET": 3840, "REG_INJ_FRAME_OFFSET": 3968,
-               "BLOCK_CORE_FIRST": 16, "BLOCK_CORE_END": 3584, "BLOCK_SOURCE_END": 3968, "BLOCK_INJECT_END": 4096,
+               # (the core's end was 3584 until round 5 took 0xD00 to 0xDFF for the learner)
+               "BLOCK_CORE_FIRST": 16, "BLOCK_CORE_END": 3328, "BLOCK_SOURCE_END": 3968, "BLOCK_INJECT_END": 4096,
                "MAX_NOISE_TABLE": 32767, "MAX_INJECT_PENDING": 1024,
                # round 3, typed from parcel KRNL's design: the kernel's block at 0xE00, its first row, its
                # status bits, its last refusal, and the memory's slot
                "BLOCK_KERNEL_FIRST": 3584, "BLOCK_KERNEL_END": 3840, "REG_KRN_BUFFER_OFFSET": 3584,
                "REG_KRN_BUFFER_WORDS": 2, "REG_KRN_STATUS_DONE_BIT": 1, "REG_KRN_START_READABLE": 0,
                "REFUSAL_KERNEL_BUSY": 44, "REFUSAL_RUN_LENGTH": 50, "MEMORY_SLOT_BYTES": 32,
+               # round 5, typed from parcel LRN-B's design and the lead's ruling: the learner's block at 0xD00,
+               # its first row, its status's last bit, its two refusals and its two bounds
+               "BLOCK_LEARNER_FIRST": 3328, "BLOCK_LEARNER_END": 3584, "REG_LRN_UPDATE_AT_OFFSET": 3328,
+               "REG_LRN_UPDATE_AT_WORDS": 2, "REG_LRN_STATUS_REFUSED_AGAIN_BIT": 5,
+               "REFUSAL_UPDATE_UNFINISHED": 54, "REFUSAL_LEARN_BOUND": 55,
+               "LEARN_COUNT_BITS": 32, "LEARN_UPDATE_FRAMES": 256,
                # the pulse, read off spec/pulses/e0.toml by eye: its second sample, its largest magnitude
                # (the fifth of the fourth row of eight), its largest positive, and its last two
                "PULSE_SAMPLE_BITS": 16, "PULSE_E0_LENGTH": 64, "PULSE_E0_SAMPLE_0": 0, "PULSE_E0_SAMPLE_1": 1,
