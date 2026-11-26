@@ -1,0 +1,65 @@
+E1 on the card: profile s16x1, sigma 1477/1, Pfa 0.01, e0 at amplitude 1/1; parts 5, 4, 3, 2, 1, 0
+  bit identity, run by run (the model's authority), and each part from the card's own bytes:
+  c5-p0-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c5-p1-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c5-p2-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130355 frames, queue peak 1
+  c5-p3-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130279 frames, queue peak 1
+  c5-p0-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c5-p1-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c5-p2-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130256 frames, queue peak 1
+  c5-p3-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130259 frames, queue peak 1
+  part 5: EQUAL to E1's committed part, key for key; the card's baseline reads equal to the statistics'; flags 0; the blank stretch from the card's swap-blank run, records 0 to 2097151; its records equal the desktop's blank run
+  c4-p0-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c4-p1-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c4-p2-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130243 frames, queue peak 1
+  c4-p3-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 129966 frames, queue peak 1
+  c4-p0-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c4-p1-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c4-p2-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130201 frames, queue peak 1
+  c4-p3-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130187 frames, queue peak 1
+  part 4: EQUAL to E1's committed part, key for key; the card's baseline reads equal to the statistics'; flags 0; the blank stretch from the desktop's model run
+  c3-p0-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c3-p1-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c3-p2-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130241 frames, queue peak 1
+  c3-p3-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130199 frames, queue peak 1
+  c3-p0-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c3-p1-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c3-p2-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130255 frames, queue peak 1
+  c3-p3-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130045 frames, queue peak 1
+  part 3: EQUAL to E1's committed part, key for key; the card's baseline reads equal to the statistics'; flags 0; the blank stretch from the desktop's model run
+  c2-p0-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c2-p1-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c2-p2-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130352 frames, queue peak 1
+  c2-p3-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130120 frames, queue peak 1
+  c2-p0-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c2-p1-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c2-p2-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130327 frames, queue peak 1
+  c2-p3-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 129972 frames, queue peak 1
+  part 2: EQUAL to E1's committed part, key for key; the card's baseline reads equal to the statistics'; flags 0; the blank stretch from the desktop's model run
+  c1-p0-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c1-p1-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c1-p2-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130234 frames, queue peak 1
+  c1-p3-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130184 frames, queue peak 1
+  c1-p0-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c1-p1-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c1-p2-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 129796 frames, queue peak 1
+  c1-p3-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 129852 frames, queue peak 1
+  part 1: EQUAL to E1's committed part, key for key; the card's baseline reads equal to the statistics'; flags 0; the blank stretch from the desktop's model run
+  c0-p0-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c0-p1-learned      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c0-p2-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 129950 frames, queue peak 1
+  c0-p3-learned      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 129909 frames, queue peak 1
+  c0-p0-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c0-p1-matched      IDENTICAL: 6400000 records, every word the model's; truth 0 before the start, 0 while it ran, least slack None frames, queue peak 1
+  c0-p2-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130163 frames, queue peak 1
+  c0-p3-matched      IDENTICAL: 6400000 records, every word the model's; truth 1024 before the start, 48976 while it ran, least slack 130003 frames, queue peak 1
+  part 0: EQUAL to E1's committed part, key for key; the card's baseline reads equal to the statistics'; flags 0; the blank stretch from the desktop's model run
+  E1's own judge on the six card parts: its output EQUAL to docs/studies/e1/judge-output.txt, byte for byte
+  == E1 SOFTWARE VERDICT: PASS, the reported model is inside the tolerance of E0's efficiency
+  swap-blank         IDENTICAL: 4194304 records, every word the model's; truth 1024 before the start, 15360 while it ran, least slack 129348 frames, queue peak 1
+== E1C SWAP blank: IDENTICAL; the first record of the new epoch at 2097152, the named index 2097152; the swap bracketed by next_index [1049468, 1050033]; SEEN
+  swap-matched       IDENTICAL: 4194304 records, every word the model's; truth 1024 before the start, 15360 while it ran, least slack 129140 frames, queue peak 1
+== E1C SWAP matched: IDENTICAL; the first record of the new epoch at 2097152, the named index 2097152; the swap bracketed by next_index [1049776, 1050357]; SEEN
+the flip control, flip-c5-p0: against the flipped set's own model run IDENTICAL; against the learned set's DIFFERENT, first {"record": 35, "field": "score", "card": 69605316, "model": 76883908}; predicted record 35
+== E1C FLIP CONTROL: SEEN, the flip reaches the records at the record predicted and the card ran the flipped set
+== E1 CARD VERDICT: PASS, every record of every run the model's, every part E1's key for key, E1's judge's output byte for byte
