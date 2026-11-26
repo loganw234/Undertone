@@ -1,4 +1,7 @@
-"""Stage E3's noise rule and its preparation, held on inputs made here: no record is fetched or read.
+"""Stage E3's noise rule and its preparation, held on inputs made here: no fetched record is read.
+
+Two tests read what the fetch and the prep committed, manifest.tsv and vectors/e3s/blocks.json, and
+hold the figures docs/model/e3s.md gives for them; neither opens a fetched file.
 
 The rule is vectors/e3s/rule.json; docs/studies/e3/e3requests.py makes the requests from it and
 docs/studies/e3/e3prep.py applies it to the fetched files (the design in the round's ledger,
@@ -368,6 +371,49 @@ def test_e3s_noise_rule_the_station_answer_gives_each_stations_epochs():
         ep = P.station_epochs(f, RULE)
     assert sorted(ep) == ["CDM"] and ep["CDM"][:2] == (34.36855, -119.341437) and len(ep["CDM"][2]) == 2
     assert P.within_epoch(DAY0, DAY0 + 655360000, ep["CDM"][2])
+
+
+# ------------------------------------------------------------------ the committed records of the fetch and the prep
+
+# The figures docs/model/e3s.md gives for the prep's one run (2026-11-25, 21:24:13 to 21:26:52), typed here
+# from vectors/e3s/blocks.json as committed at cd39f79: station, kept, its losses by rule, amplitude, H.
+PREP = {"MPP": (981, {"continuity": 0, "flat": 0, "events": 59, "launches": 7, "range": 1}, 3569, 53),
+        "CDM": (981, {"continuity": 0, "flat": 0, "events": 60, "launches": 7, "range": 0}, 3101, 46),
+        "HDH": (969, {"continuity": 0, "flat": 0, "events": 72, "launches": 7, "range": 0}, 932, 14),
+        "SRN": (952, {"continuity": 0, "flat": 0, "events": 86, "launches": 7, "range": 3}, 7465, 110)}
+
+
+def test_e3s_noise_rule_the_fetch_is_what_the_manifest_says():
+    rows = [line.rstrip("\n").split("\t") for line in open(os.path.join(E3, "manifest.tsv"), encoding="utf-8")
+            if not line.startswith("#") and line.strip()]
+    assert [r[0] for r in rows] == [r[0] for r in Q.requests(RULE)] and [r[1] for r in rows] == [r[1] for r in Q.requests(RULE)]
+    assert {r[3] for r in rows} == {"200"} and len(rows) == 40
+    assert sum(int(r[4]) for r in rows) == 393722439
+    assert (rows[0][2], rows[-1][2]) == ("2026-11-26T04:17:14Z", "2026-11-26T04:21:13Z")
+    assert all(len(r[5]) == 64 for r in rows)
+
+
+def test_e3s_noise_rule_the_prep_kept_what_the_doc_says_and_each_set_follows_from_its_amplitude():
+    with open(os.path.join(ROOT, "vectors", "e3s", "blocks.json"), encoding="utf-8") as f:
+        blocks = json.load(f)
+    with open(os.path.join(ROOT, "vectors", "e3s", "rule.json"), "rb") as f:
+        assert blocks["rule_sha256"] == hashlib.sha256(f.read()).hexdigest()
+    assert blocks["events"] == 365 and len(blocks["launch_intervals_utc"]) == 7 and blocks["launch_entries_coarser_than_a_day"] == []
+    import e3sets
+    with open(os.path.join(ROOT, "vectors", "e3s", "injection_sets.json"), encoding="utf-8") as f:
+        sets = json.load(f)
+    for s in blocks["stations"]:
+        kept, losses, num, h = PREP[s["station"]]
+        assert (s["kept"], s["losses"], s["figures"]["amplitude_num"], s["figures"]["H"]) == (kept, losses, num, h), s["station"]
+        assert s["blocks"] == 8 * 131 and s["kept"] + sum(s["losses"].values()) == s["blocks"]
+        assert s["used"] == RULE["use"] and s["figures"]["refused"] is None and s["figures"]["k"] == 163
+        assert [r["role"] for r in s["blocks_used"]] == ["calibration"] * 16 + ["training"] * 128 + ["held_out"] * 400
+        assert len({r["payload_sha256"] for r in s["blocks_used"]}) == 544, "no block is used twice"
+        starts = [r["start_utc"] for r in s["blocks_used"]]
+        assert starts == sorted(starts), "the roles follow time"
+        assert max(abs(v) for v in s["figures"]["injected"]) == h
+        assert sets["stations"][s["station"]] == e3sets.entry(num, 65536, 65536, 128, 400, RULE["layout"])
+    assert [s["station"] for s in blocks["stations"]] == RULE["stations"]
 
 
 # ------------------------------------------------------------------ a miniSEED writer for the tests

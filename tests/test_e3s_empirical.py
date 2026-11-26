@@ -103,6 +103,8 @@ def test_gate_statistics__e3s_the_judge_reads_equal_detectors_as_reaching():
     near = E.compare(model(free, at), model(free + jitter[0], at + jitter[1]), PFA, 500, 2)
     print("E3S judge: two detectors differing by noise of 0.05: cost %+.5f, se %.5f, %s" % (near["cost"], near["se"], near["reading"]))
     assert near["reading"] == "REACHES" and near["se"] > 0
+    assert near["se"] < 0.5 * min(near["se_reference"], near["se_other"]), \
+        "the cost's error is the pair's, far below either efficiency's when the two mostly agree"
 
 
 def test_control_statistics__e3s_the_judge_reads_a_detector_with_less_deflection_as_short_and_the_reverse_as_ahead():
@@ -132,7 +134,7 @@ def test_control_statistics__e3s_the_resampling_gives_the_known_error_on_gaussia
     m, n = K * FREE, K * AT
     k = E.crossings(m, PFA)
     want = tolerance.tolerance((k + 1) / (m + 1), D, n, m)
-    tot, fix, effs = [], [], []
+    tot, fix, effs, slopes, slope_ses = [], [], [], [], []
     for r in range(100):
         free, at = gaussian_blocks(rng)
         a = E.resampled_efficiency(free, at, PFA, 100, 1000 + r)
@@ -140,6 +142,13 @@ def test_control_statistics__e3s_the_resampling_gives_the_known_error_on_gaussia
         tot.append(a["se"])
         fix.append(b["se"])
         effs.append(a["efficiency"])
+        s = E.slope_by_ranks(free, at, PFA)
+        slopes.append(s["slope"])
+        slope_ses.append(s["se"])
+    # the density method's own stated error, against its spread over the repetitions (2.13 and 1.90 over 400 at the design)
+    density = np.mean(slope_ses) / np.std(slopes, ddof=1)
+    print("CONTROL e3s density's error: stated %.3f, spread %.3f (%.3f)" % (np.mean(slope_ses), np.std(slopes, ddof=1), density))
+    assert 0.8 < density < 1.5
     tot, fix = np.array(tot), np.array(fix)
     thr = np.sqrt(np.maximum(tot ** 2 - fix ** 2, 0.0))
     ratios = (tot.mean() / want["se_total"], thr.mean() / want["se_threshold"], fix.mean() / want["se_binomial"])
@@ -220,3 +229,34 @@ def test_e3s_empirical_the_disjoint_check_refuses_only_what_meets():
         with pytest.raises(E.EmpiricalRefusal) as e:
             E.check_disjoint(tr, held)
         assert e.value.name == "TRAINED_ON"
+
+
+def test_e3s_empirical_a_resample_of_every_block_once_gives_the_packages_threshold():
+    from stats.recovery import threshold_from_scores
+    rng = np.random.Generator(np.random.PCG64(SEED + 9))
+    for m, pfa in ((12288, 0.01), (307200, 0.01), (2000, 0.1)):
+        f = rng.standard_normal(m)
+        k = E.crossings(m, pfa)
+        t = E._threshold_of_rows(f[None, :], k)[0]
+        assert t == threshold_from_scores(f, pfa)["threshold"] and int((f > t).sum()) == k, (m, pfa)
+
+
+def test_control_statistics__e3s_the_carry_states_its_rate_and_its_error_rightly_where_nothing_changes():
+    """From 32 blocks to 32 of the same Gaussian noise, 100 times: the stated rate is (k + 1) / (m + 1)
+    exactly; the measured rate's resampled error is within 20% on average of the two-sample binomial
+    sqrt(pe (1 - pe) (1 / m_from + 1 / m_to)); and |z| > 2 in at most 12 of the 100 (5 expected). An
+    error that resampled one set only would be about 0.71 of the binomial, and fail."""
+    rng = np.random.Generator(np.random.PCG64(SEED + 10))
+    ses, zs = [], []
+    for r in range(100):
+        one, two = rng.standard_normal((32, 384)), rng.standard_normal((32, 384))
+        c = E.carry(one, two, PFA, 100, 3000 + r)
+        assert c["stated"] == (c["k"] + 1) / (c["m_from"] + 1) and c["k"] == 122
+        ses.append(c["se"])
+        zs.append(c["z_score"])
+    pe = (122 + 1) / (12288 + 1)
+    want = math.sqrt(pe * (1 - pe) * (2.0 / 12288))
+    zs = np.array(zs)
+    print("CONTROL e3s carry's error: mean %.5f against %.5f (%.3f); |z| > 2 in %d of 100"
+          % (np.mean(ses), want, np.mean(ses) / want, int((np.abs(zs) > 2).sum())))
+    assert abs(np.mean(ses) / want - 1) < 0.2 and int((np.abs(zs) > 2).sum()) <= 12

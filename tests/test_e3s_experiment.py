@@ -290,16 +290,43 @@ def compared(p, base, other_scores, seed=None):
                              p["seed"] if seed is None else seed, Z)
 
 
-def evaluate(p, got, schedule, extra=None):
-    """One part's record: everything the judge reads."""
+def utc_spans(station):
+    """(training, held-out) spans of a station's used blocks, from blocks.json: (start us, end us, payload SHA-256)."""
+    with open(BLOCKS_PATH, encoding="utf-8") as f:
+        blocks = json.load(f)
+    rows = [s for s in blocks["stations"] if s["station"] == station][0]["blocks_used"]
+    span = RULE["block_frames"] * e3prep.SAMPLE_US
+    out = {"training": [], "held_out": []}
+    for r in rows:
+        if r["role"] in out:
+            start = e3prep.us(e3prep.datetime.strptime(r["start_utc"], "%Y-%m-%dT%H:%M:%S.%fZ").replace(tzinfo=e3prep.timezone.utc))
+            out[r["role"]].append((start, start + span, r["payload_sha256"]))
+    return out
+
+
+def disjoint(spans):
+    """Rule 2 on the blocks: the count the judge checked, or the name it refused under."""
+    try:
+        return empirical.check_disjoint(spans["training"], spans["held_out"])
+    except empirical.EmpiricalRefusal as e:
+        return e.name
+
+
+def scores_identical(held, coeffs, reads):
+    """Is every score the model read the statistics' exact filter's, for these coefficients on these samples?"""
+    stat = E1.stat_scores_at_reads(held, coeffs)
+    return bool(stat_matched.scores_are_exact(PROFILE, coeffs) and
+                [int(v) for v in stat.tolist()] == [r["score"] for r in reads])
+
+
+def evaluate(p, got, schedule, extra=None, spans=None):
+    """One part's record: everything the judge reads. `spans` are the blocks' (training, held-out) spans."""
     a, held = p["A"], got["held"]
     free, at = split(p, got["reads"])
     learned = E1.entry("learned", free, at, a)
     blob = got["blob"]
     coeffs = list(handover.coefficients(blob)[0]) if blob is not None else [0] * TAPS
-    stat_learned = E1.stat_scores_at_reads(held, coeffs)
-    identical = stat_matched.scores_are_exact(PROFILE, coeffs) and \
-        [int(v) for v in stat_learned.tolist()] == [r["score"] for r in got["reads"]]
+    identical = scores_identical(held, coeffs, got["reads"])
     mf = matched_coefficients()
     base_scores = E1.stat_scores_at_reads(held, mf)
     base_free, base_at = split(p, E1.records_from(p, base_scores, BLANK_EPOCH))
@@ -360,6 +387,7 @@ def evaluate(p, got, schedule, extra=None):
         part["curve"].append({"training_blocks": blocks, "records": lr.counts[1], "learner_counts": list(lr.counts),
                               "coefficients": c2, "found": res["other_found"], "efficiency": res["other_efficiency"],
                               "cost": res["cost"], "se": res["se"], "reading": res["reading"]})
+    part["blocks_disjoint"] = disjoint(spans) if spans is not None else None
     part.update(extra or {})
     return part
 
@@ -417,7 +445,7 @@ def not_as_stated(part, plan_of=None, blocks_of=None, sets_of=None):
                        ("rate_label", E1.rate_label(PFA, p["m"])), ("reported", True),
                        ("learner_counts", [p["named_records"]] * 2), ("handover_refusal", None),
                        ("first_new_epoch_index", p["A"]), ("scores_not_zero_while_blank", 0),
-                       ("comparison_refused", None),
+                       ("comparison_refused", None), ("blocks_disjoint", p["training"] + p["held_out"]),
                        ("injection_sha256", want_set.get("sha256") if want_set else "none committed")):
         if part.get(name, "missing") != want:
             reasons.append("part %s: %s is %r, the experiment's is %r" % (station, name, part.get(name, "missing"), want))
@@ -533,7 +561,7 @@ def full_part(station, data, out):
     print("E3 full run, %s: %d training and %d held-out blocks, amplitude %d/%d, %d frames"
           % (station, p["training"], p["held_out"], sets["amplitude_num"], sets["amplitude_den"], p["length"]), flush=True)
     got = measure(p, paths, schedule, progress=65536 * 32)
-    part = evaluate(p, got, schedule)
+    part = evaluate(p, got, schedule, spans=utc_spans(station))
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(part, f, indent=1)
         f.write("\n")
@@ -598,7 +626,7 @@ def short():
             f = s["figures"]
             schedule = schedule_for(SHORT, f["amplitude_num"], f["amplitude_den"])
             got = measure(SHORT, s["paths"], schedule)
-            _short.update(schedule=schedule, got=got, part=evaluate(SHORT, got, schedule))
+            _short.update(schedule=schedule, got=got, part=evaluate(SHORT, got, schedule, spans=s["spans"]))
         except Exception as e:
             _short["error"] = e
             raise
@@ -881,12 +909,16 @@ def test_control_statistics__e3s_each_condition_of_the_experiment_held_fails_alo
     for name, value in (("k", 121), ("above", 121), ("base_above", 123), ("n", 4095), ("m", 12287),
                         ("spec_sha256", "0" * 64), ("injection_sha256", "0" * 64), ("first_new_epoch_index", SHORT["A"] + 1),
                         ("held_out_epochs", [BLANK_EPOCH]), ("scores_not_zero_while_blank", 1), ("handover_refusal", "QUANTISE_INPUT"),
-                        ("blob_sha256", "0" * 64), ("plan", dict(SHORT, seed=1)), ("found", part["found"] + 1)):
+                        ("blob_sha256", "0" * 64), ("plan", dict(SHORT, seed=1)), ("found", part["found"] + 1),
+                        ("blocks_disjoint", "TRAINED_ON"), ("blocks_disjoint", None)):
         assert not_as_stated(dict(part, **{name: value})), name
     j = part["judge"]
     for name, value in (("seed", 1), ("resamples", 999), ("reference_only", j["reference_only"] + 1),
                         ("cost", j["cost"] + 1e-6), ("reading", "SHORT"), ("blocks", 63)):
         assert not_as_stated(dict(part, judge=dict(j, **{name: value}))), name
+    # the learner's count and the judge's, moved together, still do not add up with the pairs
+    moved = dict(part, found=part["found"] + 1, judge=dict(j, other_found=j["other_found"] + 1))
+    assert any("do not add up" in r for r in not_as_stated(moved))
     # and a reading changes with its cost: the same se, a cost past 4 se either way
     assert judge_reading(dict(j, cost=4.01 * j["se"])) == "SHORT" and judge_reading(dict(j, cost=-4.01 * j["se"])) == "AHEAD"
     assert judge_reading(dict(j, cost=3.99 * j["se"])) == "REACHES"
@@ -951,3 +983,71 @@ def test_control_statistics__e3s_a_threshold_from_one_stretch_gives_or_fails_to_
     # the part's own check, both ways by alternate blocks, carries on the white stream for both models
     _got, part = short()
     assert all(part["carry"][w]["alternate"]["carries"] for w in ("matched", "learned"))
+
+
+def test_control_statistics__e3s_the_two_checks_on_the_instrument_can_each_fail():
+    """Two of the conditions are comparisons made inside `evaluate`: every score read against the
+    statistics' exact filter, and the core against the baseline. Each is shown to report a difference."""
+    got, part = short()
+    p = SHORT
+    learned_scores = E1.stat_scores_at_reads(got["held"], part["coefficients"])
+    base_scores = E1.stat_scores_at_reads(got["held"], matched_coefficients())
+    assert core_agrees(p, got["held"], got["blob"], learned_scores), "the core holding the learned blob gives its scores"
+    assert not core_agrees(p, got["held"], matched_blob(), learned_scores), "and the core holding the matched filter does not"
+    assert not core_agrees(p, got["held"], got["blob"], base_scores)
+    off = learned_scores.copy()
+    off[5] += 1
+    assert not core_agrees(p, got["held"], got["blob"], off), "one score one unit off"
+    assert part["scores_identical_to_stats"] and scores_identical(got["held"], part["coefficients"], got["reads"])
+    for g, delta in ((0, 1), (len(got["reads"]) - 1, -1)):            # the first score read and the last, one unit each way
+        reads = [dict(r) for r in got["reads"]]
+        reads[g]["score"] += delta
+        assert not scores_identical(got["held"], part["coefficients"], reads), (g, delta)
+    assert not scores_identical(got["held"], matched_coefficients(), got["reads"]), "another filter's scores are not these"
+    assert not holds(dict(part, scores_identical_to_stats=False))
+
+
+# ------------------------------------------------------------------ what the short form's layout does not reach
+
+def test_e3s_experiment_a_stations_part_is_held_to_its_committed_blocks_and_they_are_disjoint():
+    _got, part = short()
+    posed = dict(part, station="posed")
+    kw = dict(plan_of=lambda s: SHORT, sets_of=lambda p: committed_sets()["short"])
+    assert not_as_stated(posed, blocks_of=lambda s: list(part["blocks_sha256"]), **kw) == []
+    other = list(part["blocks_sha256"][:-1]) + ["0" * 64]
+    assert any("committed blocks" in r for r in not_as_stated(posed, blocks_of=lambda s: other, **kw))
+    for station in RULE["stations"]:
+        assert len(committed_blocks(station)) == 528
+        spans = utc_spans(station)
+        assert disjoint(spans) == 528, station
+        assert [s[2] for s in spans["training"] + spans["held_out"]] == committed_blocks(station)
+        assert max(e for _s, e, _d in spans["training"]) <= min(s for s, _e, _d in spans["held_out"]), \
+            "every training block ends before the first held-out block begins"
+    assert committed_blocks("XYZ") is None
+    assert part["blocks_disjoint"] == SHORT["training"] + SHORT["held_out"]
+    # and the part records what the check says of the spans it is handed: one held-out block that is a training block's
+    got = short()[0]
+    s = short_stream()["spans"]
+    bad = {"training": s["training"], "held_out": s["held_out"][:3] + [s["training"][5]] + s["held_out"][4:]}
+    quick = evaluate(dict(SHORT, resamples=20), got, _short["schedule"], spans=bad)
+    assert quick["blocks_disjoint"] == "TRAINED_ON" and not_as_stated(dict(part, blocks_disjoint=quick["blocks_disjoint"]))
+
+
+def test_e3s_experiment_the_named_model_learns_from_the_last_of_the_training_blocks(tmp_path):
+    """The full run's named model is the learner of the last 32 of 128 training blocks; the short form's is all
+    of them, so this is held on a part of its own: 4 training blocks of 1,024 frames, the named model the last 2."""
+    tiny = make_plan("tiny", "tiny", 1024, 4, 2, 2, (), 1, 2, 10)
+    noise = source.Noise(PROFILE, SHORT_NOISE_SEED, 300, 1, tiny["length"])
+    x = np.array([f[0] for f in noise], dtype=np.int64)
+    paths = []
+    for b in range(tiny["training"] + tiny["held_out"]):
+        path = tmp_path / ("b%d.und" % b)
+        path.write_bytes(e3prep.recording_bytes(x[b * 1024:(b + 1) * 1024]))
+        paths.append(str(path))
+    schedule = schedule_for(tiny, 65536, 65536)
+    committed = dict(zip(("sha256", "records"), E1.independent_digest(schedule)))
+    got = measure(tiny, paths, schedule, committed=committed)
+    assert got["learner"].counts == [16, 16] == [tiny["named_records"]] * 2
+    assert got["learner"].weights() == learner_of(got["train"], tiny, 2, schedule).weights()
+    assert got["learner"].weights() != learner_of(got["train"], tiny, 4, schedule).weights()
+    assert got["first_new_epoch_index"] == tiny["A"] == 4096
