@@ -31,10 +31,25 @@ What this does NOT do, stated as limits:
   - Nothing here scores: a `model.scorer.Scorer` is fed the pairs by the
     caller, who also holds the truth. Comparing events with truth is the
     caller's, and is where the two are allowed to meet.
+
+WITH A LEARNER (`learning`, round 5, parcel LRN-B; docs/model/lrn-b.md). The
+truth's indexes are then an argument of one thing downstream of the
+injector: the learner of `model/learner.py`, which reads each record's index
+and nothing else. The core is still handed each frame and nothing else. The
+learner reaches the core only by writing its shadow at an update the host
+named, and the core's outputs change only at a commit the host named. So the
+restated property: the same samples under different truth records give the
+same score records up to the first named commit, and after it the records of
+a run with no learner and the learner's set committed at the same indexes.
+`tests/test_lrn_b_isolation.py` holds it. The learner's own counters do
+depend on truth; they are not output records.
 """
+from spec import constants as C
 from model import inject as _inject
+from model import learner as _learner
 from model import weights
 from model.detector import Core
+from model.refusal import Refusal
 
 
 def scores(frames, schedule_records, length, blob, epoch=0):
@@ -68,3 +83,61 @@ def detect(frames, schedule_records, length, blob, epoch=0):
     """
     pairs, truth = scores(frames, schedule_records, length, blob, epoch)
     return tuple(record for _frame, record in pairs), truth
+
+
+OPERATIONS = ("update", "commit", "write_shadow")
+
+
+def learning(frames, schedule_records, length, blob, script, update_frames=C.LEARN_UPDATE_FRAMES,
+             count_bits=C.LEARN_COUNT_BITS, epoch=0):
+    """Returns (records, truth, outcomes, learner): the injector feeding a core with the learner beside it.
+
+    `script` maps a next index, 0 to `length`, to a list of host operations, each ("update", u),
+    ("commit", at) or ("write_shadow", blob), made in order when the core's next output is that index,
+    before its frame is drawn; at `length` they are made after the last frame. Each is taken or refused
+    by name, and recorded in `outcomes` as (index, operation, argument, the refusal's name or None): a
+    refused operation leaves the run going, as a refused register write leaves the fabric running.
+
+    Refused before a frame is read, in this order: the blob (`model.weights.unpack`), the schedule
+    (`model.inject.inject`), the script (RECORD_FIELD: an entry that is not a list of declared operations
+    at an index 0..length), the learner (`model.learner.Learner`). While the frames run, a refusal from
+    the injector or the core ends the run there and is raised, as `detect`'s is.
+    """
+    profile_name = weights.unpack(blob)["profile"]
+    injected, truth = _inject.inject(profile_name, frames, schedule_records, length)
+    _check_script(script, length)
+    learner = _learner.Learner(blob, truth, update_frames, count_bits, epoch)
+    records, outcomes = _learning_run(learner, injected, script)
+    return records, truth, outcomes, learner
+
+
+def _check_script(script, length):
+    if not isinstance(script, dict):
+        raise Refusal("RECORD_FIELD", "a script is a dict from a next index to a list of operations")
+    for index, ops in script.items():
+        if type(index) is not int or not 0 <= index <= length or not isinstance(ops, (list, tuple)):
+            raise Refusal("RECORD_FIELD", "a script's index is an int 0..%d with a list of operations, not %r"
+                          % (length, index))
+        for op in ops:
+            if not isinstance(op, tuple) or len(op) != 2 or op[0] not in OPERATIONS:
+                raise Refusal("RECORD_FIELD", "an operation is (one of %s, its argument), not %r"
+                              % (", ".join(OPERATIONS), op))
+
+
+def _learning_run(learner, injected, script):
+    # The core's whole view of the world is `injected`, through the learner's `step`. Truth is the learner's.
+    do = {"update": learner.update, "commit": learner.commit, "write_shadow": learner.write_shadow}
+    records, outcomes, frames = [], [], iter(injected)
+    while True:
+        index = learner.next_index
+        for op, argument in script.get(index, ()):
+            try:
+                do[op](argument)
+                outcomes.append((index, op, argument, None))
+            except Refusal as e:
+                outcomes.append((index, op, argument, e.name))
+        try:
+            frame = next(frames)
+        except StopIteration:
+            return tuple(records), outcomes
+        records.append(learner.step(frame))

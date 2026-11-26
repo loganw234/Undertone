@@ -1,0 +1,155 @@
+{
+  "what": "The learner of phase B (model/learner.py) on four cases small enough to work by hand: which windows it judges and how, its sums, D, the peak, the set, its counters, the outcome of each host operation, and every score record of the run.",
+  "how_worked": "By hand, on paper, with the sums written in each case's 'worked' lines; and again by a short script of the parcel's own that imports nothing of the tree, before any line of model/learner.py was written (the parcel's ledger, 2026-11-25 20:52). No line of model/ or learn/ produced any number here. The rule as the design states it: a label-0 window is frames j-T..j-1, judged when the core's next index is j, skipped START if j < T, BUSY if the record before is less than 2T before, FULL if its count is at its most; a label-1 window is frames j..j+T-1, judged at next index j+T, skipped BUSY if a record is less than T before or after, FULL likewise. D[c][k] = S1[k][c] * n0 - S0[k][c] * n1, in the order channel 0's taps, channel 1's, ...; m the largest magnitude; each coefficient the integer nearest D * 131071 / m, a tie to the even one.",
+  "conventions": {
+    "coeff_max": 131071,
+    "start_blob": "the matched-filter configuration of the case's profile and taps: one filter reading every channel, every coefficient 0, the rectifier passing, a pool of 1, a shift of 0, a head weight of 1",
+    "truth": "records of amplitude 0/1 and pulse id 0 at truth_indexes, handed to the learner directly with the frames as given: they are closer than a pulse, so the injector would refuse them, and the learner reads only their indexes",
+    "write_shadow_start": "a write_shadow whose argument is the start blob",
+    "sums": "sum_label_0 and sum_label_1 are [tap][channel], tap 0 meeting the window's oldest frame",
+    "scores": "every score record of the run as [index, epoch, flags, score]"
+  },
+  "cases": [
+    {
+      "name": "s16x1-the-tie",
+      "profile": "s16x1",
+      "taps": 2,
+      "update_frames": 3,
+      "count_bits": 32,
+      "frames": [[-32768], [0], [32767], [1], [32767], [0], [32767], [0], [1], [0], [0], [0], [0], [0], [3], [-2], [5], [0]],
+      "truth_indexes": [2, 4, 6, 8, 10],
+      "script": [[5, "update", 12], [7, "write_shadow", "start"], [13, "commit", 16], [15, "commit", 15]],
+      "outcomes": [[5, "update", 12, null], [7, "write_shadow", "start", "UPDATE_UNFINISHED"], [13, "commit", 16, "UPDATE_UNFINISHED"], [15, "commit", 15, null]],
+      "judged": [[2, 2, 0, "taken"], [4, 2, 1, "taken"], [4, 4, 0, "busy"], [6, 4, 1, "taken"], [6, 6, 0, "busy"], [8, 6, 1, "taken"], [8, 8, 0, "busy"], [10, 8, 1, "taken"], [10, 10, 0, "busy"], [12, 10, 1, "taken"]],
+      "updates": [
+        {"u": 12, "finish": 15, "counts": [1, 5], "sum_label_0": [[-32768], [0]], "sum_label_1": [[98302], [1]],
+         "difference": [262142, 1], "peak": 262142, "coefficients": [[131071, 0]], "outcome": "made"}
+      ],
+      "counters": {"lrn_count0": 1, "lrn_count1": 5, "lrn_skip_start": 0, "lrn_skip_busy": 4, "lrn_skip_full": 0, "lrn_made": 1, "lrn_unmade": 0, "lrn_early": 1},
+      "status": {"named": 0, "running": 0, "made": 1, "unmade": 0},
+      "scores": [[0, 0, 0, 0], [1, 0, 0, 0], [2, 0, 0, 0], [3, 0, 0, 0], [4, 0, 0, 0], [5, 0, 0, 0], [6, 0, 0, 0], [7, 0, 0, 0], [8, 0, 0, 0], [9, 0, 0, 0], [10, 0, 0, 0], [11, 0, 0, 0], [12, 0, 0, 0], [13, 0, 0, 0], [14, 0, 0, 0], [15, 1, 0, 393213], [16, 1, 0, -262142], [17, 1, 0, 655355]],
+      "controls": {
+        "half_away_from_zero": {"coefficients": [[131071, 1]], "score_15": 393211},
+        "last_window_dropped": {"counts": [1, 4], "difference": [229374, 1], "peak": 229374, "coefficients": [[131071, 1]]},
+        "label_0_of_4_taken": {"counts": [2, 5], "sum_label_0": [[-1], [1]], "difference": [196609, -3], "peak": 196609, "coefficients": [[131071, -2]]},
+        "no_truth": {"counters": {"lrn_count0": 0, "lrn_count1": 0, "lrn_skip_start": 0, "lrn_skip_busy": 0, "lrn_skip_full": 0, "lrn_made": 0, "lrn_unmade": 1, "lrn_early": 1},
+                     "update_outcome": "unmade",
+                     "scores": "every score 0, epoch 0 for indexes 0 to 14 and epoch 1 for 15 to 17, flags 0"}
+      },
+      "worked": [
+        "Records at 2, 4, 6, 8, 10 with T = 2: each is T after the one before.",
+        "Label 0 of 2 is frames 0, 1 = -32768, 0, judged at next index 2: 2 >= T and no record before: taken.",
+        "Label 0 of 4, 6, 8, 10: each record is 2 after the one before, less than 2T = 4: BUSY, four times.",
+        "Label 1 of j is frames j, j+1, judged at j + 2: the record after is exactly T on, not less: taken, five times: (32767, 1), (32767, 0), (32767, 0), (1, 0), (0, 0).",
+        "n0 = 1, n1 = 5. S0 = (-32768, 0). S1 = (32767 + 32767 + 32767 + 1 + 0, 1 + 0 + 0 + 0 + 0) = (98302, 1).",
+        "D = (98302 * 1 - (-32768) * 5, 1 * 1 - 0 * 5) = (98302 + 163840, 1) = (262142, 1).",
+        "m = 262142 = 2 * 131071. Tap 0: 262142 * 131071 / 262142 = 131071. Tap 1: 131071 / 262142 = 1/2 exactly, a tie: to the even 0. Half away from zero gives 1.",
+        "The trainer's weights are S1 / 5 - S0 / 1 = (262142/5, 1/5): the same ratio, so the same tie.",
+        "The update is named at next index 5 for 12, made at 12 after label 1 of 10, finished at 12 + 3 = 15.",
+        "At 7 a shadow write: 7 < 15, UPDATE_UNFINISHED. At 13 a commit for 16: 13 < 15, UPDATE_UNFINISHED, lrn_early 1. At 15 the commit for 15 is taken.",
+        "Scores: the start set is zero, so 0 to index 14. From 15 the set (131071, 0): score[i] = 131071 * x[i-1] + 0 * x[i]: 131071 * 3 = 393213; 131071 * (-2) = -262142; 131071 * 5 = 655355. Half away: 393213 + 1 * (-2) = 393211.",
+        "Dropped, label 1 of 10 (all zeros): n1 = 4, S1 unchanged: D = (98302 + 4 * 32768, 1) = (229374, 1); 131071 / 229374 = 0.571..., nearest 1.",
+        "Taken, label 0 of 4 = frames 2, 3 = (32767, 1): n0 = 2, S0 = (-32768 + 32767, 0 + 1) = (-1, 1); D = (98302 * 2 + 1 * 5, 1 * 2 - 1 * 5) = (196609, -3); -3 * 131071 / 196609 = -393213 / 196609 = -1.99997..., nearest -2.",
+        "No truth record: both counts stay 0, D is all zero, the update makes no set (QUANTISE_INPUT) and is unmade at 15; the commit at 13 is still refused, and the one at 15 swaps in the shadow, which holds the start's zeros."
+      ]
+    },
+    {
+      "name": "s16x1-start-and-an-unmade-update",
+      "profile": "s16x1",
+      "taps": 2,
+      "update_frames": 3,
+      "count_bits": 32,
+      "frames": [[0], [3], [-1], [2], [0], [4], [5], [0], [0], [1], [-1], [0]],
+      "truth_indexes": [1, 5],
+      "script": [[2, "update", 3], [4, "update", 7], [6, "update", 7], [10, "commit", 10]],
+      "outcomes": [[2, "update", 3, null], [4, "update", 7, "UPDATE_UNFINISHED"], [6, "update", 7, null], [10, "commit", 10, null]],
+      "judged": [[1, 1, 0, "start"], [3, 1, 1, "taken"], [5, 5, 0, "taken"], [7, 5, 1, "taken"]],
+      "updates": [
+        {"u": 3, "finish": 6, "counts": [0, 1], "sum_label_0": [[0], [0]], "sum_label_1": [[3], [-1]],
+         "difference": [0, 0], "peak": 0, "coefficients": null, "outcome": "unmade", "name": "QUANTISE_INPUT"},
+        {"u": 7, "finish": 10, "counts": [1, 2], "sum_label_0": [[2], [0]], "sum_label_1": [[7], [4]],
+         "difference": [3, 4], "peak": 4, "coefficients": [[98303, 131071]], "outcome": "made"}
+      ],
+      "counters": {"lrn_count0": 1, "lrn_count1": 2, "lrn_skip_start": 1, "lrn_skip_busy": 0, "lrn_skip_full": 0, "lrn_made": 1, "lrn_unmade": 1, "lrn_early": 0},
+      "status": {"named": 0, "running": 0, "made": 1, "unmade": 0},
+      "scores": [[0, 0, 0, 0], [1, 0, 0, 0], [2, 0, 0, 0], [3, 0, 0, 0], [4, 0, 0, 0], [5, 0, 0, 0], [6, 0, 0, 0], [7, 0, 0, 0], [8, 0, 0, 0], [9, 0, 0, 0], [10, 1, 0, -32768], [11, 1, 0, -98303]],
+      "controls": {
+        "label_0_of_1_taken": {"first_update": {"counts": [1, 1], "sum_label_0": [[0], [0]], "difference": [3, -1], "peak": 3, "coefficients": [[131071, -43690]], "outcome": "made"},
+                               "lrn_count0": 2}
+      },
+      "worked": [
+        "Records at 1 and 5 with T = 2.",
+        "Label 0 of 1 would be frames -1, 0: 1 < T, START.",
+        "Label 1 of 1 is frames 1, 2 = (3, -1), judged at 3: taken. Label 0 of 5 is frames 3, 4 = (2, 0), judged at 5: 5 - 1 = 4 = 2T exactly, not less: taken. Label 1 of 5 is frames 5, 6 = (4, 5), judged at 7: taken.",
+        "Update named at 2 for 3, made at 3: n0 = 0, n1 = 1, S0 = (0, 0), S1 = (3, -1): D = (3 * 0 - 0 * 1, -1 * 0 - 0 * 1) = (0, 0): no peak, QUANTISE_INPUT. Finished at 3 + 3 = 6: lrn_unmade 1.",
+        "At 4 an update for 7: 4 < 6, UPDATE_UNFINISHED, not counted in lrn_early. At 6 the same: taken.",
+        "Made at 7: n0 = 1, n1 = 2, S0 = (2, 0), S1 = (3 + 4, -1 + 5) = (7, 4). D = (7 * 1 - 2 * 2, 4 * 1 - 0 * 2) = (3, 4). m = 4: 3 * 131071 / 4 = 393213 / 4 = 98303.25, nearest 98303; 4 * 131071 / 4 = 131071. Finished at 10.",
+        "Commit at 10, taken. score[10] = 98303 * x[9] + 131071 * x[10] = 98303 - 131071 = -32768. score[11] = 98303 * x[10] + 131071 * x[11] = -98303.",
+        "Taken, label 0 of 1 = the zero before frame 0 and frame 0 = (0, 0): at 3, n0 = n1 = 1, S0 = (0, 0), S1 = (3, -1): D = (3, -1), m = 3: 131071 and -131071 / 3 = -43690.33..., nearest -43690. Made where the learner's is unmade; and count0 is 2 at the end."
+      ]
+    },
+    {
+      "name": "s24x3-ties-on-three-channels",
+      "profile": "s24x3",
+      "taps": 2,
+      "update_frames": 3,
+      "count_bits": 32,
+      "frames": [[5, 0, 0], [600, 0, 262141], [3, 131071, -2], [-200, 1, 0], [-1, 0, 3], [0, 0, 0], [2, 131071, 0], [-200, 2, 0], [0, 0, 0], [0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], [0, 0, 0]],
+      "truth_indexes": [2, 6],
+      "script": [[0, "update", 8], [11, "commit", 11]],
+      "outcomes": [[0, "update", 8, null], [11, "commit", 11, null]],
+      "judged": [[2, 2, 0, "taken"], [4, 2, 1, "taken"], [6, 6, 0, "taken"], [8, 6, 1, "taken"]],
+      "updates": [
+        {"u": 8, "finish": 11, "counts": [2, 2], "sum_label_0": [[4, 0, 3], [600, 0, 262141]], "sum_label_1": [[5, 262142, -2], [-400, 3, 0]],
+         "difference": [2, -2000, 524284, 6, -10, -524282], "peak": 524284, "coefficients": [[0, -500], [131071, 2], [-2, -131070]], "outcome": "made"}
+      ],
+      "counters": {"lrn_count0": 2, "lrn_count1": 2, "lrn_skip_start": 0, "lrn_skip_busy": 0, "lrn_skip_full": 0, "lrn_made": 1, "lrn_unmade": 0, "lrn_early": 0},
+      "status": {"named": 0, "running": 0, "made": 1, "unmade": 0},
+      "scores": [[0, 0, 0, 0], [1, 0, 0, 0], [2, 0, 0, 0], [3, 0, 0, 0], [4, 0, 0, 0], [5, 0, 0, 0], [6, 0, 0, 0], [7, 0, 0, 0], [8, 0, 0, 0], [9, 0, 0, 0], [10, 0, 0, 0], [11, 1, 0, 2], [12, 1, 0, 1], [13, 1, 0, -2]],
+      "controls": {
+        "half_away_from_zero": {"coefficients": [[1, -500], [131071, 2], [-3, -131071]], "scores_11_to_13": [3, 0, -3]}
+      },
+      "worked": [
+        "Records at 2 and 6 with T = 2. Label 0 of 2: frames 0, 1. Label 1 of 2: frames 2, 3, at 4. Label 0 of 6: frames 4, 5, at 6; 6 - 2 = 4 = 2T, not less: taken. Label 1 of 6: frames 6, 7, at 8. All four taken; n0 = n1 = 2.",
+        "S0 tap 0 = frame 0 + frame 4 = (5 - 1, 0 + 0, 0 + 3) = (4, 0, 3); tap 1 = frame 1 + frame 5 = (600, 0, 262141).",
+        "S1 tap 0 = frame 2 + frame 6 = (3 + 2, 131071 + 131071, -2 + 0) = (5, 262142, -2); tap 1 = frame 3 + frame 7 = (-200 - 200, 1 + 2, 0) = (-400, 3, 0).",
+        "D = 2 * S1 - 2 * S0. Channel 0: (2 * (5 - 4), 2 * (-400 - 600)) = (2, -2000). Channel 1: (2 * 262142, 2 * 3) = (524284, 6). Channel 2: (2 * (-2 - 3), 2 * (0 - 262141)) = (-10, -524282).",
+        "m = 524284 = 4 * 131071, so each coefficient is D / 4: 0.5, -500, 131071, 1.5, -2.5, -131070.5. To the even: 0, -500, 131071, 2, -2, -131070. Away from zero: 1, -500, 131071, 2, -3, -131071.",
+        "Update named at 0 for 8, made at 8 after label 1 of 6, finished at 11; the commit at 11 is taken.",
+        "score[i] = sum over c of q[c][0] * x_c[i-1] + q[c][1] * x_c[i]. score[11]: frames 10 = (1, 0, 0), 11 = (0, 1, 0): 0 * 1 + 2 * 1 = 2. score[12]: frames 11, 12 = (0, 0, 1): 131071 * 1 + (-131070) * 1 = 1. score[13]: frames 12, 13 = 0: -2 * 1 = -2.",
+        "Half away: score[11] = 1 * 1 + 2 * 1 = 3; score[12] = 131071 - 131071 = 0; score[13] = -3."
+      ]
+    },
+    {
+      "name": "s24x3-full-at-a-small-count",
+      "profile": "s24x3",
+      "taps": 1,
+      "update_frames": 0,
+      "count_bits": 2,
+      "frames": [[1, 0, 0], [0, 2, 0], [0, 0, 1], [3, 0, 0], [0, 1, 0], [0, 0, 2], [100, 0, 0], [0, 0, 100], [1, 0, 0], [0, 1, 0], [0, 0, 1]],
+      "truth_indexes": [1, 3, 5, 7],
+      "script": [[8, "update", 8], [8, "commit", 8]],
+      "outcomes": [[8, "update", 8, null], [8, "commit", 8, null]],
+      "judged": [[1, 1, 0, "taken"], [2, 1, 1, "taken"], [3, 3, 0, "taken"], [4, 3, 1, "taken"], [5, 5, 0, "taken"], [6, 5, 1, "taken"], [7, 7, 0, "full"], [8, 7, 1, "full"]],
+      "updates": [
+        {"u": 8, "finish": 8, "counts": [3, 3], "sum_label_0": [[1, 1, 1]], "sum_label_1": [[3, 2, 2]],
+         "difference": [6, 3, 3], "peak": 6, "coefficients": [[131071], [65536], [65536]], "outcome": "made"}
+      ],
+      "counters": {"lrn_count0": 3, "lrn_count1": 3, "lrn_skip_start": 0, "lrn_skip_busy": 0, "lrn_skip_full": 2, "lrn_made": 1, "lrn_unmade": 0, "lrn_early": 0},
+      "status": {"named": 0, "running": 0, "made": 1, "unmade": 0},
+      "scores": [[0, 0, 0, 0], [1, 0, 0, 0], [2, 0, 0, 0], [3, 0, 0, 0], [4, 0, 0, 0], [5, 0, 0, 0], [6, 0, 0, 0], [7, 0, 0, 0], [8, 1, 0, 131071], [9, 1, 0, 65536], [10, 1, 0, 65536]],
+      "controls": {
+        "full_windows_taken": {"counts": [4, 4], "sum_label_0": [[101, 1, 1]], "sum_label_1": [[3, 2, 102]], "difference": [-392, 4, 404], "peak": 404}
+      },
+      "worked": [
+        "count_bits = 2: at most 3 windows a label. This is a small build's width; the definition's is 32.",
+        "Records at 1, 3, 5, 7 with T = 1: a label-0 window is frame j - 1, judged at j; a label-1 window is frame j, judged at j + 1. Each record is 2 = 2T after the one before: free.",
+        "Taken: label 0 = frames 0, 2, 4 = (1,0,0), (0,0,1), (0,1,0); label 1 = frames 1, 3, 5 = (0,2,0), (3,0,0), (0,0,2). Label 0 of 7 (frame 6) at 7 and label 1 of 7 (frame 7) at 8: each count is at 3: FULL, twice.",
+        "S0 = (1, 1, 1), S1 = (3, 2, 2), n0 = n1 = 3. D = 3 * S1 - 3 * S0 = (6, 3, 3). m = 6: 131071; 3 * 131071 / 6 = 65535.5, a tie, to the even 65536, twice.",
+        "At next index 8, after label 1 of 7 is judged: the update for 8 is made at once, and with no update time finished at once; the commit for 8 is taken.",
+        "score[i] = sum over c of q[c] * x_c[i]: 131071, 65536, 65536 at 8, 9, 10.",
+        "Taken, the two FULL windows: S0 = (101, 1, 1), S1 = (3, 2, 102), n0 = n1 = 4: D = 4 * (3 - 101, 2 - 1, 102 - 1) = (-392, 4, 404)."
+      ]
+    }
+  ]
+}
