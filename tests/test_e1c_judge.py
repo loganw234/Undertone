@@ -14,7 +14,9 @@ The brief's named control: a count changed by one in the card's tally makes the 
 committed output, in the lines that print that count and no others; and `evaluate_card` reports a baseline read
 changed by one, and a digest that is not the statistics'.
 """
+import hashlib
 import json
+import os
 
 import numpy as np
 import pytest
@@ -156,8 +158,38 @@ def _stated_compare(tmp_path, keys=None, change=None, judge=None):
     return code, record, lines
 
 
+STALE = "E1C-E1-RECORD-STALE"
+
+
+def e1_record_stale():
+    """None when stage E1's committed parts were made under this tree's definition; else the skip's reason, by name.
+
+    `compare` holds each card part to E1's committed part key for key, and a card part carries the tree's own
+    definition hash, as `evaluate` gives it. So where E1's parts were made under another definition (on r5 until
+    wave 3 makes E1 again), compare on the stated run cannot print PASS, whatever the card did. The test below then
+    holds that the hash is compare's only reason, and skips by this name, as tests/test_e1_full_run.py skips by
+    E1-RECORD-STALE."""
+    run_under = sorted({p["spec_sha256"] for p in e1c.committed_parts().values()})
+    if run_under == [C.SPEC_SHA256]:
+        return None
+    return ("%s: stage E1's committed parts were made under the definition %s..., and this tree's is %s...; compare "
+            "holds the card's parts to them key for key, the definition's hash among the keys, so on this tree it "
+            "cannot print PASS until stage E1 is made again" % (STALE, ",".join(h[:12] for h in run_under),
+                                                                C.SPEC_SHA256[:12]))
+
+
 def test_e1c_compare_on_the_stated_run_judges_six_parts_and_fails_a_day_cut_short(tmp_path):
+    """Skips by name, E1C-E1-RECORD-STALE, where E1's committed parts are of another definition than the tree's:
+    first holding that the definition's hash is compare's only reason (every part DIFFERS in spec_sha256 and in
+    nothing else, and E1's judge prints its committed output for the card's parts)."""
+    reason = e1_record_stale()
     code, record, lines = _stated_compare(tmp_path / "whole")
+    if reason is not None:
+        assert code == 1 and lines[-1] == "== E1 CARD VERDICT: FAIL"
+        assert sum("DIFFERS from E1's committed part in spec_sha256;" in line for line in lines) == 6, lines
+        assert not any("EQUAL to E1's committed part" in line for line in lines)
+        assert record["judge"]["equal"] is True and record["judge"]["code"] == 0, "the judge is not the reason"
+        pytest.skip(reason)
     assert code == 0 and lines[-1].startswith("== E1 CARD VERDICT: PASS") and record["judge"]["equal"]
     assert "  E1's own judge on the six card parts: its output EQUAL to docs/studies/e1/judge-output.txt, byte for byte" in lines
     assert sum("EQUAL to E1's committed part, key for key" in line for line in lines) == 6
@@ -191,6 +223,26 @@ def test_e1c_compare_on_the_stated_run_judges_six_parts_and_fails_a_day_cut_shor
     code, record, lines = _stated_compare(tmp_path / "says-fail", judge=says_fail)
     assert record["judge"]["equal"] is True and record["judge"]["code"] == 1
     assert code == 1 and lines[-1] == "== E1 CARD VERDICT: FAIL"
+
+
+def test_e1c_a_definition_changed_by_one_comment_line_makes_the_stated_compare_skip_by_name(tmp_path, monkeypatch):
+    """The control of the skip above, as tests/test_e1_full_run.py's: one comment line of the definition changed is
+    another definition, and under its hash THE TEST ABOVE, called as it is, must skip by E1C-E1-RECORD-STALE, naming
+    that hash, after holding that the hash is compare's only reason."""
+    with open(os.path.join(e1c.ROOT, "spec", "undertone.toml"), "rb") as f:
+        raw = f.read().replace(b"\r\n", b"\n")
+    rows = raw.split(b"\n")
+    at = next(i for i, row in enumerate(rows) if row.startswith(b"#"))
+    rows[at] = rows[at] + b" (a comment changed by this test's control)"
+    other = hashlib.sha256(b"\n".join(rows)).hexdigest()
+    assert hashlib.sha256(raw).hexdigest() == C.SPEC_SHA256, "the hash is not taken as this control takes it"
+    assert other != C.SPEC_SHA256
+    monkeypatch.setattr(C, "SPEC_SHA256", other)
+    with pytest.raises(pytest.skip.Exception) as skipped:
+        test_e1c_compare_on_the_stated_run_judges_six_parts_and_fails_a_day_cut_short(tmp_path)
+    reason = str(skipped.value)
+    print("CONTROL the stated compare under a definition with one comment line changed: %s" % reason[:120])
+    assert reason.startswith(STALE + ":") and other[:12] in reason
 
 
 def test_e1c_a_card_record_names_its_definition_and_is_stale_by_name_once_it_moves():
