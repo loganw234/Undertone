@@ -37,6 +37,15 @@ export PLATFORM_REPO_PATHS=${PLATFORM_REPO_PATHS:-$HOME/platforms-root/opt/xilin
 [ -d "$PLATFORM_REPO_PATHS/$PLATFORM" ] || { echo "REFUSED: platform $PLATFORM not under $PLATFORM_REPO_PATHS" >&2; exit 2; }
 PART=xcu50-fsvh2104-2-e
 
+# THE LEARNER'S FLOORPLAN (the lead's, round 5, 2026-11-26; docs/rtl/krnl.md, section 7): for -t hw the learner
+# is placed in SLR1 by hw/floorplan_learn.tcl, which v++ sources before placement. An absolute path, so that
+# nothing rests on what v++ calls its build directory. hw_emu places nothing, and gets no hook.
+HOOK=()
+if [ "$T" = hw ]; then
+  [ -f hw/floorplan_learn.tcl ] || { echo "REFUSED: no hw/floorplan_learn.tcl in the tree" >&2; exit 2; }
+  HOOK=(--linkhook.do_first "vpl.impl.place_design,$(pwd)/hw/floorplan_learn.tcl")
+fi
+
 echo "== $(date '+%H:%M:%S') package (KRNL's script)"
 vivado -mode batch -nolog -nojournal -source hw/package_kernel.tcl -tclargs "$PART" "$OUT" > "$OUT/package.log" 2>&1 || true
 if grep -qE "^ERROR" "$OUT/package.log" || [ ! -f "$OUT/undertone_krnl.xo" ]; then
@@ -47,8 +56,8 @@ fi
 XO="$OUT/undertone_krnl.xo"
 grep -E "^HDLPARAM" "$OUT/package.log" || true
 
-echo "== $(date '+%H:%M:%S') link -t $T at $F MHz"
-v++ -l -t "$T" --platform "$PLATFORM" --config hw/link.cfg --kernel_frequency "$F" \
+echo "== $(date '+%H:%M:%S') link -t $T at $F MHz ${HOOK[*]:+with the hook ${HOOK[*]}}"
+v++ -l -t "$T" --platform "$PLATFORM" --config hw/link.cfg --kernel_frequency "$F" "${HOOK[@]}" \
     --save-temps --temp_dir "$OUT/_x_$T" -o "$OUT/undertone_$T.xclbin" "$XO" > "$OUT/link_$T.log" 2>&1 || true
 if [ ! -f "$OUT/undertone_$T.xclbin" ]; then
   echo "REFUSED: LINK-FAILED: v++ wrote no image:" >&2
