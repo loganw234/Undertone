@@ -68,15 +68,18 @@ KERNEL_REFUSALS = ("KERNEL_BUSY", "BUFFER_ALIGN", "BUFFER_SIZE", "RUN_START", "R
                    "RUN_LENGTH")
 # Round 3, parcel HOST: the host library's alone, typed from its design in the round's ledger.
 HOST_REFUSALS = ("IMAGE_SPEC", "NOISE_TABLE", "RECORD_SLOT")
+# Round 5, parcel LRN-B: the learner's, typed from its design and the lead's ruling in the round's ledger.
+LEARN_REFUSALS = ("UPDATE_UNFINISHED", "LEARN_BOUND")
 
 
-def test_p0_refusal_names_are_the_models_forty_the_fabrics_three_the_kernels_seven_and_the_hosts_three():
+def test_p0_refusal_names_are_the_models_forty_the_fabrics_three_the_kernels_seven_the_hosts_three_and_the_learners_two():
     assert (len(P0_REFUSALS), len(MOD_B_REFUSALS), len(MOD_A_REFUSALS), len(HEAD_REFUSALS)) == (10, 16, 11, 3)
     assert C.REFUSALS == (P0_REFUSALS + MOD_B_REFUSALS + MOD_A_REFUSALS + HEAD_REFUSALS + FABRIC_REFUSALS
-                          + KERNEL_REFUSALS + HOST_REFUSALS)
-    assert len(set(C.REFUSALS)) == 53 and len(FABRIC_REFUSALS) == 3 and len(KERNEL_REFUSALS) == 7
+                          + KERNEL_REFUSALS + HOST_REFUSALS + LEARN_REFUSALS)
+    assert len(set(C.REFUSALS)) == 55 and len(FABRIC_REFUSALS) == 3 and len(KERNEL_REFUSALS) == 7
     assert [C.REFUSAL_CODES[n] for n in KERNEL_REFUSALS] == list(range(44, 51))
     assert [C.REFUSAL_CODES[n] for n in HOST_REFUSALS] == [51, 52, 53]
+    assert [C.REFUSAL_CODES[n] for n in LEARN_REFUSALS] == [54, 55]
 
 
 def test_p0_the_hidden_layers_bounds_are_the_ones_generated_and_keep_the_head_small():
@@ -226,8 +229,8 @@ def test_p0_reference_pulse_fits_the_narrowest_profile_and_is_not_silent():
 
 
 def test_p0_every_refusal_has_a_code_of_its_own_that_fits_a_byte_and_none_is_zero():
-    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 53
-    assert len(set(C.REFUSAL_CODES.values())) == 53
+    assert set(C.REFUSAL_CODES) == set(C.REFUSALS) and len(C.REFUSAL_CODES) == 55
+    assert len(set(C.REFUSAL_CODES.values())) == 55
     assert all(type(v) is int and 1 <= v <= 255 for v in C.REFUSAL_CODES.values())
     # Typed here from the definition as it was first written, so that a renumbering is made on purpose.
     assert (C.REFUSAL_CODES["PROFILE_UNKNOWN"], C.REFUSAL_CODES["BLOB_HASH"], C.REFUSAL_CODES["SHAPE_BETWEEN"]) == (1, 7, 40)
@@ -253,31 +256,42 @@ def test_p0_the_registers_lie_inside_the_frame_in_whole_words_and_do_not_overlap
     assert 8 * 32 == 256                                                 # the hash is a SHA-256
 
 
-def test_p0_the_register_map_is_four_blocks_and_every_register_is_inside_one():
+def test_p0_the_register_map_is_five_blocks_and_every_register_is_inside_one():
     """Round 2: the core's control block from 0x080, and the source's and the injector's from 0xF00.
     Round 3: the kernel's block from 0xE00, taken from the end of the core's range, where the core had no row.
+    Round 5: the learner's block from 0xD00, taken from the end of the core's range again.
     The figures are typed here from the designs and the lead's rulings on them, not read from the definition."""
-    assert C.BLOCKS == {"core": (0x010, 0xE00), "kernel": (0xE00, 0xF00), "source": (0xF00, 0xF80),
-                        "inject": (0xF80, 0x1000)}
+    assert C.BLOCKS == {"core": (0x010, 0xD00), "learner": (0xD00, 0xE00), "kernel": (0xE00, 0xF00),
+                        "source": (0xF00, 0xF80), "inject": (0xF80, 0x1000)}
     counts = dict.fromkeys(C.BLOCKS, 0)
     for name, (offset, _access, words) in C.REGISTERS.items():
         inside = [b for b, (first, end) in C.BLOCKS.items() if first <= offset and offset + 4 * words <= end]
         assert len(inside) == 1, name
         counts[inside[0]] += 1
-    assert counts == {"core": 15 + 22, "kernel": 10, "source": 7, "inject": 8} and len(C.REGISTERS) == 62
+    assert counts == {"core": 15 + 22, "learner": 13, "kernel": 10, "source": 7, "inject": 8}
+    assert len(C.REGISTERS) == 75
+    # The learner's block as parcel LRN-B's design drew it, with the lead's names for its two capability
+    # registers: thirteen registers in twenty words, 0xD00 to 0xD4F.
+    learner = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0xD00 <= offset < 0xE00]
+    assert (len(learner), sum(w for _o, w in learner), min(o for o, _w in learner)) == (13, 20, 0xD00)
+    assert max(o + 4 * w for o, w in learner) == 0xD50
+    assert C.REGISTERS["lrn_update_at"] == (0xD00, "rw", 2) and C.REGISTERS["lrn_refusal"] == (0xD0C, "rw", 1)
+    assert not [n for n in C.REGISTERS if n.startswith("cap_") and C.REGISTERS[n][0] >= 0xD00
+                and C.REGISTERS[n][0] < 0xE00], "the host's open() reads every cap_* register"
+    assert (C.LEARN_COUNT_BITS, C.LEARN_UPDATE_FRAMES) == (32, 256)
     # The kernel's block as parcel KRNL's design drew it: ten registers in fourteen words, 0xE00 to 0xE37.
     kernel = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0xE00 <= offset < 0xF00]
     assert (len(kernel), sum(w for _o, w in kernel), min(o for o, _w in kernel)) == (10, 14, 0xE00)
     assert max(o + 4 * w for o, w in kernel) == 0xE38
     assert C.MEMORY_SLOT_BYTES == 32 and C.MEMORY_SLOT_BYTES >= sum(f[1] for f in C.RECORDS["score"]) // 8
     # The control block as parcel RTL-B's design counted it: 22 registers in 39 words, 0x080 to 0x11B.
-    control = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0x080 <= offset < 0xE00]
+    control = [(offset, words) for offset, _access, words in C.REGISTERS.values() if 0x080 <= offset < 0xD00]
     assert (len(control), sum(w for _o, w in control), min(o for o, _w in control)) == (22, 39, 0x080)
     assert max(o + 4 * w for o, w in control) == 0x11C
     assert C.REGISTERS["shape_masks"][2] == C.MAX_FILTERS            # one word of channel mask a filter
     assert C.REGISTERS["commit_at"] == (0x0F8, "rw", 2) and C.REGISTERS["next_index"] == (0x10C, "ro", 2)
     # One refusal register a block, each read and written.
-    assert [C.REGISTERS[n][1] for n in ("refusal", "src_refusal", "inj_refusal")] == ["rw", "rw", "rw"]
+    assert [C.REGISTERS[n][1] for n in ("refusal", "src_refusal", "inj_refusal", "lrn_refusal")] == ["rw"] * 4
     assert C.REGISTERS["src_seed"] == (0xF00, "wo", 2) and C.REGISTERS["cap_inject_pending"] == (0xFA4, "ro", 1)
 
 
@@ -286,7 +300,9 @@ def test_p0_the_registers_that_are_read_as_bits_and_the_fabrics_two_bounds():
         "status": {"running": 0, "loading": 1, "commit": 2, "settling": 3, "closed": 4, "partial": 5, "whole": 6,
                    "overflow": 7, "refused": 8, "refused_again": 9},
         "src_status": {"running": 0},
-        "krn_status": {"running": 0, "done": 1, "refused": 2}}
+        "krn_status": {"running": 0, "done": 1, "refused": 2},
+        # Round 5, parcel LRN-B's design, ruled by the lead.
+        "lrn_status": {"named": 0, "running": 1, "made": 2, "unmade": 3, "refused": 4, "refused_again": 5}}
     for register in C.REGISTER_BITS:
         assert C.REGISTERS[register][1] == "ro" and C.REGISTERS[register][2] == 1
     assert (C.MAX_NOISE_TABLE, C.MAX_INJECT_PENDING) == (32767, 1024)

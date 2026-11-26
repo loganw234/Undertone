@@ -218,3 +218,13 @@ Then, the same evening:
 > We will begin work on it starting tomorrow morning. But prep now is fine
 
 *The lead's reading:* wave 0 is made tonight: the branch, the round's folder, the briefs and the worktrees. No parcel is dispatched and nothing of the round is run before 2026-11-26's morning.
+
+Then, at about 20:30 the same evening, after the figures of parcel VIZ were sent to him:
+
+> Push the visualizations to main, go ahead and begin the round now, its alright to work overnight as Im curious to the results of R5, we can hopefully be prepped to do some runs on the card by the time the nightly finished up at 8
+
+*The lead's reading,* where it changes what is written above:
+1. **The round begins that night and works through it.** The parcels' stop at 17:45 is lifted for that night. The reading of the evening's earlier word, that no parcel is dispatched before the morning, is overtaken.
+2. **The figures go to `main` without the plan.** The five commits of parcel VIZ are put onto `main` by themselves; this plan reaches `main` at the round's close, as each round's has.
+3. **One card day is added, which needs no new image: stage E1 on the card, on round 3's image** (parcel E1C), from 08:00 on 2026-11-26, after cft-fp256's nightly window. It is phase A's two halves together on the card for the first time (row L1): the host trains E1's learner, the card scores E1's held-out streams under the learned set and the matched filter, every record is compared with the model's, and one run swaps a trained set in at an index the host names. "Nothing here runs on the card", in "What this plan does not settle", stands for tracks A and B; this card day is the one exception. **Bit identity rests on the model, and the counts on `stats/`; the counts equal E1's in software exactly when every record is the model's, so the day adds nothing to E1 about sensitivity.**
+4. **Not chosen: a new image that night.** A link of r5's tip, or one with the injector taught `e1` (route C), is 4 h 24 min to 6 h 06 min (row L16) on a box another project shares that night, and either image would be refused again at the round's one change to the definition. Route C stays where the plan put it, for a link that can also carry the learner.

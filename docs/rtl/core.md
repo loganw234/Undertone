@@ -68,7 +68,7 @@ Two banks and one bit, `active_sel`. Before the start a weight word goes into bo
 
 ## 6. The control block
 
-Its 22 rows are in the definition, `[registers]`, from 0x080 to 0x118, with the ten bits of `status` in `[register_bits]`. The port is the one every block has: `reg_valid`, `reg_we`, `reg_addr`, `reg_wdata`, `reg_rdata`; one operation a clock; `reg_rdata` is a register that answers 0 for what is not a readable row of this block. Outside 0x010 to 0xEFF the core does nothing.
+Its 22 rows are in the definition, `[registers]`, from 0x080 to 0x118, with the ten bits of `status` in `[register_bits]`. The port is the one every block has: `reg_valid`, `reg_we`, `reg_addr`, `reg_wdata`, `reg_rdata`; one operation a clock; `reg_rdata` is a register that answers 0 for what is not a readable row of this block. Outside 0x010 to 0xEFF the core does nothing. *Restated by the lead in round 5, on parcel LRN-B's finding F3:* the core's block has ended at 0xE00 since round 3 took 0xE00 to 0xEFF for the kernel, and ends at 0xD00 since round 5 took 0xD00 to 0xDFF for the learner (`[blocks]`). So outside 0x010 to 0xCFF the core does nothing. It decodes its range from the package, so no line of `core.sv` changed.
 
 The states are STOPPED (after reset, the only way into it), LOADING (after `configure`) and RUNNING (after `start`). A command's data means something and is checked: `configure` and `shadow_begin` take the count of weight words, `start` the start epoch, `commit_at` the index in two words, the write of the upper word being the commit.
 
