@@ -39,7 +39,7 @@ RULE = os.path.join(ROOT, "vectors", "e3s", "rule.json")
 BLOCKS = os.path.join(ROOT, "vectors", "e3s", "blocks.json")
 SETS = os.path.join(ROOT, "vectors", "e3s", "injection_sets.json")
 # The short form's layout (tests/test_e3s_experiment.py, SHORT): blocks of 16,384 frames.
-SHORT = {"block_frames": 16384, "training": 32, "held_out": 64}
+SHORT = {"block_frames": 16384, "training": 32, "held_out": 128}
 
 
 def schedule(num, den, block_frames, training, held_out, layout):

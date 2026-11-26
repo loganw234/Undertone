@@ -56,16 +56,16 @@
   }
  },
  "short": {
-  "sha256": "6cb3ed1a24a550470fabb591b1f1eb152809ae58cdebec93f489e9202d0f8de3",
-  "records": 8192,
-  "amplitude_num": 65575,
+  "sha256": "4cbe1a946aee5b73f12420541679cb96df6fd11cce586f54d08a309f9cafc3e8",
+  "records": 12288,
+  "amplitude_num": 65201,
   "amplitude_den": 65536,
   "block_frames": 16384,
   "training_blocks": 32,
-  "held_out_blocks": 64,
+  "held_out_blocks": 128,
   "training_records": 4096,
-  "held_out_injections": 4096,
+  "held_out_injections": 8192,
   "first_index": 64,
-  "last_index": 1572800
+  "last_index": 2621376
  }
 }
