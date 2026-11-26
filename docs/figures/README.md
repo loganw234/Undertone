@@ -1,13 +1,13 @@
 # Figures made from the project's records
 
-The figures here are **generated copies of committed records**, as `spec/`'s three copies are of the definition. `python -m viz` makes every one of them from the records in the tree and writes this folder; no figure here is drawn by hand. Every number a figure shows is read from a committed record when it is made, or is the statistics package's formula (`stats/`, the second authority) evaluated at parameters read from a record. The generator types no number that a record holds.
+The figures here are **generated copies of committed records**, as `spec/`'s three copies are of the definition. `python -m viz` makes every one of them from the records in the tree and writes this folder; no figure here is drawn by hand. Every number a figure shows is read from a committed record when it is made, or worked from such numbers by a rule each section states (a count over a count, a difference, a sum), or is the statistics package's formula (`stats/`, the second authority) evaluated at parameters read from a record. The generator types no number that a record holds.
 
 **What holds that:** `tests/test_viz_figures.py` makes every figure again and requires the committed file byte for byte, so a record changed without its figure, or a figure edited by hand, fails the gate's first size. The same file reads each figure back and compares every value it carries with the record, read there independently. `tests/test_viz_writer.py` holds the writer, the refusals, the command, the imports and the colours.
 
     python -m viz            # write every figure into docs/figures/
     python -m viz --check    # write nothing; name each stale figure, exit 1 if any
 
-The generator is `viz/`: the standard library, and `stats/` for a theory curve. It imports nothing of `model/`, `learn/`, `host/` or `rtl/`, and installs nothing. Each figure names on its last lines every file it read, with the SHA-256 of that file's bytes.
+The generator is `viz/`: the standard library, and `stats/` for a theory curve. It imports nothing of `model/`, `learn/`, `host/` or `rtl/`, and installs nothing. Each figure names on its last lines every file it read, with the SHA-256 of that file's bytes; for `PULSES`, of its value (see the pulses' section).
 
 **A rerun of a record a figure reads needs `python -m viz` in the same commit.** That is the point of a generated copy (the lead's ruling, 2026-11-25).
 

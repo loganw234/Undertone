@@ -204,7 +204,7 @@ def e1_learning(r):
     fig = Figure("e1-learning", "Stage E1: the learner's efficiency against labelled windows",
                  ["Each point one part, its own seed, scored on %d held-out injections at its own threshold"
                   % n,
-                  "measured from %d signal-free scores, %d above it; profile %s, sigma %s, target Pfa %s"
+                  "measured from m = %d signal-free scores, k = %d; profile %s, sigma %s, target Pfa %s"
                   % (m, k, profile, sigma_text(sigma), repr(pfa)),
                   "D8 and its tolerance at the threshold's Pfa, (k + 1) / (m + 1), with the threshold's own term.",
                   "Authority: stats/. Software only."],

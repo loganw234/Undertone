@@ -4,7 +4,7 @@
 <rect class="bg" fill="#ffffff" height="578.00" width="841.00" x="0.00" y="0.00"/>
 <text class="ink" fill="#1f2328" font-size="16" font-weight="bold" text-anchor="start" x="16.00" y="26.00">Stage E1: the learner's efficiency against labelled windows</text>
 <text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="46.00">Each point one part, its own seed, scored on 100000 held-out injections at its own threshold</text>
-<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="62.00">measured from 300000 signal-free scores, 3000 above it; profile s16x1, sigma 1477/1, target Pfa 0.01</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="62.00">measured from m = 300000 signal-free scores, k = 3000; profile s16x1, sigma 1477/1, target Pfa 0.01</text>
 <text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="78.00">D8 and its tolerance at the threshold's Pfa, (k + 1) / (m + 1), with the threshold's own term.</text>
 <text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="94.00">Authority: stats/. Software only.</text>
 <g class="panel" data-height="320.00" data-left="84.00" data-panel="main" data-top="118.00" data-width="440.00" data-x-hi="100000" data-x-lo="10" data-x-scale="log10" data-y-hi="0.6" data-y-lo="0.0" data-y-scale="linear">
