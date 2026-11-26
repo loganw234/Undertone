@@ -21,7 +21,7 @@ the lead's, BELIEVED, and no test separates it (docs/rtl/README.md, limit 15). F
 
 [[line]]
 file = "rtl/inject/inject.sv"
-line = 276
+line = 279
 says = "sorry: constant selects in always_* processes are not currently supported (all bits will be included)."
 why = """The same line of Icarus Verilog 12.0 as above, at the first line of the injector's
 always_comb process, with the same reading, BELIEVED (docs/rtl/README.md, limit 15)."""

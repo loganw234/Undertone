@@ -1143,7 +1143,7 @@ kind = "WORD"
 [[bench]]
 name = "krnl-first"
 toplevel = "undertone_krnl"
-sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv"]
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/krnl/undertone_krnl.sv"]
 module = "bench_krnl"
 profiles = ["s16x1", "s24x3"]
 identity = ["identity_e0", "identity_long_bursts", "identity_hidden", "identity_on_axi_ram"]
@@ -1201,7 +1201,7 @@ kind = ""
 [[bench]]
 name = "krnl-max"
 toplevel = "krnl_max"
-sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_max.sv"]
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_max.sv"]
 module = "bench_krnl_max"
 profiles = ["s16x1", "s24x3"]
 identity = ["identity_e0"]
@@ -1210,7 +1210,7 @@ limit = 40
 [[bench]]
 name = "krnl-small-s16x1"
 toplevel = "krnl_small"
-sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
 module = "bench_krnl_small"
 profiles = ["s16x1"]
 identity = ["identity_small", "identity_w_before_aw", "truth_isolation", "truth_while_running", "reset_between_runs"]
@@ -1300,7 +1300,7 @@ kind = ""
 [[bench]]
 name = "krnl-small-s24x3"
 toplevel = "krnl_small"
-sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/krnl/undertone_krnl.sv", "rtl/krnl/krnl_small.sv"]
 module = "bench_krnl_small"
 profiles = ["s24x3"]
 identity = ["identity_small", "identity_w_before_aw", "truth_isolation", "truth_while_running", "reset_between_runs"]
@@ -1333,7 +1333,7 @@ kind = ""
 [[bench]]
 name = "host-first"
 toplevel = "undertone_krnl"
-sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/krnl/undertone_krnl.sv"]
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/krnl/undertone_krnl.sv"]
 module = "bench_host"
 profiles = ["s16x1", "s24x3"]
 identity = ["identity_e0", "identity_fed_and_swapped", "refusal_read_back_by_name"]
@@ -1882,3 +1882,131 @@ file = "rtl/learn/learn.sv"
 edits = [["uf_n    = u_new + B_UPDATE_FRAMES;", "uf_n    = u_new + B_UPDATE_FRAMES - 1;"]]
 must_fail = ["update_finishes_within_f"]
 kind = ""
+
+# ---------------------------------------------------------------------- KRNL-L (round 5): the learner in the kernel
+# rtl/krnl/undertone_krnl.sv itself, the packaged top at its defaults, with rtl/learn/learn.sv and learn_port.sv
+# inside it, driven only through its AXI4-Lite port and its memory (docs/rtl/krnl-learn.md). Two rows, one a
+# profile, so that each mutant runs under s16x1 alone. Each mutant is read by its evidence against the record or
+# register word docs/rtl/krnl-learn.md's table predicts, not by its verdict alone.
+
+[[bench]]
+name = "krnl-learn-s16x1"
+toplevel = "undertone_krnl"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/krnl/undertone_krnl.sv"]
+module = "bench_krnl_learn"
+profiles = ["s16x1"]
+identity = ["learning_on_the_kernel"]
+limit = 300
+
+# The learner's word left out of the read path's OR.
+[[bench.mutant]]
+name = "learner-word-not-read"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["s_axi_control_rdata <= src_rdata | inj_rdata | core_rdata | learn_rdata;", "s_axi_control_rdata <= src_rdata | inj_rdata | core_rdata;"]]
+must_fail = ["learner_rows_through_the_port"]
+kind = "WORD"
+
+# Truth not reaching the learner.
+[[bench.mutant]]
+name = "truth-not-to-the-learner"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [[".truth_valid(t_push),", ".truth_valid(1'b0),"]]
+must_fail = ["learning_on_the_kernel"]
+kind = "WORD"
+
+# The learner fed the frames the injector takes in, the source's, in place of the core's.
+[[bench.mutant]]
+name = "learner-fed-the-source-frames"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["        .in_valid(inj_valid),\n        .in_frame(core_frame),\n        .core_running(v_running),", "        .in_valid(src_valid),\n        .in_frame(src_frame),\n        .core_running(v_running),"]]
+must_fail = ["learning_on_the_kernel"]
+kind = "WORD"
+
+# learn_port bypassed: the core's register port back to round 3's, so the host's commit is taken while an
+# update is unfinished.
+[[bench.mutant]]
+name = "learn-port-bypassed"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [[".reg_valid(c_valid),\n        .reg_we(c_we),\n        .reg_addr(c_addr),\n        .reg_wdata(c_wdata),", ".reg_valid(core_valid),\n        .reg_we(bus_we),\n        .reg_addr(bus_addr),\n        .reg_wdata(bus_wdata),"]]
+must_fail = ["learning_on_the_kernel"]
+kind = "WORD"
+
+# A view port of the core's on the wrong register: the running taps from the rows. RTL-B's file, edited here as
+# text inside the mutant only, on a line this parcel added.
+[[bench.mutant]]
+name = "taps-view-from-rows"
+file = "rtl/core/core.sv"
+edits = [["assign view_taps        = cfg_taps;", "assign view_taps        = cfg_rows;"]]
+must_fail = ["learning_on_the_kernel"]
+kind = "WORD"
+
+# A learner that reads a truth record's amplitude: a record of numerator 0 not handed over. The injector's
+# register by hierarchical name, inside the mutant only.
+[[bench.mutant]]
+name = "reads-the-amplitude"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["    learn #(", "    wire t_push_amp = t_push && (u_inject.t_num != '0);\n    learn #("], [".truth_valid(t_push),", ".truth_valid(t_push_amp),"]]
+must_fail = ["learning_on_the_kernel"]
+kind = "WORD"
+
+# A learner not reset by krn_reset: its reset from ap_rst_n alone.
+[[bench.mutant]]
+name = "learner-not-reset-by-krn-reset"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["    learn #(", "    wire l_rst_only = !ap_rst_n;\n    learn #("], ["    ) u_learn (\n        .clk(ap_clk),\n        .rst(chain_rst),", "    ) u_learn (\n        .clk(ap_clk),\n        .rst(l_rst_only),"]]
+must_fail = ["learner_rows_through_the_port"]
+kind = "WORD"
+
+# The learner built at 64 taps beside a core of 128.
+[[bench.mutant]]
+name = "learner-built-at-64-taps"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [[".B_TAPS(B_TAPS),\n        .B_COUNT_BITS", ".B_TAPS(64),\n        .B_COUNT_BITS"]]
+must_fail = ["learning_on_the_kernel"]
+kind = "WORD"
+
+# A view port of the core's on the wrong register: the pool from the filters. RTL-B's file, edited here as text
+# inside the mutant only, on a line this parcel added.
+[[bench.mutant]]
+name = "pool-view-from-filters"
+file = "rtl/core/core.sv"
+edits = [["assign view_pool        = cfg_pool;", "assign view_pool        = cfg_filters;"]]
+must_fail = ["refusals_through_the_views"]
+kind = "WORD"
+
+# A learner's refusal made the kernel's: its latch ORed into krn_status's refused bit. The learner's register by
+# hierarchical name, inside the mutant only.
+[[bench.mutant]]
+name = "learner-refusal-in-krn-status"
+file = "rtl/krnl/undertone_krnl.sv"
+edits = [["    function automatic logic [WORD-1:0] own_word", "    wire l_refused = (u_learn.refusal != '0);\n    function automatic logic [WORD-1:0] own_word"], ["st_word[REG_KRN_STATUS_REFUSED_BIT] = (refusal != '0);", "st_word[REG_KRN_STATUS_REFUSED_BIT] = (refusal != '0) || l_refused;"]]
+must_fail = ["learner_rows_through_the_port"]
+kind = "WORD"
+
+# The core's stages renumbered: the kernel works `closed` over stages 1 to 7, core.sv's ST_S1 to ST_CLOSED_LAST,
+# and its simulation-only guard must stop the run by name. RTL-B's file, edited here as text inside the mutant only.
+[[bench.mutant]]
+name = "stages-renumbered"
+file = "rtl/core/core.sv"
+edits = [["localparam int ST_CLOSED_LAST = ST_H1;", "localparam int ST_CLOSED_LAST = ST_H2;"]]
+must_fail = ["learner_rows_through_the_port"]
+kind = ""
+
+[[bench]]
+name = "krnl-learn-s24x3"
+toplevel = "undertone_krnl"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/krnl/undertone_krnl.sv"]
+module = "bench_krnl_learn"
+profiles = ["s24x3"]
+identity = ["learning_on_the_kernel"]
+limit = 400
+
+# A view port of the core's on the wrong value: the filters read as one. Under one channel two filters are two
+# rows, so only this profile tells the filters' view apart. RTL-B's file, edited here as text inside the mutant
+# only, on a line this parcel added.
+[[bench.mutant]]
+name = "filters-view-one"
+file = "rtl/core/core.sv"
+edits = [["assign view_filters     = cfg_filters;", "assign view_filters     = 32'd1;"]]
+must_fail = ["refusals_through_the_views"]
+kind = "WORD"

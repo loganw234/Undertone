@@ -12,16 +12,18 @@ Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION.
 
 ## 1. What the kernel is
 
-- **The chain.** The kernel holds the three blocks of round 2 (`rtl/source/`, `rtl/inject/`, `rtl/core/`), unchanged. They are wired source to injector to core, exactly as `rtl/seam/seam.sv` wires them.
+- **The chain.** Since round 5 the kernel holds four blocks: the three of round 2 (`rtl/source/`, `rtl/inject/`, `rtl/core/`), the core and the injector with read-only view ports added, and the learner (`rtl/learn/`, [krnl-learn.md](krnl-learn.md)). They are wired source to injector to core, exactly as `rtl/seam/seam.sv` wires them.
   - The core is built at the top's parameters `B_*`.
   - **Their defaults are the first build's maxima**: 4 filters, 4 rows, 128 taps, 12 hidden units, and the definition's other maxima (pool, the two shifts). That is Logan's word on the round's plan, question 2.
   - Every block's reset is the kernel's `ap_rst_n` or a write of `krn_reset`.
 - **The register port.** One AXI4-Lite slave, `s_axi_control`, of the definition's 12 address bits and 32-bit words.
   - It takes one operation at a time: a write once both its address and its data are in hand, else a read. It answers OKAY to every operation; a refusal is latched in a register, as every block does.
   - **A write goes only to the block whose range holds its address.** So the injector's truth rows never reach the core's register port at all. The seam's top sent every write to all three blocks (seam.md, section 2).
-  - A read goes to all three blocks, and each answers 0 outside its own range.
+  - A read goes to all four blocks, the learner among them since round 5, and each answers 0 outside its own range.
 - **The memory path.** Every score record the core puts out during a run goes into a queue of `RECORD_QUEUE` records (512 by default), and from there to memory through one AXI4 master, `m_axi_gmem`. The master is 256 bits wide and only writes; its read channels are tied off.
 - **The control protocol is Vitis's user-managed one.** XRT writes no register of the kernel's. The host writes every row itself, the kernel's start among them, and reads `krn_status` for done. Section 3 says why.
+
+*Restated by KRNL-L, 2026-11-26:* the learner of round 5 is wired into this kernel, and [krnl-learn.md](krnl-learn.md) is its account. The core's register port is shared with the learner through `learn_port`. The learner's rows answer at 0xD00 to 0xDFF, and its refusals are latched in `lrn_refusal` alone, never in `krn_refusal` or `krn_status`. `krn_reset` resets it with the chain. With no update named the kernel is round 3's, and every bench here passes unchanged.
 
 ## 2. One record in memory
 
@@ -50,7 +52,7 @@ The kernel's rows are a block of their own, **`kernel` = [0xE00, 0xF00]**, taken
 | `krn_size` | 0xE08, 2 words | rw | the buffer's size, bytes |
 | `krn_frames` | 0xE10, 2 words | rw | the run's length in frames, which is the records it must write |
 | `krn_start` | 0xE18 | wo | a write of 1 starts a run (section 5) |
-| `krn_reset` | 0xE1C | wo | a write of 1 resets the three blocks and the run's state; the arguments are kept |
+| `krn_reset` | 0xE1C | wo | a write of 1 resets the four blocks and the run's state; the arguments are kept |
 | `krn_status` | 0xE20 | ro | bit 0 running, bit 1 done, bit 2 refused |
 | `krn_refusal` | 0xE24 | rw | the first refusal since cleared; a write of 0 clears it, in every state |
 | `krn_records` | 0xE28, 2 words | ro | records written and answered OKAY, in order, from slot 0; a read of the lower word holds the upper |
@@ -235,7 +237,7 @@ The ninth was planted to show limit 4, and it passed `identity_small`, as that l
 - the master `m_axi_gmem` of 256 bits;
 - one argument, the buffer, on that master at `krn_buffer`'s offset, 0xE00, so that v++ binds the master to memory. XRT never writes it.
 
-`hw/package_kernel.tcl` is adapted from the sibling's. It names its seven sources (the generated package, the three blocks' five files, the kernel's top) rather than globbing, so neither bench top in `rtl/krnl/` is packaged. It packages the top's defaults and prints each parameter it carries as an `HDLPARAM:` line.
+`hw/package_kernel.tcl` is adapted from the sibling's. It names its nine sources (the generated package, the three blocks' five files, the learner's two since round 5, the kernel's top) rather than globbing, so neither bench top in `rtl/krnl/` is packaged. It packages the top's defaults and prints each parameter it carries as an `HDLPARAM:` line.
 
 `hw/link.cfg` is one compute unit, its master to `HBM[0]`; the clock is the build's to ask.
 
@@ -293,7 +295,7 @@ Each is stated by the behaviour it concedes.
 19. **The first build's pool memory is 65,536 entries** (the definition's `max_pool`) of 164 bits under s16x1, 10,747,904 bits, uncounted by the round's plan, which counts DSP slices. What it costs is the build's report's to say. *Restated by the lead on 2026-11-25:* the third link's synthesis put it in distributed RAM, in LUTs: the kernel used 196,089 LUTs as memory and no URAM (K29). That is why two copies of this kernel would not fit, and its write address was that link's worst path (K28). *Restated by the lead after the closing verifier:* "would not fit" is arithmetic, two copies needing 97.3 percent of the part's LUT memory before the platform's own (the ROADMAP's row R8, COMPUTED); no link of two copies was tried.
 20. **The streams are short and the sigmas mostly small**, to keep the run time under four minutes (K4). The seam's sigma, a table of 459 entries, is run in one test, `identity_e0` under s16x1.
 21. **A host can clear `krn_refusal` while a run goes**, by the rule every block's refusal register has. If it clears a refusal the run latched (RECORD_QUEUE, say), the run's end latches nothing more, since the run is halted. The run then ends with `done` and a refusal of 0, and only `krn_records` against `krn_frames` says it was short. A host reads `krn_records` after every run; nothing here holds that it does (VKRNL, K25).
-22. **The routing of writes to one block is not observable by any bench.** Each block decodes its own range and does nothing outside it, so a kernel that sent every write to all three blocks, as the seam's top does, would pass everything here. That the truth rows never reach the core's port rests on the RTL's reading (`hit_core` and its two siblings in `undertone_krnl.sv`), not on a test (VKRNL, K25).
+22. **The routing of writes to one block is not observable by any bench.** Each block decodes its own range and does nothing outside it, so a kernel that sent every write to all four blocks, as the seam's top does to its three, would pass everything here. That the truth rows never reach the core's port rests on the RTL's reading (`hit_core` and its three siblings in `undertone_krnl.sv`), not on a test (VKRNL, K25).
 23. **The edge's refusals are tried word by word, and the gate by trial**, as section 6 says. While a run goes, every word of the three arguments, `krn_start` and `krn_reset` are tried. The base is tried 1, 2, 4, 8 and 16 bytes off. Only `cap_blob_versions`, `cap_inject_pending` and, on the large tops, `cap_record_queue` are read without trial. *Restated by the lead at the merge, from VKRNL-2:* and `cap_rows` under `s16x1`, where a filter is one row (section 6 says so). And `identity_w_before_aw`, on the small tops, makes only one-beat bursts; the memory model's mode is held for longer bursts by `identity_e0` and `identity_long_bursts` on the packaged top.
 
 ## 10. Register

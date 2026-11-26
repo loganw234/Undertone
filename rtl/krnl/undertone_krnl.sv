@@ -4,17 +4,29 @@
 // the lines. The reference model is the authority: every score word this writes is held against
 // model/run.py's by the benches rtl/tb/bench_krnl*.py.
 //
-// THE CHAIN. The source, the injector and the detector core of round 2, the same files, unchanged,
-// wired as rtl/seam/seam.sv wires them: the source's frames to the injector, the injector's to the
-// core, and the core's score records to this kernel's queue. The core is built at this top's
-// maxima, the parameters B_*: their defaults are the FIRST BUILD's (4 filters, 4 rows, 128 taps,
-// 12 hidden units, the definition's other maxima; Logan's word on the round's plan, question 2).
+// THE CHAIN. The source, the injector and the detector core of round 2, wired as rtl/seam/seam.sv
+// wires them: the source's frames to the injector, the injector's to the core, and the core's score
+// records to this kernel's queue. The core is built at this top's maxima, the parameters B_*: their
+// defaults are the FIRST BUILD's (4 filters, 4 rows, 128 taps, 12 hidden units, the definition's
+// other maxima; Logan's word on the round's plan, question 2).
+//
+// THE LEARNER (round 5, docs/rtl/krnl-learn.md): rtl/learn/learn.sv beside the core, built at the
+// core's B_TAPS and the definition's count bits and update time. It is handed the frames the core
+// takes, on the core's own wires; the core's state through the core's read-only view ports; and of
+// each truth record the injector takes into its store, the index alone (the injector's view ports).
+// Its only way to the core is the core's own register port, through rtl/learn/learn_port.sv, at an
+// update the host named. The core's and the injector's view ports only expose signals each block
+// already had; no behaviour of either changed.
 //
 // THE REGISTER PORT. One AXI4-Lite slave, s_axi_control, of the definition's word and address
 // bits. It takes one operation at a time, a write when both its address and its data are in hand,
 // else a read, and answers OKAY to every one: a refusal is latched in a register, as every block
 // does. A write goes ONLY to the block whose range holds its address, so the injector's truth rows
-// never reach the core's port; a read goes to all three, and each answers 0 outside its own range.
+// never reach the core's port or the learner's; the learner also sees the core's range, which it
+// needs to count a commit it held back. A read goes to all four, and each answers 0 outside its own
+// range. The core's port is learn_port's: the host's access the kernel routes to the core, and in a
+// clock with none the learner's write; while an update is unfinished the host's commit, shadow_begin
+// and shadow_data are held back, and the learner latches UPDATE_UNFINISHED in lrn_refusal.
 // What this kernel takes for itself and does not forward:
 //     a write whose strobes are not all four bytes        REGISTER_ACCESS (no block has byte enables)
 //     a write below the definition's first offset         REGISTER_ACCESS (nothing sits there)
@@ -33,7 +45,7 @@
 //                   src_frames (the upper word starts the source) and reads src_status back: a
 //                   source that does not say it runs, RUN_START. Else the run goes. The write's
 //                   answer comes when all that is decided
-//     krn_reset     a write of 1: the three blocks are reset, and the run's state with them; the
+//     krn_reset     a write of 1: the four blocks are reset, and the run's state with them; the
 //                   arguments are kept. A run going: KERNEL_BUSY
 //     krn_status    running, done, refused (the definition's bits)
 //     krn_refusal   the first refusal since it was cleared; a write of 0 clears it, in every state
@@ -54,13 +66,14 @@
 // passed since (the injector's 52 and the core's 11 clocks, twice over), every queued record is
 // written (or abandoned after MEMORY_WRITE), and every burst is answered. Then, with no refusal of
 // the run's own, a count of records answered other than krn_frames is RUN_LENGTH: the chain stopped
-// short, and a block's own refusal register says why.
+// short, and a block's own refusal register says why. The learner's refusals are its own register's,
+// lrn_refusal: none sets krn_status's refused bit, latches in krn_refusal or ends a run.
 //
 // WHAT IT DOES NOT DO, each a stated limit of docs/rtl/krnl.md: it reads no memory, so truth records
 // come from the host through the injector's rows; it holds no run past a refusal of its own; it does
-// not stop the source; it has never been synthesised or placed. Vivado's IP packager read its first
-// version once and refused it (the package's names in its port list); this version has been read by
-// Icarus Verilog alone.
+// not stop the source. Round 3's version, without the learner, was packaged, linked and run on the
+// card (docs/rtl/krnl.md, section 7); this version, with the learner, has been read by Icarus Verilog
+// alone.
 `timescale 1ns / 1ps
 
 // THE PORT LIST AND THE PARAMETERS' DEFAULTS ARE PLAIN NUMBERS, never the package's names. Vivado's
@@ -184,6 +197,14 @@ module undertone_krnl #(
             $fatal(1, "undertone_krnl: a port's width written in the port list is not the definition's");
         end
     end
+`ifndef SYNTHESIS
+    // Simulation only: `v_closed` below takes core.sv's stages ST_S1 to ST_CLOSED_LAST as 1 to 7.
+    initial begin
+        if (u_core.ST_S1 != 1 || u_core.ST_CLOSED_LAST != 7) begin
+            $fatal(1, "undertone_krnl: core.sv's stages that read weights at a later edge are not 1 to 7, as v_closed takes them");
+        end
+    end
+`endif
 
     // ------------------------------------------------------------------ the register bus to the chain
     logic              bus_valid, bus_we;
@@ -195,16 +216,35 @@ module undertone_krnl #(
     wire               hit_core   = (bus_at >= BLOCK_CORE_FIRST)   && (bus_at < BLOCK_CORE_END);
     wire               hit_source = (bus_at >= BLOCK_SOURCE_FIRST) && (bus_at < BLOCK_SOURCE_END);
     wire               hit_inject = (bus_at >= BLOCK_INJECT_FIRST) && (bus_at < BLOCK_INJECT_END);
-    // A write reaches only the block whose range holds it. A read reaches all three.
+    wire               hit_learner = (bus_at >= BLOCK_LEARNER_FIRST) && (bus_at < BLOCK_LEARNER_END);
+    // A write reaches only the block whose range holds it, and the learner the core's range besides (it
+    // counts a commit it held back). A read reaches all four.
     wire               core_valid   = bus_valid && (!bus_we || hit_core);
     wire               source_valid = bus_valid && (!bus_we || hit_source);
     wire               inject_valid = bus_valid && (!bus_we || hit_inject);
+    wire               learn_valid  = bus_valid && (!bus_we || hit_learner || hit_core);
 
     // ------------------------------------------------------------------ the chain
     logic            src_valid, inj_valid, rec_valid;
     logic [W-1:0]    src_frame, inj_frame, core_frame;
-    logic [WORD-1:0] src_rdata, inj_rdata, core_rdata;
+    logic [WORD-1:0] src_rdata, inj_rdata, core_rdata, learn_rdata;
     logic [REC-1:0]  rec_word;
+    // the core's register port, as learn_port hands it over
+    logic            c_valid, c_we;
+    logic [A-1:0]    c_addr;
+    logic [WORD-1:0] c_wdata;
+    // learn_port and the learner, to each other
+    logic            lp_hold, lp_intercept, lp_host, l_hold_q, l_hold_end_q, l_lw_valid;
+    logic [A-1:0]    l_lw_addr;
+    logic [WORD-1:0] l_lw_wdata;
+    // the injector's truth, by its view ports: a record taken into its store at this edge, and its index
+    logic                        t_push;
+    logic [TRUTH_INDEX_BITS-1:0] t_index;
+    // the core's state, by its view ports
+    logic                        v_running, v_rect_abs, v_no_hidden, v_commit, v_partial, v_active_sel;
+    logic [SCORE_INDEX_BITS-1:0] v_next, v_commit_at;
+    logic [WORD-1:0]             v_taps, v_filters, v_rows, v_pool, v_shift;
+    logic [10:1]                 v_vld, v_tag_sel;            // every stage of the core's pipeline, 1 to 10
 
     assign core_frame = inj_frame;          // the core is handed the injector's frame, and nothing else
 
@@ -239,7 +279,9 @@ module undertone_krnl #(
         .in_valid(src_valid),
         .in_frame(src_frame),
         .out_valid(inj_valid),
-        .out_frame(inj_frame)
+        .out_frame(inj_frame),
+        .view_push(t_push),
+        .view_index(t_index)
     );
 
     core #(
@@ -259,11 +301,94 @@ module undertone_krnl #(
         .in_frame(core_frame),
         .out_valid(rec_valid),
         .out_record(rec_word),
+        .reg_valid(c_valid),
+        .reg_we(c_we),
+        .reg_addr(c_addr),
+        .reg_wdata(c_wdata),
+        .reg_rdata(core_rdata),
+        .view_running(v_running),
+        .view_next_index(v_next),
+        .view_taps(v_taps),
+        .view_filters(v_filters),
+        .view_rows(v_rows),
+        .view_pool(v_pool),
+        .view_score_shift(v_shift),
+        .view_rect_abs(v_rect_abs),
+        .view_no_hidden(v_no_hidden),
+        .view_commit(v_commit),
+        .view_commit_at(v_commit_at),
+        .view_partial(v_partial),
+        .view_active_sel(v_active_sel),
+        .view_vld(v_vld),
+        .view_tag_sel(v_tag_sel)
+    );
+
+    // ------------------------------------------------------------------ the learner and the core's shared port
+    // `closed` as the core's own status read works it: a frame of the stages that still read weights at a
+    // later edge, 1 to 7 (core.sv's ST_S1 to ST_CLOSED_LAST, retyped here as learn_chain.sv does), carries the
+    // other bank. `take`: the core takes a frame at this edge.
+    wire v_closed = |(v_vld[7:1] & (v_tag_sel[7:1] ^ {7{v_active_sel}}));
+    wire l_take   = inj_valid && v_running;
+
+    learn_port u_port (
         .reg_valid(core_valid),
         .reg_we(bus_we),
         .reg_addr(bus_addr),
         .reg_wdata(bus_wdata),
-        .reg_rdata(core_rdata)
+        .take(l_take),
+        .hold_q(l_hold_q),
+        .hold_end_q(l_hold_end_q),
+        .lw_valid(l_lw_valid),
+        .lw_addr(l_lw_addr),
+        .lw_wdata(l_lw_wdata),
+        .hold(lp_hold),
+        .intercept(lp_intercept),
+        .host(lp_host),
+        .c_valid(c_valid),
+        .c_we(c_we),
+        .c_addr(c_addr),
+        .c_wdata(c_wdata)
+    );
+
+    learn #(
+        .SAMPLE_BITS(SAMPLE_BITS),
+        .CHANNELS(CHANNELS),
+        .B_TAPS(B_TAPS),
+        .B_COUNT_BITS(LEARN_COUNT_BITS),
+        .B_UPDATE_FRAMES(LEARN_UPDATE_FRAMES)
+    ) u_learn (
+        .clk(ap_clk),
+        .rst(chain_rst),
+        .in_valid(inj_valid),
+        .in_frame(core_frame),
+        .core_running(v_running),
+        .core_next_index(v_next),
+        .core_taps(v_taps),
+        .core_filters(v_filters),
+        .core_rows(v_rows),
+        .core_pool(v_pool),
+        .core_score_shift(v_shift),
+        .core_rect_abs(v_rect_abs),
+        .core_no_hidden(v_no_hidden),
+        .core_commit(v_commit),
+        .core_commit_at(v_commit_at),
+        .core_partial(v_partial),
+        .core_closed(v_closed),
+        .truth_valid(t_push),
+        .truth_index(t_index),
+        .reg_valid(learn_valid),
+        .reg_we(bus_we),
+        .reg_addr(bus_addr),
+        .reg_wdata(bus_wdata),
+        .reg_rdata(learn_rdata),
+        .port_hold(lp_hold),
+        .port_intercept(lp_intercept),
+        .port_host(lp_host),
+        .hold_q(l_hold_q),
+        .hold_end_q(l_hold_end_q),
+        .lw_valid(l_lw_valid),
+        .lw_addr(l_lw_addr),
+        .lw_wdata(l_lw_wdata)
     );
 
     // ------------------------------------------------------------------ the kernel's state
@@ -492,7 +617,7 @@ module undertone_krnl #(
                     st <= S_RD_TAKE;
                 end
                 S_RD_TAKE: begin                                // the blocks' words are out: the addressed one's
-                    s_axi_control_rdata <= src_rdata | inj_rdata | core_rdata;
+                    s_axi_control_rdata <= src_rdata | inj_rdata | core_rdata | learn_rdata;
                     s_axi_control_rvalid <= 1'b1;
                     st <= S_R;
                 end

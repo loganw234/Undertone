@@ -68,6 +68,22 @@ module core #(
     input  logic [undertone_pkg::BUS_ADDRESS_BITS-1:0]  reg_addr,     // a byte offset
     input  logic [undertone_pkg::BUS_WORD_BITS-1:0]     reg_wdata,
     output logic [undertone_pkg::BUS_WORD_BITS-1:0]     reg_rdata     // a register: the word of the last read, or 0
+    // READ-ONLY VIEWS for the kernel's learner (docs/rtl/krnl-learn.md): each an existing signal, assigned at the end
+    , output logic                                      view_running      // running
+    , output logic [undertone_pkg::SCORE_INDEX_BITS-1:0] view_next_index  // next_index
+    , output logic [undertone_pkg::BUS_WORD_BITS-1:0]   view_taps         // cfg_taps
+    , output logic [undertone_pkg::BUS_WORD_BITS-1:0]   view_filters      // cfg_filters
+    , output logic [undertone_pkg::BUS_WORD_BITS-1:0]   view_rows         // cfg_rows
+    , output logic [undertone_pkg::BUS_WORD_BITS-1:0]   view_pool         // cfg_pool, zero-extended
+    , output logic [undertone_pkg::BUS_WORD_BITS-1:0]   view_score_shift  // cfg_score_shift, zero-extended
+    , output logic                                      view_rect_abs     // cfg_rect_abs
+    , output logic                                      view_no_hidden    // cfg_no_hidden
+    , output logic                                      view_commit       // commit_valid
+    , output logic [undertone_pkg::SCORE_INDEX_BITS-1:0] view_commit_at   // commit_at
+    , output logic                                      view_partial      // ld_partial
+    , output logic                                      view_active_sel   // active_sel
+    , output logic [10:1]                               view_vld          // vld, every stage, ST_S1 (1) to ST_H4 (10)
+    , output logic [10:1]                               view_tag_sel      // each stage's tag's bank select
 );
     import undertone_pkg::*;
 
@@ -699,4 +715,27 @@ module core #(
             end
         end
     end
+
+    // ------------------------------------------------------------------ the read-only views (docs/rtl/krnl-learn.md)
+    // Each port is an existing signal and nothing more: nothing in this module reads them.
+    assign view_running     = running;
+    assign view_next_index  = next_index;
+    assign view_taps        = cfg_taps;
+    assign view_filters     = cfg_filters;
+    assign view_rows        = cfg_rows;
+    assign view_pool        = cfg_pool;
+    assign view_score_shift = cfg_score_shift;
+    assign view_rect_abs    = cfg_rect_abs;
+    assign view_no_hidden   = cfg_no_hidden;
+    assign view_commit      = commit_valid;
+    assign view_commit_at   = commit_at;
+    assign view_partial     = ld_partial;
+    assign view_active_sel  = active_sel;
+    assign view_vld         = vld;
+    genvar gv;
+    generate
+        for (gv = ST_S1; gv <= ST_H4; gv++) begin : view_tags
+            assign view_tag_sel[gv] = tg[gv][TAG_SEL];
+        end
+    endgenerate
 endmodule
