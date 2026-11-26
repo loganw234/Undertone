@@ -630,6 +630,56 @@ def test_viz_control_a_record_changed_by_one_count_makes_another_figure(tree):
     assert e0_findings(after.encode("ascii"), tree) == []
 
 
+def drawn(text):
+    """A figure's text without its source lines: what it draws, and not what it names."""
+    return "\n".join(line for line in text.split("\n") if "source: " not in line)
+
+
+D2_OUT = "docs/studies/d2/scored-output.txt"
+# For each of the other five figures, one value its record holds, changed in a copy:
+# (figure, [(file, old bytes, new bytes)], figures that must change in their source line alone,
+#  how the check of the committed figure against the changed record must begin)
+RECORD_CHANGES = [
+    ("e1-learning.svg", [("docs/studies/e1/c%d.json" % i, b'"k": 3000,', b'"k": 2999,') for i in range(6)],
+     [], "main/own-d8"),                                     # k, which D8's rate (k + 1) / (m + 1) reads
+    ("e2-recovery.svg", [(E2_PART, b'"found": 12339,', b'"found": 12340,')], [], "main/frozen"),
+    ("card-timed.svg", [(TIMED, b'"records": 2222573800,', b'"records": 2223573800,'),
+                        (TIMED, b'"sum_ns": 2818189735,', b'"sum_ns": 2819189735,')], [], "main bars"),
+    # E0's figure reads PULSES too, and its source line hashes PULSES' whole value (the lead's
+    # ruling, 17:44): a change to e1 changes that line and nothing E0 draws
+    ("pulses.svg", [("spec/constants.py", b"0, 2, 12, 24, 20, -9, -45, -49,", b"0, 3, 12, 24, 20, -9, -45, -49,")],
+     ["e0-efficiency.svg"], "main/e1"),
+    ("launch-windows.svg", [(D2_OUT, b"| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | yes |",
+                             b"| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | no |"),
+                            (D2_OUT, b"| CI.LOC | 16.5 | 95 | 23 of 23 |", b"| CI.LOC | 16.5 | 95 | 22 of 23 |")],
+     [], "d2 bars"),
+]
+
+
+@pytest.mark.parametrize("name,edits,also,report", RECORD_CHANGES, ids=[c[0] for c in RECORD_CHANGES])
+def test_viz_control_a_record_changed_makes_another_figure_for_each_figure(tree, name, edits, also, report):
+    """Limit 1 held for every figure: once its record changes, a figure typing the old value is caught.
+
+    The changed record makes a figure that differs in what it draws, not only in its source line; that
+    figure alone is stale (with E0's for a pulse, by its source line alone); the committed figure fails
+    the check of its numbers against the changed record; and the figure made from it passes."""
+    before = dict(viz.build(tree))
+    for rel, old, new in edits:
+        p = path(tree, rel)
+        data = open(p, "rb").read()
+        assert data.count(old) == 1
+        open(p, "wb").write(data.replace(old, new))
+    after = dict(viz.build(tree))
+    assert drawn(after[name]) != drawn(before[name])
+    for other in also:
+        assert after[other] != before[other] and drawn(after[other]) == drawn(before[other])
+    assert viz.stale(tree) == [n for n in NAMES if n == name or n in also]
+    found = FINDINGS[name](committed(tree, name), tree)
+    print(found)
+    assert found and found[0].startswith(report)
+    assert FINDINGS[name](after[name].encode("ascii"), tree) == []
+
+
 class TypedCount(Reader):
     """A generator patched to show a typed constant for the card's count at amplitude 1/1."""
 
@@ -650,7 +700,7 @@ def test_viz_control_a_generator_typing_a_count_is_caught(tree):
     assert any("main/card" in f and "99743/200000" in f and "99744/200000" in f for f in found)
     assert e0_findings(honest.encode("ascii"), tree) == []
     # and on the unchanged records the typed generator is not told apart: that is why the
-    # control changes the record first (README, limit 4)
+    # control changes the record first (README, limit 1)
     assert viz.stale(ROOT, reader=TypedCount) == []
 
 
