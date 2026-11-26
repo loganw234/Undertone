@@ -25,6 +25,7 @@ D0's stage E3, "a recorded stream ... with injections", which D0 left undesigned
 | [tests/test_e3s_experiment.py](../../tests/test_e3s_experiment.py) | the experiment, the full run's two commands, the short form, rules 1 to 5 as the gate `comparison-rules`, and the named controls |
 | [tests/test_e3s_empirical.py](../../tests/test_e3s_empirical.py) | the judge's own tests and its controls on Gaussian scores |
 | [tests/test_e3s_noise_rule.py](../../tests/test_e3s_noise_rule.py), [tests/test_e3s_freeze.py](../../tests/test_e3s_freeze.py) | the rule and the prep on inputs made in the test; the freeze |
+| [tests/test_e3s_layout.py](../../tests/test_e3s_layout.py) | where the roles fell, day by day, held to `blocks.json`; the experiment's carry seeds held apart (added after VE3S) |
 
 The tests claim the existing gates `comparison-rules` and `statistics`; no row of `tests/gates.toml` is added. Nothing under `model/`, `learn/`, `spec/` or the rest of `stats/` changed.
 
@@ -39,7 +40,7 @@ The tests claim the existing gates `comparison-rules` and `statistics`; no row o
 
 ## The noise rule
 
-**The stations:** CI.MPP, CI.CDM, CI.HDH and CI.SRN, study D3's four, HHZ at 100 samples a second; their coordinates and channel epochs from D3's station answer, held to its SHA-256 and not asked again. **The days:** eight, 2024-01-08 and every eighth day to 2024-03-04, so that each weekday comes once (Monday twice) and eight weeks of weather and ocean are spread over. **The blocks:** each day from 00:00:00 UTC in 131 blocks of 65,536 frames, 655.36 s.
+**The stations:** CI.MPP, CI.CDM, CI.HDH and CI.SRN, study D3's four, HHZ at 100 samples a second; their coordinates and channel epochs from D3's station answer, held to its SHA-256 and not asked again. **The days fetched:** eight, 2024-01-08 and every eighth day to 2024-03-04. **The days used: the first five**, because the rule fills the roles in time order (below, and limit 16). *Restated after the verifier's pass (VE3S, its (b)2):* this sentence said the eight days put "each weekday once (Monday twice) and eight weeks of weather and ocean" into the experiment. That was the design's intent and is not what the frozen rule does: the 544 blocks a station uses fall on 2024-01-08, 01-16, 01-24, 02-01 and part of 02-09, Monday to Friday, three and a half weeks, and 02-17, 02-25 and 03-04 were fetched and are not used. **The blocks:** each day from 00:00:00 UTC in 131 blocks of 65,536 frames, 655.36 s.
 
 A block is kept only if, in this order, each holds; a block lost is counted under the first it fails ([e3prep.py](../studies/e3/e3prep.py)'s docstring has every number):
 
@@ -64,7 +65,22 @@ The fetch made 40 requests to `service.scedc.caltech.edu` alone, one after anoth
 | CI.HDH | 969 | 72 | 7 | 0 | 932 | 14 |
 | CI.SRN | 952 | 86 | 7 | 3 | 7,465 | 110 |
 
-Every station filled every role. **The amplitudes are the calibration rule's** (below): at each station the matched filter's response to the injected integers first reaches the 99th percentile of its own scores on the 16 calibration blocks above their median, which on Gaussian noise is the amplitude where it finds about half the injections.
+Every station filled every role. **Where the roles fell**, a station's blocks of each day by role (R20; c calibration, t training, h held-out, u kept and not used, l lost):
+
+| day, 2024 | weekday | CI.MPP c t h u l | CI.CDM c t h u l | CI.HDH c t h u l | CI.SRN c t h u l |
+|---|---|---|---|---|---|
+| 01-08 | Monday | 16 98 0 0 17 | 16 98 0 0 17 | 16 93 0 0 22 | 16 94 0 0 21 |
+| 01-16 | Tuesday | 0 30 101 0 0 | 0 30 101 0 0 | 0 35 95 0 1 | 0 34 94 0 3 |
+| 01-24 | Wednesday | 0 0 128 0 3 | 0 0 128 0 3 | 0 0 126 0 5 | 0 0 121 0 10 |
+| 02-01 | Thursday | 0 0 131 0 0 | 0 0 131 0 0 | 0 0 128 0 3 | 0 0 131 0 0 |
+| 02-09 | Friday | 0 0 40 54 37 | 0 0 40 54 37 | 0 0 51 42 38 | 0 0 54 38 39 |
+| 02-17 | Saturday | 0 0 0 131 0 | 0 0 0 131 0 | 0 0 0 131 0 | 0 0 0 123 8 |
+| 02-25 | Sunday | 0 0 0 125 6 | 0 0 0 125 6 | 0 0 0 125 6 | 0 0 0 122 9 |
+| 03-04 | Monday | 0 0 0 127 4 | 0 0 0 127 4 | 0 0 0 127 4 | 0 0 0 125 6 |
+
+So, at every station: the calibration is the first three hours of 2024-01-08 UTC (16:00 to about 19:00 on Sunday 2024-01-07 in California); training runs from there to 2024-01-16 at about 05:27 to 06:22 UTC; **the named model's 32 blocks are the last of training**, two of 01-08 and thirty of 01-16 at MPP and CDM, all of 01-16 at HDH and SRN; and the held-out stretch begins in the very next block, with no block between, on 01-16 between 05:27 and 06:22 UTC (the evening of Monday 2024-01-15 in California), and runs to 2024-02-09 between 07:27 and 09:49 UTC, about three and a half weeks. 408 to 437 kept blocks a station, all of 02-09's rest and of the last three days, are not used.
+
+**The amplitudes are the calibration rule's** (below): at each station the matched filter's response to the injected integers first reaches the 99th percentile of its own scores on the 16 calibration blocks above their median, which on Gaussian noise is the amplitude where it finds about half the injections.
 
 ## The sample format: HHZ alone in `s16x1`, by a fixed shift of zero bits
 
@@ -100,7 +116,7 @@ It imports numpy and the statistics package; nothing of `model/` or `learn/`.
 
 1. **the thresholds' errors**: in every resample each model's threshold is measured again from the resampled signal-free scores;
 2. **dependence between scores inside a block, and the spread between blocks**;
-3. **each threshold's false-alarm rate measured on held-out signal-free scores of other blocks** (`carry`): from the even-numbered held-out blocks to the odd and back;
+3. **each threshold's false-alarm rate measured on held-out signal-free scores of other blocks** (`carry`): from the even-numbered held-out blocks to the odd and back. **The even and odd blocks interleave, so each pair shares a day's conditions:** "carries" says the threshold holds between neighbouring blocks of the same days, which is weaker than its name. It does not say the threshold holds from one day to another. The carry by halves in time, first half against second, is the stronger check, and is reported and not in the verdict;
 4. **a reading at an equal measured rate**: REACHES when the cost is within 4 of its standard errors of zero, SHORT when the learner finds fewer by more, AHEAD when it finds more.
 
 **The threshold's own error: resampling whole blocks.** On real noise two assumptions of `stats.tolerance`'s term fail: Gaussian scores, through D8's `roc_slope`, and independent signal-free scores, through pfa (1 - pfa) / m. The density of the scores at the threshold mends the first and not the second; resampling whole blocks mends both, up to a block's length, and needs no slope. So the reading's error is the spread of the cost over 1,000 resamples of the 400 held-out blocks, both thresholds measured again in each. **Reported beside it:** the density method (the ROC's slope read from the ranks of the signal-free scores at k - k/4 and k + k/4, and the first-order term it gives), and the resampling on joins of four blocks, which is larger than the plain one when dependence runs past a block.
@@ -120,7 +136,7 @@ It imports numpy and the statistics package; nothing of `model/` or `learn/`.
 3. every score read equals the statistics' exact filter's;
 4. the core equals the baseline on the first 256 held-out trials;
 5. each model's own threshold gives it k of the same m signal-free scores, by E1's recount and the judge's;
-6. each model's threshold carries, both ways between the even and odd held-out blocks, within 4 of its resampled standard errors.
+6. each model's threshold carries, both ways between the even and odd held-out blocks, within 4 of its resampled standard errors. Those blocks interleave and share each day's conditions, so this holds the threshold between neighbours, not across days (limit 17).
 
 ## The comparison rules of D0's section 8
 
@@ -166,6 +182,8 @@ Each was made in a copy of the tree and the named tests run on it (R18). The scr
 - **`stats/empirical.py`, against `tests/test_e3s_empirical.py`, 14:** the reading strict at its edge; a declared threshold not recounted; the signal-free positions not compared; the held threshold ignored; the resampled threshold a rank low; the carry's stated rate k / m; the carry resampling one set only; `check_disjoint` closed at its ends; the refusal names unchecked; too few blocks allowed; the cost's error from one model's efficiency; the cost's sign reversed; the density band one-sided; the density's error without its band's.
 - **The experiment's judge in `tests/test_e3s_experiment.py`, against that file, 11:** the carry not in the verdict; the blocks not held to `blocks.json`; the named model taken from the first training blocks; the reading at 2 standard errors; a station left out of the report; the counts not added up; the injection set unchecked; signal-free and injection reads swapped in the split; the core check of nothing; the identical-scores check of nothing; `blocks_disjoint` not recorded.
 
+- **Added after the verifier's pass, VE3S's (c), 16 more, each failing a test added for it in `tests/test_e3s_empirical.py` or `tests/test_e3s_layout.py`:** the reading padded by 0.01, and by 0.0001; the tolerance at half; the catch margin at half; `compare`'s z defaulting to 3; `carry`'s to 8; `carry_both_ways`' back leg on its first leg's seed; the density's band over m for m + 1; its pe = k / m; `_declared` loosened to five crossings; `score_blocks`' bound raised past 2^53; `se_pairs`, `z_score` and `noise_both` each zeroed; the cost's error with ddof 0; the learner's carry on the matched filter's seed.
+
 A fault of another shape can pass every test; each limit below names the shapes this page knows of.
 
 ## The forecast from 2021, and what the experiment was not shaped to do
@@ -201,9 +219,9 @@ Each is stated by the behaviour it concedes. A fault inside one passes the gate.
 3. **The resampled error runs a few percent narrow** at the short form's size on Gaussian scores (R10: over 400 repetitions its mean was 0.01541 where the efficiencies spread by 0.01632, 5.6% narrower); at 4 standard errors that moves a reading's edge by about a quarter of one. Nothing here measures it at the full run's size.
 4. **A learner short by less than about 8 of the judge's standard errors can read REACHES**, as E1's limit 2: the reading is at 4 standard errors, and one short by exactly 4 is read SHORT about half the time.
 5. **Neither model whitens, and the matched filter is not the best detector on coloured noise.** REACHES, SHORT or AHEAD is a comparison of these two detectors on this noise and says nothing of an optimum. **A learner may come out AHEAD**: it learns the injected integers, which at amplitudes as small as HDH's (largest integer 14) are not `e0`'s shape exactly, while the matched filter is `e0`'s.
-6. **Four stations, eight winter days of 2024, one pulse, one amplitude a station, one false-alarm rate, one profile, one rule.** The calibration is a station's first 16 kept blocks of 2024-01-08 UTC, a day that begins at 16:00 on Sunday 2024-01-07 in California (the design wrote "the afternoon of 2024-01-08", which was a day late); the matched filter finds about half elsewhere only where the noise is as it was then.
+6. **Four stations, five winter days of 2024 used of the eight fetched (2024-01-08 to part of 02-09, Monday to Friday by their UTC dates, none a weekend's), one pulse, one amplitude a station, one false-alarm rate, one profile, one rule.** *Restated after VE3S:* this limit said "eight winter days". The calibration is a station's first 16 kept blocks of 2024-01-08 UTC, a day that begins at 16:00 on Sunday 2024-01-07 in California (the design wrote "the afternoon of 2024-01-08", which was a day late); the matched filter finds about half elsewhere only where the noise is as it was then.
 7. **The injection is counts added to counts**, not a ground motion: no instrument response, no propagation, the same pulse at every station.
-8. **The training stretch precedes the held-out one by up to eight weeks.** A learner trained nearer in time is not tried.
+8. **The training stretch ends where the held-out one begins, with no block between them.** The named model learns from 01-16 (and two blocks of 01-08 at MPP and CDM), and is judged from the next block on, over 01-16 to 02-09. So the reading is of a learner trained just before its test, on the days nearest it; a learner judged weeks after its training is not tried. *Restated after VE3S:* this limit said "The training stretch precedes the held-out one by up to eight weeks", which was the design's intent and not what the rule does.
 9. **The judge takes counts on trust**, as E1's limit 6: it holds a part to its plan, its blocks' SHA-256, its set and its own arithmetic, and does not recompute a score from a stream. A part file edited to counts that agree with one another is judged as those counts.
 10. **The rule's numbers are held on inputs made in the tests**, not on SCEDC's answers: a record or a catalogue row of a shape no test has would be read as the code reads it. `blocks.json` records each day's records, samples and any refusal of the reader, so the full run's record shows what was read.
 11. **SCEDC's bytes are taken as given**; whether a second request returns the same bytes was not tried. The fetched files and the recordings are not in the tree.
@@ -211,6 +229,8 @@ Each is stated by the behaviour it concedes. A fault inside one passes the gate.
 13. **The short form's answer is known in advance**: white noise. It tests that every step of the full run's code gives E1's answer where that answer is right, and not what real noise does to it.
 14. **E1's rule functions are imported from E1's test file.** A change there changes both experiments' rules together, which is intended, and an E1 test that broke them would break E3's too.
 15. **The full run's own path is run in the gate only up to its inputs.** `full_inputs` is held (each station's 528 paths in `blocks.json`'s order, its committed set, its disjoint spans), and `measure` and `evaluate` are the short form's code. What only a part of 528 blocks of 65,536 frames meets, its memory and its time among them, is first seen in the lead's run. That the recordings on disk are the blocks named was checked once, read-only, by the parcel's scratch script, and is held again by the part's own `blocks_sha256`.
+16. **The frozen rule departs from the design's stated intent, and the departure stands.** The design said both that a station's kept blocks are used in time order (16, then 128, then 400) and that eight days every eighth day would spread "eight weeks of weather and ocean" and every weekday through the experiment. Both cannot hold: 544 blocks in time order are the first five days' (the table above). The rule as frozen and hashed before the fetch is the first, and it is not changed after the fetch (the lead's ruling of 21:02, restated after VE3S). So **the experiment's noise is five days from 2024-01-08 to 02-09, weekdays by their UTC dates (01-08's first hours are Sunday evening in California), its held-out stretch spanning three and a half weeks of the calendar; 02-17, 02-25 and 03-04 were fetched and are not used;** what weekends, late February or March would do to the reading is not measured. The design missed the conflict and the lead's ruling approved both; the verifier found it.
+17. **The carry check is between neighbours.** Its two halves are the even- and odd-numbered held-out blocks, which interleave, so both halves hold every day's conditions. A threshold that holds within each day and not from one day to another carries by this check. The carry by halves in time is reported beside it, not in the verdict.
 
 ## Register
 
@@ -233,5 +253,6 @@ Each is stated by the behaviour it concedes. A fault inside one passes the gate.
 | R15 | The forecast: the learner at 16,384 records D8's Pd 0.011 to 0.060 at CDM, HDH and MPP against the matched filter's 0.22 to 0.64, and 0.444 and 0.541 at SRN against 0.505 and 0.607 | ESTIMATE | the same command; first order and Gaussian, from 2021 | the full run |
 | R16 | A full part 10 to 15 minutes, the four at once about 15 | ESTIMATE | E1's part 5, 27,697,152 frames in 7 to 11 minutes ([E1-software.md](../studies/E1-software.md), row E7), times 1.25, and Replay's reading | the lead's run |
 | R17 | The gate's cost of this parcel's tests | MEASURED | `bash verify/run.sh`, the run named in the parcel's last commit message; the times of `tests/test_e3s_*.py` in its results | a rerun |
-| R18 | One-place faults, each made in a copy of the tree and run against the parcel's tests: 23 of 23 in `e3prep.py` failed a test (21 of 23 at the first pass; the two that passed each got a test before the freeze); 14 of 14 in `stats/empirical.py` (10 of 14 at first; four tests added); 11 of 11 in the experiment's judge (7 of 9 at first, two tests added; then two faults more, of which one, `blocks_disjoint` not recorded, passed until a test was added) | MEASURED | the parcel's scratch scripts `mutate_prep.py` and `mutate_judge.py`, 2026-11-25 21:13 to 22:02, their outputs in the parcel's scratch folder; **the scripts are not in the tree**: a reader makes each fault by hand from the list under "The one-place faults tried" | a fault of another shape that passes: each limit above names one |
+| R18 | One-place faults, each made in a copy of the tree and run against the parcel's tests: 23 of 23 in `e3prep.py` failed a test (21 of 23 at the first pass; the two that passed each got a test before the freeze); 14 of 14 in `stats/empirical.py` (10 of 14 at first; four tests added); 11 of 11 in the experiment's judge (7 of 9 at first, two tests added; then two faults more, of which one, `blocks_disjoint` not recorded, passed until a test was added); and after VE3S, 16 of 16 of its gaps | MEASURED | the parcel's scratch scripts `mutate_prep.py`, `mutate_judge.py` and `mutate_gaps.py`, 2026-11-25 21:13 to 22:02 and 22:47 to 22:49, their outputs in the parcel's scratch folder; **the scripts are not in the tree**: a reader makes each fault by hand from the list under "The one-place faults tried" | a fault of another shape that passes: each limit above names one |
+| R20 | Where the roles fell: the table under "What the fetch and the prep found", every cell; the roles' first and last blocks' times; 408 to 437 kept blocks a station not used | MEASURED | `vectors/e3s/blocks.json`, its `blocks_used` and `lost` by day, as the prep wrote them at its one run; `tests/test_e3s_layout.py` holds every cell and time to it | that test |
 | R19 | Study D1b's twelve 2021 files at these four stations need 11 to 14 bits, their samples from -1,673 to 5,962 | READ | [D1b](../studies/D1b-first-look.md), the table under Q5c, the column "bits a sample needs" | that table |

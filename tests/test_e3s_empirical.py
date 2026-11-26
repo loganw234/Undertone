@@ -260,3 +260,129 @@ def test_control_statistics__e3s_the_carry_states_its_rate_and_its_error_rightly
     print("CONTROL e3s carry's error: mean %.5f against %.5f (%.3f); |z| > 2 in %d of 100"
           % (np.mean(ses), want, np.mean(ses) / want, int((np.abs(zs) > 2).sum())))
     assert abs(np.mean(ses) / want - 1) < 0.2 and int((np.abs(zs) > 2).sum()) <= 12
+
+
+# ------------------------------------------------------------------ the verifier's gaps (VE3S, its (c)), each a test
+
+def two_models(seed):
+    rng = np.random.Generator(np.random.PCG64(seed))
+    free, at = gaussian_blocks(rng)
+    other_free, other_at = free + rng.standard_normal(free.shape) * 0.3, at - 0.08 + rng.standard_normal(at.shape) * 0.3
+    return model(free, at), model(other_free, other_at)
+
+
+def test_control_statistics__e3s_the_reading_turns_exactly_at_z_standard_errors_through_compare():
+    """The same pair, seed and resamples give the same cost and error; with z just above |cost| / se the
+    reading is REACHES, just below it SHORT (or AHEAD for the reverse pair). A pad on the edge, of any size
+    above a part in ten thousand of the cost, reads REACHES where it must read SHORT."""
+    a, b = two_models(SEED + 11)
+    r = E.compare(a, b, PFA, 200, 5)
+    assert r["cost"] > 0 and r["se"] > 0
+    edge = r["cost"] / r["se"]
+    print("E3S judge's edge: cost %+.5f, se %.5f, at %.3f se" % (r["cost"], r["se"], edge))
+    assert E.compare(a, b, PFA, 200, 5, z=edge * 1.0001)["reading"] == "REACHES"
+    assert E.compare(a, b, PFA, 200, 5, z=edge * 0.9999)["reading"] == "SHORT"
+    assert E.compare(b, a, PFA, 200, 5, z=edge * 0.9999)["reading"] == "AHEAD"
+    assert E.compare(b, a, PFA, 200, 5, z=edge * 1.0001)["reading"] == "REACHES"
+
+
+def test_control_statistics__e3s_the_tolerance_and_catch_margin_are_4_and_8_standard_errors_and_z_defaults_to_4():
+    import inspect
+    a, b = two_models(SEED + 12)
+    r = E.compare(a, b, PFA, 100, 6)
+    assert r["z"] == tolerance.Z_GATE == 4.0
+    assert r["tolerance"] == 4.0 * r["se"] and r["catch_margin"] == 8.0 * r["se"]
+    assert r["z_score"] == r["cost"] / r["se"]
+    for f in (E.compare, E.carry, E.carry_both_ways):
+        assert inspect.signature(f).parameters["z"].default == tolerance.Z_GATE, f.__name__
+    # a carry z between 4 and 8 does not carry at the default
+    rng = np.random.Generator(np.random.PCG64(SEED + 13))
+    one, louder = rng.standard_normal((32, 384)), rng.standard_normal((32, 384)) * 1.12
+    c = E.carry(one, louder, PFA, 200, 7)
+    print("E3S carry at 1.12 times the level: %+.2f se, %s" % (c["z_score"], c["carries"]))
+    assert 4 < c["z_score"] < 8 and not c["carries"]
+
+
+def test_control_statistics__e3s_the_cost_s_error_is_the_spread_of_the_paired_resamples_with_ddof_1():
+    """compare's resampling draws its blocks from the seed alone, as resampled_efficiency's does: so the two
+    models' efficiencies there, resample for resample, are the ones compare differences."""
+    a, b = two_models(SEED + 14)
+    r = E.compare(a, b, PFA, 150, 8)
+    ea = E.resampled_efficiency(a["free"], a["at"], PFA, 150, 8)["efficiencies"]
+    eb = E.resampled_efficiency(b["free"], b["at"], PFA, 150, 8)["efficiencies"]
+    assert r["se"] == float(np.std(ea - eb, ddof=1)) != float(np.std(ea - eb, ddof=0))
+    assert r["se_reference"] == float(np.std(ea, ddof=1)) and r["se_other"] == float(np.std(eb, ddof=1))
+    one = E.resampled_efficiency(a["free"], a["at"], PFA, 150, 8)
+    assert one["se"] == float(np.std(one["efficiencies"], ddof=1))
+    # the pairs' own error and the shared crossings, from the package's paired_cost and a count by hand
+    from stats.recovery import paired_cost
+    ha, hb = (a["at"] > a["threshold"]).ravel(), (b["at"] > b["threshold"]).ravel()
+    assert r["se_pairs"] == paired_cost(ha, hb)["se"] > 0
+    assert r["noise_both"] == int(((a["free"] > a["threshold"]) & (b["free"] > b["threshold"])).sum()) > 0
+
+
+def test_control_statistics__e3s_carry_both_ways_runs_its_two_legs_on_two_seeds():
+    rng = np.random.Generator(np.random.PCG64(SEED + 15))
+    f = rng.standard_normal((64, 384))                                 # each half 12,288 scores, 122 crossings
+    both = E.carry_both_ways(f, PFA, 100, 40, "alternate")
+    there, back = E.carry(f[0::2], f[1::2], PFA, 100, 40), E.carry(f[1::2], f[0::2], PFA, 100, 41)
+    assert both["there"] == there and both["back"] == back
+    assert both["back"]["se"] != E.carry(f[1::2], f[0::2], PFA, 100, 40)["se"], "the back leg is not on the first leg's seed"
+    halves = E.carry_both_ways(f, PFA, 100, 50, "halves")
+    assert halves["there"] == E.carry(f[:32], f[32:], PFA, 100, 50) and halves["back"] == E.carry(f[32:], f[:32], PFA, 100, 51)
+
+
+def test_control_statistics__e3s_a_declared_threshold_is_refused_one_crossing_either_side_of_k():
+    rng = np.random.Generator(np.random.PCG64(SEED + 16))
+    free, at = gaussian_blocks(rng)
+    m = free.size
+    k = E.crossings(m, PFA)
+    order = np.sort(free.ravel())[::-1]
+    exact = model(free, at, threshold=order[k])                       # k above it
+    assert int((free > exact["threshold"]).sum()) == k
+    assert E.compare(exact, exact, PFA, 20, 1)["k"] == k
+    for t, above in ((order[k - 1], k - 1), (order[k + 1], k + 1), (order[k - 5], k - 5), (order[k + 5], k + 5)):
+        off = model(free, at, threshold=t)
+        assert int((free > t).sum()) == above
+        for pair in ((exact, off), (off, exact)):
+            with pytest.raises(E.EmpiricalRefusal) as e:
+                E.compare(pair[0], pair[1], PFA, 20, 1)
+            assert e.value.name == "UNEQUAL_FALSE_ALARM_RATE", above
+
+
+def test_control_statistics__e3s_the_density_method_is_its_stated_formula_on_numbers_worked_here():
+    """Signal-free scores 0 .. m - 1, so that the (j + 1)-th largest is m - 1 - j, and scores at injections
+    placed by hand: m = 12,000, k = 120, w = 30; the band is (m - 1 - 150, m - 1 - 90] = (11,849, 11,909];
+    41 of n = 1,000 injection scores in it. So the slope is (41 / 1000) / (60 / 12001) = 8.20068,
+    its relative error sqrt((1 - 0.041) / 41 + 1 / 60), and the threshold term uses (121 / 12001)."""
+    m, n = 12000, 1000
+    free = np.arange(m, dtype=np.float64).reshape(60, 200)
+    inside = np.linspace(11849.5, 11909, 41)
+    at = np.concatenate([inside, np.full(n - 41 - 9, 5.0), [11849.0] * 4, [11909.5] * 5]).reshape(20, 50)
+    s = E.slope_by_ranks(free, at, PFA)
+    assert (s["k"], s["width"], s["count"], s["m"], s["n"]) == (120, 30, 41, m, n)
+    slope = (41 / 1000) / (60 / 12001)
+    assert s["slope"] == slope and abs(slope - 8.20068) < 1e-5
+    assert s["se"] == slope * math.sqrt((1 - 41 / 1000) / 41 + 1 / 60)
+    pe = 121 / 12001
+    assert s["se_threshold"] == math.sqrt(slope * slope * pe * (1 - pe) / m)
+    assert s["slope"] != (41 / 1000) / (60 / 12000) and s["se_threshold"] != math.sqrt(slope * slope * (120 / 12000) * (1 - 120 / 12000) / m)
+
+
+def test_control_statistics__e3s_an_integer_score_past_2_to_the_53_is_refused_and_one_at_it_is_not():
+    rng = np.random.Generator(np.random.PCG64(SEED + 17))
+    free = (rng.standard_normal((20, 200)) * 1000).astype(np.int64)
+    at = (rng.standard_normal((20, 50)) * 1000).astype(np.int64)
+    assert E.score_blocks(free, "free").dtype == np.float64
+    edge = free.copy()
+    edge[0, 0] = 2 ** 53
+    E.score_blocks(edge, "free")
+    past = free.copy()
+    past[0, 0] = 2 ** 53 + 1
+    with pytest.raises(E.EmpiricalRefusal) as e:
+        E.score_blocks(past, "free")
+    assert e.value.name == "INEXACT_INPUT"
+    past[0, 0] = -(2 ** 53) - 1
+    with pytest.raises(E.EmpiricalRefusal):
+        E.score_blocks(past, "free")
+    assert E.resampled_efficiency(free, at, 0.1, 10, 1)["m"] == 4000
