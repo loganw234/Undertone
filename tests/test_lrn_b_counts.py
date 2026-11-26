@@ -149,6 +149,39 @@ def test_lrn_b_counts_full_at_the_definitions_count_from_a_written_state(profile
     assert learner.counts == [most, most] and learner.counters()["lrn_skip_full"] == 2
 
 
+# ------------------------------------------------------------ the order of the window checks, where two or three hold
+
+@pytest.mark.parametrize("profile", S.PROFILES)
+def test_lrn_b_counts_a_label_1_window_both_busy_and_full_is_counted_busy(profile):
+    """At a count width of 1 (one window a label), records at 8, 20 and 21, T = 2. Label 1 of 20 is BUSY
+    (21 is less than T after it) and its label is full; so is label 1 of 21 (20 is less than T before it).
+    BUSY is checked first: BUSY 3 (label 0 of 21, label 1 of 20, label 1 of 21) and FULL 1 (label 0 of 20).
+    With FULL first for label 1 the same stream gives BUSY 1 and FULL 3."""
+    learner = Learner(S.start_blob(profile, 2), [S.rec(j) for j in (8, 20, 21)], 3, 1)
+    for f in varied(profile, 30):
+        learner.step(f)
+    assert learner.log == [(8, 8, 0, "taken"), (10, 8, 1, "taken"), (20, 20, 0, "full"), (21, 21, 0, "busy"),
+                           (22, 20, 1, "busy"), (23, 21, 1, "busy")]
+    c = learner.counters()
+    assert (c["lrn_skip_busy"], c["lrn_skip_full"], c["lrn_count0"], c["lrn_count1"]) == (3, 1, 1, 1)
+
+
+@pytest.mark.parametrize("profile", S.PROFILES)
+@pytest.mark.parametrize("indexes, written, judgement", [
+    ([1, 3], False, (3, 3, 0, "start")),       # START and BUSY: 3 < T, and 3 - 1 < 2T
+    ([4, 12, 14], False, (14, 14, 0, "busy")), # BUSY and FULL, at a width of 1: 14 - 12 < 2T, and label 0 of 4 is taken
+    ([1], True, (1, 1, 0, "start")),           # START and FULL: the counts written at their most after the learner is made
+    ([1, 3], True, (3, 3, 0, "start")),        # all three
+])
+def test_lrn_b_counts_label_0s_order_is_start_then_busy_then_full_where_two_or_three_hold(profile, indexes, written, judgement):
+    learner = Learner(S.start_blob(profile, T), [S.rec(j) for j in indexes], 3, 1)
+    if written:
+        learner.counts = [1, 1]              # 2^1 - 1: each label at its most
+    for f in varied(profile, 24):
+        learner.step(f)
+    assert judgement in learner.log, learner.log
+
+
 # ------------------------------------------------------------ the host's operations, by name and in order
 
 def other_shapes(profile):
@@ -187,6 +220,48 @@ def test_lrn_b_counts_an_update_is_refused_by_each_name(profile):
     for at in (2, -1, True, 3.0, "4", L.INDEX_MAX - d.update_frames + 1):
         assert refused(lambda: d.update(at)) == "SWAP_INDEX", at
     assert refused(lambda: d.update(L.INDEX_MAX - d.update_frames)) is None
+
+
+@pytest.mark.parametrize("profile", S.PROFILES)
+def test_lrn_b_counts_an_update_is_refused_unfinished_ahead_of_another_shape_when_both_hold(profile):
+    """Both cannot hold by the operations alone: an update is named only under the matched shape, and a
+    shape is frozen while the core runs. So the state is written: a learner under another shape, with an
+    update written in as named and unfinished. UPDATE_UNFINISHED is named first."""
+    for what, blob in other_shapes(profile):
+        learner = fresh(profile, blob=blob, steps=2)
+        assert refused(lambda: learner.update(5)) == "SWAP_SHAPE", what
+        learner._update = {"u": 5, "finish": 8, "made": False, "counts": None, "sums": None,
+                           "difference": None, "blob": None, "name": None, "outcome": None}
+        assert refused(lambda: learner.update(6)) == "UPDATE_UNFINISHED", what
+
+
+@pytest.mark.parametrize("profile", S.PROFILES)
+def test_lrn_b_counts_an_update_at_a_bool_is_refused_where_its_int_would_be_taken(profile):
+    """False is 0 and True is 1 to `isinstance(..., int)`: each named where that int is a taken index."""
+    at_zero = fresh(profile, steps=0)
+    assert refused(lambda: at_zero.update(False)) == "SWAP_INDEX"
+    assert refused(lambda: fresh(profile, steps=0).update(0)) is None
+    at_one = fresh(profile, steps=1)
+    assert refused(lambda: at_one.update(True)) == "SWAP_INDEX"
+    assert refused(lambda: fresh(profile, steps=1).update(1)) is None
+
+
+@pytest.mark.parametrize("profile", S.PROFILES)
+def test_lrn_b_counts_a_truth_index_at_the_fields_most_is_taken_and_one_past_it_refused(profile):
+    blob = S.start_blob(profile, T)
+    assert Learner(blob, [S.rec(5), S.rec(L.INDEX_MAX)], 3).indexes == (5, L.INDEX_MAX)
+    assert L.INDEX_MAX == (1 << 64) - 1
+    assert refused(lambda: Learner(blob, [S.rec(5), dict(S.rec(0), index=L.INDEX_MAX + 1)], 3)) == "RECORD_FIELD"
+
+
+@pytest.mark.parametrize("profile", S.PROFILES)
+def test_lrn_b_counts_a_record_at_index_0_is_counted_start_when_the_learner_is_made(profile):
+    """Its label-0 window is judged at next index 0, which is reached when the learner is made, before any frame."""
+    learner = Learner(S.start_blob(profile, T), [S.rec(0), S.rec(20)], 3)
+    assert learner.log == [(0, 0, 0, "start")] and learner.counters()["lrn_skip_start"] == 1
+    for f in varied(profile, T):
+        learner.step(f)
+    assert learner.log == [(0, 0, 0, "start"), (T, 0, 1, "taken")]
 
 
 @pytest.mark.parametrize("profile", S.PROFILES)
