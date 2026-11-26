@@ -184,6 +184,14 @@ def test_e1c_compare_on_the_stated_run_judges_six_parts_and_fails_a_day_cut_shor
     assert code == 1 and sum("EQUAL to E1's committed part, key for key" in line for line in lines) == 6
     assert record["judge"]["equal"] is False and lines[-1] == "== E1 CARD VERDICT: FAIL"
 
+    # and the judge's exit code held alone: the committed output printed byte for byte, and 1 returned
+    def says_fail(paths):
+        real(paths)
+        return 1
+    code, record, lines = _stated_compare(tmp_path / "says-fail", judge=says_fail)
+    assert record["judge"]["equal"] is True and record["judge"]["code"] == 1
+    assert code == 1 and lines[-1] == "== E1 CARD VERDICT: FAIL"
+
 
 def test_e1c_a_card_record_names_its_definition_and_is_stale_by_name_once_it_moves():
     assert e1c.stale({"spec_sha256": C.SPEC_SHA256}) is None

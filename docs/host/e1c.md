@@ -112,6 +112,7 @@ The model's run before the commit is the blank core's or the matched filter's, a
 **The training stretch's two keys,** `scores_not_zero_while_blank` and its share of `flags`:
 - **Part 5's come from the card's bytes**, records 0 to A - 1 of swap-blank, when that run is there. Those records must also equal the desktop's blank run of the same frames, by their SHA-256.
 - **Parts 0 to 4's come from the desktop's model run** of frames 0 to A - 1 through the blank core.
+- **If swap-blank is refused, ends short, or leaves no records,** part 5's two keys come from the desktop's model run, and part 5's line says so (VE1C, its (d)). For example: "NOT the card's: the swap-blank run ended refused SWAP_SHAPE; it left 0 of the 2048 records before the commit, so the blank stretch could not come from the card; the desktop's model run stands in". The verdict then FAILs, on the swap's own line.
 
 ## 5. The flip: one coefficient changed
 
@@ -183,8 +184,10 @@ Part 5's learned piece 0, run with `hw.e0c.pieces.flipped` of the learned set: r
 - the piece.json files, `table.json`, `order.txt`;
 - the blank, matched, six learned and flipped blobs.
 
-**Box to desktop:**
-- 6,673,680,384 bytes of records, which are 317,794,304 records of 21 bytes;
+`cases` also writes `swap-blank/swap.json` and `swap-matched/swap.json`, and **nothing reads them**. The box and `compare` take each swap's blob, index and wait from `order.txt`. The two files repeat what `order.txt` says, and a difference between them would be seen by neither.
+
+**Box to desktop,** for the 51 runs:
+- 6,761,760,768 bytes of records, which are 321,988,608 records of 21 bytes;
 - each run's report.json and log;
 - the day's log and SHA256SUMS.
 
@@ -206,12 +209,12 @@ Part 5's learned piece 0, run with `hw.e0c.pieces.flipped` of the learned set: r
 4. Copy back the records, reports and logs, and check each file's SHA-256 on both machines.
 5. On the desktop: `python hw/e1c/e1c.py compare <cases> <run folder>`.
 
-**Size and time on the card.** 50 runs:
-- 48 judged pieces, 307,200,000 frames, 2.4 times round 4's E0 day;
+**Size and time on the card.** 51 runs, the lines of `order.txt`:
+- 48 judged pieces, 307,200,000 frames, 2.4 times round 4's 20 pieces of E0 (128,000,640 frames);
 - the two swap runs, 8,388,608 frames;
 - the flip piece, 6,400,000 frames.
 
-So 321,988,608 frames and 6,761,760,768 bytes of records. **About 17 to 21 minutes of the card, an ESTIMATE**, at round 4's 19 to 22 s a piece, with part 5's results in about 4. Then the copy back takes about 6 minutes at round 4's rate, and compare about a minute. **The whole of E1 fits the booked morning.**
+So 321,988,608 frames and 6,761,760,768 bytes of records. The card is fed 1,232,768 truth records in all: 50,000 in each of the 24 runs of the 12 test pieces, and 16,384 in each swap run. **About 17 to 21 minutes of the card, an ESTIMATE**, at round 4's 19 to 22 s a piece, with part 5's results in about 4. Then the copy back takes about 6 minutes at round 4's rate, and compare about a minute. **The whole of E1 fits the booked morning.**
 
 ## 10. On r5's definition
 
@@ -241,7 +244,7 @@ It gives `== E1 CARD VERDICT: PASS`: every run IDENTICAL, the card part EQUAL to
 | 5. a count changed by one in the card's tally makes the judge's output differ from E1's committed output | `test_control_statistics__e1c_a_count_changed_by_one_in_the_cards_tally_changes_the_judges_output` | one injection more found by the learned set: three lines differ, part 5's curve, its paired cost and the reported model. One more by the baseline: two lines. One signal-free crossing moved from both models to one each: one line. One count alone: NOT AS STATED |
 
 **Also:**
-- the stated cut, its reads and its seeds, and every refusal of the cut by name (`test_e1c_cut.py`);
+- the stated cut, its reads and its seeds, and every refusal of the cut by name, a pulse over a bound from each side (`test_e1c_cut.py`);
 - the gate `replay` on small streams under both profiles, with its two controls;
 - the desktop's training of parts 0 to 3 equal to E1's committed sets. Parts 4 and 5 are held by `cases`, in about 42 s for all six (row K14);
 - the short form's honest set equal to LRN-A's;
@@ -251,6 +254,7 @@ It gives `== E1 CARD VERDICT: PASS`: every run IDENTICAL, the card part EQUAL to
   - a day cut to part 5 FAIL, NOT RUN;
   - one count changed FAIL at line 9;
   - every part E1's under a judge that prints one line more: FAIL, the judge's condition alone;
+  - the committed output printed byte for byte by a judge that returns 1: FAIL, the judge's exit code alone;
 - `stale`.
 
 On the tiny plan through the stand-in:
@@ -260,28 +264,36 @@ On the tiny plan through the stand-in:
 - the learned pieces loaded at epoch 0, which differ in `held_out_epochs`, `threshold_epoch` and `first_new_epoch_index`;
 - the two sets exchanged, seen by the run's identity and by the statistics' digest;
 - a flip the card did not run;
-- pieces that are not the stated cut, PIECE_SET;
+- pieces that are not the stated cut, PIECE_SET, and a part.json whose count of pieces alone is not the cut's;
+- a part with no reference to hold it to: FAIL, "no reference given";
+- the flip's comparison taking its difference only as integers in the score field;
+- a swap-blank run the card refused, and one that left nothing: part 5's line says the blank stretch could not come from the card, and the verdict FAILs;
 - `cases`' three checks, each by itself: another injection set (INJECTION_SET), another trained set (LEARNED_SET), schedules that do not join back (PIECE_SET);
 - `order.txt` as the box script reads it;
 - `expect`'s LEARNED_SET;
 - the swap run's epoch and its fit before B.
 
-**Thirteen changes, each breaking one of the verdict's conditions alone, each FAIL by the line that says why** (`test_e1c_control_the_verdict_fails_on_each_of_its_conditions_alone`):
+**Fifteen changes, each breaking one of the verdict's conditions alone, each FAIL by the line that says why** (`test_e1c_control_the_verdict_fails_on_each_of_its_conditions_alone`):
 - a matched record no read takes, changed;
 - a flag with its expectation made to match;
 - the statistics' baseline digest;
 - the reference part;
 - the desktop's blank run's hash;
-- the swap's next_index bracket;
+- the swap's next_index bracket, its second read at the named index;
+- the swap's next_index bracket, its first read at the named index;
 - the swap's first new epoch;
 - the flip's predicted record;
 - the flip's predicted difference;
+- the flip's first difference at the predicted record by the predicted amount, in the epoch field and not the score;
 - a flip that changed nothing;
 - a swap record changed;
 - a swap flag;
 - a run's records missing.
 
-**The box** (`test_e1c_box.py`): nothing it runs imports `tests/`, `learn/` or numpy, by E0C's own import check, imported. Every flag the script hands `run_piece` is one `host.run_case` declares.
+**The box** (`test_e1c_box.py`): nothing it runs imports `tests/`, `learn/` or numpy, by E0C's own import check, imported. Every flag the script hands `run_piece` is one `host.run_case` declares. Its text is read, since no test may start that shell (CLAUDE.md, trap 13):
+- every run of `run_piece` sits under `timeout 900`;
+- nothing stops the script after a run that ends refused: no `set -e`, no exit but the one before any run, and nothing after the loop's call;
+- its last lines are as written. The flip's comparison by hash says NOT COMPARED, never SAME, when either hash is missing (VE1C, its (d)).
 
 ## 12. Limits
 
@@ -307,6 +319,8 @@ Each is stated by the behaviour it concedes.
 13. **The flip is one bit of one tap on one piece.**
 14. **The swap's margin** is about 0.21 s at 200 ns a frame. A commit that arrives after A is refused by the core, SWAP_INDEX: a lost run by name.
 15. **The flags condition of the verdict is implied by bit identity** wherever the model raises no flag, which is every run here. It is held alone only by a test that makes the expectation match a planted flag.
+16. **`box_e1.sh` is held by reading its text, not by running it.** A change of its behaviour that keeps the lines the test reads passes: a `trap`, say, or a `set -e` reached by another spelling. `bash -n` was run on it by hand on the desktop; what the box makes of it is the card day's.
+17. **`swap-*/swap.json` is read by nothing** (section 8). A swap.json that disagreed with `order.txt` would pass unseen.
 
 ## 13. Register
 
@@ -317,7 +331,7 @@ Each is stated by the behaviour it concedes.
 | K3 | Every read of every piece is E1's own read position, in E1's order, at local 63 or later | MEASURED | `python -m pytest -q -p no:cacheprovider tests/test_e1c_cut.py`, its second test | that test |
 | K4 | 131,070 blocks of 64 fit one buffer of 8,388,484 frames and 131,071 do not | COMPUTED | 64 x 131,070 = 8,388,480; 64 x 131,071 = 8,388,544; held by the cut's refusal test | arithmetic |
 | K5 | Part 5's flip is bit 12 of tap 28, -131,071 to -126,975, and its first possible record is local 35 | COMPUTED | `python hw/e1c/e1c.py cases <folder>`, its `flip/piece.json` (2026-11-25 21:19); 63 - 28 | that file |
-| K6 | 50 runs, 321,988,608 frames and 6,761,760,768 bytes of records; 616,384 truth records on the card in the judged pieces and one swap run's schedule, 632,768 with both | COMPUTED | 48 x 6,400,000 + 2 x 4,194,304 + 6,400,000; x 21; 12 x 50,000 + 16,384, + 16,384 | arithmetic |
+| K6 | 51 runs, 321,988,608 frames and 6,761,760,768 bytes of records; 1,232,768 truth records fed to the card over the 51 runs | COMPUTED | 48 + 2 + 1 runs, the lines of `order.txt`; 48 x 6,400,000 + 2 x 4,194,304 + 6,400,000; x 21; 24 x 50,000 + 2 x 16,384, the calibration pieces and the flip's piece holding none | arithmetic |
 | K7 | 17 to 21 minutes of the card | ESTIMATE | round 4's 19 to 22 s a piece of 6,400,000 frames (CARD-e0.md, CE9, MEASURED there) x 48, the two swap runs and the flip at the same rate a frame, and health | the card day's log |
 | K8 | A copy back of about 6 minutes | ESTIMATE | round 4's 2,822,461,773 bytes in 159 s (its ledger, READ) at the same rate for K6's bytes | the card day's copy |
 | K9 | An expect run of 12 to 18 minutes, six part processes at once beside two shorter ones | ESTIMATE | K15's 28.29 us a frame over a part's 25,600,000 held-out frames and its training stretch is 12 minutes of one core; contention on 12 logical cores, a guess, the rest | the lead's expect run |

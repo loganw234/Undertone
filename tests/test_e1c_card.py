@@ -408,8 +408,29 @@ def test_e1c_control_the_verdict_fails_on_each_of_its_conditions_alone(tiny, tmp
         os.remove(os.path.join(runs, "ct-p3-matched", "records.bin"))
         return "part t: NOT MADE"
 
+    def swap_before(folder, runs):      # the swap's first next_index read already at the named index
+        path = os.path.join(runs, "swap-blank", "report.json")
+        rep = e1c.read_json(path)
+        rep["swap"]["next_index_before"] = 2048
+        e1c.write_json(path, rep)
+        return "== E1C SWAP blank: IDENTICAL; the first record of the new epoch at 2048, the named index 2048; the " \
+            "swap bracketed by next_index [2048, %d]; NOT AS IT MUST BE" % rep["swap"]["next_index_after"]
+
+    def flip_field(folder, runs):       # the first difference at the predicted record, by the predicted amount, in
+        r = by_name(tiny)["ct-p0-learned"]  # the epoch field and not the score: the run and its expectation made so
+        data = e1c.read_bytes(os.path.join(runs, r["name"], "records.bin"))
+        path = os.path.join(folder, "expect", "flip-ct-p0.json")
+        exp = e1c.read_json(path)
+        planted = _changed(data, exp["predicted"]["record"], "epoch", 1)
+        e1c.write_bytes(os.path.join(runs, "flip-ct-p0", "records.bin"), planted)
+        _rewrite_expectation(folder, "flip-ct-p0", planted)
+        exp = e1c.read_json(path)
+        exp["predicted"]["difference"] = 1
+        e1c.write_json(path, exp)
+        return '"field": "epoch", "card": 2, "model": 1'
+
     for change in (identity, flags, stats, reference, blank, swap_index, swap_epoch, flip, flip_difference, flip_same,
-                   swap_identity, swap_flags, missing):
+                   swap_identity, swap_flags, missing, swap_before, flip_field):
         folder = copy_cases(tiny, tmp_path / change.__name__)
         runs = copy_runs(tiny, tmp_path / change.__name__)
         said = change(folder, runs)
@@ -483,3 +504,64 @@ def test_e1c_compare_holds_a_stated_part_to_e1s_own_plan(tmp_path):
     with pytest.raises(E1CRefusal) as e:
         e1c.check_set(str(folder), 0, True)
     assert e.value.name == "PIECE_SET" and "pieces []" in str(e.value)
+
+
+def test_e1c_compare_refuses_a_part_whose_count_of_pieces_is_not_the_cuts(tiny, tmp_path):
+    """Every piece folder there, and part.json saying one fewer: PIECE_SET, by the count alone."""
+    folder = copy_cases(tiny, tmp_path)
+    path = os.path.join(folder, "part%s" % KEY, "part.json")
+    e1c.write_json(path, dict(e1c.read_json(path), pieces=3))
+    with pytest.raises(E1CRefusal) as e:
+        compared(folder, tiny["runs"])
+    assert e.value.name == "PIECE_SET" and "pieces ['p0', 'p1', 'p2', 'p3']" in str(e.value)
+
+
+def test_e1c_compare_fails_a_part_with_no_reference_to_hold_it_to(tiny):
+    lines = []
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(recovery, "MIN_CROSSINGS", 1)
+        code, record = e1c.compare(tiny["folder"], tiny["runs"], references={}, out=lines.append)
+    assert code == 1 and lines[-1] == "== E1 CARD VERDICT: FAIL" and record["parts"] == [tiny["reference"]]
+    assert any(line.startswith("  part t: no reference given;") for line in lines)
+
+
+def test_e1c_compare_flip_takes_only_an_integer_difference_in_the_score_field(tiny, monkeypatch):
+    """compare_blocks gives integers; a comparison that handed back the right difference as floats is not taken."""
+    real = P0.compare_blocks
+
+    def floats(data, expected, remake=None):
+        got = real(data, expected, remake)
+        first = got.get("first") or {}
+        if expected.get("name") == "ct-p0-learned" and "card" in first:
+            got = dict(got, first=dict(first, card=float(first["card"]), model=float(first["model"])))
+        return got
+    lines = []
+    monkeypatch.setattr(e1c.P0, "compare_blocks", floats)
+    monkeypatch.setattr(recovery, "MIN_CROSSINGS", 1)
+    code, _record = e1c.compare(tiny["folder"], tiny["runs"], references={KEY: tiny["reference"]}, out=lines.append)
+    assert code == 1 and "== E1C FLIP CONTROL: NOT AS IT MUST BE" in lines
+
+
+def test_e1c_a_swap_blank_run_the_card_refused_is_said_so_on_part_5s_line(tiny, tmp_path):
+    """VE1C's (d): the swap-blank run refused on the card, with its report and no records, and with neither. Part's
+    line must say the blank stretch could not come from the card, and the verdict FAILs."""
+    for how in ("refused", "nothing"):
+        runs = copy_runs(tiny, tmp_path / how)
+        d = os.path.join(runs, "swap-blank")
+        if how == "refused":
+            e1c.write_bytes(os.path.join(d, "records.bin"), b"")
+            rep = e1c.read_json(os.path.join(d, "report.json"))
+            rep["refused"] = {"name": "SWAP_SHAPE", "detail": "planted by this test"}
+            e1c.write_json(os.path.join(d, "report.json"), dict(rep, records=0))
+            said = "NOT the card's: the swap-blank run ended refused SWAP_SHAPE; it left 0 of the 2048 records before " \
+                "the commit, so the blank stretch could not come from the card; the desktop's model run stands in"
+        else:
+            shutil.rmtree(d)
+            said = "NOT the card's: the swap-blank run left no report.json; it left none (no records.bin) of the 2048 " \
+                "records before the commit, so the blank stretch could not come from the card"
+        code, record, lines = compared(tiny["folder"], runs)
+        part_line = next(line for line in lines if line.startswith("  part t:"))
+        print("the part's line, swap-blank %s: %s" % (how, part_line[-200:]))
+        assert said in part_line and "desktop's blank run" not in part_line.split(said)[1]
+        assert code == 1 and lines[-1] == "== E1 CARD VERDICT: FAIL"
+        assert record["parts"] == [tiny["reference"]], "the desktop's model run stood in, and the part is E1's"

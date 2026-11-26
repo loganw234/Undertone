@@ -567,6 +567,17 @@ def first_epoch_change(data, first, epoch):
     return None
 
 
+def run_end(runs, name):
+    """How a run ended, from host.run_case's report.json: "pass", "refused <name>", "failed" or "deadline"; None
+    when there is no report."""
+    report = os.path.join(runs, name, "report.json")
+    if not os.path.exists(report):
+        return None
+    got = read_json(report)
+    return "refused %s" % got["refused"]["name"] if "refused" in got else (
+        "failed" if "failed" in got else ("deadline" if "deadline" in got else "pass"))
+
+
 def compare_run(folder, r, runs, keep=False):
     """One run: the card's records.bin against the model's expectation. A report, and the bytes when `keep`."""
     exp = read_json(os.path.join(folder, "expect", r["name"] + ".json"))
@@ -576,8 +587,7 @@ def compare_run(folder, r, runs, keep=False):
     if os.path.exists(report):
         got = read_json(report)
         rep["run"], rep["swap"] = got.get("run"), got.get("swap")
-        rep["end"] = "refused %s" % got["refused"]["name"] if "refused" in got else (
-            "failed" if "failed" in got else ("deadline" if "deadline" in got else "pass"))
+        rep["end"] = run_end(runs, r["name"])
     if not os.path.exists(path):
         return rep, None
     data = read_bytes(path)
@@ -658,17 +668,28 @@ def card_part(folder, key, runs, order, swap_part, out, stated=False):
     if key == swap_part and "swap-blank" in order:
         r = order["swap-blank"]
         path = os.path.join(runs, r["name"], "records.bin")
-        if os.path.exists(path):
-            data = read_bytes(path)
-            prefix = data[:r["swap_at"] * P0.RECORD_BYTES]
-            got["blank_prefix_equal"] = len(prefix) == r["swap_at"] * P0.RECORD_BYTES and \
-                sha(prefix) == desktop["blank_records_sha256"]
-            recs = list(P0.RECORD.iter_unpack(prefix[:len(prefix) - len(prefix) % P0.RECORD_BYTES]))
+        whole = r["swap_at"] * P0.RECORD_BYTES
+        data = read_bytes(path) if os.path.exists(path) else None
+        if data is not None and len(data) >= whole:
+            prefix = data[:whole]
+            got["blank_prefix_equal"] = sha(prefix) == desktop["blank_records_sha256"]
+            recs = list(P0.RECORD.iter_unpack(prefix))
             not_blank = sum(1 for x in recs if x[3] != 0)
             training_flags = 0
             for x in recs:
                 training_flags |= x[2]
             blank_from = "the card's swap-blank run, records 0 to %d" % (r["swap_at"] - 1)
+        else:
+            # The run was refused, or ended short, or left no records: the stretch cannot come from the card, and
+            # the line says so rather than naming the desktop's run as if it were the plan (VE1C, its (d)).
+            end = run_end(runs, r["name"])
+            got["blank_prefix_equal"] = None if data is None else False
+            got["blank_short"] = True
+            blank_from = ("NOT the card's: the swap-blank run %s; it left %s of the %d records before the commit, so "
+                          "the blank stretch could not come from the card; the desktop's model run stands in"
+                          % ("ended %s" % end if end else "left no report.json",
+                             "none (no records.bin)" if data is None else "%d" % (len(data) // P0.RECORD_BYTES),
+                             r["swap_at"]))
     got["blank_from"] = blank_from
     extra = extra_of(dict(desktop, training_flags=training_flags), first_new, got["learned_flags"], not_blank)
     part = evaluate_card(p, reads["learned"], reads["matched"], learned, summary["stats"], extra)
@@ -744,9 +765,9 @@ def compare(folder, runs, keys=None, references=None, committed_output=None, out
             % (key, "no reference given" if ref is None else
                ("EQUAL to %s, key for key" % whose if not differ else "DIFFERS from %s in %s" % (whose, ", ".join(differ))),
                "equal to" if got["matched_identical_to_stats"] else "NOT equal to", got["flags"], got["blank_from"],
-               "" if got["blank_prefix_equal"] is None else ("; its records equal the desktop's blank run" if
-                                                              got["blank_prefix_equal"] else
-                                                              "; its records are NOT the desktop's blank run")))
+               "" if got["blank_prefix_equal"] is None or got.get("blank_short") else (
+                   "; its records equal the desktop's blank run" if got["blank_prefix_equal"] else
+                   "; its records are NOT the desktop's blank run")))
     record["parts"] = parts
     # the judge
     if stated and len(parts) == len(E1.COUNTS) and sorted(p["part"] for p in parts) == list(range(len(E1.COUNTS))):

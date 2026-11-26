@@ -70,7 +70,9 @@ flip=$(grep -E '^flip-' "$CASES/order.txt" | cut -d' ' -f1)
 against=$(field "$CASES/expect/$flip.json" against 2>/dev/null)
 want=$(field "$CASES/expect/$against.json" sha256 2>/dev/null)
 got=$(sha256sum "$R/$flip/records.bin" 2>/dev/null | cut -d' ' -f1)
-if [ "$got" = "$want" ]; then echo "$flip the SAME as $against's: the flip was NOT seen"; else echo "$flip differs from $against's, as it must"; fi
+if [ -z "$got" ] || [ -z "$want" ]; then echo "$flip NOT COMPARED: its records or the expectation of $against are missing";
+elif [ "$got" = "$want" ]; then echo "$flip the SAME as $against's: the flip was NOT seen";
+else echo "$flip differs from $against's, as it must"; fi
 
 echo "== $(date '+%H:%M:%S') health after"
 health after

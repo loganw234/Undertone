@@ -53,6 +53,36 @@ def test_e1c_every_flag_the_box_script_hands_run_piece_is_one_run_case_takes():
     assert "--swap-unbatched" in declared and "--swap-unbatched" not in handed, "the swap is batched, as round 3's"
 
 
+def test_e1c_the_box_script_bounds_each_run_goes_on_after_a_refused_one_and_ends_as_written():
+    """Read, not run: no test may start that shell. Each run of run_piece sits under `timeout 900`; nothing stops the
+    script after a run that ends refused or failed (no `set -e`, no exit but the one before any run, nothing after
+    the loop's call); and its last lines, the flip's comparison by hash and the end, are as written, the flip's
+    comparison saying NOT COMPARED, never SAME, when either hash is missing."""
+    text = script_text()
+    lines = text.split("\n")
+    code = [line for line in lines if line.strip() and not line.lstrip().startswith("#")]
+    runs = [line for line in code if "python3 hw/e0c/run_piece.py" in line]
+    assert len(runs) == 1 and "timeout 900 python3 hw/e0c/run_piece.py" in runs[0]
+    assert "set -u" in code and not any(line.strip().startswith("set -e") or "set -o errexit" in line for line in code)
+    exits = [line.strip() for line in code if "exit" in line.replace("exit $?", "").replace("exit %s", "")]
+    assert exits == ['mkdir -p "$R"; cd "$R" || exit 1'], exits
+    loop = code.index("while read -r line; do")
+    assert code[loop:loop + 4] == ["while read -r line; do", '    [ -n "$line" ] || continue', "    one $line",
+                                   'done < "$CASES/order.txt"']
+    tail = code[code.index('flip=$(grep -E \'^flip-\' "$CASES/order.txt" | cut -d\' \' -f1)'):]
+    assert tail[:6] == [
+        'flip=$(grep -E \'^flip-\' "$CASES/order.txt" | cut -d\' \' -f1)',
+        'against=$(field "$CASES/expect/$flip.json" against 2>/dev/null)',
+        'want=$(field "$CASES/expect/$against.json" sha256 2>/dev/null)',
+        'got=$(sha256sum "$R/$flip/records.bin" 2>/dev/null | cut -d\' \' -f1)',
+        'if [ -z "$got" ] || [ -z "$want" ]; then echo "$flip NOT COMPARED: its records or the expectation of $against '
+        'are missing";',
+        'elif [ "$got" = "$want" ]; then echo "$flip the SAME as $against\'s: the flip was NOT seen";']
+    assert tail[6] == 'else echo "$flip differs from $against\'s, as it must"; fi'
+    assert tail[-1] == 'echo "== $(date \'+%H:%M:%S\') end"'
+    assert sum("SHA256SUMS" in line for line in tail) == 1 and any("health after" in line for line in tail)
+
+
 def test_e1c_the_box_check_sees_a_planted_import():
     import tempfile
     with tempfile.TemporaryDirectory() as d:

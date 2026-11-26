@@ -103,6 +103,15 @@ def test_e1c_a_pulse_a_bound_splits_and_schedules_that_do_not_join_back_are_refu
         with pytest.raises(E1CRefusal) as e:
             K.schedule_of(pieces[3] if start > pieces[2].first else pieces[1], [dict(rec, index=start)])
         assert e.value.name == "PIECE_CUT", start
+    # each side of the check alone: a pulse that starts before the piece and ends in it, and one that starts in the
+    # piece and ends past it
+    for piece, start in ((pieces[3], pieces[3].first - 1), (pieces[2], pieces[3].first - 1),
+                         (pieces[2], pieces[2].first + pieces[2].frames - 63), (pieces[0], pieces[1].first - 1)):
+        with pytest.raises(E1CRefusal) as e:
+            K.schedule_of(piece, [dict(rec, index=start)])
+        assert e.value.name == "PIECE_CUT" and "splits the pulse of the record at %d" % start in str(e.value), (piece, start)
+    assert K.schedule_of(pieces[2], [dict(rec, index=pieces[3].first - 64)])[0]["index"] == pieces[2].frames - 64, \
+        "a pulse whose last sample is the piece's last frame is the piece's"
     assert K.schedule_of(pieces[3], [dict(rec, index=pieces[3].first - 64)]) == []      # one that ends before it
     assert K.schedule_of(pieces[3], [dict(rec, index=pieces[3].first)])[0]["index"] == 0
     scheds = [K.schedule_of(x, held) for x in pieces]

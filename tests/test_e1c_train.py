@@ -119,7 +119,10 @@ def test_e1c_the_training_check_refuses_each_thing_it_checks_alone():
             e1c.check_training(p, frames, labels)
         assert e.value.name == "TRAINED_ON"
     info = {"coefficients": [1], "blob_sha256": "x", "learner_counts": [1, 1], "handover_refusal": None}
-    for key in e1c.TRAINING_KEYS:
+    keys = ("coefficients", "blob_sha256", "learner_counts", "handover_refusal")     # written out, not read from e1c
+    assert e1c.TRAINING_KEYS == keys
+    assert e1c.check_learned(0, info, dict(info)) == info
+    for key in keys:
         with pytest.raises(E1CRefusal) as e:
             e1c.check_learned(0, info, dict(info, **{key: "other"}))
         assert e.value.name == "LEARNED_SET" and key in str(e.value)
