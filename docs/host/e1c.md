@@ -311,7 +311,7 @@ Each is stated by the behaviour it concedes.
    - a load at epoch 1;
    - the blank set loaded and swapped out.
 
-   The kernel's benches run the first two in simulation (`rtl/tb/bench_krnl.py`: an empty schedule, and epoch 11), and the host library and the model take the third. The day's comparison decides each.
+   The kernel's benches run the first two in simulation (`rtl/tb/bench_krnl.py`: an empty schedule, and epoch 11), and the host library and the model take the third. The day's comparison decides each. *The card day, 2026-11-26, the lead's:* each of the three ran IDENTICAL on the card ([CARD-e1.md](../studies/CARD-e1.md)).
 8. **The stand-in models no block.** XRT, the box, the 205 MB buffers and the host keeping up with 48,976 truth records while a run goes are the card day's, as E0C's were. The stand-in takes a truth record however late it is written, and never says a record came late.
 9. **`evaluate_card` is a mirror of `evaluate`,** held equal to it on the tiny plan (through compare) and the short form (directly). A divergence in a key no case varies would pass. One case of that kind is known: on the tiny plan an exchanged baseline set moves no key of the part, so that case holds the run's identity and the statistics' digest and not the part.
 10. **The premise at full scale** is the expect run's, the lead's, before the card day. The gate has the tiny plan, small streams and the short form's reads; the short form end to end is a command, run once (section 10).
