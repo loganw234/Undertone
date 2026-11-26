@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="841" height="690" viewBox="0 0 841 690" font-family="sans-serif" role="img" aria-label="Studies D2 and D3: launch windows against control windows, by station">
+<title>Studies D2 and D3: launch windows against control windows, by station</title>
+<style>@media (prefers-color-scheme: dark){.bg{fill:#0d1117}.ink{fill:#e6edf3}.muted{fill:#9198a1}.grid{stroke:#30363d}.axis{stroke:#e6edf3}}</style>
+<rect class="bg" fill="#ffffff" height="690.00" width="841.00" x="0.00" y="0.00"/>
+<text class="ink" fill="#1f2328" font-size="16" font-weight="bold" text-anchor="start" x="16.00" y="26.00">Studies D2 and D3: launch windows against control windows, by station</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="46.00">The share of each kind of window with a record in which the study's frozen rule found a hit,</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="62.00">at each of its stations, nearest the pad first. Each bar carries its hits and its windows.</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="78.00">Authority: neither. Each study's own rule and Fisher's exact test; no detector was run.</text>
+<g class="panel" data-height="220.00" data-left="84.00" data-panel="d2" data-top="102.00" data-width="440.00" data-x-hi="4" data-x-lo="0" data-x-scale="category" data-y-hi="1.0" data-y-lo="0.0" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="322.00" y2="322.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="326.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="278.00" y2="278.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="282.00">0.2</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="234.00" y2="234.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="238.00">0.4</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="190.00" y2="190.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="194.00">0.6</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="146.00" y2="146.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="150.00">0.8</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="102.00" y2="102.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="106.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="139.00" x2="139.00" y1="102.00" y2="322.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="139.00" y="338.00">CI.GATR (13.5 km)</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="249.00" x2="249.00" y1="102.00" y2="322.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="249.00" y="338.00">CI.LOC (16.5 km)</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="359.00" x2="359.00" y1="102.00" y2="322.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="359.00" y="338.00">CI.LCP (32.6 km)</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="469.00" x2="469.00" y1="102.00" y2="322.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="469.00" y="338.00">CI.SYN (49.9 km)</text>
+<rect class="axis" fill="none" height="220.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="102.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="358.00">D2: station (its distance from the pad)</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 212.00)" x="32.00" y="212.00">share of windows that hit</text>
+<rect data-hits="7" data-series="launch" data-station="CI.GATR" data-windows="7" data-x="0" data-y0="0" data-y1="7/7" fill="#2f6fd0" height="220.00" stroke="none" width="19.80" x="96.10" y="102.00"/>
+<rect data-hits="0" data-series="wrong" data-station="CI.GATR" data-windows="7" data-x="0" data-y0="0" data-y1="0/7" fill="#c8640a" height="0.00" stroke="none" width="19.80" x="118.10" y="322.00"/>
+<rect data-hits="0" data-series="shifted" data-station="CI.GATR" data-windows="7" data-x="0" data-y0="0" data-y1="0/7" fill="#9b59d0" height="0.00" stroke="none" width="19.80" x="140.10" y="322.00"/>
+<rect data-hits="0" data-series="control" data-station="CI.GATR" data-windows="21" data-x="0" data-y0="0" data-y1="0/21" fill="#808080" height="0.00" stroke="none" width="19.80" x="162.10" y="322.00"/>
+<rect data-hits="23" data-series="launch" data-station="CI.LOC" data-windows="23" data-x="1" data-y0="0" data-y1="23/23" fill="#2f6fd0" height="220.00" stroke="none" width="19.80" x="206.10" y="102.00"/>
+<rect data-hits="0" data-series="wrong" data-station="CI.LOC" data-windows="23" data-x="1" data-y0="0" data-y1="0/23" fill="#c8640a" height="0.00" stroke="none" width="19.80" x="228.10" y="322.00"/>
+<rect data-hits="1" data-series="shifted" data-station="CI.LOC" data-windows="23" data-x="1" data-y0="0" data-y1="1/23" fill="#9b59d0" height="9.57" stroke="none" width="19.80" x="250.10" y="312.43"/>
+<rect data-hits="0" data-series="control" data-station="CI.LOC" data-windows="68" data-x="1" data-y0="0" data-y1="0/68" fill="#808080" height="0.00" stroke="none" width="19.80" x="272.10" y="322.00"/>
+<rect data-hits="23" data-series="launch" data-station="CI.LCP" data-windows="23" data-x="2" data-y0="0" data-y1="23/23" fill="#2f6fd0" height="220.00" stroke="none" width="19.80" x="316.10" y="102.00"/>
+<rect data-hits="0" data-series="wrong" data-station="CI.LCP" data-windows="23" data-x="2" data-y0="0" data-y1="0/23" fill="#c8640a" height="0.00" stroke="none" width="19.80" x="338.10" y="322.00"/>
+<rect data-hits="0" data-series="shifted" data-station="CI.LCP" data-windows="23" data-x="2" data-y0="0" data-y1="0/23" fill="#9b59d0" height="0.00" stroke="none" width="19.80" x="360.10" y="322.00"/>
+<rect data-hits="0" data-series="control" data-station="CI.LCP" data-windows="68" data-x="2" data-y0="0" data-y1="0/68" fill="#808080" height="0.00" stroke="none" width="19.80" x="382.10" y="322.00"/>
+<rect data-hits="20" data-series="launch" data-station="CI.SYN" data-windows="23" data-x="3" data-y0="0" data-y1="20/23" fill="#2f6fd0" height="191.30" stroke="none" width="19.80" x="426.10" y="130.70"/>
+<rect data-hits="0" data-series="wrong" data-station="CI.SYN" data-windows="23" data-x="3" data-y0="0" data-y1="0/23" fill="#c8640a" height="0.00" stroke="none" width="19.80" x="448.10" y="322.00"/>
+<rect data-hits="0" data-series="shifted" data-station="CI.SYN" data-windows="23" data-x="3" data-y0="0" data-y1="0/23" fill="#9b59d0" height="0.00" stroke="none" width="19.80" x="470.10" y="322.00"/>
+<rect data-hits="0" data-series="control" data-station="CI.SYN" data-windows="68" data-x="3" data-y0="0" data-y1="0/68" fill="#808080" height="0.00" stroke="none" width="19.80" x="492.10" y="322.00"/>
+</g>
+<g class="panel" data-height="220.00" data-left="84.00" data-panel="d3" data-top="386.00" data-width="440.00" data-x-hi="4" data-x-lo="0" data-x-scale="category" data-y-hi="1.0" data-y-lo="0.0" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="606.00" y2="606.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="610.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="562.00" y2="562.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="566.00">0.2</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="518.00" y2="518.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="522.00">0.4</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="474.00" y2="474.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="478.00">0.6</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="430.00" y2="430.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="434.00">0.8</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="386.00" y2="386.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="390.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="139.00" x2="139.00" y1="386.00" y2="606.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="139.00" y="622.00">CI.MPP (78.5 km)</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="249.00" x2="249.00" y1="386.00" y2="606.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="249.00" y="622.00">CI.CDM (120.4 km)</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="359.00" x2="359.00" y1="386.00" y2="606.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="359.00" y="622.00">CI.HDH (181.4 km)</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="469.00" x2="469.00" y1="386.00" y2="606.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="469.00" y="622.00">CI.SRN (275.0 km)</text>
+<rect class="axis" fill="none" height="220.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="386.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="642.00">D3: station (its distance from the pad)</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 496.00)" x="32.00" y="496.00">share of windows that hit</text>
+<rect data-hits="23" data-series="launch" data-station="CI.MPP" data-windows="23" data-x="0" data-y0="0" data-y1="23/23" fill="#2f6fd0" height="220.00" stroke="none" width="19.80" x="96.10" y="386.00"/>
+<rect data-hits="4" data-series="wrong" data-station="CI.MPP" data-windows="23" data-x="0" data-y0="0" data-y1="4/23" fill="#c8640a" height="38.26" stroke="none" width="19.80" x="118.10" y="567.74"/>
+<rect data-hits="4" data-series="shifted" data-station="CI.MPP" data-windows="23" data-x="0" data-y0="0" data-y1="4/23" fill="#9b59d0" height="38.26" stroke="none" width="19.80" x="140.10" y="567.74"/>
+<rect data-hits="4" data-series="control" data-station="CI.MPP" data-windows="68" data-x="0" data-y0="0" data-y1="4/68" fill="#808080" height="12.94" stroke="none" width="19.80" x="162.10" y="593.06"/>
+<rect data-hits="20" data-series="launch" data-station="CI.CDM" data-windows="23" data-x="1" data-y0="0" data-y1="20/23" fill="#2f6fd0" height="191.30" stroke="none" width="19.80" x="206.10" y="414.70"/>
+<rect data-hits="0" data-series="wrong" data-station="CI.CDM" data-windows="23" data-x="1" data-y0="0" data-y1="0/23" fill="#c8640a" height="0.00" stroke="none" width="19.80" x="228.10" y="606.00"/>
+<rect data-hits="1" data-series="shifted" data-station="CI.CDM" data-windows="23" data-x="1" data-y0="0" data-y1="1/23" fill="#9b59d0" height="9.57" stroke="none" width="19.80" x="250.10" y="596.43"/>
+<rect data-hits="2" data-series="control" data-station="CI.CDM" data-windows="67" data-x="1" data-y0="0" data-y1="2/67" fill="#808080" height="6.57" stroke="none" width="19.80" x="272.10" y="599.43"/>
+<rect data-hits="14" data-series="launch" data-station="CI.HDH" data-windows="23" data-x="2" data-y0="0" data-y1="14/23" fill="#2f6fd0" height="133.91" stroke="none" width="19.80" x="316.10" y="472.09"/>
+<rect data-hits="2" data-series="wrong" data-station="CI.HDH" data-windows="23" data-x="2" data-y0="0" data-y1="2/23" fill="#c8640a" height="19.13" stroke="none" width="19.80" x="338.10" y="586.87"/>
+<rect data-hits="2" data-series="shifted" data-station="CI.HDH" data-windows="23" data-x="2" data-y0="0" data-y1="2/23" fill="#9b59d0" height="19.13" stroke="none" width="19.80" x="360.10" y="586.87"/>
+<rect data-hits="5" data-series="control" data-station="CI.HDH" data-windows="68" data-x="2" data-y0="0" data-y1="5/68" fill="#808080" height="16.18" stroke="none" width="19.80" x="382.10" y="589.82"/>
+<rect data-hits="13" data-series="launch" data-station="CI.SRN" data-windows="23" data-x="3" data-y0="0" data-y1="13/23" fill="#2f6fd0" height="124.35" stroke="none" width="19.80" x="426.10" y="481.65"/>
+<rect data-hits="7" data-series="wrong" data-station="CI.SRN" data-windows="23" data-x="3" data-y0="0" data-y1="7/23" fill="#c8640a" height="66.96" stroke="none" width="19.80" x="448.10" y="539.04"/>
+<rect data-hits="2" data-series="shifted" data-station="CI.SRN" data-windows="23" data-x="3" data-y0="0" data-y1="2/23" fill="#9b59d0" height="19.13" stroke="none" width="19.80" x="470.10" y="586.87"/>
+<rect data-hits="7" data-series="control" data-station="CI.SRN" data-windows="68" data-x="3" data-y0="0" data-y1="7/68" fill="#808080" height="22.65" stroke="none" width="19.80" x="492.10" y="583.35"/>
+</g>
+<g class="legend">
+<rect fill="#2f6fd0" height="12.00" stroke="none" width="16.00" x="552" y="104.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="114.00">launch windows</text>
+<rect fill="#c8640a" height="12.00" stroke="none" width="16.00" x="552" y="122.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="132.00">wrong windows, closing just before T0</text>
+<rect fill="#9b59d0" height="12.00" stroke="none" width="16.00" x="552" y="140.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="150.00">windows an hour early</text>
+<rect fill="#808080" height="12.00" stroke="none" width="16.00" x="552" y="158.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="168.00">control windows, whole weeks away</text>
+</g>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="654.00">source: docs/studies/d2/scored-output.txt  sha256 ce75702876d44b825d54c5be173b417aa8c9a3ca849ca8ac92ee4fe7103cd5ba</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="668.00">source: docs/studies/d3/scored-output.txt  sha256 e2b3d1329d00596b1904782432c466c012ab09d3e5dae42a88d440bd10845f3e</text>
+</svg>

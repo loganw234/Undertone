@@ -460,10 +460,98 @@ def pulses(r):
     return fig.render(LEGEND_X, top_px + 8)
 
 
+# ---------------------------------------------------------------- the launch studies, D2 and D3
+
+LAUNCH_STUDIES = (("D2", "docs/studies/d2/scored-output.txt"), ("D3", "docs/studies/d3/scored-output.txt"))
+KINDS = (("launch", "launch windows"), ("wrong", "wrong windows, closing just before T0"),
+         ("shifted", "windows an hour early"), ("control", "control windows, whole weeks away"))
+KIND_COLOURS = ("blue", "orange", "purple", "grey")
+BAR_WIDTH = 0.18                        # of a station's slot: four bars a slot
+BAR_OFFSETS = (-0.3, -0.1, 0.1, 0.3)    # each bar's centre from its slot's centre, in slots
+WINDOW_ROW = re.compile(r"\| (\d{4}-\d{3}) \| (CI\.[A-Z0-9]+) \| (launch|wrong|shifted|control) \| [^|]* \| "
+                        r"[^|]* \| [^|]* \| (yes|no|-) \| [^|]*\|")
+TEST_ROW = re.compile(r"\| (CI\.[A-Z0-9]+) \| (\d+\.\d) \| \d+ \| (\d+) of (\d+) \| (\d+) of (\d+) \| .*\|")
+CONTROLS_ROW = re.compile(r"\| (CI\.[A-Z0-9]+) \| (\d+) of (\d+) \| [^|]+ \| (\d+) of (\d+) \| [^|]+ \| [^|]+ \|")
+
+
+def parse_scored(text, rel):
+    """(stations [(name, km text)], {(station, kind): (hits, windows with a record)}) from a study's output.
+
+    The counts are the table "Every window", one row a window: its hit "yes" or "no", or "-" for no
+    record, which is not counted. The station rows of the two summary tables are read too, the
+    test's (launch and control) and the controls' (wrong and an hour early), and each count there
+    must equal the windows' (VIZ-RECORD-PAIR). A row starting "| 20" or "| CI." in neither shape
+    is refused, VIZ-PARSE. The stations are drawn in the test table's order.
+    """
+    stations, summary, counts = [], {}, {}
+    for number, line in enumerate(text.split("\n"), 1):
+        if line.startswith("| 20"):
+            m = WINDOW_ROW.fullmatch(line)
+            if not m:
+                raise VizRefusal("VIZ-PARSE", "%s line %d is not a window row: %r" % (rel, number, line))
+            hits, usable = counts.get((m.group(2), m.group(3)), (0, 0))
+            if m.group(4) != "-":
+                hits, usable = hits + (m.group(4) == "yes"), usable + 1
+            counts[(m.group(2), m.group(3))] = (hits, usable)
+        elif line.startswith("| CI."):
+            t, c = TEST_ROW.fullmatch(line), CONTROLS_ROW.fullmatch(line)
+            if t and not c:
+                stations.append((t.group(1), t.group(2)))
+                summary[(t.group(1), "launch")] = (int(t.group(3)), int(t.group(4)))
+                summary[(t.group(1), "control")] = (int(t.group(5)), int(t.group(6)))
+            elif c and not t:
+                summary[(c.group(1), "wrong")] = (int(c.group(2)), int(c.group(3)))
+                summary[(c.group(1), "shifted")] = (int(c.group(4)), int(c.group(5)))
+            else:
+                raise VizRefusal("VIZ-PARSE", "%s line %d is not a station row: %r" % (rel, number, line))
+    if not stations:
+        raise VizRefusal("VIZ-PARSE", "%s holds no station row" % rel)
+    for station, _ in stations:
+        for kind, _ in KINDS:
+            if counts.get((station, kind)) != summary.get((station, kind)):
+                raise VizRefusal("VIZ-RECORD-PAIR", "%s: %s's %s windows count %r, its summary %r"
+                                 % (rel, station, kind, counts.get((station, kind)), summary.get((station, kind))))
+    return stations, counts
+
+
+def launch_windows(r):
+    studies = [(name, rel, parse_scored(r.text(rel), rel)) for name, rel in LAUNCH_STUDIES]
+    fig = Figure("launch-windows", "Studies D2 and D3: launch windows against control windows, by station",
+                 ["The share of each kind of window with a record in which the study's frozen rule found a hit,",
+                  "at each of its stations, nearest the pad first. Each bar carries its hits and its windows.",
+                  "Authority: neither. Each study's own rule and Fisher's exact test; no detector was run."],
+                 WIDTH)
+    top = fig.top_of_plots()
+    colours = [SERIES[c] for c in KIND_COLOURS]
+    for i, (name, rel, (stations, counts)) in enumerate(studies):
+        shares = []
+        for station, _ in stations:
+            for kind, _ in KINDS:
+                hits, usable = counts[(station, kind)]
+                if usable == 0:
+                    raise VizRefusal("VIZ-RECORD-FIELD", "%s: %s has no %s window with a record"
+                                     % (rel, station, kind))
+                shares.append(Ratio(hits, usable))
+        xaxis = CategoryAxis("%s: station (its distance from the pad)" % name,
+                             ["%s (%s km)" % (s, km) for s, km in stations])
+        panel = fig.add_panel(Panel(name.lower(), PLOT_LEFT, top + i * (220 + 64), PLOT_WIDTH, 220, xaxis,
+                                    LinearAxis("share of windows that hit", shares)))
+        for slot, (station, _) in enumerate(stations):
+            for (kind, _), colour, offset in zip(KINDS, colours, BAR_OFFSETS):
+                hits, usable = counts[(station, kind)]
+                panel.bar(kind, slot, 0, Ratio(hits, usable), colour, offset=offset, width=BAR_WIDTH,
+                          extra={"data-station": station, "data-hits": str(hits), "data-windows": str(usable)})
+    for (kind, label), colour in zip(KINDS, colours):
+        fig.legend("bar", colour, label)
+    fig.source(r.log)
+    return fig.render(LEGEND_X, top + 8)
+
+
 FIGURES = (
     ("e0-efficiency.svg", e0_efficiency),
     ("e1-learning.svg", e1_learning),
     ("e2-recovery.svg", e2_recovery),
     ("card-timed.svg", card_timed),
     ("pulses.svg", pulses),
+    ("launch-windows.svg", launch_windows),
 )

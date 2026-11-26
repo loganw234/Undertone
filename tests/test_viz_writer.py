@@ -366,6 +366,35 @@ def test_viz_timed_refusals(edit):
     refused("VIZ-RECORD-FIELD", F.card_timed, patched(json_edits={TIMED: edit}))
 
 
+D2 = "docs/studies/d2/scored-output.txt"
+
+
+def gatr_wrong_unrecorded(t):
+    """CI.GATR's wrong windows all without a record, its summary saying 0 of 0: consistent, and empty."""
+    t = re.sub(r"(\| CI\.GATR \| wrong \| [^|]* \| [^|]* \| [^|]* \| )(yes|no)( \|)", r"\1-\3", t)
+    return t.replace("| CI.GATR | 0 of 7 | 1 | 0 of 7 |", "| CI.GATR | 0 of 0 | 1 | 0 of 7 |")
+
+
+@pytest.mark.parametrize("edit,name", [
+    (lambda t: t.replace("| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | yes |  |",
+                         "| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | maybe |  |"), "VIZ-PARSE"),
+    (lambda t: t.replace("| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | yes |  |",
+                         "| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | yes |"), "VIZ-PARSE"),
+    (lambda t: t.replace("| CI.GATR | 0 of 7 | 1 | 0 of 7 | 1 | neither rejects |",
+                         "| CI.GATR | none | 1 | 0 of 7 | 1 | neither rejects |"), "VIZ-PARSE"),
+    (lambda t: re.sub(r"(?m)^\| CI\.", "| XX.", t), "VIZ-PARSE"),                            # no station rows
+    (lambda t: t.replace("| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | yes |",
+                         "| 2024-091 | CI.LOC | launch | 0 | 207 | 95 | no |"), "VIZ-RECORD-PAIR"),
+    (lambda t: t.replace("| CI.GATR | 0 of 7 | 1 | 0 of 7 |", "| CI.GATR | 0 of 7 | 1 | 1 of 7 |"),
+     "VIZ-RECORD-PAIR"),
+    (gatr_wrong_unrecorded, "VIZ-RECORD-FIELD"),
+])
+def test_viz_launch_refusals(edit, name):
+    e = refused(name, F.launch_windows, patched(text_edits={D2: edit}))
+    if edit is gatr_wrong_unrecorded:
+        assert e.detail == "%s: CI.GATR has no wrong window with a record" % D2
+
+
 @pytest.mark.parametrize("fn,edits,pulses_edit", [
     (F.card_timed, {TIMED: lambda v: v["generations"].reverse()}, None),             # ordered by number
     (F.e2_recovery, {E2_PART: lambda v: v["entries"].reverse()}, None),               # ordered by g
@@ -389,7 +418,8 @@ def test_viz_pulses_figure_refuses_more_pulses_than_colours():
 # ---------------------------------------------------------------- the command
 
 
-COPIED = ["vectors/e0c/round1", "docs/studies/e0-card", "docs/studies/e1", "docs/studies/e2", "docs/figures"]
+COPIED = ["vectors/e0c/round1", "docs/studies/e0-card", "docs/studies/e1", "docs/studies/e2", "docs/studies/d2",
+          "docs/studies/d3", "docs/figures"]
 
 
 @pytest.fixture
@@ -407,12 +437,12 @@ def fig_path(tree, name):
 
 def test_viz_command_check_and_write(tree, capsys):
     assert main(["--check", "--root", tree]) == 0
-    assert capsys.readouterr().out == "OK figures: 5 figure(s) equal what the records make\n"
+    assert capsys.readouterr().out == "OK figures: 6 figure(s) equal what the records make\n"
     open(fig_path(tree, "pulses.svg"), "ab").write(b" ")
     assert main(["--check", "--root", tree]) == 1
     assert capsys.readouterr().out == "STALE docs/figures/pulses.svg: run python -m viz and commit it with its records\n"
     assert main(["--root", tree]) == 0
-    assert capsys.readouterr().out.split("\n")[:5] == ["wrote docs/figures/%s" % n for n, _ in F.FIGURES]
+    assert capsys.readouterr().out.split("\n")[:6] == ["wrote docs/figures/%s" % n for n, _ in F.FIGURES]
     assert main(["--check", "--root", tree]) == 0
     os.remove(fig_path(tree, "pulses.svg"))
     assert main(["--check", "--root", tree]) == 1                  # a missing figure is stale
@@ -439,7 +469,7 @@ def test_viz_an_unknown_figure_is_refused_and_nothing_is_written(tree, capsys):
 
 def test_viz_python_dash_m_viz_check_on_the_tree():
     p = subprocess.run([sys.executable, "-m", "viz", "--check"], cwd=ROOT, capture_output=True, text=True)
-    assert (p.returncode, p.stdout) == (0, "OK figures: 5 figure(s) equal what the records make\n"), p.stderr
+    assert (p.returncode, p.stdout) == (0, "OK figures: 6 figure(s) equal what the records make\n"), p.stderr
 
 
 # ---------------------------------------------------------------- the imports
