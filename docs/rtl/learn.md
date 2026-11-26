@@ -169,7 +169,7 @@ And two more of its notes. **Label 0's FULL and label 1's FULL are each removed 
 
 Each is stated by the behaviour it concedes.
 
-1. **One simulator,** Icarus Verilog 12.0. Nothing is synthesised; wave 3 synthesises `learn` alone, out of context.
+1. **One simulator,** Icarus Verilog 12.0. Only `learn` and `learn_port` alone are synthesised, out of context, for their cost and nothing else: `docs/studies/SYN-learn.md` (the lead's, wave 3). Nothing is implemented, and no clock is claimed.
 2. **F is met at the chain's rate.** With frames faster than one every 20 clocks a channel, a commit the model takes at u + F is refused UPDATE_UNFINISHED: seen, not silent. A host that holds the core's port for more than about half the update's budget does the same. The windows are right at any rate up to a frame a clock.
 3. **The core's and the injector's state are read by hierarchical name** in the two simulation tops. A synthesis tool may not take them, and a rename in `core.sv` or `inject.sv` stops these builds.
 4. **`closed` is worked in the tops from core.sv's tag layout**, retyped from the package. A core that changed its layout would be seen only as a core refusal at the learner's write or as an update that never finishes.
@@ -204,7 +204,7 @@ Until then the kernel sends a write at 0xD00 to 0xDFF to no block, dropped with 
 
 ## 8. What it costs, as far as a count can say
 
-Counted at the definition's maxima (B = 128, N = 32); no LUT and no clock is claimed (row L7).
+Counted at the definition's maxima (B = 128, N = 32); no LUT and no clock is claimed here (row L7). The look-up tables, registers and DSP slices were measured afterwards, by an out-of-context synthesis, in `docs/studies/SYN-learn.md`; no clock is claimed there either.
 
 | what | s16x1 | s24x3 |
 |---|---|---|
@@ -216,7 +216,7 @@ Counted at the definition's maxima (B = 128, N = 32); no LUT and no clock is cla
 | multipliers | 2 of 48 × 32 | 2 of 56 × 32 |
 | the divider | one 81-bit restoring step, iterated | one 89-bit step |
 
-The truth store is read at three places at once in this RTL (the two cursors and the record after one); whether a tool makes that of LUTs or of a block RAM with registers before it is the synthesis's to measure.
+The truth store is read at three places at once in this RTL (the two cursors and the record after one); whether a tool makes that of LUTs or of a block RAM with registers before it is the synthesis's to measure. The synthesis made no block RAM under either profile (SYN-learn.md, row SL1).
 
 ## 9. Register
 
