@@ -69,10 +69,10 @@
 <rect fill="#2e8b3e" fill-opacity="0.18" height="12.00" stroke="#2e8b3e" stroke-dasharray="2 3" stroke-width="1" width="24.00" x="548" y="192.00"/>
 <text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="202.00">its tolerance, 4 se (stats.tolerance)</text>
 </g>
-<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="486.00">source: docs/studies/e1/c0.json  sha256 25b71f3b0c7cf2ccab90329fbecf8c1ab1c62a4a6fd372634e542d2ce533a5d0</text>
-<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="500.00">source: docs/studies/e1/c1.json  sha256 1161c38846d511626329a5cf2a9b871b83f490d7c5feaaa114e83d779e05dd04</text>
-<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="514.00">source: docs/studies/e1/c2.json  sha256 8042d527cfa4120729faa292f9d56e6f8e55030a918198a03faa2db42951b2a4</text>
-<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="528.00">source: docs/studies/e1/c3.json  sha256 99cd8b20ffc5d31df6a229fa40c85a02f2d3cfe2952e3023fd9b05d7947873db</text>
-<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="542.00">source: docs/studies/e1/c4.json  sha256 3ea394c80c49fdc05f9bd231ae22f6de3b582fcde0cd959d8519a97585aed1f9</text>
-<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="556.00">source: docs/studies/e1/c5.json  sha256 e0b898589ea47ee48720951fa06ca1a96e4c02ee4134bdd26225b93cd8366a03</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="486.00">source: docs/studies/e1/c0.json  sha256 d1e0618c5afbeaf9d4ea7b53d3bfd383de2394228fcfd169a1a9154eca37b6c4</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="500.00">source: docs/studies/e1/c1.json  sha256 f93012331d0c6c04379e5d187d6477ffce300642241e8f42a954b2bbd0dcfe96</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="514.00">source: docs/studies/e1/c2.json  sha256 874b949ed82f9dd4f3c523ac76113a790688df23b7663a098106e6ba177369a6</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="528.00">source: docs/studies/e1/c3.json  sha256 32f92c063f5992713e6428e45e7e66f4a45519ca52a295493cb8823882ac3b10</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="542.00">source: docs/studies/e1/c4.json  sha256 b1a17fd9557659d5964569abef23ed83e81eec89587918dcb71f659b1ce8801c</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="556.00">source: docs/studies/e1/c5.json  sha256 93b115af7cc6d187de95949e6b24ff7f5ef20b4e05e034a27a4d7a8f676a4e3e</text>
 </svg>

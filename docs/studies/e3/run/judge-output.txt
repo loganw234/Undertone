@@ -1,0 +1,51 @@
+E3 in software: profile s16x1, Pfa 0.01, z 4.0; the matched filter of e0 against E1's learner of 16384 records
+  MPP: the matched filter 1334 of 102400, the learner 1334 of 102400; cost +0.00000, se 0.00010, REACHES; held: yes
+    carry matched  alternate there 0.01034 of 0.01001 (+0.12 se), back 0.00971 (-0.10 se): CARRIES
+    carry matched  halves    there 0.18424 of 0.01001 (+12.89 se), back 0.00000 (+inf se): DOES NOT CARRY
+    density matched  slope 1.387, se 0.063; first-order threshold se 0.00025
+    carry learned  alternate there 0.01025 of 0.01001 (+0.08 se), back 0.00979 (-0.08 se): CARRIES
+    carry learned  halves    there 0.18426 of 0.01001 (+13.18 se), back 0.00000 (+inf se): DOES NOT CARRY
+    density learned  slope 1.355, se 0.062; first-order threshold se 0.00024
+    the resampling on joins of four blocks: se 0.00010 against 0.00010
+    curve: 1024 records, found 1342, cost -0.00008, se 0.00014, REACHES
+    curve: 4096 records, found 1344, cost -0.00010, se 0.00014, REACHES
+    curve: 65536 records, found 1348, cost -0.00014, se 0.00012, REACHES
+    the instrument: flags 0; scores identical to the statistics': True; core equal to the baseline: True; peak at truth + 63
+  CDM: the matched filter 68000 of 102400, the learner 74626 of 102400; cost -0.06471, se 0.05079, REACHES; held: yes
+    carry matched  alternate there 0.00874 of 0.01001 (-0.42 se), back 0.01120 (+0.36 se): CARRIES
+    carry matched  halves    there 0.04501 of 0.01001 (+6.45 se), back 0.00040 (-40.56 se): DOES NOT CARRY
+    density matched  slope 43.879, se 1.149; first-order threshold se 0.00788
+    carry learned  alternate there 0.01014 of 0.01001 (+0.06 se), back 0.00992 (-0.04 se): CARRIES
+    carry learned  halves    there 0.01425 of 0.01001 (+1.73 se), back 0.00419 (-2.51 se): CARRIES
+    density learned  slope 15.545, se 0.430; first-order threshold se 0.00279
+    the resampling on joins of four blocks: se 0.08802 against 0.05079
+    curve: 1024 records, found 47370, cost +0.20146, se 0.05850, REACHES
+    curve: 4096 records, found 2364, cost +0.64098, se 0.06434, SHORT
+    curve: 65536 records, found 4253, cost +0.62253, se 0.06292, SHORT
+    the instrument: flags 0; scores identical to the statistics': True; core equal to the baseline: True; peak at truth + 63
+  HDH: the matched filter 42319 of 102400, the learner 11485 of 102400; cost +0.30111, se 0.02718, SHORT; held: yes
+    carry matched  alternate there 0.01083 of 0.01001 (+0.58 se), back 0.00915 (-0.64 se): CARRIES
+    carry matched  halves    there 0.01490 of 0.01001 (+2.95 se), back 0.00677 (-3.27 se): CARRIES
+    density matched  slope 45.401, se 1.188; first-order threshold se 0.00815
+    carry learned  alternate there 0.01042 of 0.01001 (+0.29 se), back 0.00968 (-0.25 se): CARRIES
+    carry learned  halves    there 0.05458 of 0.01001 (+12.45 se), back 0.00145 (-29.02 se): DOES NOT CARRY
+    density learned  slope 11.250, se 0.321; first-order threshold se 0.00202
+    the resampling on joins of four blocks: se 0.03903 against 0.02718
+    curve: 1024 records, found 1421, cost +0.39939, se 0.03050, SHORT
+    curve: 4096 records, found 2651, cost +0.38738, se 0.03040, SHORT
+    curve: 65536 records, found 19270, cost +0.22509, se 0.02393, SHORT
+    the instrument: flags 0; scores identical to the statistics': True; core equal to the baseline: True; peak at truth + 63
+  SRN: the matched filter 15742 of 102400, the learner 15782 of 102400; cost -0.00039, se 0.00172, REACHES; held: yes
+    carry matched  alternate there 0.01008 of 0.01001 (+0.04 se), back 0.00993 (-0.04 se): CARRIES
+    carry matched  halves    there 0.01492 of 0.01001 (+2.09 se), back 0.00638 (-2.75 se): CARRIES
+    density matched  slope 22.109, se 0.597; first-order threshold se 0.00397
+    carry learned  alternate there 0.01033 of 0.01001 (+0.16 se), back 0.00969 (-0.16 se): CARRIES
+    carry learned  halves    there 0.01475 of 0.01001 (+2.03 se), back 0.00622 (-2.82 se): CARRIES
+    density learned  slope 22.711, se 0.612; first-order threshold se 0.00408
+    the resampling on joins of four blocks: se 0.00197 against 0.00172
+    curve: 1024 records, found 8154, cost +0.07410, se 0.01244, SHORT
+    curve: 4096 records, found 15415, cost +0.00319, se 0.00243, REACHES
+    curve: 65536 records, found 15876, cost -0.00131, se 0.00257, REACHES
+    the instrument: flags 0; scores identical to the statistics': True; core equal to the baseline: True; peak at truth + 63
+  THE REPORTED READINGS, the model named before the run at every station: MPP REACHES, CDM REACHES, HDH SHORT, SRN REACHES
+== E3 SOFTWARE: the experiment held at every station

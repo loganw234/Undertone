@@ -41,8 +41,11 @@ PART = "e2-part.json"
 OUTPUT = "judge-output.txt"
 # `sha256sum` of the committed files, taken by the lead when they were put in the tree, 2026-11-25: the part as
 # the run wrote it on an export of 804c49c, under the definition with e1; the output with its line ends made LF.
+# Restated by the lead on 2026-11-25, in round 5: the part is now the second run's, made on a git archive export of
+# cbf2e77 from 23:07:32 that day under round 5's definition (85e63d4d...). It differs from the first's in the
+# definition's hash alone; the first part's SHA-256 was 76f0871a.... The judge's output is unchanged.
 SHA256 = {
-    "e2-part.json": "76f0871a06dbf573a439a24ba9638455025fedd85088ecc59a1c5c332ae50964",
+    "e2-part.json": "4d62bfa907fbb6b1f80a13412ce9f9ca4a6d1a5c72d4050e26e8c7c69ab9bf67",
     "judge-output.txt": "aadec8909846ce63a1bde5ce6cd9c01c20cfbcca6e5a4dbc6b6e26acfadf9247",
 }
 VERDICT = "== E2 SOFTWARE VERDICT: PASS, each named model recovers events the frozen model misses"

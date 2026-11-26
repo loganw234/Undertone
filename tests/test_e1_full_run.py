@@ -53,13 +53,18 @@ OUTPUT = "judge-output.txt"
 # export of 804c49c from 14:52:06 that day, under the definition with the pulse e1. They differ from the third run's
 # in one field of each part, the definition's hash, and in nothing else; the judge's output is unchanged. The third
 # run's hashes were 462add11..., 5af8c98f..., 83429623..., 600bb529..., 4bba664f... and e5f259e4....
+# Restated by the lead again on 2026-11-25, in round 5: the six parts are now the FIFTH run's, made on a git archive
+# export of cbf2e77 from 23:07:31 that day, under round 5's definition with the learner's block (85e63d4d...). They
+# differ from the fourth run's in one field of each part, the definition's hash, and in nothing else; the judge's
+# output is unchanged. The fourth run's hashes were 25b71f3b..., 1161c388..., 8042d527..., 99cd8b20..., 3ea394c8...
+# and e0b89858....
 SHA256 = {
-    "c0.json": "25b71f3b0c7cf2ccab90329fbecf8c1ab1c62a4a6fd372634e542d2ce533a5d0",
-    "c1.json": "1161c38846d511626329a5cf2a9b871b83f490d7c5feaaa114e83d779e05dd04",
-    "c2.json": "8042d527cfa4120729faa292f9d56e6f8e55030a918198a03faa2db42951b2a4",
-    "c3.json": "99cd8b20ffc5d31df6a229fa40c85a02f2d3cfe2952e3023fd9b05d7947873db",
-    "c4.json": "3ea394c80c49fdc05f9bd231ae22f6de3b582fcde0cd959d8519a97585aed1f9",
-    "c5.json": "e0b898589ea47ee48720951fa06ca1a96e4c02ee4134bdd26225b93cd8366a03",
+    "c0.json": "d1e0618c5afbeaf9d4ea7b53d3bfd383de2394228fcfd169a1a9154eca37b6c4",
+    "c1.json": "f93012331d0c6c04379e5d187d6477ffce300642241e8f42a954b2bbd0dcfe96",
+    "c2.json": "874b949ed82f9dd4f3c523ac76113a790688df23b7663a098106e6ba177369a6",
+    "c3.json": "32f92c063f5992713e6428e45e7e66f4a45519ca52a295493cb8823882ac3b10",
+    "c4.json": "b1a17fd9557659d5964569abef23ed83e81eec89587918dcb71f659b1ce8801c",
+    "c5.json": "93b115af7cc6d187de95949e6b24ff7f5ef20b4e05e034a27a4d7a8f676a4e3e",
     "judge-output.txt": "6691abfacb69aee9c02abfc2f4a705e0157b024e3acafacf23d58edaf6f80f0e",
 }
 VERDICT = "== E1 SOFTWARE VERDICT: PASS, the reported model is inside the tolerance of E0's efficiency"
