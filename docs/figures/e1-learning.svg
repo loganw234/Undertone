@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="841" height="578" viewBox="0 0 841 578" font-family="sans-serif" role="img" aria-label="Stage E1: the learner's efficiency against labelled windows">
+<title>Stage E1: the learner's efficiency against labelled windows</title>
+<style>@media (prefers-color-scheme: dark){.bg{fill:#0d1117}.ink{fill:#e6edf3}.muted{fill:#9198a1}.grid{stroke:#30363d}.axis{stroke:#e6edf3}}</style>
+<rect class="bg" fill="#ffffff" height="578.00" width="841.00" x="0.00" y="0.00"/>
+<text class="ink" fill="#1f2328" font-size="16" font-weight="bold" text-anchor="start" x="16.00" y="26.00">Stage E1: the learner's efficiency against labelled windows</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="46.00">Each point one part, its own seed, scored on 100000 held-out injections at its own threshold</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="62.00">measured from 300000 signal-free scores, 3000 above it; profile s16x1, sigma 1477/1, target Pfa 0.01</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="78.00">D8 and its tolerance at the threshold's Pfa, (k + 1) / (m + 1), with the threshold's own term.</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="94.00">Authority: stats/. Software only.</text>
+<g class="panel" data-height="320.00" data-left="84.00" data-panel="main" data-top="118.00" data-width="440.00" data-x-hi="100000" data-x-lo="10" data-x-scale="log10" data-y-hi="0.6" data-y-lo="0.0" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="438.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="442.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="384.67" y2="384.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="388.67">0.1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="331.33" y2="331.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="335.33">0.2</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="278.00" y2="278.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="282.00">0.3</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="224.67" y2="224.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="228.67">0.4</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="171.33" y2="171.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="175.33">0.5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="118.00" y2="118.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="122.00">0.6</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="84.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="84.00" y="454.00">10</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="194.00" x2="194.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="194.00" y="454.00">100</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="304.00" x2="304.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="304.00" y="454.00">1,000</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="414.00" x2="414.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="414.00" y="454.00">10,000</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="524.00" x2="524.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="524.00" y="454.00">100,000</text>
+<rect class="axis" fill="none" height="320.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="118.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="474.00">labelled windows the learner was given (log scale)</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 278.00)" x="32.00" y="278.00">efficiency (found / injections)</text>
+<rect data-hi="0.5128359886540265" data-lo="0.4876747626506396" data-series="e0-tolerance" fill="#2e8b3e" fill-opacity="0.18" height="13.42" stroke="#2e8b3e" stroke-dasharray="2 3" stroke-width="1" width="440.00" x="84.00" y="164.49"/>
+<line data-series="e0-figure" data-y="0.500255375652333" stroke="#2e8b3e" stroke-dasharray="6 4" stroke-width="1.5" x1="84.00" x2="524.00" y1="171.20" y2="171.20"/>
+<polyline data-series="learned-line" fill="none" points="139.57,337.66 205.79,233.28 272.02,198.53 338.25,176.75 404.47,171.26 470.70,174.04" stroke="#2f6fd0" stroke-width="1.0"/>
+<polygon data-cx="139.57" data-cy="336.31" data-series="own-d8" data-x="32" data-y="0.19065954470015242" fill="none" points="139.57,330.91 144.97,336.31 139.57,341.71 134.17,336.31" stroke="#9b59d0" stroke-width="1.5"/>
+<polygon data-cx="139.57" data-cy="173.39" data-series="matched" data-x="32" data-y="49614/100000" fill="#808080" points="139.57,169.37 143.07,176.37 136.07,176.37" stroke="#808080" stroke-width="1.5"/>
+<circle cx="139.57" cy="337.66" data-series="learned" data-x="32" data-y="18814/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<polygon data-cx="205.79" data-cy="233.18" data-series="own-d8" data-x="128" data-y="0.38403007764540414" fill="none" points="205.79,227.78 211.19,233.18 205.79,238.58 200.39,233.18" stroke="#9b59d0" stroke-width="1.5"/>
+<polygon data-cx="205.79" data-cy="169.65" data-series="matched" data-x="128" data-y="50316/100000" fill="#808080" points="205.79,165.62 209.29,172.62 202.29,172.62" stroke="#808080" stroke-width="1.5"/>
+<circle cx="205.79" cy="233.28" data-series="learned" data-x="128" data-y="38385/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<polygon data-cx="272.02" data-cy="200.26" data-series="own-d8" data-x="512" data-y="0.44576989692250124" fill="none" points="272.02,194.86 277.42,200.26 272.02,205.66 266.62,200.26" stroke="#9b59d0" stroke-width="1.5"/>
+<polygon data-cx="272.02" data-cy="169.63" data-series="matched" data-x="512" data-y="50319/100000" fill="#808080" points="272.02,165.61 275.52,172.61 268.52,172.61" stroke="#808080" stroke-width="1.5"/>
+<circle cx="272.02" cy="198.53" data-series="learned" data-x="512" data-y="44901/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<polygon data-cx="338.25" data-cy="175.44" data-series="own-d8" data-x="2048" data-y="0.4923017382675581" fill="none" points="338.25,170.04 343.65,175.44 338.25,180.84 332.85,175.44" stroke="#9b59d0" stroke-width="1.5"/>
+<polygon data-cx="338.25" data-cy="171.89" data-series="matched" data-x="2048" data-y="49895/100000" fill="#808080" points="338.25,167.87 341.75,174.87 334.75,174.87" stroke="#808080" stroke-width="1.5"/>
+<circle cx="338.25" cy="176.75" data-series="learned" data-x="2048" data-y="48985/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<polygon data-cx="404.47" data-cy="172.63" data-series="own-d8" data-x="8192" data-y="0.49756557601715323" fill="none" points="404.47,167.23 409.87,172.63 404.47,178.03 399.07,172.63" stroke="#9b59d0" stroke-width="1.5"/>
+<polygon data-cx="404.47" data-cy="169.73" data-series="matched" data-x="8192" data-y="50301/100000" fill="#808080" points="404.47,165.70 407.97,172.70 400.97,172.70" stroke="#808080" stroke-width="1.5"/>
+<circle cx="404.47" cy="171.26" data-series="learned" data-x="8192" data-y="50013/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<polygon data-cx="470.70" data-cy="171.50" data-series="own-d8" data-x="32768" data-y="0.4996810656526574" fill="none" points="470.70,166.10 476.10,171.50 470.70,176.90 465.30,171.50" stroke="#9b59d0" stroke-width="1.5"/>
+<polygon data-cx="470.70" data-cy="174.02" data-series="matched" data-x="32768" data-y="49496/100000" fill="#808080" points="470.70,170.00 474.20,177.00 467.20,177.00" stroke="#808080" stroke-width="1.5"/>
+<circle cx="470.70" cy="174.04" data-series="learned" data-x="32768" data-y="49492/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+</g>
+<g class="legend">
+<circle cx="560" cy="126.00" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="130.00">the learned filter</text>
+<polygon data-cx="560" data-cy="144.00" fill="none" points="560.00,139.20 564.80,144.00 560.00,148.80 555.20,144.00" stroke="#9b59d0" stroke-width="1.5"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="148.00">D8 at that part's own d</text>
+<polygon data-cx="560" data-cy="162.00" fill="#808080" points="560.00,157.40 564.00,165.40 556.00,165.40" stroke="#808080" stroke-width="1.5"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="166.00">the matched filter, same part</text>
+<line stroke="#2e8b3e" stroke-dasharray="6 4" stroke-width="2" x1="548" x2="572" y1="180.00" y2="180.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="184.00">E0's figure: D8 at the matched d</text>
+<rect fill="#2e8b3e" fill-opacity="0.18" height="12.00" stroke="#2e8b3e" stroke-dasharray="2 3" stroke-width="1" width="24.00" x="548" y="192.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="202.00">its tolerance, 4 se (stats.tolerance)</text>
+</g>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="486.00">source: docs/studies/e1/c0.json  sha256 25b71f3b0c7cf2ccab90329fbecf8c1ab1c62a4a6fd372634e542d2ce533a5d0</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="500.00">source: docs/studies/e1/c1.json  sha256 1161c38846d511626329a5cf2a9b871b83f490d7c5feaaa114e83d779e05dd04</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="514.00">source: docs/studies/e1/c2.json  sha256 8042d527cfa4120729faa292f9d56e6f8e55030a918198a03faa2db42951b2a4</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="528.00">source: docs/studies/e1/c3.json  sha256 99cd8b20ffc5d31df6a229fa40c85a02f2d3cfe2952e3023fd9b05d7947873db</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="542.00">source: docs/studies/e1/c4.json  sha256 3ea394c80c49fdc05f9bd231ae22f6de3b582fcde0cd959d8519a97585aed1f9</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="556.00">source: docs/studies/e1/c5.json  sha256 e0b898589ea47ee48720951fa06ca1a96e4c02ee4134bdd26225b93cd8366a03</text>
+</svg>

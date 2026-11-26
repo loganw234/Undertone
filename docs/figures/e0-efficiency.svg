@@ -1,0 +1,134 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="902" height="832" viewBox="0 0 902 832" font-family="sans-serif" role="img" aria-label="Stage E0: efficiency against amplitude, software and card">
+<title>Stage E0: efficiency against amplitude, software and card</title>
+<style>@media (prefers-color-scheme: dark){.bg{fill:#0d1117}.ink{fill:#e6edf3}.muted{fill:#9198a1}.grid{stroke:#30363d}.axis{stroke:#e6edf3}}</style>
+<rect class="bg" fill="#ffffff" height="832.00" width="902.00" x="0.00" y="0.00"/>
+<text class="ink" fill="#1f2328" font-size="16" font-weight="bold" text-anchor="start" x="16.00" y="26.00">Stage E0: efficiency against amplitude, software and card</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="46.00">The matched filter for e0; profile s16x1, sigma 1477/1, Pfa 0.01; each point one part of 200000 injections</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="62.00">Authority: stats/ (D8 and its tolerance) for the top two panels; the reference model for the</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="78.00">lowest, card found less software found at each amplitude (counts, not words)</text>
+<g class="panel" data-height="260.00" data-left="84.00" data-panel="main" data-top="102.00" data-width="440.00" data-x-hi="1.5" data-x-lo="0.0" data-x-scale="linear" data-y-hi="1.0" data-y-lo="0.0" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="362.00" y2="362.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="366.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="310.00" y2="310.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="314.00">0.2</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="258.00" y2="258.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="262.00">0.4</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="206.00" y2="206.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="210.00">0.6</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="154.00" y2="154.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="158.00">0.8</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="102.00" y2="102.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="106.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="84.00" y1="102.00" y2="362.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="84.00" y="378.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="230.67" x2="230.67" y1="102.00" y2="362.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="230.67" y="378.00">0.5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="377.33" x2="377.33" y1="102.00" y2="362.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="377.33" y="378.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="524.00" x2="524.00" y1="102.00" y2="362.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="524.00" y="378.00">1.5</text>
+<rect class="axis" fill="none" height="260.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="102.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="398.00">amplitude (of the definition's e0)</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 232.00)" x="32.00" y="232.00">efficiency (found / injections)</text>
+<polyline data-series="d8-curve" fill="none" points="84.00,359.40 86.93,359.23 89.87,359.06 92.80,358.88 95.73,358.68 98.67,358.48 101.60,358.26 104.53,358.03 107.47,357.80 110.40,357.55 113.33,357.28 116.27,357.01 119.20,356.72 122.13,356.41 125.07,356.09 128.00,355.76 130.93,355.41 133.87,355.04 136.80,354.66 139.73,354.26 142.67,353.84 145.60,353.41 148.53,352.95 151.47,352.48 154.40,351.98 157.33,351.46 160.27,350.93 163.20,350.37 166.13,349.78 169.07,349.18 172.00,348.55 174.93,347.90 177.87,347.22 180.80,346.51 183.73,345.78 186.67,345.03 189.60,344.25 192.53,343.43 195.47,342.60 198.40,341.73 201.33,340.83 204.27,339.91 207.20,338.95 210.13,337.96 213.07,336.94 216.00,335.90 218.93,334.81 221.87,333.70 224.80,332.56 227.73,331.38 230.67,330.17 233.60,328.92 236.53,327.65 239.47,326.34 242.40,324.99 245.33,323.61 248.27,322.20 251.20,320.75 254.13,319.27 257.07,317.76 260.00,316.21 262.93,314.62 265.87,313.01 268.80,311.36 271.73,309.67 274.67,307.96 277.60,306.21 280.53,304.43 283.47,302.61 286.40,300.77 289.33,298.89 292.27,296.98 295.20,295.04 298.13,293.08 301.07,291.08 304.00,289.06 306.93,287.00 309.87,284.93 312.80,282.82 315.73,280.69 318.67,278.54 321.60,276.36 324.53,274.16 327.47,271.94 330.40,269.69 333.33,267.43 336.27,265.15 339.20,262.85 342.13,260.54 345.07,258.21 348.00,255.87 350.93,253.51 353.87,251.14 356.80,248.77 359.73,246.38 362.67,243.99 365.60,241.59 368.53,239.18 371.47,236.77 374.40,234.36 377.33,231.95 380.27,229.53 383.20,227.12 386.13,224.71 389.07,222.31 392.00,219.91 394.93,217.51 397.87,215.13 400.80,212.75 403.73,210.38 406.67,208.03 409.60,205.69 412.53,203.36 415.47,201.04 418.40,198.75 421.33,196.47 424.27,194.21 427.20,191.97 430.13,189.74 433.07,187.55 436.00,185.37 438.93,183.21 441.87,181.09 444.80,178.98 447.73,176.90 450.67,174.85 453.60,172.83 456.53,170.83 459.47,168.87 462.40,166.93 465.33,165.03 468.27,163.15 471.20,161.31 474.13,159.49 477.07,157.71 480.00,155.97 482.93,154.25 485.87,152.57 488.80,150.92 491.73,149.30 494.67,147.72 497.60,146.18 500.53,144.66 503.47,143.18 506.40,141.74 509.33,140.33 512.27,138.95 515.20,137.61 518.13,136.30 521.07,135.02 524.00,133.78" stroke="#2e8b3e" stroke-width="1.5"/>
+<circle cx="230.67" cy="330.23" data-series="software" data-x="1/2" data-y="24442/200000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="230.67" data-cy="330.23" data-series="card" data-x="1/2" data-y="24442/200000" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="224.17" y="323.73"/>
+<circle cx="304.00" cy="289.39" data-series="software" data-x="3/4" data-y="55857/200000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="304.00" data-cy="289.39" data-series="card" data-x="3/4" data-y="55857/200000" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="297.50" y="282.89"/>
+<circle cx="377.33" cy="232.33" data-series="software" data-x="1/1" data-y="99743/200000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="377.33" data-cy="232.33" data-series="card" data-x="1/1" data-y="99743/200000" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="370.83" y="225.83"/>
+<circle cx="450.67" cy="174.70" data-series="software" data-x="5/4" data-y="144075/200000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="450.67" data-cy="174.70" data-series="card" data-x="5/4" data-y="144075/200000" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="444.17" y="168.20"/>
+<circle cx="524.00" cy="133.69" data-series="software" data-x="3/2" data-y="175622/200000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="524.00" data-cy="133.69" data-series="card" data-x="3/2" data-y="175622/200000" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="517.50" y="127.19"/>
+</g>
+<g class="panel" data-height="130.00" data-left="84.00" data-panel="residual" data-top="420.00" data-width="440.00" data-x-hi="1.5" data-x-lo="0.0" data-x-scale="linear" data-y-hi="0.006" data-y-lo="-0.006" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="550.00" y2="550.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="554.00">-0.006</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="528.33" y2="528.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="532.33">-0.004</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="506.67" y2="506.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="510.67">-0.002</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="485.00" y2="485.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="489.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="463.33" y2="463.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="467.33">0.002</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="441.67" y2="441.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="445.67">0.004</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="420.00" y2="420.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="424.00">0.006</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="84.00" y1="420.00" y2="550.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="84.00" y="566.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="230.67" x2="230.67" y1="420.00" y2="550.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="230.67" y="566.00">0.5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="377.33" x2="377.33" y1="420.00" y2="550.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="377.33" y="566.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="524.00" x2="524.00" y1="420.00" y2="550.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="524.00" y="566.00">1.5</text>
+<rect class="axis" fill="none" height="130.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="420.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="586.00">amplitude (of the definition's e0)</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 485.00)" x="32.00" y="485.00">efficiency - D8</text>
+<path d="M230.67 516.76V453.24M225.67 516.76H235.67M225.67 453.24H235.67" data-hi="0.0029317977807543465" data-lo="-0.0029317977807543465" data-series="d8-tolerance" data-x="1/2" fill="none" stroke="#2e8b3e" stroke-width="1.5"/>
+<circle cx="230.67" cy="487.41" data-expected="0.1224327580952651" data-series="software-offset" data-x="1/2" data-y="-0.00022275809526510482" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="230.67" data-cy="487.41" data-expected="0.1224327580952651" data-series="card-offset" data-x="1/2" data-y="-0.00022275809526510482" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="224.17" y="480.91"/>
+<path d="M304.00 528.53V441.47M299.00 528.53H309.00M299.00 441.47H309.00" data-hi="0.00401819136113369" data-lo="-0.00401819136113369" data-series="d8-tolerance" data-x="3/4" fill="none" stroke="#2e8b3e" stroke-width="1.5"/>
+<circle cx="304.00" cy="498.25" data-expected="0.28050802448293854" data-series="software-offset" data-x="3/4" data-y="-0.0012230244829385395" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="304.00" data-cy="498.25" data-expected="0.28050802448293854" data-series="card-offset" data-x="3/4" data-y="-0.0012230244829385395" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="297.50" y="491.75"/>
+<path d="M377.33 533.45V436.55M372.33 533.45H382.33M372.33 436.55H382.33" data-hi="0.004472135575488616" data-lo="-0.004472135575488616" data-series="d8-tolerance" data-x="1/1" fill="none" stroke="#2e8b3e" stroke-width="1.5"/>
+<circle cx="377.33" cy="501.15" data-expected="0.5002059869262129" data-series="software-offset" data-x="1/1" data-y="-0.0014909869262128561" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="377.33" data-cy="501.15" data-expected="0.5002059869262129" data-series="card-offset" data-x="1/1" data-y="-0.0014909869262128561" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="370.83" y="494.65"/>
+<path d="M450.67 528.51V441.49M445.67 528.51H455.67M445.67 441.49H455.67" data-hi="0.004016669906621388" data-lo="-0.004016669906621388" data-series="d8-tolerance" data-x="5/4" fill="none" stroke="#2e8b3e" stroke-width="1.5"/>
+<circle cx="450.67" cy="479.20" data-expected="0.7198397956820526" data-series="software-offset" data-x="5/4" data-y="0.000535204317947402" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="450.67" data-cy="479.20" data-expected="0.7198397956820526" data-series="card-offset" data-x="5/4" data-y="0.000535204317947402" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="444.17" y="472.70"/>
+<path d="M524.00 516.74V453.26M519.00 516.74H529.00M519.00 453.26H529.00" data-hi="0.0029296391535255937" data-lo="-0.0029296391535255937" data-series="d8-tolerance" data-x="3/2" fill="none" stroke="#2e8b3e" stroke-width="1.5"/>
+<circle cx="524.00" cy="481.39" data-expected="0.8777766276209038" data-series="software-offset" data-x="3/2" data-y="0.0003333723790961418" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<rect data-cx="524.00" data-cy="481.39" data-expected="0.8777766276209038" data-series="card-offset" data-x="3/2" data-y="0.0003333723790961418" fill="none" height="13.00" stroke="#c8640a" stroke-width="1.5" width="13.00" x="517.50" y="474.89"/>
+</g>
+<g class="panel" data-height="70.00" data-left="84.00" data-panel="strip" data-top="608.00" data-width="440.00" data-x-hi="1.5" data-x-lo="0.0" data-x-scale="linear" data-y-hi="1.0" data-y-lo="-1.0" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="678.00" y2="678.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="682.00">-1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="660.50" y2="660.50"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="664.50">-0.5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="643.00" y2="643.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="647.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="625.50" y2="625.50"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="629.50">0.5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="608.00" y2="608.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="612.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="84.00" y1="608.00" y2="678.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="84.00" y="694.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="230.67" x2="230.67" y1="608.00" y2="678.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="230.67" y="694.00">0.5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="377.33" x2="377.33" y1="608.00" y2="678.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="377.33" y="694.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="524.00" x2="524.00" y1="608.00" y2="678.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="524.00" y="694.00">1.5</text>
+<rect class="axis" fill="none" height="70.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="608.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="714.00">amplitude (of the definition's e0)</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 643.00)" x="32.00" y="643.00">card - software</text>
+<polygon data-cx="230.67" data-cy="643.00" data-series="card-minus-software" data-x="1/2" data-y="0" fill="#c8640a" points="230.67,638.20 235.47,643.00 230.67,647.80 225.87,643.00" stroke="#c8640a" stroke-width="1.5"/>
+<polygon data-cx="304.00" data-cy="643.00" data-series="card-minus-software" data-x="3/4" data-y="0" fill="#c8640a" points="304.00,638.20 308.80,643.00 304.00,647.80 299.20,643.00" stroke="#c8640a" stroke-width="1.5"/>
+<polygon data-cx="377.33" data-cy="643.00" data-series="card-minus-software" data-x="1/1" data-y="0" fill="#c8640a" points="377.33,638.20 382.13,643.00 377.33,647.80 372.53,643.00" stroke="#c8640a" stroke-width="1.5"/>
+<polygon data-cx="450.67" data-cy="643.00" data-series="card-minus-software" data-x="5/4" data-y="0" fill="#c8640a" points="450.67,638.20 455.47,643.00 450.67,647.80 445.87,643.00" stroke="#c8640a" stroke-width="1.5"/>
+<polygon data-cx="524.00" data-cy="643.00" data-series="card-minus-software" data-x="3/2" data-y="0" fill="#c8640a" points="524.00,638.20 528.80,643.00 524.00,647.80 519.20,643.00" stroke="#c8640a" stroke-width="1.5"/>
+</g>
+<g class="legend">
+<line stroke="#2e8b3e" stroke-width="2" x1="548" x2="572" y1="110.00" y2="110.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="114.00">D8: stats.theory.pd_matched</text>
+<circle cx="560" cy="128.00" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="132.00">software, round 1</text>
+<rect data-cx="560" data-cy="146.00" fill="none" height="8.00" stroke="#c8640a" stroke-width="1.5" width="8.00" x="556.00" y="142.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="150.00">card, round 4</text>
+<path d="M560.00 157.00V171.00M555.00 157.00H565.00M555.00 171.00H565.00" fill="none" stroke="#2e8b3e" stroke-width="1.5"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="168.00">D8's tolerance about 0, 4 se</text>
+<polygon data-cx="560" data-cy="182.00" fill="#c8640a" points="560.00,177.20 564.80,182.00 560.00,186.80 555.20,182.00" stroke="#c8640a" stroke-width="1.5"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="186.00">lowest: card less software</text>
+</g>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="726.00">source: vectors/e0c/round1/part0.json  sha256 7316da9c2fb5ec16a79329e809f66ccff2695c8e6005002f9f218ad1c1942722</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="740.00">source: vectors/e0c/round1/part1.json  sha256 f4b2b1219040c0c7ad2c33146a600e01d9ca8a7cdba55052145317ed0114ee50</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="754.00">source: vectors/e0c/round1/part2.json  sha256 3b28f79d4f2f993a814c2eb5716a1d3e295c064cb82c020f7c22cf6407be6c95</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="768.00">source: vectors/e0c/round1/part3.json  sha256 546f4a4fa90a9a19d8a29d82ac6e52c47e0d2ccebb48483b584c68a0096cd0ef</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="782.00">source: vectors/e0c/round1/part4.json  sha256 33cc9cba2b026d3f4a795c225fbec60c7896688d789948bc04ea80cd21814930</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="796.00">source: docs/studies/e0-card/card-e0.json  sha256 bfe29da984649cb701e812193565b4f6f770db6c246d9a2500db70b2cc41c3fa</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="810.00">source: spec/constants.py, PULSES: sha256 of its value as canonical JSON  sha256 0d8aaaf1c4ce08c7d5269cb6eb8c4ffded17a1c903e8233f859ef3299d5d2bf5</text>
+</svg>

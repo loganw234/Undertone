@@ -1,0 +1,171 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="492" viewBox="0 0 820 492" font-family="sans-serif" role="img" aria-label="The card's timed generations: where the time goes">
+<title>The card's timed generations: where the time goes</title>
+<style>@media (prefers-color-scheme: dark){.bg{fill:#0d1117}.ink{fill:#e6edf3}.muted{fill:#9198a1}.grid{stroke:#30363d}.axis{stroke:#e6edf3}}</style>
+<rect class="bg" fill="#ffffff" height="492.00" width="820.00" x="0.00" y="0.00"/>
+<text class="ink" fill="#1f2328" font-size="16" font-weight="bold" text-anchor="start" x="16.00" y="26.00">The card's timed generations: where the time goes</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="46.00">One bar a generation: the device opened, weights loaded, 1280128 frames run with 10000 injections,</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="62.00">the records read back and scored, the device closed. Each part as the host timed it.</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="78.00">Authority: neither. A wall clock of one session of this host code on the U50.</text>
+<g class="panel" data-height="320.00" data-left="84.00" data-panel="main" data-top="102.00" data-width="440.00" data-x-hi="10" data-x-lo="0" data-x-scale="category" data-y-hi="3.0E+3" data-y-lo="0E+2" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="422.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="426.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="368.67" y2="368.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="372.67">500</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="315.33" y2="315.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="319.33">1000</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="262.00" y2="262.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="266.00">1500</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="208.67" y2="208.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="212.67">2000</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="155.33" y2="155.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="159.33">2500</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="102.00" y2="102.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="106.00">3000</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="106.00" x2="106.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="106.00" y="438.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="150.00" x2="150.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="150.00" y="438.00">1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="194.00" x2="194.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="194.00" y="438.00">2</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="238.00" x2="238.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="238.00" y="438.00">3</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="282.00" x2="282.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="282.00" y="438.00">4</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="326.00" x2="326.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="326.00" y="438.00">5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="370.00" x2="370.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="370.00" y="438.00">6</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="414.00" x2="414.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="414.00" y="438.00">7</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="458.00" x2="458.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="458.00" y="438.00">8</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="502.00" x2="502.00" y1="102.00" y2="422.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="502.00" y="438.00">9</text>
+<rect class="axis" fill="none" height="320.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="102.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="458.00">generation</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 262.00)" x="32.00" y="262.00">time (ms)</text>
+<rect data-generation="0" data-ns="25155" data-series="ready" data-x="0" data-y0="0/1000000" data-y1="25155/1000000" fill="#2f6fd0" height="0.00" stroke="none" width="26.40" x="92.80" y="422.00"/>
+<rect data-generation="0" data-ns="206204163" data-series="open" data-x="0" data-y0="25155/1000000" data-y1="206229318/1000000" fill="#c8640a" height="22.00" stroke="none" width="26.40" x="92.80" y="400.00"/>
+<rect data-generation="0" data-ns="1066474" data-series="identity" data-x="0" data-y0="206229318/1000000" data-y1="207295792/1000000" fill="#2e8b3e" height="0.11" stroke="none" width="26.40" x="92.80" y="399.89"/>
+<rect data-generation="0" data-ns="48116" data-series="reset" data-x="0" data-y0="207295792/1000000" data-y1="207343908/1000000" fill="#9b59d0" height="0.01" stroke="none" width="26.40" x="92.80" y="399.88"/>
+<rect data-generation="0" data-ns="494381" data-series="load" data-x="0" data-y0="207343908/1000000" data-y1="207838289/1000000" fill="#d03a3a" height="0.05" stroke="none" width="26.40" x="92.80" y="399.83"/>
+<rect data-generation="0" data-ns="96906043" data-series="start" data-x="0" data-y0="207838289/1000000" data-y1="304744332/1000000" fill="#1a8a8a" height="10.34" stroke="none" width="26.40" x="92.80" y="389.49"/>
+<rect data-generation="0" data-ns="256049969" data-series="finish" data-x="0" data-y0="304744332/1000000" data-y1="560794301/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="92.80" y="362.18"/>
+<rect data-generation="0" data-ns="2222573800" data-series="records" data-x="0" data-y0="560794301/1000000" data-y1="2783368101/1000000" fill="#a0703a" height="237.07" stroke="none" width="26.40" x="92.80" y="125.11"/>
+<rect data-generation="0" data-ns="12734874" data-series="score" data-x="0" data-y0="2783368101/1000000" data-y1="2796102975/1000000" fill="#c8508c" height="1.36" stroke="none" width="26.40" x="92.80" y="123.75"/>
+<rect data-generation="0" data-ns="22086760" data-series="close" data-x="0" data-y0="2796102975/1000000" data-y1="2818189735/1000000" fill="#7f8a1a" height="2.36" stroke="none" width="26.40" x="92.80" y="121.39"/>
+<rect data-generation="1" data-ns="60823" data-series="ready" data-x="1" data-y0="0/1000000" data-y1="60823/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="136.80" y="421.99"/>
+<rect data-generation="1" data-ns="222543856" data-series="open" data-x="1" data-y0="60823/1000000" data-y1="222604679/1000000" fill="#c8640a" height="23.74" stroke="none" width="26.40" x="136.80" y="398.26"/>
+<rect data-generation="1" data-ns="1011394" data-series="identity" data-x="1" data-y0="222604679/1000000" data-y1="223616073/1000000" fill="#2e8b3e" height="0.11" stroke="none" width="26.40" x="136.80" y="398.15"/>
+<rect data-generation="1" data-ns="38875" data-series="reset" data-x="1" data-y0="223616073/1000000" data-y1="223654948/1000000" fill="#9b59d0" height="0.00" stroke="none" width="26.40" x="136.80" y="398.14"/>
+<rect data-generation="1" data-ns="220820" data-series="load" data-x="1" data-y0="223654948/1000000" data-y1="223875768/1000000" fill="#d03a3a" height="0.02" stroke="none" width="26.40" x="136.80" y="398.12"/>
+<rect data-generation="1" data-ns="92826321" data-series="start" data-x="1" data-y0="223875768/1000000" data-y1="316702089/1000000" fill="#1a8a8a" height="9.90" stroke="none" width="26.40" x="136.80" y="388.22"/>
+<rect data-generation="1" data-ns="256045525" data-series="finish" data-x="1" data-y0="316702089/1000000" data-y1="572747614/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="136.80" y="360.91"/>
+<rect data-generation="1" data-ns="2237992666" data-series="records" data-x="1" data-y0="572747614/1000000" data-y1="2810740280/1000000" fill="#a0703a" height="238.72" stroke="none" width="26.40" x="136.80" y="122.19"/>
+<rect data-generation="1" data-ns="12614609" data-series="score" data-x="1" data-y0="2810740280/1000000" data-y1="2823354889/1000000" fill="#c8508c" height="1.35" stroke="none" width="26.40" x="136.80" y="120.84"/>
+<rect data-generation="1" data-ns="26353653" data-series="close" data-x="1" data-y0="2823354889/1000000" data-y1="2849708542/1000000" fill="#7f8a1a" height="2.81" stroke="none" width="26.40" x="136.80" y="118.03"/>
+<rect data-generation="2" data-ns="57028" data-series="ready" data-x="2" data-y0="0/1000000" data-y1="57028/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="180.80" y="421.99"/>
+<rect data-generation="2" data-ns="204788503" data-series="open" data-x="2" data-y0="57028/1000000" data-y1="204845531/1000000" fill="#c8640a" height="21.84" stroke="none" width="26.40" x="180.80" y="400.15"/>
+<rect data-generation="2" data-ns="975696" data-series="identity" data-x="2" data-y0="204845531/1000000" data-y1="205821227/1000000" fill="#2e8b3e" height="0.10" stroke="none" width="26.40" x="180.80" y="400.05"/>
+<rect data-generation="2" data-ns="40697" data-series="reset" data-x="2" data-y0="205821227/1000000" data-y1="205861924/1000000" fill="#9b59d0" height="0.00" stroke="none" width="26.40" x="180.80" y="400.04"/>
+<rect data-generation="2" data-ns="232170" data-series="load" data-x="2" data-y0="205861924/1000000" data-y1="206094094/1000000" fill="#d03a3a" height="0.02" stroke="none" width="26.40" x="180.80" y="400.02"/>
+<rect data-generation="2" data-ns="95645859" data-series="start" data-x="2" data-y0="206094094/1000000" data-y1="301739953/1000000" fill="#1a8a8a" height="10.20" stroke="none" width="26.40" x="180.80" y="389.81"/>
+<rect data-generation="2" data-ns="256046480" data-series="finish" data-x="2" data-y0="301739953/1000000" data-y1="557786433/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="180.80" y="362.50"/>
+<rect data-generation="2" data-ns="2231802299" data-series="records" data-x="2" data-y0="557786433/1000000" data-y1="2789588732/1000000" fill="#a0703a" height="238.06" stroke="none" width="26.40" x="180.80" y="124.44"/>
+<rect data-generation="2" data-ns="12467993" data-series="score" data-x="2" data-y0="2789588732/1000000" data-y1="2802056725/1000000" fill="#c8508c" height="1.33" stroke="none" width="26.40" x="180.80" y="123.11"/>
+<rect data-generation="2" data-ns="27474484" data-series="close" data-x="2" data-y0="2802056725/1000000" data-y1="2829531209/1000000" fill="#7f8a1a" height="2.93" stroke="none" width="26.40" x="180.80" y="120.18"/>
+<rect data-generation="3" data-ns="58557" data-series="ready" data-x="3" data-y0="0/1000000" data-y1="58557/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="224.80" y="421.99"/>
+<rect data-generation="3" data-ns="224492189" data-series="open" data-x="3" data-y0="58557/1000000" data-y1="224550746/1000000" fill="#c8640a" height="23.95" stroke="none" width="26.40" x="224.80" y="398.05"/>
+<rect data-generation="3" data-ns="998460" data-series="identity" data-x="3" data-y0="224550746/1000000" data-y1="225549206/1000000" fill="#2e8b3e" height="0.11" stroke="none" width="26.40" x="224.80" y="397.94"/>
+<rect data-generation="3" data-ns="37201" data-series="reset" data-x="3" data-y0="225549206/1000000" data-y1="225586407/1000000" fill="#9b59d0" height="0.00" stroke="none" width="26.40" x="224.80" y="397.94"/>
+<rect data-generation="3" data-ns="200476" data-series="load" data-x="3" data-y0="225586407/1000000" data-y1="225786883/1000000" fill="#d03a3a" height="0.02" stroke="none" width="26.40" x="224.80" y="397.92"/>
+<rect data-generation="3" data-ns="92990978" data-series="start" data-x="3" data-y0="225786883/1000000" data-y1="318777861/1000000" fill="#1a8a8a" height="9.92" stroke="none" width="26.40" x="224.80" y="388.00"/>
+<rect data-generation="3" data-ns="256045223" data-series="finish" data-x="3" data-y0="318777861/1000000" data-y1="574823084/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="224.80" y="360.69"/>
+<rect data-generation="3" data-ns="2237243159" data-series="records" data-x="3" data-y0="574823084/1000000" data-y1="2812066243/1000000" fill="#a0703a" height="238.64" stroke="none" width="26.40" x="224.80" y="122.05"/>
+<rect data-generation="3" data-ns="14909189" data-series="score" data-x="3" data-y0="2812066243/1000000" data-y1="2826975432/1000000" fill="#c8508c" height="1.59" stroke="none" width="26.40" x="224.80" y="120.46"/>
+<rect data-generation="3" data-ns="26762911" data-series="close" data-x="3" data-y0="2826975432/1000000" data-y1="2853738343/1000000" fill="#7f8a1a" height="2.85" stroke="none" width="26.40" x="224.80" y="117.60"/>
+<rect data-generation="4" data-ns="56532" data-series="ready" data-x="4" data-y0="0/1000000" data-y1="56532/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="268.80" y="421.99"/>
+<rect data-generation="4" data-ns="163766454" data-series="open" data-x="4" data-y0="56532/1000000" data-y1="163822986/1000000" fill="#c8640a" height="17.47" stroke="none" width="26.40" x="268.80" y="404.53"/>
+<rect data-generation="4" data-ns="1012617" data-series="identity" data-x="4" data-y0="163822986/1000000" data-y1="164835603/1000000" fill="#2e8b3e" height="0.11" stroke="none" width="26.40" x="268.80" y="404.42"/>
+<rect data-generation="4" data-ns="57839" data-series="reset" data-x="4" data-y0="164835603/1000000" data-y1="164893442/1000000" fill="#9b59d0" height="0.01" stroke="none" width="26.40" x="268.80" y="404.41"/>
+<rect data-generation="4" data-ns="262869" data-series="load" data-x="4" data-y0="164893442/1000000" data-y1="165156311/1000000" fill="#d03a3a" height="0.03" stroke="none" width="26.40" x="268.80" y="404.38"/>
+<rect data-generation="4" data-ns="94629387" data-series="start" data-x="4" data-y0="165156311/1000000" data-y1="259785698/1000000" fill="#1a8a8a" height="10.09" stroke="none" width="26.40" x="268.80" y="394.29"/>
+<rect data-generation="4" data-ns="256048944" data-series="finish" data-x="4" data-y0="259785698/1000000" data-y1="515834642/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="268.80" y="366.98"/>
+<rect data-generation="4" data-ns="2219061007" data-series="records" data-x="4" data-y0="515834642/1000000" data-y1="2734895649/1000000" fill="#a0703a" height="236.70" stroke="none" width="26.40" x="268.80" y="130.28"/>
+<rect data-generation="4" data-ns="13470906" data-series="score" data-x="4" data-y0="2734895649/1000000" data-y1="2748366555/1000000" fill="#c8508c" height="1.44" stroke="none" width="26.40" x="268.80" y="128.84"/>
+<rect data-generation="4" data-ns="19485608" data-series="close" data-x="4" data-y0="2748366555/1000000" data-y1="2767852163/1000000" fill="#7f8a1a" height="2.08" stroke="none" width="26.40" x="268.80" y="126.76"/>
+<rect data-generation="5" data-ns="55423" data-series="ready" data-x="5" data-y0="0/1000000" data-y1="55423/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="312.80" y="421.99"/>
+<rect data-generation="5" data-ns="256877458" data-series="open" data-x="5" data-y0="55423/1000000" data-y1="256932881/1000000" fill="#c8640a" height="27.40" stroke="none" width="26.40" x="312.80" y="394.59"/>
+<rect data-generation="5" data-ns="975967" data-series="identity" data-x="5" data-y0="256932881/1000000" data-y1="257908848/1000000" fill="#2e8b3e" height="0.10" stroke="none" width="26.40" x="312.80" y="394.49"/>
+<rect data-generation="5" data-ns="38972" data-series="reset" data-x="5" data-y0="257908848/1000000" data-y1="257947820/1000000" fill="#9b59d0" height="0.00" stroke="none" width="26.40" x="312.80" y="394.49"/>
+<rect data-generation="5" data-ns="211882" data-series="load" data-x="5" data-y0="257947820/1000000" data-y1="258159702/1000000" fill="#d03a3a" height="0.02" stroke="none" width="26.40" x="312.80" y="394.46"/>
+<rect data-generation="5" data-ns="95961331" data-series="start" data-x="5" data-y0="258159702/1000000" data-y1="354121033/1000000" fill="#1a8a8a" height="10.24" stroke="none" width="26.40" x="312.80" y="384.23"/>
+<rect data-generation="5" data-ns="256047971" data-series="finish" data-x="5" data-y0="354121033/1000000" data-y1="610169004/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="312.80" y="356.92"/>
+<rect data-generation="5" data-ns="2276963451" data-series="records" data-x="5" data-y0="610169004/1000000" data-y1="2887132455/1000000" fill="#a0703a" height="242.88" stroke="none" width="26.40" x="312.80" y="114.04"/>
+<rect data-generation="5" data-ns="11713543" data-series="score" data-x="5" data-y0="2887132455/1000000" data-y1="2898845998/1000000" fill="#c8508c" height="1.25" stroke="none" width="26.40" x="312.80" y="112.79"/>
+<rect data-generation="5" data-ns="26385935" data-series="close" data-x="5" data-y0="2898845998/1000000" data-y1="2925231933/1000000" fill="#7f8a1a" height="2.81" stroke="none" width="26.40" x="312.80" y="109.98"/>
+<rect data-generation="6" data-ns="57931" data-series="ready" data-x="6" data-y0="0/1000000" data-y1="57931/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="356.80" y="421.99"/>
+<rect data-generation="6" data-ns="167563265" data-series="open" data-x="6" data-y0="57931/1000000" data-y1="167621196/1000000" fill="#c8640a" height="17.87" stroke="none" width="26.40" x="356.80" y="404.12"/>
+<rect data-generation="6" data-ns="1010397" data-series="identity" data-x="6" data-y0="167621196/1000000" data-y1="168631593/1000000" fill="#2e8b3e" height="0.11" stroke="none" width="26.40" x="356.80" y="404.01"/>
+<rect data-generation="6" data-ns="39007" data-series="reset" data-x="6" data-y0="168631593/1000000" data-y1="168670600/1000000" fill="#9b59d0" height="0.00" stroke="none" width="26.40" x="356.80" y="404.01"/>
+<rect data-generation="6" data-ns="204199" data-series="load" data-x="6" data-y0="168670600/1000000" data-y1="168874799/1000000" fill="#d03a3a" height="0.02" stroke="none" width="26.40" x="356.80" y="403.99"/>
+<rect data-generation="6" data-ns="92743693" data-series="start" data-x="6" data-y0="168874799/1000000" data-y1="261618492/1000000" fill="#1a8a8a" height="9.89" stroke="none" width="26.40" x="356.80" y="394.09"/>
+<rect data-generation="6" data-ns="256041723" data-series="finish" data-x="6" data-y0="261618492/1000000" data-y1="517660215/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="356.80" y="366.78"/>
+<rect data-generation="6" data-ns="2218546113" data-series="records" data-x="6" data-y0="517660215/1000000" data-y1="2736206328/1000000" fill="#a0703a" height="236.64" stroke="none" width="26.40" x="356.80" y="130.14"/>
+<rect data-generation="6" data-ns="12699315" data-series="score" data-x="6" data-y0="2736206328/1000000" data-y1="2748905643/1000000" fill="#c8508c" height="1.35" stroke="none" width="26.40" x="356.80" y="128.78"/>
+<rect data-generation="6" data-ns="19185521" data-series="close" data-x="6" data-y0="2748905643/1000000" data-y1="2768091164/1000000" fill="#7f8a1a" height="2.05" stroke="none" width="26.40" x="356.80" y="126.74"/>
+<rect data-generation="7" data-ns="55820" data-series="ready" data-x="7" data-y0="0/1000000" data-y1="55820/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="400.80" y="421.99"/>
+<rect data-generation="7" data-ns="173283674" data-series="open" data-x="7" data-y0="55820/1000000" data-y1="173339494/1000000" fill="#c8640a" height="18.48" stroke="none" width="26.40" x="400.80" y="403.51"/>
+<rect data-generation="7" data-ns="963342" data-series="identity" data-x="7" data-y0="173339494/1000000" data-y1="174302836/1000000" fill="#2e8b3e" height="0.10" stroke="none" width="26.40" x="400.80" y="403.41"/>
+<rect data-generation="7" data-ns="57385" data-series="reset" data-x="7" data-y0="174302836/1000000" data-y1="174360221/1000000" fill="#9b59d0" height="0.01" stroke="none" width="26.40" x="400.80" y="403.40"/>
+<rect data-generation="7" data-ns="280923" data-series="load" data-x="7" data-y0="174360221/1000000" data-y1="174641144/1000000" fill="#d03a3a" height="0.03" stroke="none" width="26.40" x="400.80" y="403.37"/>
+<rect data-generation="7" data-ns="96353750" data-series="start" data-x="7" data-y0="174641144/1000000" data-y1="270994894/1000000" fill="#1a8a8a" height="10.28" stroke="none" width="26.40" x="400.80" y="393.09"/>
+<rect data-generation="7" data-ns="256043629" data-series="finish" data-x="7" data-y0="270994894/1000000" data-y1="527038523/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="400.80" y="365.78"/>
+<rect data-generation="7" data-ns="2226633682" data-series="records" data-x="7" data-y0="527038523/1000000" data-y1="2753672205/1000000" fill="#a0703a" height="237.51" stroke="none" width="26.40" x="400.80" y="128.27"/>
+<rect data-generation="7" data-ns="11676689" data-series="score" data-x="7" data-y0="2753672205/1000000" data-y1="2765348894/1000000" fill="#c8508c" height="1.25" stroke="none" width="26.40" x="400.80" y="127.03"/>
+<rect data-generation="7" data-ns="22759603" data-series="close" data-x="7" data-y0="2765348894/1000000" data-y1="2788108497/1000000" fill="#7f8a1a" height="2.43" stroke="none" width="26.40" x="400.80" y="124.60"/>
+<rect data-generation="8" data-ns="56969" data-series="ready" data-x="8" data-y0="0/1000000" data-y1="56969/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="444.80" y="421.99"/>
+<rect data-generation="8" data-ns="222117589" data-series="open" data-x="8" data-y0="56969/1000000" data-y1="222174558/1000000" fill="#c8640a" height="23.69" stroke="none" width="26.40" x="444.80" y="398.30"/>
+<rect data-generation="8" data-ns="980217" data-series="identity" data-x="8" data-y0="222174558/1000000" data-y1="223154775/1000000" fill="#2e8b3e" height="0.10" stroke="none" width="26.40" x="444.80" y="398.20"/>
+<rect data-generation="8" data-ns="37501" data-series="reset" data-x="8" data-y0="223154775/1000000" data-y1="223192276/1000000" fill="#9b59d0" height="0.00" stroke="none" width="26.40" x="444.80" y="398.19"/>
+<rect data-generation="8" data-ns="266883" data-series="load" data-x="8" data-y0="223192276/1000000" data-y1="223459159/1000000" fill="#d03a3a" height="0.03" stroke="none" width="26.40" x="444.80" y="398.16"/>
+<rect data-generation="8" data-ns="92654606" data-series="start" data-x="8" data-y0="223459159/1000000" data-y1="316113765/1000000" fill="#1a8a8a" height="9.88" stroke="none" width="26.40" x="444.80" y="388.28"/>
+<rect data-generation="8" data-ns="256046032" data-series="finish" data-x="8" data-y0="316113765/1000000" data-y1="572159797/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="444.80" y="360.97"/>
+<rect data-generation="8" data-ns="2232066919" data-series="records" data-x="8" data-y0="572159797/1000000" data-y1="2804226716/1000000" fill="#a0703a" height="238.09" stroke="none" width="26.40" x="444.80" y="122.88"/>
+<rect data-generation="8" data-ns="12510121" data-series="score" data-x="8" data-y0="2804226716/1000000" data-y1="2816736837/1000000" fill="#c8508c" height="1.33" stroke="none" width="26.40" x="444.80" y="121.55"/>
+<rect data-generation="8" data-ns="23703988" data-series="close" data-x="8" data-y0="2816736837/1000000" data-y1="2840440825/1000000" fill="#7f8a1a" height="2.53" stroke="none" width="26.40" x="444.80" y="119.02"/>
+<rect data-generation="9" data-ns="52382" data-series="ready" data-x="9" data-y0="0/1000000" data-y1="52382/1000000" fill="#2f6fd0" height="0.01" stroke="none" width="26.40" x="488.80" y="421.99"/>
+<rect data-generation="9" data-ns="238455434" data-series="open" data-x="9" data-y0="52382/1000000" data-y1="238507816/1000000" fill="#c8640a" height="25.44" stroke="none" width="26.40" x="488.80" y="396.56"/>
+<rect data-generation="9" data-ns="1017170" data-series="identity" data-x="9" data-y0="238507816/1000000" data-y1="239524986/1000000" fill="#2e8b3e" height="0.11" stroke="none" width="26.40" x="488.80" y="396.45"/>
+<rect data-generation="9" data-ns="59216" data-series="reset" data-x="9" data-y0="239524986/1000000" data-y1="239584202/1000000" fill="#9b59d0" height="0.01" stroke="none" width="26.40" x="488.80" y="396.44"/>
+<rect data-generation="9" data-ns="294538" data-series="load" data-x="9" data-y0="239584202/1000000" data-y1="239878740/1000000" fill="#d03a3a" height="0.03" stroke="none" width="26.40" x="488.80" y="396.41"/>
+<rect data-generation="9" data-ns="92744517" data-series="start" data-x="9" data-y0="239878740/1000000" data-y1="332623257/1000000" fill="#1a8a8a" height="9.89" stroke="none" width="26.40" x="488.80" y="386.52"/>
+<rect data-generation="9" data-ns="256048762" data-series="finish" data-x="9" data-y0="332623257/1000000" data-y1="588672019/1000000" fill="#808080" height="27.31" stroke="none" width="26.40" x="488.80" y="359.21"/>
+<rect data-generation="9" data-ns="2221255669" data-series="records" data-x="9" data-y0="588672019/1000000" data-y1="2809927688/1000000" fill="#a0703a" height="236.93" stroke="none" width="26.40" x="488.80" y="122.27"/>
+<rect data-generation="9" data-ns="12702516" data-series="score" data-x="9" data-y0="2809927688/1000000" data-y1="2822630204/1000000" fill="#c8508c" height="1.35" stroke="none" width="26.40" x="488.80" y="120.92"/>
+<rect data-generation="9" data-ns="19878559" data-series="close" data-x="9" data-y0="2822630204/1000000" data-y1="2842508763/1000000" fill="#7f8a1a" height="2.12" stroke="none" width="26.40" x="488.80" y="118.80"/>
+</g>
+<g class="legend">
+<rect fill="#7f8a1a" height="12.00" stroke="none" width="16.00" x="552" y="104.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="114.00">close</text>
+<rect fill="#c8508c" height="12.00" stroke="none" width="16.00" x="552" y="122.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="132.00">score</text>
+<rect fill="#a0703a" height="12.00" stroke="none" width="16.00" x="552" y="140.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="150.00">records</text>
+<rect fill="#808080" height="12.00" stroke="none" width="16.00" x="552" y="158.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="168.00">finish</text>
+<rect fill="#1a8a8a" height="12.00" stroke="none" width="16.00" x="552" y="176.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="186.00">start</text>
+<rect fill="#d03a3a" height="12.00" stroke="none" width="16.00" x="552" y="194.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="204.00">load</text>
+<rect fill="#9b59d0" height="12.00" stroke="none" width="16.00" x="552" y="212.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="222.00">reset</text>
+<rect fill="#2e8b3e" height="12.00" stroke="none" width="16.00" x="552" y="230.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="240.00">identity</text>
+<rect fill="#c8640a" height="12.00" stroke="none" width="16.00" x="552" y="248.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="258.00">open</text>
+<rect fill="#2f6fd0" height="12.00" stroke="none" width="16.00" x="552" y="266.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="276.00">ready</text>
+</g>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="470.00">source: docs/studies/e0-card/timed.json  sha256 1eefa95fc2cc657db644e5292fa0170bb88580f05d26ea9046a20f136b484ec6</text>
+</svg>

@@ -1,0 +1,95 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="820" height="522" viewBox="0 0 820 522" font-family="sans-serif" role="img" aria-label="Stage E2: recovery after the drift from e0 to e1">
+<title>Stage E2: recovery after the drift from e0 to e1</title>
+<style>@media (prefers-color-scheme: dark){.bg{fill:#0d1117}.ink{fill:#e6edf3}.muted{fill:#9198a1}.grid{stroke:#30363d}.axis{stroke:#e6edf3}}</style>
+<rect class="bg" fill="#ffffff" height="522.00" width="820.00" x="0.00" y="0.00"/>
+<text class="ink" fill="#1f2328" font-size="16" font-weight="bold" text-anchor="start" x="16.00" y="26.00">Stage E2: recovery after the drift from e0 to e1</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="46.00">Each point a snapshot after g x 256 labelled windows of e1, all scored on the same 100000</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="62.00">held-out injections of e1, each at its own threshold; profile s16x1, sigma 1477/1, Pfa 0.01</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="78.00">Authority: stats/ (D8) for the efficiencies; the dashed predictions are E2L's first-order</text>
+<text class="muted" fill="#57606a" font-size="12" text-anchor="start" x="16.00" y="94.00">derivation, printed by the judge, which is not stats/'. Software only.</text>
+<g class="panel" data-height="320.00" data-left="84.00" data-panel="main" data-top="118.00" data-width="440.00" data-x-hi="8" data-x-lo="0" data-x-scale="linear" data-y-hi="0.6" data-y-lo="0.0" data-y-scale="linear">
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="438.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="442.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="384.67" y2="384.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="388.67">0.1</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="331.33" y2="331.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="335.33">0.2</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="278.00" y2="278.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="282.00">0.3</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="224.67" y2="224.67"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="228.67">0.4</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="171.33" y2="171.33"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="175.33">0.5</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="524.00" y1="118.00" y2="118.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="end" x="78.00" y="122.00">0.6</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="84.00" x2="84.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="84.00" y="454.00">0</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="194.00" x2="194.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="194.00" y="454.00">2</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="304.00" x2="304.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="304.00" y="454.00">4</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="414.00" x2="414.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="414.00" y="454.00">6</text>
+<line class="grid" stroke="#d0d7de" stroke-width="1" x1="524.00" x2="524.00" y1="118.00" y2="438.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="middle" x="524.00" y="454.00">8</text>
+<rect class="axis" fill="none" height="320.00" stroke="#1f2328" stroke-width="1" width="440.00" x="84.00" y="118.00"/>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" x="304.00" y="474.00">g (labelled windows after the change / 256)</text>
+<text class="ink" fill="#1f2328" font-size="12" text-anchor="middle" transform="rotate(-90 32.00 278.00)" x="32.00" y="278.00">efficiency (found / injections)</text>
+<line data-series="e1-filter" data-y="50447/100000" stroke="#2e8b3e" stroke-width="2.0" x1="84.00" x2="524.00" y1="168.95" y2="168.95"/>
+<line data-series="frozen" data-y="12339/100000" stroke="#808080" stroke-width="2.0" x1="84.00" x2="524.00" y1="372.19" y2="372.19"/>
+<polyline data-series="adaptive-predicted-line" fill="none" points="84.00,378.89 139.00,355.73 194.00,325.47 249.00,285.42 304.00,249.83 359.00,215.11 414.00,193.40 469.00,182.93 524.00,178.10" stroke="#2f6fd0" stroke-dasharray="6 4" stroke-width="1.0"/>
+<polyline data-series="adaptive-line" fill="none" points="84.00,379.56 139.00,356.39 194.00,327.63 249.00,287.06 304.00,250.74 359.00,216.88 414.00,194.20 469.00,183.34 524.00,177.75" stroke="#2f6fd0" stroke-width="1.0"/>
+<circle cx="84.00" cy="378.89" data-base="12339/100000" data-predicted-gain="-0.01256" data-series="adaptive-predicted" data-x="0" data-y="0.11083" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="139.00" cy="355.73" data-base="12339/100000" data-predicted-gain="+0.03087" data-series="adaptive-predicted" data-x="1" data-y="0.15426" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="194.00" cy="325.47" data-base="12339/100000" data-predicted-gain="+0.08760" data-series="adaptive-predicted" data-x="2" data-y="0.21099" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="249.00" cy="285.42" data-base="12339/100000" data-predicted-gain="+0.16269" data-series="adaptive-predicted" data-x="3" data-y="0.28608" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="304.00" cy="249.83" data-base="12339/100000" data-predicted-gain="+0.22943" data-series="adaptive-predicted" data-x="4" data-y="0.35282" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="359.00" cy="215.11" data-base="12339/100000" data-predicted-gain="+0.29453" data-series="adaptive-predicted" data-x="5" data-y="0.41792" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="414.00" cy="193.40" data-base="12339/100000" data-predicted-gain="+0.33523" data-series="adaptive-predicted" data-x="6" data-y="0.45861999999999997" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="469.00" cy="182.93" data-base="12339/100000" data-predicted-gain="+0.35486" data-series="adaptive-predicted" data-x="7" data-y="0.47825" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="524.00" cy="178.10" data-base="12339/100000" data-predicted-gain="+0.36392" data-series="adaptive-predicted" data-x="8" data-y="0.48731" fill="none" r="3.00" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="84.00" cy="379.56" data-series="adaptive" data-x="0" data-y="10958/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="139.00" cy="356.39" data-series="adaptive" data-x="1" data-y="15302/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="194.00" cy="327.63" data-series="adaptive" data-x="2" data-y="20695/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="249.00" cy="287.06" data-series="adaptive" data-x="3" data-y="28301/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="304.00" cy="250.74" data-series="adaptive" data-x="4" data-y="35111/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="359.00" cy="216.88" data-series="adaptive" data-x="5" data-y="41460/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="414.00" cy="194.20" data-series="adaptive" data-x="6" data-y="45713/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="469.00" cy="183.34" data-series="adaptive" data-x="7" data-y="47748/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<circle cx="524.00" cy="177.75" data-series="adaptive" data-x="8" data-y="48796/100000" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<polyline data-series="reset-predicted-line" fill="none" points="84.00,380.67 139.00,337.19 194.00,299.45 249.00,270.15 304.00,249.83 359.00,209.53 414.00,187.41 469.00,185.75 524.00,182.26" stroke="#c8640a" stroke-dasharray="6 4" stroke-width="1.0"/>
+<polyline data-series="reset-line" fill="none" points="84.00,381.44 139.00,338.02 194.00,301.38 249.00,271.57 304.00,250.74 359.00,207.94 414.00,185.97 469.00,185.80 524.00,181.71" stroke="#c8640a" stroke-width="1.0"/>
+<rect data-base="12339/100000" data-cx="84.00" data-cy="380.67" data-predicted-gain="-0.01589" data-series="reset-predicted" data-x="0" data-y="0.1075" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="81.00" y="377.67"/>
+<rect data-base="12339/100000" data-cx="139.00" data-cy="337.19" data-predicted-gain="+0.06562" data-series="reset-predicted" data-x="1" data-y="0.18901" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="136.00" y="334.19"/>
+<rect data-base="12339/100000" data-cx="194.00" data-cy="299.45" data-predicted-gain="+0.13640" data-series="reset-predicted" data-x="2" data-y="0.25978999999999997" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="191.00" y="296.45"/>
+<rect data-base="12339/100000" data-cx="249.00" data-cy="270.15" data-predicted-gain="+0.19132" data-series="reset-predicted" data-x="3" data-y="0.31471" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="246.00" y="267.15"/>
+<rect data-base="12339/100000" data-cx="304.00" data-cy="249.83" data-predicted-gain="+0.22943" data-series="reset-predicted" data-x="4" data-y="0.35282" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="301.00" y="246.83"/>
+<rect data-base="12339/100000" data-cx="359.00" data-cy="209.53" data-predicted-gain="+0.30499" data-series="reset-predicted" data-x="5" data-y="0.42838" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="356.00" y="206.53"/>
+<rect data-base="12339/100000" data-cx="414.00" data-cy="187.41" data-predicted-gain="+0.34647" data-series="reset-predicted" data-x="6" data-y="0.46986" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="411.00" y="184.41"/>
+<rect data-base="12339/100000" data-cx="469.00" data-cy="185.75" data-predicted-gain="+0.34957" data-series="reset-predicted" data-x="7" data-y="0.47296" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="466.00" y="182.75"/>
+<rect data-base="12339/100000" data-cx="524.00" data-cy="182.26" data-predicted-gain="+0.35612" data-series="reset-predicted" data-x="8" data-y="0.47951" fill="none" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="521.00" y="179.26"/>
+<rect data-cx="84.00" data-cy="381.44" data-series="reset" data-x="0" data-y="10605/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="81.00" y="378.44"/>
+<rect data-cx="139.00" data-cy="338.02" data-series="reset" data-x="1" data-y="18747/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="136.00" y="335.02"/>
+<rect data-cx="194.00" data-cy="301.38" data-series="reset" data-x="2" data-y="25617/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="191.00" y="298.38"/>
+<rect data-cx="249.00" data-cy="271.57" data-series="reset" data-x="3" data-y="31206/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="246.00" y="268.57"/>
+<rect data-cx="304.00" data-cy="250.74" data-series="reset" data-x="4" data-y="35111/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="301.00" y="247.74"/>
+<rect data-cx="359.00" data-cy="207.94" data-series="reset" data-x="5" data-y="43137/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="356.00" y="204.94"/>
+<rect data-cx="414.00" data-cy="185.97" data-series="reset" data-x="6" data-y="47256/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="411.00" y="182.97"/>
+<rect data-cx="469.00" data-cy="185.80" data-series="reset" data-x="7" data-y="47288/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="466.00" y="182.80"/>
+<rect data-cx="524.00" data-cy="181.71" data-series="reset" data-x="8" data-y="48054/100000" fill="#c8640a" height="6.00" stroke="#c8640a" stroke-width="1.5" width="6.00" x="521.00" y="178.71"/>
+</g>
+<g class="legend">
+<circle cx="560" cy="126.00" fill="#2f6fd0" r="3.50" stroke="#2f6fd0" stroke-width="1.5"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="130.00">adaptive</text>
+<rect data-cx="560" data-cy="144.00" fill="#c8640a" height="8.00" stroke="#c8640a" stroke-width="1.5" width="8.00" x="556.00" y="140.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="148.00">reset</text>
+<line stroke="#2f6fd0" stroke-dasharray="6 4" stroke-width="2" x1="548" x2="572" y1="162.00" y2="162.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="166.00">first-order prediction</text>
+<line stroke="#2e8b3e" stroke-width="2" x1="548" x2="572" y1="180.00" y2="180.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="184.00">the e1 filter</text>
+<line stroke="#808080" stroke-width="2" x1="548" x2="572" y1="198.00" y2="198.00"/>
+<text class="ink" fill="#1f2328" font-size="11" text-anchor="start" x="580.00" y="202.00">the frozen model (e0's filter)</text>
+</g>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="486.00">source: docs/studies/e2/e2-part.json  sha256 76f0871a06dbf573a439a24ba9638455025fedd85088ecc59a1c5c332ae50964</text>
+<text class="muted" fill="#57606a" font-size="10" text-anchor="start" x="16.00" y="500.00">source: docs/studies/e2/judge-output.txt  sha256 aadec8909846ce63a1bde5ce6cd9c01c20cfbcca6e5a4dbc6b6e26acfadf9247</text>
+</svg>
