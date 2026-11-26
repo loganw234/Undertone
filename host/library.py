@@ -67,6 +67,19 @@ SLOT_FORMAT = struct.Struct("<" + "".join(_CODES[(bits, sign)] for _n, bits, sig
 PROCEDURES = ("open", "reset", "load", "write_shadow", "commit", "swap", "start", "step", "finish", "run",
               "records", "refusals", "raw_read", "raw_write")
 
+# The learner's calls (round 5, parcel LRN-C; docs/host/lrn-c.md). They are NOT in PROCEDURES, which the two
+# drivers of host/drive.py are made from and tests/test_host_drivers.py holds at its fourteen names: they are
+# driven by host.drive.run_by_calls and run_by_coroutines, which take any procedure (the lead's ruling,
+# 2026-11-26 03:57, question 2).
+LEARNER_PROCEDURES = ("lrn_open", "lrn_update", "lrn_commit", "lrn_write_shadow", "lrn_clear", "lrn_registers")
+LRN_CAPS = ("lrn_cap_count_bits", "lrn_cap_update_frames")
+LRN_COUNTS = ("lrn_count0", "lrn_count1", "lrn_skip_start", "lrn_skip_busy", "lrn_skip_full", "lrn_made",
+              "lrn_unmade", "lrn_early")
+LRN_STATUS = C.REGISTER_BITS["lrn_status"]
+for _name in LRN_CAPS + LRN_COUNTS + ("lrn_update_at", "lrn_status", "lrn_refusal"):
+    if _name not in C.REGISTERS:
+        raise ImportError("host/library.py reads the learner's register %s, which the definition does not declare" % _name)
+
 
 def offset(name, word=0):
     return C.REGISTERS[name][0] + word * WORD_BYTES
@@ -563,3 +576,133 @@ class Library:
     def raw_write(self, where, word):
         """One write at a byte offset. For tests, and the card day's raw shape. Checks nothing, reads nothing back."""
         yield Write(where, word)
+
+    # -------------------------------------------------------------- the learner's calls (round 5, parcel LRN-C)
+    #
+    # The learner's block, 0xD00 to 0xDFF (docs/rtl/learn.md, section 3). The same rule as every call above:
+    # what the call can know from its inputs and the capability registers is refused before any write; what
+    # depends on the learner's state is read back by name, from lrn_refusal (and the core's refusal, for a
+    # commit or a shadow write), cleared and raised. A code already latched is raised with nothing written.
+    #
+    # The calls of round 3 (`commit`, `write_shadow`, `swap`) are unchanged and read only the core's refusal:
+    # a commit the learner holds back, UPDATE_UNFINISHED, is latched in lrn_refusal and the core's register
+    # reads 0, so they return as if taken. A caller of a learner kernel uses `lrn_commit` and
+    # `lrn_write_shadow` (the model's own limit: a caller of the core's own commit is not held to
+    # UPDATE_UNFINISHED).
+
+    learner_caps = None          # what lrn_open read: {"count_bits", "update_frames"}; a class default, so that
+                                 # Library.__init__ stays as it was
+
+    def lrn_open(self, count_bits=None, update_frames=None):
+        """Read the learner's two capability registers and refuse, LEARN_BOUND, a build whose learner is outside
+        the definition's bounds (count_bits 1..LEARN_COUNT_BITS, update_frames 0..LEARN_UPDATE_FRAMES), a kernel
+        with no learner among them (it reads 0 at 0xD00 to 0xDFF), or one that is not what the case names.
+        Runs `open` first if it has not run. Writes nothing. Returns {"count_bits", "update_frames"}."""
+        yield from self._ident()
+        bits = yield from self._value("lrn_cap_count_bits")
+        frames = yield from self._value("lrn_cap_update_frames")
+        wrong = []
+        if not 1 <= bits <= C.LEARN_COUNT_BITS:
+            wrong.append("lrn_cap_count_bits reads %d, outside 1..%d" % (bits, C.LEARN_COUNT_BITS))
+        if not 0 <= frames <= C.LEARN_UPDATE_FRAMES:
+            wrong.append("lrn_cap_update_frames reads %d, outside 0..%d" % (frames, C.LEARN_UPDATE_FRAMES))
+        if wrong:
+            if bits == 0 and frames == 0:
+                wrong.append("no learner answers at 0x%X to 0x%X: a kernel without the learner reads 0 there"
+                             % (C.BLOCKS["learner"][0], C.BLOCKS["learner"][1] - 1))
+            raise Refusal("LEARN_BOUND", "; ".join(wrong))
+        for asked, have, what in ((count_bits, bits, "count_bits"), (update_frames, frames, "update_frames")):
+            if asked is not None and asked != have:
+                raise Refusal("LEARN_BOUND", "the case's model run needs %s %r; the build's is %d" % (what, asked, have))
+        self.learner_caps = {"count_bits": bits, "update_frames": frames}
+        return dict(self.learner_caps)
+
+    def _lrn(self):
+        if self.learner_caps is None:
+            yield from self.lrn_open()
+        return self.learner_caps
+
+    def _lrn_latched(self, core, what):
+        """A code already latched in lrn_refusal (and, with `core`, the core's refusal) raised, nothing written."""
+        for register, block in (("lrn_refusal", "learner"), ("refusal", "core"))[:2 if core else 1]:
+            code = yield Read(offset(register))
+            if code:
+                raise named(code, "%s: the %s's refusal was latched before this call, and nothing was written"
+                            % (what, block))
+
+    def _lrn_after(self, core, what):
+        """lrn_refusal (and, with `core`, the core's refusal) read after a group of writes. Each code is cleared
+        (a write of 0); the learner's is raised first, since a write the learner holds back reaches no block."""
+        codes = []
+        for register, block in (("lrn_refusal", "learner"), ("refusal", "core"))[:2 if core else 1]:
+            code = yield Read(offset(register))
+            codes.append((register, block, code))
+        latched = [(r, b, c) for r, b, c in codes if c]
+        if latched:
+            for register, _b, _c in latched:
+                yield Write(offset(register), 0)
+            said = "; ".join("the %s %s" % (b, NAME_OF.get(c, "code %d" % c)) for _r, b, c in latched)
+            raise named(latched[0][2], "%s refused: %s" % (what, said))
+
+    def lrn_update(self, at):
+        """Name an update at output index `at`: lrn_update_at's lower word, then its upper, which names it.
+        SWAP_INDEX before any write for an `at` that is not 0 to 2^64 - 1, or whose finish, `at` + the build's
+        update_frames, passes it. Then lrn_refusal read back: the learner's UPDATE_UNFINISHED, SWAP_SHAPE,
+        SWAP_PENDING, SWAP_INDEX (or the fabric's CORE_STOPPED, WEIGHT_COUNT), cleared and raised."""
+        caps = yield from self._lrn()
+        if not _is_int(at, 0, INDEX_LIMIT - 1) or at + caps["update_frames"] > INDEX_LIMIT - 1:
+            raise Refusal("SWAP_INDEX", "an update at %r; it finishes %d frames on, inside 0..2^64 - 1"
+                          % (at, caps["update_frames"]))
+        yield from self._lrn_latched(False, "lrn_update")
+        yield WriteMany(tuple(words_of("lrn_update_at", at)))
+        yield from self._lrn_after(False, "the update at %d" % at)
+        return {"at": at}
+
+    def lrn_commit(self, at):
+        """`commit`'s writes, read back from the learner as well as the core: UPDATE_UNFINISHED (the learner held
+        the commit back, and counted it lrn_early), or the core's SWAP_PENDING, SWAP_INDEX, SWAP_EPOCH."""
+        yield from self._lrn()
+        pairs = self._at(at)
+        yield from self._lrn_latched(True, "lrn_commit")
+        yield WriteMany(tuple(pairs))
+        yield from self._lrn_after(True, "the commit at %d" % at)
+        return {"at": at}
+
+    def lrn_write_shadow(self, blob):
+        """`write_shadow`'s writes, read back from the learner as well as the core: UPDATE_UNFINISHED (the learner
+        held the shadow's writes back), or the core's own (SWAP_PENDING, WEIGHT_COUNT, ...)."""
+        yield from self._lrn()
+        config = yield from self._shadow_config(blob)
+        yield from self._lrn_latched(True, "lrn_write_shadow")
+        yield WriteMany(tuple(self._shadow_pairs(config)))
+        yield from self._lrn_after(True, "the shadow's words")
+        return {"words": len(self._words(config))}
+
+    def lrn_clear(self):
+        """lrn_refusal read, and a code cleared (a write of 0). Returns its name, or None. It reads a state and does
+        not raise, as `refusals` does not: an unmade update's QUANTISE_INPUT is latched at its finish, between
+        calls, and this is how the host reads it."""
+        yield from self._lrn()
+        code = yield Read(offset("lrn_refusal"))
+        if code:
+            yield Write(offset("lrn_refusal"), 0)
+        return None if code == 0 else NAME_OF.get(code, "code %d" % code)
+
+    def lrn_registers(self):
+        """Every learner register, read and nothing cleared: lrn_update_at, lrn_status (its word and its six
+        bits), lrn_refusal by name, the eight counts and the two caps. Each 64-bit counter is read lower word
+        then upper word, one after the other: the lower read holds that counter's upper word for the next."""
+        yield from self._lrn()
+        out = {"lrn_update_at": (yield from self._value("lrn_update_at"))}
+        word = yield Read(offset("lrn_status"))
+        out["lrn_status_word"] = word
+        out["lrn_status"] = dict((bit, (word >> at) & 1) for bit, at in sorted(LRN_STATUS.items(), key=lambda x: x[1]))
+        code = yield Read(offset("lrn_refusal"))
+        out["lrn_refusal"] = None if code == 0 else NAME_OF.get(code, "code %d" % code)
+        out["counts"] = {}
+        for name in LRN_COUNTS:
+            out["counts"][name] = yield from self._value(name)
+        out["caps"] = {}
+        for name in LRN_CAPS:
+            out["caps"][name] = yield from self._value(name)
+        return out

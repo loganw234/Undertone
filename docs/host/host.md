@@ -59,6 +59,16 @@ Parcel HOST, round 3, 2026-11-24. The library is `host/`. Its bench on the simul
 
 `swap` returns `next_index` read just before its first shadow write and just after the read that says the commit was taken, and the places of those two operations among its own. IMAGE_SPEC, NOISE_TABLE and RECORD_SLOT are the host library's alone: no block of the fabric raises them.
 
+### The learner's calls (round 5, parcel LRN-C)
+
+*Added by parcel LRN-C, 2026-11-26; the whole account is [lrn-c.md](lrn-c.md), section 2.* The learner's block, 0xD00 to 0xDFF, has six calls of its own, listed in `LEARNER_PROCEDURES` beside `PROCEDURES`, which is unchanged: `lrn_open`, `lrn_update`, `lrn_commit`, `lrn_write_shadow`, `lrn_clear` and `lrn_registers`. They are driven by `host.drive.run_by_calls` and `run_by_coroutines`. They keep the rule above:
+- `lrn_open` refuses LEARN_BOUND before any write: a build whose `lrn_cap_count_bits` or `lrn_cap_update_frames` is outside the definition's bounds, a kernel with no learner (it reads 0 there) among them, or a build that is not the case's;
+- `lrn_update`, `lrn_commit` and `lrn_write_shadow` read back `lrn_refusal`, and for the last two the core's `refusal` too, the learner's first;
+- `lrn_clear` reads and clears `lrn_refusal` without raising;
+- `lrn_registers` reads every learner register.
+
+**The calls above do not read `lrn_refusal`**, so on a learner kernel a `commit` the learner holds back returns as if taken: the learner's calls are what a caller of a learner kernel uses (lrn-c.md, limit 8).
+
 ## 4. Truth while the run goes
 
 `ahead` is the most records the library keeps in the injector's store: `cap_inject_pending` by default, set lower by a bench. `start` writes the first `ahead`. Each `step` reads `inj_pending` and writes as many more as bring it to `ahead`, in the schedule's order, as one `WriteMany`, after reading the core's `next_index`. The least of each batch's first index less that `next_index` is reported as the least slack. A host that falls behind gets INJECT_OVERLAP from the injector, RUN_LENGTH from the kernel, and the records written before: never a wrong record.
@@ -125,6 +135,8 @@ Its path goes to `host.backend_xrt.Backend(xclbin, shim_path=...)`, or into `UND
 **Nothing the host writes stops a running kernel**: the kernel refuses a reset while its run goes (`rtl/krnl/undertone_krnl.sv`, its `krn_reset` row; `docs/rtl/krnl.md`, section 5). VHOST-2 saw this in simulation, the run going on to all 400 of its records (the round's report `VHOST-2.md`, in its folder and not in the tree; READ). Only the image's reload or the card's own reset stops it, and **a kernel still running when the backend frees its buffers may write into a buffer being freed** (limit 18).
 
 `--swap-unbatched` writes the swap one `Write` a word, so the trace times each, and `report.json` records it as `swap_batched`. Its docstring has every option. `--polls` bounds the wait for done (10^7 rounds by default); under emulation, where one register read is far slower than on the card, the caller sets it to what the emulator can run.
+
+*Added by parcel LRN-C, 2026-11-26:* `--learn <script.json>`, with `--count-bits` and `--update-frames`, runs a learner's script while the run goes. It is a list of updates, commits, shadow writes and clears, each made once a read of `next_index` is at least its "after", through the learner's calls. Each call is bracketed by two reads of `next_index`, and a refusal is that operation's outcome, recorded by name while the run goes on. `report.json`'s `learner` holds every operation and the learner's registers at the end. Without `--learn` nothing of a run changes. The windows in which each operation gives the model's outcome are [lrn-c.md](lrn-c.md), section 3.
 
 Its inputs are made beside the model, and its records compared with the model's there, in a few lines (an example, not a file of the tree):
 
