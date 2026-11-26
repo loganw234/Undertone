@@ -2,7 +2,7 @@
 
 Round 5 put phase B's learner into RTL beside the core, in simulation only (`docs/rtl/learn.md`). That page's section 8 counts the learner's storage and arithmetic, and claims no LUT and no clock. The round's plan asked for the cost to be measured: "the learner synthesised out of context, as the head was in round 2, for its LUTs, DSP slices and memory against L12's room" (`docs/plans/R5-learning-in-fabric-and-real-noise.md`, "Track A: learning in the fabric, in simulation"). This page is that measurement, made on the pattern of `docs/studies/SYN-head.md`.
 
-**This page reports a synthesis and nothing more.** The learner was synthesised out of context, for the card's part, with a utilisation report. There was no implementation, no placement and no timing, so nothing here says the learner meets any clock. The learner is in no kernel and no image (learn.md, section 7), and nothing was put on the card.
+**This page reports a synthesis and nothing more.** The learner was synthesised out of context, for the card's part, with a utilisation report. There was no implementation, no placement and no timing, so nothing here says the learner meets any clock. When it was run, the learner was in no kernel and no image. Parcel KRNL-L has since wired it into the kernel (`docs/rtl/krnl-learn.md`), and nothing of that is measured on this page. Nothing was put on the card.
 
 ## The result
 
@@ -64,16 +64,25 @@ These are readings of the totals. The netlist was not read, and the hierarchical
 - **One Netlist 29-101** under each profile (a flat netlist is not ideal for floorplanning), and **one Synth 8-7080** (the criteria for parallel synthesis are not met) under s16x1 and for the port.
 - There was no critical warning and no error.
 
+## A timing estimate, made after
+
+The same synthesis of `learn` under s16x1 was made again with a clock on its port `clk` of 10.000 ns, the kernel's 100 MHz, and a timing report (2026-11-26, 03:36:51 to 03:47:42 by the box's clock).
+- **WNS +5.747 ns, TNS 0:** none of 79,706 endpoints fails, and WHS is +0.029 ns.
+- **The worst paths** are 3.97 ns of data path over 20 logic levels: 9 CARRY8, 8 LUTs, a MUXF7, a MUXF8 and a RAMD64E. Each runs from the truth store's cursor `t1_reg` to the A and B inputs of `db_p0`'s DSP blocks.
+- **With the clock** it is 19,668 look-up tables (3,814 as memory), 26,557 registers and 12 DSP slices.
+
+**It is an estimate before placement, from register to register only.** The inputs and outputs are unconstrained. The delays are synthesis's, not a routed design's. Out of context the clock's source is unset, so its delay and skew were not estimated (Timing 38-242). That the learner closes at 100 MHz in the kernel is BELIEVED from it; a link measures it.
+
 ## Limits
 
-1. **No timing.** The divider takes one restoring step a clock, and the sums are added and compared in this RTL's stages as they are. Nothing here says the learner closes at 100 MHz or at any clock. If a build needs more pipeline stages, it has more registers and the same multipliers.
+1. **No timing but the estimate above.** The divider takes one restoring step a clock, and the sums are added and compared in this RTL's stages as they are. Nothing here says the learner closes at 100 MHz in a placed and routed design. If a build needs more pipeline stages, it has more registers and the same multipliers.
 2. **Out of context.** The module was synthesised alone, its inputs free. In the kernel, the tool may share, trim or duplicate logic. The sums with the kernel's figure add two different runs: this script's `synth_design`, and v++'s synthesis inside round 3's link with its own strategy.
 3. **One tool, one version, the default strategy.**
 4. **Where each array went is BELIEVED.** The netlist was not read, and the report's hierarchy has one level.
-5. **The learner's ports are free here.** In the simulation tops the learner reads state of the core and the injector by hierarchical name (learn.md, limit 3). The ports a later round must add to `core.sv` and `inject.sv` for that (learn.md, section 7) are not counted, nor is the read path's OR in the kernel.
+5. **The learner's ports are free here.** In the simulation tops the learner reads state of the core and the injector by hierarchical name (learn.md, limit 3). The view ports KRNL-L added to `core.sv` and `inject.sv` for the kernel (`docs/rtl/krnl-learn.md`) are not counted, nor is the read path's OR in the kernel.
 6. **The kernel was never synthesised under s24x3,** so the learner's cost under that profile has no kernel to sit beside.
 
-**Whether the learner goes into the kernel, and at which profile, is a later link's question and Logan's decision.** This page measures and decides nothing.
+**This page measures and decides nothing.** Logan's word of 2026-11-26 put the learner into the kernel under s16x1 the same day; the link's own reports measure what it costs there.
 
 ## Register
 
@@ -87,4 +96,6 @@ These are readings of the totals. The netlist was not read, and the hierarchical
 | SL6 | The registers exceed section 8's sums and copy (24,576 and 86,016 bits) by 1,995 and 1,880, fewer than the truth store's 65,792 bits | COMPUTED | SL1; `docs/rtl/learn.md`, row L7 | arithmetic |
 | SL7 | `rtl/learn/learn.sv`, `rtl/learn/learn_port.sv` and `spec/undertone_pkg.sv` in the tree this page is committed in have the SHA-256 of the files synthesised: 797954c1..., bd3c106c... and edb24062... | MEASURED | `sha256sum` of each in the tree, against the box's own listing at the run's start | that command |
 | SL8 | Each of the 71 elements Synth 8-6014 names is assigned with a blocking `=` at the line it gives, and the 71 are the same under both profiles; the 48 lines of Synth 8-7129 name bits 8 to 31 of `core_taps`, the same under both | MEASURED | the two logs, read by a script of the lead's against `rtl/learn/learn.sv`; `diff` of each warning's lines between the two logs | the logs |
+| SL10 | `learn` under `s16x1` with a 10.000 ns clock on `clk`: WNS +5.747 ns, TNS 0, 0 failing of 79,706 endpoints, WHS +0.029 ns; the worst paths 3.97 ns of data path over 20 logic levels, from `t1_reg` to `db_p0`'s DSP inputs; 19,668 look-up tables (3,814 as memory), 26,557 registers, 12 DSP slices | MEASURED | Vivado v2022.2, the command of SL1 under `s16x1` after `read_xdc` of `create_clock -period 10.000 -name clk [get_ports clk]`, then `report_timing_summary`, `report_timing -max_paths 40`, `report_design_analysis -logic_level_distribution` and `report_utilization`; 2026-11-26, 03:36:51 to 03:47:42, on the box | the same command on the same files |
+| SL11 | The learner closes at 100 MHz in the kernel | BELIEVED | SL10, an estimate before placement with no clock skew and no path into or out of the learner timed | the routed kernel's timing report |
 | SL9 | The truth store and the delay buffer are the look-up tables used as memory, the sums and the copy are the registers, and the growth from `s16x1` to `s24x3` is the multiplexers that pick one sum by its index | BELIEVED | the totals of SL1 against section 8's counts; no netlist was read | a read of the synthesised netlist |
