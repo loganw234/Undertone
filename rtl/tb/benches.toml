@@ -1338,3 +1338,547 @@ module = "bench_host"
 profiles = ["s16x1", "s24x3"]
 identity = ["identity_e0", "identity_fed_and_swapped", "refusal_read_back_by_name"]
 limit = 80
+
+# ---------------------------------------------------------------------- RTL-L (round 5): the learner
+# The learner of phase B beside the detector core (rtl/learn/, docs/rtl/learn.md), held to
+# model/learner.py. Two tops: learn_small, a small core and the learner, frames and truth from the bench;
+# and learn_chain, the seam's chain with the learner at the definition's bounds, truth from the injector.
+# Every mutant runs under one profile; its evidence is read against the record or the register its fault
+# predicts (docs/rtl/learn.md, section 8's table).
+
+[[bench]]
+name = "learn-s16x1"
+toplevel = "learn_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_small.sv"]
+module = "bench_learn"
+profiles = ["s16x1"]
+identity = ["bit_identity_hand_worked_ties", "bit_identity_every_coefficient", "update_finishes_within_f", "skips_at_their_boundaries", "snapshot_at_u", "a_record_offered_late", "frames_every_clock", "refuses_an_update", "refuses_the_core_rows", "refuses_swap_shape", "refuses_what_the_model_cannot", "quantise_input", "refusal_order", "rows_read_back", "counters_past_two_to_the_32", "reads_while_the_learner_writes", "extremes_by_real_windows"]
+limit = 120
+
+# A learner that does nothing: no window is ever taken.
+[[bench.mutant]]
+name = "does-nothing"
+file = "rtl/learn/learn.sv"
+edits = [["take0 = fire0 && !o0_start && !o0_busy && !o0_full;", "take0 = 1'b0;"], ["take1 = fire1 && !o1_busy && !o1_full;", "take1 = 1'b0;"]]
+must_fail = ["bit_identity_hand_worked_ties"]
+kind = "WORD"
+
+# The rounding the other way: a tie goes away from zero.
+[[bench.mutant]]
+name = "half-away"
+file = "rtl/learn/learn.sv"
+edits = [["((twice == {1'b0, peak}) && dv_q[0])", "(twice == {1'b0, peak})"]]
+must_fail = ["bit_identity_hand_worked_ties"]
+kind = "WORD"
+
+# The last window before the update dropped: the counts and the copy taken before that edge's judgements.
+[[bench.mutant]]
+name = "drops-the-last-window"
+file = "rtl/learn/learn.sv"
+edits = [["n0s <= (idx_n == (named ? u_new : upd_u)) ? cnt0_n : cnt0;", "n0s <= cnt0;"], ["n1s <= (idx_n == (named ? u_new : upd_u)) ? cnt1_n : cnt1;", "n1s <= cnt1;"], ["cp_wait <= (idx_n == (named ? u_new : upd_u));", "cp_wait <= 1'b0;"]]
+must_fail = ["bit_identity_hand_worked_ties"]
+kind = "WORD"
+
+# The copy a clock late when the update is made a frame late: a window judged after u inside the set.
+[[bench.mutant]]
+name = "copy-one-late"
+file = "rtl/learn/learn.sv"
+edits = [["cp_wait <= (idx_n == (named ? u_new : upd_u));", "cp_wait <= 1'b1;"]]
+must_fail = ["snapshot_at_u"]
+kind = "WORD"
+
+# Each skip's condition removed alone.
+[[bench.mutant]]
+name = "start-removed"
+file = "rtl/learn/learn.sv"
+edits = [["o0_start = (j0 < T);", "o0_start = 1'b0;"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = ""
+
+[[bench.mutant]]
+name = "busy1-before-removed"
+file = "rtl/learn/learn.sv"
+edits = [["o1_busy  = (prev1_ok && ((j1 - prev1) < T)) || (kq && ((jq - j1) < T));", "o1_busy  = 1'b0 || (kq && ((jq - j1) < T));"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = ""
+
+[[bench.mutant]]
+name = "full1-removed"
+file = "rtl/learn/learn.sv"
+edits = [["o1_full  = (cnt1 == COUNT_MAX);", "o1_full  = 1'b0;"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = "WORD"
+
+# Finished one frame early: a commit at the last clock of u + F - 1 taken.
+[[bench.mutant]]
+name = "finished-a-frame-early"
+file = "rtl/learn/learn.sv"
+edits = [["uf_n    = u_new + B_UPDATE_FRAMES;", "uf_n    = u_new + B_UPDATE_FRAMES - 1;"]]
+must_fail = ["update_finishes_within_f"]
+kind = ""
+
+# The update made at u without waiting for the truth there to be final.
+[[bench.mutant]]
+name = "make-without-waiting"
+file = "rtl/learn/learn.sv"
+edits = [["|| (idx_n > (named ? u_new : upd_u)));", "|| 1'b1);"]]
+must_fail = ["a_record_offered_late"]
+kind = "WORD"
+
+# The host's writes reaching the core while an update is unfinished, one row at a time; and an update.
+[[bench.mutant]]
+name = "commit-not-held"
+file = "rtl/learn/learn_port.sv"
+edits = [["(reg_addr == REG_COMMIT_AT_OFFSET + WBYTES) || (reg_addr == REG_SHADOW_BEGIN_OFFSET)", "1'b0 || (reg_addr == REG_SHADOW_BEGIN_OFFSET)"]]
+must_fail = ["refuses_the_core_rows"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "shadow-begin-not-held"
+file = "rtl/learn/learn_port.sv"
+edits = [["|| (reg_addr == REG_SHADOW_BEGIN_OFFSET)", "|| 1'b0"]]
+must_fail = ["refuses_the_core_rows"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "update-not-held"
+file = "rtl/learn/learn.sv"
+edits = [["x_unfinished = w_uhi && port_hold;", "x_unfinished = 1'b0;"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+# One condition of an update's refusals removed alone.
+[[bench.mutant]]
+name = "shape-rectifier"
+file = "rtl/learn/learn.sv"
+edits = [["&& !core_rect_abs &&", "&& 1'b1 &&"]]
+must_fail = ["refuses_swap_shape"]
+kind = ""
+
+[[bench.mutant]]
+name = "shape-shift"
+file = "rtl/learn/learn.sv"
+edits = [["(core_score_shift == 0)", "1'b1"]]
+must_fail = ["refuses_swap_shape"]
+kind = ""
+
+[[bench.mutant]]
+name = "pending"
+file = "rtl/learn/learn.sv"
+edits = [["x_pending    = w_uhi && pend_n;", "x_pending    = 1'b0;"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+[[bench.mutant]]
+name = "index-past-end"
+file = "rtl/learn/learn.sv"
+edits = [["|| ({1'b0, u_new} + B_UPDATE_FRAMES > INDEX_TOP)", "|| 1'b0"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+[[bench.mutant]]
+name = "stream-partial"
+file = "rtl/learn/learn.sv"
+edits = [["x_count      = w_uhi && core_partial;", "x_count      = 1'b0;"]]
+must_fail = ["refuses_what_the_model_cannot"]
+kind = ""
+
+[[bench.mutant]]
+name = "access"
+file = "rtl/learn/learn.sv"
+edits = [["x_access     = w_blk && (!(w_ulo || w_uhi || w_rfs) || (w_rfs && (reg_wdata != 0)));", "x_access     = 1'b0;"]]
+must_fail = ["refuses_what_the_model_cannot"]
+kind = ""
+
+# A 64-bit counter that wraps at 2^32; and an upper word read live, not held by the lower word's read.
+[[bench.mutant]]
+name = "counter-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["c_busy <= c_busy + add_busy;", "c_busy <= {32'd0, c_busy[31:0] + add_busy};"]]
+must_fail = ["rows_read_back"]
+kind = ""
+
+# A sum and the peak one bit narrower.
+[[bench.mutant]]
+name = "sum-narrower"
+file = "rtl/learn/learn.sv"
+edits = [["logic signed [W_SUM-1:0] sum0 [0:NSUM-1];", "logic signed [W_SUM-2:0] sum0 [0:NSUM-1];"], ["logic signed [W_SUM-1:0] sum1 [0:NSUM-1];", "logic signed [W_SUM-2:0] sum1 [0:NSUM-1];"]]
+must_fail = ["extremes_by_real_windows"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "peak-narrower"
+file = "rtl/learn/learn.sv"
+edits = [["logic [W_MAG-1:0]        peak;", "logic [W_MAG-2:0]        peak;"]]
+must_fail = ["extremes_by_real_windows"]
+kind = "WORD"
+
+# The gate gives the learner the port over a host's read: the core misses the read.
+[[bench.mutant]]
+name = "learner-takes-a-read"
+file = "rtl/learn/learn_port.sv"
+edits = [["assign host      = reg_valid && !intercept;", "assign host      = reg_valid && !intercept && !(lw_valid && !reg_we);"]]
+must_fail = ["reads_while_the_learner_writes"]
+kind = ""
+
+# Pass B's taps the other way round.
+[[bench.mutant]]
+name = "taps-reversed"
+file = "rtl/learn/learn.sv"
+edits = [["da_s1 <= cpy1[is_k*CHANNELS + is_c];", "da_s1 <= cpy1[(T-1-is_k)*CHANNELS + is_c];"], ["da_s0 <= cpy0[is_k*CHANNELS + is_c];", "da_s0 <= cpy0[(T-1-is_k)*CHANNELS + is_c];"]]
+must_fail = ["bit_identity_every_coefficient"]
+kind = "WORD"
+
+# The verifier VRTLL's gaps, round 5, and their neighbours: two BUSY skips at one edge counted once; SWAP_INDEX
+# one below the next index taken; SWAP_PENDING read before the frame at the write's edge.
+[[bench.mutant]]
+name = "two-busy-counted-once"
+file = "rtl/learn/learn.sv"
+edits = [["add_busy = (fire0 && !o0_start && o0_busy) + (fire1 && o1_busy);", "add_busy = (fire0 && !o0_start && o0_busy) | (fire1 && o1_busy);"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = ""
+
+[[bench.mutant]]
+name = "index-one-below-taken"
+file = "rtl/learn/learn.sv"
+edits = [["((u_new < idx_n) ||", "((u_new + 1 < idx_n) ||"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+[[bench.mutant]]
+name = "pending-before-the-frame"
+file = "rtl/learn/learn.sv"
+edits = [["pend_n   = core_commit && !(take && (core_next_index == core_commit_at));", "pend_n   = core_commit;"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+# Three of the six 64-bit counters at 32 bits, and three upper words read from another counter's hold.
+[[bench.mutant]]
+name = "start-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["if (fire0 && o0_start) c_start <= c_start + 1;", "if (fire0 && o0_start) c_start <= {32'd0, c_start[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "full-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["c_full <= c_full + add_full;", "c_full <= {32'd0, c_full[31:0] + add_full};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "made-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["if (upd_set) c_made <= c_made + 1;", "if (upd_set) c_made <= {32'd0, c_made[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "start-upper-from-busy"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_start;", "reg_rdata <= h_busy;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "full-upper-from-made"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_full;", "reg_rdata <= h_made;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "unmade-upper-from-early"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_unmade;", "reg_rdata <= h_early;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench]]
+name = "learn-s24x3"
+toplevel = "learn_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_small.sv"]
+module = "bench_learn"
+profiles = ["s24x3"]
+identity = ["bit_identity_hand_worked_ties", "bit_identity_every_coefficient", "update_finishes_within_f", "skips_at_their_boundaries", "snapshot_at_u", "a_record_offered_late", "frames_every_clock", "refuses_an_update", "refuses_the_core_rows", "refuses_swap_shape", "refuses_what_the_model_cannot", "quantise_input", "refusal_order", "rows_read_back", "counters_past_two_to_the_32", "reads_while_the_learner_writes", "extremes_by_real_windows"]
+limit = 150
+
+# The copy with the same edge's adds when they are the update's: the window judged at u left out of the sums.
+[[bench.mutant]]
+name = "copy-one-early"
+file = "rtl/learn/learn.sv"
+edits = [["cp_wait <= (idx_n == (named ? u_new : upd_u));", "cp_wait <= 1'b0;"]]
+must_fail = ["snapshot_at_u"]
+kind = "WORD"
+
+# No snapshot: passes A and B read the live sums, so a window judged while pass B divides is in the set.
+[[bench.mutant]]
+name = "no-copy"
+file = "rtl/learn/learn.sv"
+edits = [["da_s1 <= cpy1[is_k*CHANNELS + is_c];", "da_s1 <= sum1[is_k*CHANNELS + is_c];"], ["da_s0 <= cpy0[is_k*CHANNELS + is_c];", "da_s0 <= sum0[is_k*CHANNELS + is_c];"]]
+must_fail = ["snapshot_at_u"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "busy0-removed"
+file = "rtl/learn/learn.sv"
+edits = [["o0_busy  = prev0_ok && ((j0 - prev0) < 2 * T);", "o0_busy  = 1'b0;"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = ""
+
+[[bench.mutant]]
+name = "busy1-after-removed"
+file = "rtl/learn/learn.sv"
+edits = [["o1_busy  = (prev1_ok && ((j1 - prev1) < T)) || (kq && ((jq - j1) < T));", "o1_busy  = (prev1_ok && ((j1 - prev1) < T)) || 1'b0;"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = ""
+
+# Label 1's FULL counted before its BUSY.
+[[bench.mutant]]
+name = "full-before-busy"
+file = "rtl/learn/learn.sv"
+edits = [["(fire1 && o1_busy);", "(fire1 && o1_busy && !o1_full);"], ["(fire1 && !o1_busy && o1_full);", "(fire1 && o1_full);"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = ""
+
+# Finished one frame late: a commit at the first clock of u + F refused.
+[[bench.mutant]]
+name = "finished-a-frame-late"
+file = "rtl/learn/learn.sv"
+edits = [["uf_n    = u_new + B_UPDATE_FRAMES;", "uf_n    = u_new + B_UPDATE_FRAMES + 1;"]]
+must_fail = ["update_finishes_within_f"]
+kind = "WORD"
+
+# A record that arrives once the next index is its own, judged only at an edge that takes a frame.
+[[bench.mutant]]
+name = "late-record-not-judged"
+file = "rtl/learn/learn.sv"
+edits = [["fire0 = core_running && k0 && (j0 == idx_n);", "fire0 = core_running && k0 && (j0 == idx_n) && take;"]]
+must_fail = ["a_record_offered_late"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "shadow-data-not-held"
+file = "rtl/learn/learn_port.sv"
+edits = [["|| (reg_addr == REG_SHADOW_DATA_OFFSET);", "|| 1'b0;"]]
+must_fail = ["refuses_the_core_rows"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "shape-filters"
+file = "rtl/learn/learn.sv"
+edits = [["shape_ok = (core_filters == 1) && (core_rows == CHANNELS)", "shape_ok = 1'b1 && (core_rows == CHANNELS)"]]
+must_fail = ["refuses_swap_shape"]
+kind = ""
+
+[[bench.mutant]]
+name = "shape-rows"
+file = "rtl/learn/learn.sv"
+edits = [["&& (core_rows == CHANNELS) &&", "&& 1'b1 &&"]]
+must_fail = ["refuses_swap_shape"]
+kind = ""
+
+[[bench.mutant]]
+name = "shape-pool"
+file = "rtl/learn/learn.sv"
+edits = [["(core_pool == 1)", "1'b1"]]
+must_fail = ["refuses_swap_shape"]
+kind = ""
+
+[[bench.mutant]]
+name = "shape-hidden"
+file = "rtl/learn/learn.sv"
+edits = [["&& core_no_hidden;", "&& 1'b1;"]]
+must_fail = ["refuses_swap_shape"]
+kind = ""
+
+[[bench.mutant]]
+name = "index-below"
+file = "rtl/learn/learn.sv"
+edits = [["((u_new < idx_n) ||", "(1'b0 ||"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+[[bench.mutant]]
+name = "stopped"
+file = "rtl/learn/learn.sv"
+edits = [["x_stopped    = w_uhi && !core_running;", "x_stopped    = 1'b0;"]]
+must_fail = ["refuses_what_the_model_cannot"]
+kind = ""
+
+[[bench.mutant]]
+name = "peak-zero"
+file = "rtl/learn/learn.sv"
+edits = [["if (peak_n == 0) begin", "if (1'b0) begin"]]
+must_fail = ["quantise_input"]
+kind = "WORD"
+
+# Every number lrn_refusal reports is another's: its lowest bit flipped.
+[[bench.mutant]]
+name = "names-every-refusal-wrongly"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= refusal;", "reg_rdata <= (refusal != '0) ? (refusal ^ 8'd1) : refusal;"]]
+must_fail = ["refuses_an_update", "refuses_the_core_rows", "refuses_swap_shape", "refuses_what_the_model_cannot", "quantise_input"]
+kind = ""
+
+[[bench.mutant]]
+name = "upper-word-live"
+file = "rtl/learn/learn.sv"
+edits = [["else if (reg_addr == REG_LRN_SKIP_BUSY_OFFSET + WBYTES)  reg_rdata <= h_busy;", "else if (reg_addr == REG_LRN_SKIP_BUSY_OFFSET + WBYTES)  reg_rdata <= c_busy[2*WORD-1:WORD];"]]
+must_fail = ["rows_read_back"]
+kind = ""
+
+# D and the dividend one bit narrower.
+[[bench.mutant]]
+name = "difference-narrower"
+file = "rtl/learn/learn.sv"
+edits = [["dc_d  <= db_p1 - db_p0;", "dc_d  <= $signed((db_p1 - db_p0) << 1) >>> 1;"]]
+must_fail = ["extremes_by_real_windows"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "dividend-narrower"
+file = "rtl/learn/learn.sv"
+edits = [["logic [W_X-1:0]          xx, xs;", "logic [W_X-2:0]          xx; logic [W_X-1:0] xs;"]]
+must_fail = ["extremes_by_real_windows"]
+kind = "WORD"
+
+# The add's channels the other way round.
+[[bench.mutant]]
+name = "channels-swapped"
+file = "rtl/learn/learn.sv"
+edits = [["sum1[acc_k*CHANNELS + c] + $signed(dbuf[acc_a][c*S +: S]);", "sum1[acc_k*CHANNELS + c] + $signed(dbuf[acc_a][(CHANNELS-1-c)*S +: S]);"], ["sum0[acc_k*CHANNELS + c] + $signed(dbuf[acc_a][c*S +: S]);", "sum0[acc_k*CHANNELS + c] + $signed(dbuf[acc_a][(CHANNELS-1-c)*S +: S]);"]]
+must_fail = ["bit_identity_every_coefficient"]
+kind = "WORD"
+
+# The verifier VRTLL's gaps, round 5, and their neighbours: label 0's FULL alone; SWAP_INDEX against the
+# next index before the frame at the write's edge; lrn_status at exactly next index u.
+[[bench.mutant]]
+name = "full0-removed"
+file = "rtl/learn/learn.sv"
+edits = [["o0_full  = (cnt0 == COUNT_MAX);", "o0_full  = 1'b0;"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "index-before-the-frame"
+file = "rtl/learn/learn.sv"
+edits = [["((u_new < idx_n) ||", "((u_new < core_next_index) ||"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+[[bench.mutant]]
+name = "status-at-u"
+file = "rtl/learn/learn.sv"
+edits = [["upd_taken && (core_next_index < upd_u);", "upd_taken && (core_next_index <= upd_u);"], ["upd_taken && (core_next_index >= upd_u);", "upd_taken && (core_next_index > upd_u);"]]
+must_fail = ["rows_read_back"]
+kind = ""
+
+# The other three 64-bit counters at 32 bits, and three more upper words read from another counter's hold.
+[[bench.mutant]]
+name = "unmade-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["else c_unmade <= c_unmade + 1;", "else c_unmade <= {32'd0, c_unmade[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "early-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["if (port_intercept && w_commit_hi) c_early <= c_early + 1;", "if (port_intercept && w_commit_hi) c_early <= {32'd0, c_early[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "busy-upper-from-full"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_busy;", "reg_rdata <= h_full;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "made-upper-from-unmade"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_made;", "reg_rdata <= h_unmade;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "early-upper-from-made"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_early;", "reg_rdata <= h_made;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench]]
+name = "learn-chain-s16x1"
+toplevel = "learn_chain"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_chain.sv"]
+module = "bench_learn_chain"
+profiles = ["s16x1"]
+identity = ["update_finishes_within_f", "truth_isolation", "bit_identity_e1_flow", "full_at_thirty_two_bits"]
+limit = 240
+
+# A commit at an index no one named: the commit's lower word reaches the core one higher.
+[[bench.mutant]]
+name = "commit-a-frame-late"
+file = "rtl/learn/learn_port.sv"
+edits = [["assign c_wdata   = host ? reg_wdata : lw_wdata;", "assign c_wdata   = host ? reg_wdata + ((reg_addr == REG_COMMIT_AT_OFFSET) ? 1 : 0) : lw_wdata;"]]
+must_fail = ["bit_identity_e1_flow"]
+kind = "WORD"
+
+# A commit the learner makes itself, two frames after its last write.
+[[bench.mutant]]
+name = "learner-commits-itself"
+file = "rtl/learn/learn.sv"
+edits = [["""                    if (!lw_valid) begin                    // the last write has been taken
+                        done_n = 1'b1;""", """                    if (!lw_valid && lw_addr == REG_SHADOW_DATA_OFFSET) begin
+                        lw_valid <= 1'b1; lw_addr <= REG_COMMIT_AT_OFFSET; lw_wdata <= core_next_index[31:0] + 2;
+                    end else if (!lw_valid && lw_addr == REG_COMMIT_AT_OFFSET) begin
+                        lw_valid <= 1'b1; lw_addr <= REG_COMMIT_AT_OFFSET + WBYTES; lw_wdata <= core_next_index[63:32];
+                    end else if (!lw_valid) begin
+                        done_n = 1'b1;"""]]
+must_fail = ["truth_isolation"]
+kind = "WORD"
+
+# Truth reaching a score with no commit: the lowest bit of the last truth index taken, into the core's frame.
+[[bench.mutant]]
+name = "truth-into-the-frame"
+file = "rtl/learn/learn_chain.sv"
+edits = [["    assign core_frame = inj_frame;", "    logic t_odd = 1'b0; always @(posedge clk) if (t_push) t_odd <= t_index[0]; assign core_frame = inj_frame ^ {{(W-1){1'b0}}, t_odd};"]]
+must_fail = ["truth_isolation"]
+kind = "WORD"
+
+# A learner that reads the amplitude: a record whose numerator is odd is not handed over.
+[[bench.mutant]]
+name = "reads-the-amplitude"
+file = "rtl/learn/learn_chain.sv"
+edits = [["wire                        t_push = u_inject.wr_push;", "wire                        t_push = u_inject.wr_push && !u_inject.t_num[0];"]]
+must_fail = ["truth_isolation"]
+kind = "WORD"
+
+# The learner's word off the bus.
+[[bench.mutant]]
+name = "learner-off-the-bus"
+file = "rtl/learn/learn_chain.sv"
+edits = [["assign reg_rdata = src_rdata | inj_rdata | core_rdata | learn_rdata;", "assign reg_rdata = src_rdata | inj_rdata | core_rdata;"]]
+must_fail = ["one_bus_four_blocks"]
+kind = "WORD"
+
+[[bench]]
+name = "learn-chain-s24x3"
+toplevel = "learn_chain"
+sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_chain.sv"]
+module = "bench_learn_chain"
+profiles = ["s24x3"]
+identity = ["update_finishes_within_f", "truth_isolation", "a_record_offered_late", "bit_identity_e1_flow", "full_at_thirty_two_bits"]
+limit = 300
+
+# Finished one frame early at the definition's 128 taps.
+[[bench.mutant]]
+name = "finished-a-frame-early"
+file = "rtl/learn/learn.sv"
+edits = [["uf_n    = u_new + B_UPDATE_FRAMES;", "uf_n    = u_new + B_UPDATE_FRAMES - 1;"]]
+must_fail = ["update_finishes_within_f"]
+kind = ""
