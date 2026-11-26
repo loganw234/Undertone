@@ -210,6 +210,7 @@ Each is stated by the behaviour it concedes. A fault inside one passes the gate.
 12. **The forecast's amplitude is an approximation of the rule** (its script's docstring says how), and its deflections are Gaussian and first order. It drove two choices of the design, the format and the absent front end, and no figure of the experiment.
 13. **The short form's answer is known in advance**: white noise. It tests that every step of the full run's code gives E1's answer where that answer is right, and not what real noise does to it.
 14. **E1's rule functions are imported from E1's test file.** A change there changes both experiments' rules together, which is intended, and an E1 test that broke them would break E3's too.
+15. **The full run's own path is run in the gate only up to its inputs.** `full_inputs` is held (each station's 528 paths in `blocks.json`'s order, its committed set, its disjoint spans), and `measure` and `evaluate` are the short form's code. What only a part of 528 blocks of 65,536 frames meets, its memory and its time among them, is first seen in the lead's run. That the recordings on disk are the blocks named was checked once, read-only, by the parcel's scratch script, and is held again by the part's own `blocks_sha256`.
 
 ## Register
 

@@ -548,7 +548,8 @@ def judge_parts(paths, refused=()):
     return 0 if ok else 1
 
 
-def full_part(station, data, out):
+def full_inputs(station, data):
+    """What a station's full part reads: (plan, committed set, the recordings' paths in order, schedule, spans)."""
     p = full_plan(station)
     sets = committed_set(p)
     if not sets or "sha256" not in sets:
@@ -558,10 +559,15 @@ def full_part(station, data, out):
     rows = [s for s in blocks["stations"] if s["station"] == station][0]
     paths = [os.path.join(data, r["file"]) for r in rows["blocks_used"] if r["role"] in ("training", "held_out")]
     schedule = schedule_for(p, sets["amplitude_num"], sets["amplitude_den"])
+    return p, sets, paths, schedule, utc_spans(station)
+
+
+def full_part(station, data, out):
+    p, sets, paths, schedule, spans = full_inputs(station, data)
     print("E3 full run, %s: %d training and %d held-out blocks, amplitude %d/%d, %d frames"
           % (station, p["training"], p["held_out"], sets["amplitude_num"], sets["amplitude_den"], p["length"]), flush=True)
     got = measure(p, paths, schedule, progress=65536 * 32)
-    part = evaluate(p, got, schedule, spans=utc_spans(station))
+    part = evaluate(p, got, schedule, spans=spans)
     with open(out, "w", encoding="utf-8", newline="\n") as f:
         json.dump(part, f, indent=1)
         f.write("\n")
@@ -1031,6 +1037,20 @@ def test_e3s_experiment_a_stations_part_is_held_to_its_committed_blocks_and_they
     bad = {"training": s["training"], "held_out": s["held_out"][:3] + [s["training"][5]] + s["held_out"][4:]}
     quick = evaluate(dict(SHORT, resamples=20), got, _short["schedule"], spans=bad)
     assert quick["blocks_disjoint"] == "TRAINED_ON" and not_as_stated(dict(part, blocks_disjoint=quick["blocks_disjoint"]))
+
+
+def test_e3s_experiment_a_full_parts_inputs_are_the_committed_ones():
+    """What `--full` hands `measure` and `evaluate`, short of the records themselves, which are not in the tree."""
+    for station in RULE["stations"]:
+        p, sets, paths, schedule, spans = full_inputs(station, "DATA")
+        assert p == full_plan(station) and sets == committed_sets()["stations"][station]
+        assert len(paths) == 528 and paths[0] == os.path.join("DATA", station + "/training-000.und")
+        assert paths[127].endswith("training-127.und") and paths[128].endswith("held_out-000.und") and paths[-1].endswith("held_out-399.und")
+        assert check_injection_set(p, schedule) == sets["sha256"] and len(schedule) == 128 * 512 + 400 * 256
+        assert schedule[0]["index"] == 64 and schedule[-1]["index"] == p["length"] - 256 + 192
+        assert disjoint(spans) == 528
+    with pytest.raises(ValueError):
+        full_inputs("XYZ", "DATA")
 
 
 def test_e3s_experiment_the_named_model_learns_from_the_last_of_the_training_blocks(tmp_path):
