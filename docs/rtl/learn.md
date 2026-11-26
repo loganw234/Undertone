@@ -190,17 +190,9 @@ Each is stated by the behaviour it concedes.
 19. **Truth isolation in the fabric is held through the model, not by comparing the design's runs with each other.** `truth_isolation` requires the model's records of the wordings 3/1 and 6/2 to be equal, and those of 3/1 and of 3/1 with an added record of amplitude 0 to be equal up to the commit and different after it, and holds the design to the model in each run. So the fabric's records are equal across the wordings only because each equals the model's; no assertion compares two of the design's runs directly.
 20. **Two windows cannot both be counted FULL at one next index.** At next index n the windows judged are label 0 of a record at n and label 1 of a record at n − T. For label 1 of n − T to be free of BUSY no record lies in (n − T, n), so the record at n is the next after n − T, and label 0 of n is then BUSY, T < 2T. So `add_full`'s two terms are never true together, and the learner counting them with an OR in place of a sum is identical on every stream: no test can see it, and none does. Two BUSY at one edge do happen, and `skips_at_their_boundaries` holds them (row L14).
 
-## 7. The kernel, a later round's
+## 7. The kernel
 
-Wiring the learner into `rtl/krnl/` is not in this parcel. A later round must:
-1. give `core.sv` and `inject.sv` read-only ports for what section 2.1 reads by name;
-2. instantiate `learn` and `learn_port` in `undertone_krnl.sv`, the core's port through the gate and the learner on the bus unfiltered;
-3. OR the learner's `reg_rdata` into the read path;
-4. build the core and the learner at one B_TAPS;
-5. teach the host library the update, the counters and `lrn_cap_*`, with `host/fake.py` beside it;
-6. link.
-
-Until then the kernel sends a write at 0xD00 to 0xDFF to no block, dropped with no refusal, and a read there answers 0 (row L9).
+*Restated by KRNL-L, 2026-11-26:* the learner is wired into the kernel ([krnl-learn.md](krnl-learn.md)). `core.sv` and `inject.sv` have read-only view ports for what section 2.1 reads by name. `undertone_krnl.sv` holds `learn` and `learn_port`, the learner at the kernel's B_TAPS, and ORs its word into the read path. A write at 0xD00 to 0xDFF is the learner's, and a read there answers its rows. The two simulation tops here still read by hierarchical name (limit 3). The host library's side is parcel LRN-C's, and the link the lead's.
 
 ## 8. What it costs, as far as a count can say
 
@@ -239,3 +231,5 @@ The truth store is read at three places at once in this RTL (the two cursors and
 | L13 | F = 256 frames is the definition's, and the learner meets it at the chain's rate | DECISION | the lead's ruling, 2026-11-25 22:00, on LRN-B's question 1 | `update_finishes_within_f` failing |
 | L14 | No next index judges two windows that are both free of START and BUSY, so two FULL skips never fall at one edge; two BUSY skips do | COMPUTED | limit 20's argument; and a script of the parcel's own that states the window rules anew and imports nothing, over every set of up to five records in 0..19 at T = 1 to 4: no such index. The script is in the round's scratch folder, not the tree | a stream of the model's whose log has two FULL outcomes at one next index |
 | L15 | Each of the verifier VRTLL's eight gaps but the two-FULL one fails a test, and each such test passed on the shipped RTL at its first run | MEASURED | the run of L5: the eighteen new mutants of section 5.1 each failed as named, their evidence read one line a test, and the new and changed tests passed on the unchanged RTL | the gate's second size with those mutants |
+
+*Restated by KRNL-L, 2026-11-26:* row L9 is false from KRNL-L's commit: the kernel sends a write at 0xD00 to 0xDFF to the learner, and a read there answers the learner's rows ([krnl-learn.md](krnl-learn.md), section 3).

@@ -11,7 +11,12 @@ that each number and name in them is the one the definition and the RTL give:
                 master, at krn_buffer's offset, a pointer
   the script    every source it names is a file of the tree, the generated
                 package first and the kernel's top last; no bench's top is
-                among them; its top and its kernel name are the module's
+                among them; its top and its kernel name are the module's;
+                and they are, file for file and in order, the sources of the
+                bench row that builds the packaged top (rtl/tb/benches.toml,
+                krnl-first), so what is packaged is what is simulated. Since
+                round 5 that list holds the learner and its port (KRNL-L,
+                docs/rtl/krnl-learn.md)
   link.cfg      its kernel and port are kernel.xml's
   the top       its parameter and port lists, which Vivado's IP packager
                 reads, hold plain numbers and no name of the package (the
@@ -31,12 +36,14 @@ written. Those are the lead's, in BUILD (docs/rtl/krnl.md, its limits).
 """
 import os
 import re
+import tomllib
 import xml.etree.ElementTree as ET
 
 from spec import constants as C
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 XML, TCL, CFG, TOP = "hw/kernel.xml", "hw/package_kernel.tcl", "hw/link.cfg", "rtl/krnl/undertone_krnl.sv"
+MANIFEST, PACKAGED_BENCH = "rtl/tb/benches.toml", "krnl-first"     # the bench row that builds the packaged top
 BENCH_TOPS = ("rtl/krnl/krnl_max.sv", "rtl/krnl/krnl_small.sv", "rtl/seam/", "rtl/core/core_small.sv", "rtl/p0/")
 
 
@@ -45,8 +52,8 @@ def read(rel):
         return f.read()
 
 
-def findings(xml_text, tcl_text, cfg_text, top_text):
-    """Each way the four texts disagree with the definition or with one another, as a list of sentences."""
+def findings(xml_text, tcl_text, cfg_text, top_text, manifest_text):
+    """Each way the five texts disagree with the definition or with one another, as a list of sentences."""
     out = []
     kernel = ET.fromstring(xml_text).find("kernel")
     name = kernel.get("name")
@@ -85,6 +92,11 @@ def findings(xml_text, tcl_text, cfg_text, top_text):
             out.append("the script packages %s, a bench's top" % rel)
     if sources and (sources[0] != "spec/undertone_pkg.sv" or sources[-1] != TOP):
         out.append("the script's sources begin with %s and end with %s" % (sources[0], sources[-1]))
+    rows = [b for b in tomllib.loads(manifest_text).get("bench", []) if b.get("name") == PACKAGED_BENCH]
+    if len(rows) != 1 or rows[0].get("toplevel") != module:
+        out.append("the manifest has not one bench %s whose top is %s" % (PACKAGED_BENCH, module))
+    elif sources != rows[0].get("sources"):
+        out.append("the script packages %s, not what %s builds, %s" % (sources, PACKAGED_BENCH, rows[0].get("sources")))
     if "set_property top %s " % name not in tcl_text or "-kernel_name %s " % name not in tcl_text:
         out.append("the script's top or kernel name is not %s" % name)
     for busif in ("s_axi_control", "m_axi_gmem"):
@@ -151,7 +163,7 @@ def header_findings(top_text):
 
 
 def the_texts():
-    return read(XML), read(TCL), read(CFG), read(TOP)
+    return read(XML), read(TCL), read(CFG), read(TOP), read(MANIFEST)
 
 
 def test_krnl_packaging_agrees_with_the_definition():
@@ -182,6 +194,8 @@ PLANTED = (
      "logic [511:0]                                m_axi_gmem_wdata", "m_axi_gmem_wdata is 512 bits"),
     ("a pool one short", 3, "B_POOL         = 65536,", "B_POOL         = 65535,", "B_POOL's default is 65535"),
     ("a shift one short", 3, "B_HIDDEN_SHIFT = 31,", "B_HIDDEN_SHIFT = 30,", "B_HIDDEN_SHIFT's default is 30"),
+    # Round 5 (KRNL-L): a file the packaged top instantiates, built by its bench and left out of the package.
+    ("the learner's port not packaged", 1, "  rtl/learn/learn_port.sv\n", "", "not what krnl-first builds"),
 )
 
 

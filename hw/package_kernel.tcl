@@ -46,6 +46,8 @@ set sources {
   rtl/inject/inject.sv
   rtl/core/core_head.sv
   rtl/core/core.sv
+  rtl/learn/learn.sv
+  rtl/learn/learn_port.sv
   rtl/krnl/undertone_krnl.sv
 }
 

@@ -239,7 +239,7 @@ def test_p0_a_build_line_the_list_does_not_name_is_a_finding_at_its_run_and_plac
 
 def test_p0_the_committed_build_list_is_read_whole_and_names_the_two_lines_of_round_2(tmp_path):
     listed = check_rtl.build_list(ROOT)
-    assert listed == {("rtl/source/source.sv", 187, SORRY), ("rtl/inject/inject.sv", 276, SORRY)}
+    assert listed == {("rtl/source/source.sv", 187, SORRY), ("rtl/inject/inject.sv", 279, SORRY)}
     for path, line, _says in listed:
         with open(os.path.join(ROOT, path), encoding="utf-8") as f:
             assert f.read().split("\n")[line - 1].strip() == "always_comb begin", (path, line)

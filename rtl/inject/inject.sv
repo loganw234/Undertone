@@ -82,6 +82,9 @@ module inject #(
     input  logic [CHANNELS*SAMPLE_BITS-1:0]            in_frame,   // channel c at [c*SAMPLE_BITS +: SAMPLE_BITS]
     output logic                                       out_valid,
     output logic [CHANNELS*SAMPLE_BITS-1:0]            out_frame
+    // READ-ONLY VIEWS for the kernel's learner (docs/rtl/krnl-learn.md): each an existing signal, assigned at the end
+    , output logic                                     view_push   // wr_push: a record taken into the store at this edge
+    , output logic [undertone_pkg::TRUTH_INDEX_BITS-1:0] view_index // t_index: that record's index, and nothing else of it
 );
     import undertone_pkg::*;
 
@@ -486,4 +489,8 @@ module inject #(
             end
         end
     end
+
+    // ---- the read-only views (docs/rtl/krnl-learn.md): each an existing signal; nothing here reads them ----
+    assign view_push  = wr_push;
+    assign view_index = t_index;
 endmodule
