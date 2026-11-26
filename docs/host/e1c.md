@@ -267,6 +267,7 @@ On the tiny plan through the stand-in:
 - pieces that are not the stated cut, PIECE_SET, and a part.json whose count of pieces alone is not the cut's;
 - a part with no reference to hold it to: FAIL, "no reference given";
 - the flip's comparison taking its difference only as integers in the score field;
+- the flip's predicted difference negated: NOT AS IT MUST BE, so its sign is held (`test_e1c_control_the_flips_difference_is_held_with_its_sign`);
 - a swap-blank run the card refused, and one that left nothing: part 5's line says the blank stretch could not come from the card, and the verdict FAILs;
 - `cases`' three checks, each by itself: another injection set (INJECTION_SET), another trained set (LEARNED_SET), schedules that do not join back (PIECE_SET);
 - `order.txt` as the box script reads it;

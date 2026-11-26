@@ -542,6 +542,25 @@ def test_e1c_compare_flip_takes_only_an_integer_difference_in_the_score_field(ti
     assert code == 1 and "== E1C FLIP CONTROL: NOT AS IT MUST BE" in lines
 
 
+def test_e1c_control_the_flips_difference_is_held_with_its_sign(tiny, tmp_path):
+    """VE1C2's gap: the flip's predicted difference, (after - before) times the sample, is signed. With it negated,
+    the same record and field and the same size, the flip is NOT AS IT MUST BE, at the flip's line, and the verdict
+    FAILs. A comparison of the two differences' sizes alone would pass it."""
+    folder = copy_cases(tiny, tmp_path)
+    path = os.path.join(folder, "expect", "flip-ct-p0.json")
+    exp = e1c.read_json(path)
+    assert exp["predicted"]["difference"] != 0
+    exp["predicted"]["difference"] = -exp["predicted"]["difference"]
+    e1c.write_json(path, exp)
+    lines = []
+    with pytest.MonkeyPatch.context() as mp:
+        mp.setattr(recovery, "MIN_CROSSINGS", 1)
+        code, _record = e1c.compare(folder, tiny["runs"], references={KEY: tiny["reference"]}, out=lines.append)
+    flip = [line for line in lines if line.startswith("== E1C FLIP CONTROL:")]
+    assert flip == ["== E1C FLIP CONTROL: NOT AS IT MUST BE"] and code == 1 and lines[-1] == "== E1 CARD VERDICT: FAIL"
+    assert sum(line.startswith("  ct-") and "IDENTICAL: " in line for line in lines) == 8, "nothing else differs"
+
+
 def test_e1c_a_swap_blank_run_the_card_refused_is_said_so_on_part_5s_line(tiny, tmp_path):
     """VE1C's (d): the swap-blank run refused on the card, with its report and no records, and with neither. Part's
     line must say the blank stretch could not come from the card, and the verdict FAILs."""
