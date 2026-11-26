@@ -27,6 +27,22 @@ FIRST_BUILD = {"cap_filters": 4, "cap_taps": 128, "cap_rows": 4, "cap_pool": C.M
                "cap_noise_table": C.MAX_NOISE_TABLE, "cap_inject_pending": C.MAX_INJECT_PENDING, "cap_record_queue": 512}
 
 
+# The learner's build (round 5, parcel LRN-C): its two capability registers as the definition's maxima, at which the
+# learner is built (the lead's ruling, 2026-11-26 03:57, question 4 (c)). `identity_words` does not carry them, so
+# a default identity is a kernel with no learner, which reads 0 at 0xD00 to 0xDFF; `learner_words` adds them.
+LEARNER_BUILD = {"lrn_cap_count_bits": C.LEARN_COUNT_BITS, "lrn_cap_update_frames": C.LEARN_UPDATE_FRAMES}
+
+
+def learner_words(**caps):
+    """The learner's two capability registers, as {offset: word}: LEARNER_BUILD, with `caps` over it."""
+    values = dict(LEARNER_BUILD)
+    values.update(caps)
+    words = {}
+    for name, value in values.items():
+        words.update(value_words(name, value))
+    return words
+
+
 def value_words(name, value):
     first, _access, count = C.REGISTERS[name]
     return dict((first + WORD_BYTES * i, (value >> (WORD_BITS * i)) & WORD_MASK) for i in range(count))
