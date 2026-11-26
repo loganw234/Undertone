@@ -170,10 +170,16 @@ def check_injection_set(p, schedule, committed=None):
     return got[0]
 
 
-def replayed(paths):
-    """The part's frames: each block's recording replayed by the model's source, one at a time, in order."""
+def replayed(paths, hashes=None):
+    """The part's frames: each block's recording replayed by the model's source, one at a time, in order.
+
+    `hashes`, when handed, gains each block's SHA-256 as the block is replayed: of its samples BEFORE
+    the injector, as e3prep.py's `payload` writes them and blocks.json's `payload_sha256` holds them."""
     for path in paths:
-        yield from source.Replay(PROFILE, path)
+        block = source.Replay(PROFILE, path)
+        if hashes is not None:
+            hashes.append(hashlib.sha256(e3prep.payload([f[0] for f in block])).hexdigest())
+        yield from block
 
 
 def measure(p, paths, schedule, committed=None, make_learner=None, commit_at=None, progress=None):
@@ -197,7 +203,8 @@ def measure(p, paths, schedule, committed=None, make_learner=None, commit_at=Non
             state["refusal"] = e.name
         return state["blob"]
 
-    pairs, truth = E1.wired(PROFILE, replayed(paths), schedule, length, handover.blank_blob(PROFILE, TAPS),
+    blocks_sha256 = []                                                # each replayed block's, before injection
+    pairs, truth = E1.wired(PROFILE, replayed(paths, blocks_sha256), schedule, length, handover.blank_blob(PROFILE, TAPS),
                             (a, make, a if commit_at is None else commit_at))
     reads, flags, first_new, not_blank, seen = [], 0, None, 0, 0
     for (sample,), record in pairs:
@@ -221,7 +228,8 @@ def measure(p, paths, schedule, committed=None, make_learner=None, commit_at=Non
     return {"plan": p, "reads": reads, "train": np.frombuffer(train_samples, dtype=np.int16),
             "held": np.frombuffer(held, dtype=np.int16), "blob": state["blob"], "refusal": state["refusal"],
             "learner": state["learner"], "flags": flags, "first_new_epoch_index": first_new,
-            "scores_not_zero_while_blank": not_blank, "injection_sha256": digest, "truth": truth}
+            "scores_not_zero_while_blank": not_blank, "injection_sha256": digest, "truth": truth,
+            "blocks_sha256": blocks_sha256}
 
 
 # ------------------------------------------------------------------ the records, as the judge takes them
@@ -348,9 +356,7 @@ def evaluate(p, got, schedule, extra=None, spans=None):
             "flags": got["flags"], "scores_not_zero_while_blank": got["scores_not_zero_while_blank"],
             "injection_sha256": got["injection_sha256"],
             "stream_sha256": hashlib.sha256(got["train"].tobytes() + got["held"].tobytes()).hexdigest(),
-            "blocks_sha256": [hashlib.sha256(np.ascontiguousarray(x).astype("<i2").tobytes()).hexdigest()
-                              for x in np.split(np.concatenate([got["train"], got["held"]]),
-                                                p["training"] + p["held_out"])]}
+            "blocks_sha256": list(got["blocks_sha256"])}
     try:
         E1.compare_at_equal_rate(base, learned, 1.0, 1.0)                 # rule 3, by E1's own recount
         part["comparison_refused"] = None
@@ -416,7 +422,13 @@ def reading(part):
 
 
 def committed_blocks(station):
-    """The kept blocks' payload SHA-256s, training then held-out, as e3prep.py wrote them."""
+    """The kept blocks' payload SHA-256s, training then held-out, as e3prep.py wrote them.
+
+    The short form's are its own recordings', hashed by e3prep.payload as `short_stream` writes them;
+    it commits no blocks.json of its own, so its blocks are held to what it wrote."""
+    if station == "short":
+        spans = short_stream()["spans"]
+        return [h for role in ("training", "held_out") for _s, _e, h in spans[role]]
     with open(BLOCKS_PATH, encoding="utf-8") as f:
         blocks = json.load(f)
     for s in blocks["stations"]:
@@ -451,10 +463,9 @@ def not_as_stated(part, plan_of=None, blocks_of=None, sets_of=None):
             reasons.append("part %s: %s is %r, the experiment's is %r" % (station, name, part.get(name, "missing"), want))
     if part.get("rate_label") == "COUNTED" and part.get("pfa", PFA) * p["m"] < E1.FLOOR_CROSSINGS:
         reasons.append("part %s: a rate below the floor of %d crossings is called counted" % (station, E1.FLOOR_CROSSINGS))
-    if station != "short":
-        want_blocks = (blocks_of or committed_blocks)(station)
-        if part.get("blocks_sha256") != want_blocks:
-            reasons.append("part %s: its blocks are not the committed blocks of vectors/e3s/blocks.json" % station)
+    want_blocks = (blocks_of or committed_blocks)(station)
+    if part.get("blocks_sha256") != want_blocks:
+        reasons.append("part %s: its blocks are not the committed blocks of vectors/e3s/blocks.json" % station)
     coeffs = part.get("coefficients")
     try:
         sha = weights.unpack(weights.pack(PROFILE, [{0: tuple(coeffs)}], (1,), C.RECTIFIERS["pass"], 1, 0))["sha256"]
@@ -1019,8 +1030,8 @@ def test_e3s_experiment_a_stations_part_is_held_to_its_committed_blocks_and_they
     _got, part = short()
     posed = dict(part, station="posed")
     kw = dict(plan_of=lambda s: SHORT, sets_of=lambda p: committed_sets()["short"])
-    assert not_as_stated(posed, blocks_of=lambda s: list(part["blocks_sha256"]), **kw) == []
-    other = list(part["blocks_sha256"][:-1]) + ["0" * 64]
+    assert not_as_stated(posed, blocks_of=lambda s: committed_blocks("short"), **kw) == []
+    other = committed_blocks("short")[:-1] + ["0" * 64]
     assert any("committed blocks" in r for r in not_as_stated(posed, blocks_of=lambda s: other, **kw))
     for station in RULE["stations"]:
         assert len(committed_blocks(station)) == 528
@@ -1037,6 +1048,34 @@ def test_e3s_experiment_a_stations_part_is_held_to_its_committed_blocks_and_they
     bad = {"training": s["training"], "held_out": s["held_out"][:3] + [s["training"][5]] + s["held_out"][4:]}
     quick = evaluate(dict(SHORT, resamples=20), got, _short["schedule"], spans=bad)
     assert quick["blocks_disjoint"] == "TRAINED_ON" and not_as_stated(dict(part, blocks_disjoint=quick["blocks_disjoint"]))
+
+
+def test_e3s_experiment_a_parts_blocks_are_its_recordings_hashed_before_injection_as_e3prep_hashes_them():
+    """The part's `blocks_sha256` is each replayed block's samples before the injector, hashed as e3prep.py
+    hashes a kept block (`hashlib.sha256(payload(x))`, blocks.json's `payload_sha256`). Held on the short
+    form's own recordings, run through the part: read back from disk past their header and hashed here,
+    and as `short_stream` hashed the samples it wrote. The lead's full run found the field hashed after
+    injection, which no real part can match; the short form then skipped the check, and the test above
+    held a part to its own field."""
+    got, part = short()
+    s = short_stream()
+    assert source.HEADER_BYTES == 56
+    on_disk = []
+    for path in s["paths"]:
+        with open(path, "rb") as f:
+            on_disk.append(hashlib.sha256(f.read()[source.HEADER_BYTES:]).hexdigest())
+    as_written = [hashlib.sha256(e3prep.payload(e["x"])).hexdigest() for role in ("training", "held_out")
+                  for e in s["blocks"][role]]
+    assert len(on_disk) == SHORT["training"] + SHORT["held_out"] == 160
+    assert part["blocks_sha256"] == got["blocks_sha256"] == on_disk == as_written == committed_blocks("short")
+    assert not_as_stated(part) == []
+    # the samples the core was handed are not these: every block carries injections
+    after = [hashlib.sha256(e3prep.payload(x)).hexdigest()
+             for x in np.split(np.concatenate([got["train"], got["held"]]), len(on_disk))]
+    assert all(a != b for a, b in zip(after, on_disk))
+    assert any("committed blocks" in r for r in not_as_stated(dict(part, blocks_sha256=after))), "hashed after injection"
+    for dropped in (on_disk[1:], on_disk[:-1], on_disk[:100] + on_disk[101:]):
+        assert any("committed blocks" in r for r in not_as_stated(dict(part, blocks_sha256=dropped))), "a block dropped"
 
 
 def test_e3s_experiment_a_full_parts_inputs_are_the_committed_ones():
@@ -1071,3 +1110,7 @@ def test_e3s_experiment_the_named_model_learns_from_the_last_of_the_training_blo
     assert got["learner"].weights() == learner_of(got["train"], tiny, 2, schedule).weights()
     assert got["learner"].weights() != learner_of(got["train"], tiny, 4, schedule).weights()
     assert got["first_new_epoch_index"] == tiny["A"] == 4096
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
