@@ -305,9 +305,20 @@ def _read(path, mode="rb"):
         return f.read()
 
 
+OP_KEYS = ("op", "after", "outcome", "next_index_before", "next_index_after")
+END_KEYS = ("lrn_update_at", "lrn_refusal", "lrn_status_word", "lrn_status", "counts", "caps")
+
+
+def op_keys(op):
+    """Every key of an operation's entry in report.json that the judge reads: a key that is missing FAILs by its
+    name, and is never read as the model's value (VLRNC's finding, 2026-11-26)."""
+    extra = {"update": ("arg",), "commit": ("arg",), "write_shadow": ("blob",), "clear": ("read",)}[op["op"]]
+    return OP_KEYS + extra
+
+
 def _ops_lines(name, expected, report):
     """(lines, ok, the first failing line or None): each operation's outcome against the model's, and its bracket
-    against its window."""
+    against its window. An entry without a key the judge reads (`op_keys`) FAILs, naming the key."""
     ops = (report.get("learner") or {}).get("ops")
     if not isinstance(ops, list) or len(ops) != len(expected["script"]):
         line = "%s: the learner's operations in report.json are %r, not %d" % (
@@ -315,6 +326,14 @@ def _ops_lines(name, expected, report):
         return [line], False, line
     lines, ok, bad = [], True, None
     for k, (op, want, (lo, hi), got) in enumerate(zip(expected["script"], expected["outcomes"], expected["windows"], ops)):
+        missing = [key for key in op_keys(op) if not isinstance(got, dict) or key not in got]
+        if missing:
+            lines.append("%s op %d %s: report.json has no %s for it: NOT the model's" % (
+                name, k, op["op"], ", ".join(missing)))
+            if ok:
+                bad = lines[-1]
+            ok = False
+            continue
         have = got.get("read") if op["op"] == "clear" else got.get("outcome")
         if op["op"] == "clear" and got.get("outcome") is not None:
             have = "the clear itself refused %s" % got.get("outcome")
@@ -322,7 +341,7 @@ def _ops_lines(name, expected, report):
         inside = (type(before) is int and type(after) is int and (lo is None or before >= lo)
                   and (hi is None or after <= hi))
         same = (have == want and got.get("op") == op["op"] and got.get("arg") == op.get("arg")
-                and got.get("blob") == op.get("blob"))
+                and got.get("blob") == op.get("blob") and got.get("after") == op["after"])
         what = "%s(%s)" % (op["op"], op.get("arg", op.get("blob", "")))
         lines.append("%s op %d %s: %s%s, the model's %s; bracket [%s, %s] %s [%s, %s]%s" % (
             name, k, what, "read " if op["op"] == "clear" else "", have or "taken", want or "taken", before, after,
@@ -342,18 +361,31 @@ def _registers_lines(name, expected, report):
     if not isinstance(end, dict):
         line = "%s: no learner registers at the end in report.json" % name
         return [line], False, line
-    wrong = []
+    wrong = ["report.json has no %s" % key for key in END_KEYS if key not in end]
     for key in ("lrn_update_at", "lrn_refusal"):
-        if end.get(key) != want[key]:
-            wrong.append("%s %r where the model has %r" % (key, end.get(key), want[key]))
+        if key in end and end[key] != want[key]:
+            wrong.append("%s %r where the model has %r" % (key, end[key], want[key]))
     for group in ("counts", "caps", "lrn_status"):
+        have = end.get(group)
+        if group in end and not isinstance(have, dict):
+            wrong.append("%s is %r, not a table of registers" % (group, have))
+            continue
         for key, value in want[group].items():
-            if (end.get(group) or {}).get(key) != value:
-                wrong.append("%s %r where the model has %r" % (key, (end.get(group) or {}).get(key), value))
-    declared = sum(1 << b for b in C.REGISTER_BITS["lrn_status"].values())
+            if group not in end:
+                continue
+            if key not in have:
+                wrong.append("report.json has no %s in %s" % (key, group))
+            elif have[key] != value:
+                wrong.append("%s %r where the model has %r" % (key, have[key], value))
+    bits = C.REGISTER_BITS["lrn_status"]
+    declared = sum(1 << b for b in bits.values())
     word = end.get("lrn_status_word")
-    if type(word) is not int or word & ~declared:
-        wrong.append("lrn_status's word %r holds a bit the definition does not declare" % (word,))
+    if "lrn_status_word" in end:
+        if type(word) is not int or word & ~declared:
+            wrong.append("lrn_status's word %r holds a bit the definition does not declare" % (word,))
+        elif isinstance(end.get("lrn_status"), dict) and any(
+                end["lrn_status"].get(b) != (word >> at) & 1 for b, at in bits.items()):
+            wrong.append("lrn_status's word 0x%X is not its six bits as report.json gives them" % word)
     n = len(want["counts"]) + len(want["caps"]) + len(want["lrn_status"]) + 3
     if wrong:
         line = "%s registers at the end: NOT the model's: %s" % (name, "; ".join(wrong))

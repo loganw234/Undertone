@@ -179,8 +179,10 @@ A refusal is latched where learn.md section 3 latches it, and the reads answer a
 
 `python hw/lrnc/lrnc.py compare <cases> <runs>`, on the desktop, from each run's `records.bin`, `report.json` and log:
 1. **Bit identity, run by run:** `hw.e0c.pieces.compare_blocks` against the expectation's hashes, with the model's own records: `IDENTICAL`, or the first differing record with its field and both values.
-2. **Each operation:** its outcome against the model's, by name (for a clear, the name it read). It must also be the same kind, argument and blob, and its bracket must be inside its window. The margin it left is printed.
-3. **The registers at the end:** each of the eight counts; each of `lrn_status`'s six bits, and no undeclared bit in its word; `lrn_update_at`; `lrn_refusal`; the two caps.
+2. **Each operation:** its outcome against the model's, by name (for a clear, the name it read). It must also be the same kind, argument, blob and after, and its bracket must be inside its window. The margin it left is printed.
+3. **The registers at the end:** each of the eight counts; each of `lrn_status`'s six bits, with its word holding no undeclared bit and the same six bits; `lrn_update_at`; `lrn_refusal`; the two caps.
+
+**A key the judge reads that is missing from `report.json` FAILs by its name**, and is never read as the model's value (`op_keys`, `END_KEYS`; *added after the verifier VLRNC, 2026-11-26*). Until then an operation without its `outcome`, or an end without `lrn_refusal`, read as None, which is the model's value there, and the day PASSed. `test_lrn_c_a_key_the_judge_reads_missing_...` and `test_lrn_c_a_register_missing_...` delete every such key alone.
 4. **The run's end:** every record written, and the PASS line in its log.
 5. **The lead's control on the card, moved:** IDENTICAL to its own model run, and different from flow's expectation first at the record P that the two model runs predict, in the score, at or after the commit at 2M. SEEN only if both hold, at P exactly. At M = 1,024 P is 2,048, the commit's own record, as at M = 2,048 it is 4,096.
 6. **The verdict**, `== LRN-C CARD VERDICT: PASS`, only when every run is IDENTICAL, every operation is the model's and inside its window, every register is the model's, every run ended, and moved is SEEN. **Exit 0 only then**; otherwise FAIL, naming the first line that failed, exit 1. It writes `card-lrnc.json`.
@@ -233,7 +235,7 @@ Each is stated by the behaviour it concedes.
 4. **next_index's two words are read apart.** Every index of these cases is below 2^32, so its upper word is 0 throughout and no carry can fall between the reads; a case past 2^32 would need that held.
 5. **On the case's own stream a learner that reads amplitude or pulse id is not seen**: amplitude 1/1 and one pulse throughout. Control 5 sees it only on a stream made for it, and the card's injector holds `e0` alone (learn.md, limit 9). `test_lrn_c_on_the_cases_own_stream_...` shows the limit.
 6. **FULL is never reached on the card** (2^32 windows a label), and the six 64-bit counters' upper words read 0 there: the card holds their low words only. `lrn_skip_full` is 0 in every run.
-7. **`refused_again` is read only at the end**, where it must be 0. Whether a held-back shadow write sets it in the fabric is the benches' to hold, not the card's. The stand-in's own latch is held by `test_lrn_c_the_stand_in_latches_as_the_fabric_does_...`.
+7. **`refused_again` is read only at the end**, where it must be 0. The library clears the latch after every operation with a write of 0, which clears both of the latch's bits. So a fabric that set `refused_again` wrongly during the run, or failed to set it for a held-back shadow write's second refusal, is not seen, unless the latch was still set at the end. Whether it does so in the fabric is the benches' to hold, not the card's. The stand-in's own latch is held by `test_lrn_c_the_stand_in_latches_as_the_fabric_does_...`.
 8. **Round 3's calls do not read `lrn_refusal`.** On a learner kernel `commit`, `write_shadow` and `swap` return as if taken when the learner held the write back; `test_lrn_c_round_3s_commit_...` shows it. The learner path of run_case uses the `lrn_` calls only.
 9. **An operation outside its window FAILs** even where the card may have been right: the judge cannot then say.
 10. **The stand-in does not model the card's timing:**
@@ -251,6 +253,16 @@ Each is stated by the behaviour it concedes.
 13. **The model's latch is worked here**, not in the model, which has none: `hw/lrnc/windows.py` latches QUANTISE_INPUT at an unmade finish, as learn.md section 3 says the fabric does. A fabric that latched it elsewhere would be seen at the clear's read.
 14. **Nothing here is evidence about sensitivity.**
 15. **A learner that rounds the other way is seen only where an update's set holds a tie**, a coefficient whose |D| x COEFF_MAX over the peak leaves exactly half the peak, with an even integer part. The cases are not shaped to make one. At M = 1,024 no update of the three cases holds a tie, and such a learner gives the model's records there (`test_lrn_c_ties_...`). At M = 2^20, `expect` counts each update's ties; until the lead's expect run, whether the card's streams hold any is not known. The RTL benches hold the rounding on hand-worked ties (learn.md, section 4, `bit_identity_hand_worked_ties`).
+
+*Limits 16 to 18 were stated after the verifier VLRNC, 2026-11-26.*
+
+16. **Two terms of the window rule bind no window of the three cases**:
+    - SWAP_INDEX's lower bound `arg + 1`. In rich's operations 9 and 10, commit(1) and update(1), `arg + 1` is 2, below the last commit's index + 1, 4,194,305, which sets their lo.
+    - The latch's upper bound `f - 1`. It is 1,048,831 for rich's unmade update, above rich operation 0's own hi of 1,048,576, and no other operation lands before that finish unread.
+
+    So each term, changed alone, leaves every window of these cases as it was, and the 169 tests still pass with it (VLRNC). Both are right by section 3's argument. They would be held by `expect`'s edge runs at full scale, which move every operation to its lo and its hi, on a case where they bind; on these cases nothing holds them.
+17. **run_case's wait uses `<`, and `<=` would pass every test.** The wait loops while `next_index` is below "after". With `<=` it would wait one frame more: on the stand-in, at most one more poll, which the stride of 37 frames hides; on the card, about one more round of the host's loop, inside a margin of about 10^6 frames. So the wait's exact condition is not held, and an operation's landing is held only by its bracket inside its window.
+18. **An operation whose window's hi is "by order" has no upper bound in the judge.** That covers a clear, and rich's SWAP_INDEX operations 9 and 10, whose window ends at the next operation's landing. The judge checks the bracket's lower side alone for them. Each such operation is followed, in the host's order, by an operation whose own window binds it. A clear made after a later refusal latched would read that refusal's name, not QUANTISE_INPUT, and the judge would see another outcome. But a clear's own bracket says nothing above its lo.
 
 ## 10. Register
 

@@ -213,6 +213,60 @@ def test_lrn_c_control_a_register_read_back_changed_by_one_is_reported_by_name(d
     assert "NOT the model's" in line and (name if name != "lrn_status_word" else "lrn_status's word") in line
 
 
+MISSING_OP = ([("flow", 0, key) for key in lrnc.op_keys({"op": "update"})]
+              + [("flow", 1, key) for key in lrnc.op_keys({"op": "commit"})]
+              + [("rich", 1, key) for key in lrnc.op_keys({"op": "clear"})]
+              + [("rich", 3, key) for key in lrnc.op_keys({"op": "commit"})]
+              + [("rich", 4, key) for key in lrnc.op_keys({"op": "write_shadow"})])
+
+
+@pytest.mark.parametrize("run_name, k, key", MISSING_OP)
+def test_lrn_c_a_key_the_judge_reads_missing_from_an_operation_fails_by_its_name(day, tmp_path, capsys, run_name, k, key):
+    """VLRNC's finding: an absent key is not read as the model's value. Each key `op_keys` names, of operations
+    whose model value is None (taken, or a clear's outcome) and whose value is a name, deleted alone."""
+    runs = copy_runs(day, tmp_path)
+    edit_report(runs, run_name, lambda r: r["learner"]["ops"][k].pop(key))
+    code, out, _card = judged(day, runs, capsys)
+    assert code == 1, out
+    line = [x for x in out.splitlines() if "%s op %d " % (run_name, k) in x][0]
+    assert ("report.json has no %s" % key) in line and "NOT the model's" in line, line
+
+
+MISSING_END = ([(key, None) for key in lrnc.END_KEYS]
+               + [("counts", n) for n in ("lrn_count0", "lrn_count1", "lrn_skip_start", "lrn_skip_busy", "lrn_skip_full",
+                                          "lrn_made", "lrn_unmade", "lrn_early")]
+               + [("caps", n) for n in ("lrn_cap_count_bits", "lrn_cap_update_frames")]
+               + [("lrn_status", b) for b in ("named", "running", "made", "unmade", "refused", "refused_again")])
+
+
+@pytest.mark.parametrize("group, key", MISSING_END)
+def test_lrn_c_a_register_missing_from_the_end_fails_by_its_name(day, tmp_path, capsys, group, key):
+    """VLRNC's finding, the registers' half: lrn_refusal and lrn_update_at among them, whose model values are None
+    and 0. Every key `_registers_lines` reads, deleted alone, in rich and in flow."""
+    for run_name in ("rich", "flow"):
+        runs = copy_runs(day, tmp_path / run_name)
+        edit_report(runs, run_name, lambda r: (r["learner"]["end"].pop(group) if key is None
+                                               else r["learner"]["end"][group].pop(key)))
+        code, out, _card = judged(day, runs, capsys)
+        assert code == 1, out
+        line = [x for x in out.splitlines() if x.strip().startswith("%s registers at the end" % run_name)][0]
+        assert ("report.json has no %s" % (group if key is None else key)) in line, line
+
+
+def test_lrn_c_a_status_word_that_is_not_its_six_bits_fails(day, tmp_path, capsys):
+    runs = copy_runs(day, tmp_path)
+    edit_report(runs, "rich", lambda r: r["learner"]["end"].__setitem__("lrn_status_word", 0))
+    code, out, _card = judged(day, runs, capsys)
+    assert code == 1 and "is not its six bits as report.json gives them" in out
+
+
+def test_lrn_c_an_operation_reported_at_another_after_fails(day, tmp_path, capsys):
+    runs = copy_runs(day, tmp_path)
+    edit_report(runs, "flow", lambda r: r["learner"]["ops"][1].__setitem__("after", 1285))
+    code, out, _card = judged(day, runs, capsys)
+    assert code == 1 and "flow op 1 commit(2048)" in out and "NOT the model's" in out
+
+
 def test_lrn_c_each_verdict_condition_broken_alone_fails_the_day(day, tmp_path, capsys):
     cases = {
         "a run not there": lambda runs: shutil.rmtree(os.path.join(runs, "rich")),
