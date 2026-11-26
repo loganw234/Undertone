@@ -131,3 +131,15 @@ control = "ctl-rtl-benches"
 name = "host-capabilities"
 d0 = "capability bits"
 kind = "pytest"
+
+# RTL-L, round 5: D0's gate "learner", restated (the round's plan, question 4, as Logan approved it): the
+# fabric's set after each update, and the counts of windows taken and refused and of updates refused for
+# time, each equal to the model's. Held by rtl/tb/bench_learn.py and rtl/tb/bench_learn_chain.py inside the
+# stage rtl-benches (docs/rtl/learn.md). The control stage is the one on the judge; the controls on these
+# benches are their mutants, which run inside the stage itself.
+[[gate]]
+name = "learner"
+d0 = "learner"
+kind = "stage"
+test = "rtl-benches"
+control = "ctl-rtl-benches"
