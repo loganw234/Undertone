@@ -394,10 +394,11 @@ class Panel:
                                     "fill": colour, "fill-opacity": "0.18", "stroke": colour,
                                     "stroke-dasharray": DASHES["dotted"], "stroke-width": "1"}))
 
-    def bar(self, series, i, y0, y1, colour, extra=None):
-        """A bar in category slot i from y0 to y1, 0.6 of the slot wide."""
-        w = self.x.slot() * self.width * 0.6
-        xc = self.px(i)
+    def bar(self, series, i, y0, y1, colour, extra=None, offset=0.0, width=0.6):
+        """A bar in category slot i from y0 to y1, `width` of the slot wide, its centre `offset`
+        slots from the slot's centre (a group of bars in one slot)."""
+        w = self.x.slot() * self.width * width
+        xc = self.px(i) + offset * self.x.slot() * self.width
         ya, yb = self.py(y0), self.py(y1)
         a = {"data-series": series, "data-x": exact(i), "data-y0": exact(y0), "data-y1": exact(y1),
              "x": xc - w / 2, "y": yb, "width": w, "height": ya - yb, "fill": colour,

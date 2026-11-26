@@ -43,7 +43,8 @@ from stats.tolerance import tolerance
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 NS = "{http://www.w3.org/2000/svg}"
 PX = 0.006
-NAMES = ["e0-efficiency.svg", "e1-learning.svg", "e2-recovery.svg", "card-timed.svg", "pulses.svg"]
+NAMES = ["e0-efficiency.svg", "e1-learning.svg", "e2-recovery.svg", "card-timed.svg", "pulses.svg",
+         "launch-windows.svg"]
 CARD = "docs/studies/e0-card/card-e0.json"
 E2_PART = "docs/studies/e2/e2-part.json"
 E2_JUDGE = "docs/studies/e2/judge-output.txt"
@@ -361,8 +362,52 @@ def pulses_findings(data, root):
     return out
 
 
+LAUNCH = [("d2", "docs/studies/d2/scored-output.txt"), ("d3", "docs/studies/d3/scored-output.txt")]
+LAUNCH_KINDS = ("launch", "wrong", "shifted", "control")
+
+
+def launch_counts(root, rel):
+    """(stations in the test table's order, {(station, kind): (hits, windows with a record)}), by cells."""
+    stations, counts = [], {}
+    for line in open(path(root, rel), encoding="utf-8").read().split("\n"):
+        cells = [c.strip() for c in line.split("|")[1:-1]]
+        if line.startswith("| 20") and len(cells) == 8:
+            key = (cells[1], cells[2])
+            h, u = counts.get(key, (0, 0))
+            if cells[6] != "-":
+                h, u = h + (cells[6] == "yes"), u + 1
+            counts[key] = (h, u)
+        elif line.startswith("| CI.") and len(cells) == 9:
+            stations.append(cells[0])
+    return stations, counts
+
+
+def launch_findings(data, root):
+    fig, out = Fig(data), []
+    for panel, rel in LAUNCH:
+        stations, counts = launch_counts(root, rel)
+        bars = [e for e in fig.panels[panel] if e.get("data-hits") is not None]
+        got = [(e.get("data-station"), e.get("data-series"), e.get("data-hits"), e.get("data-windows"),
+                e.get("data-y1")) for e in bars]
+        want = [(s, k, str(counts[(s, k)][0]), str(counts[(s, k)][1]), "%d/%d" % counts[(s, k)])
+                for s in stations for k in LAUNCH_KINDS]
+        if got != want:
+            out.append("%s bars: %r, the record's %r" % (panel, got, want))
+            continue
+        ax = fig.axes(panel)
+        slot = ax.width / len(stations)
+        for e, (s, k, h, u, _) in zip(bars, want):
+            x, y, w, hgt = (float(e.get(a)) for a in ("x", "y", "width", "height"))
+            centre = ax.px(stations.index(s)) + (-0.3, -0.1, 0.1, 0.3)[LAUNCH_KINDS.index(k)] * slot
+            if abs(x + w / 2 - centre) > 2 * PX or abs(y - ax.py(Fraction(int(h), int(u)))) > PX \
+                    or abs(y + hgt - ax.py(0)) > 2 * PX:
+                out.append("%s bar %s %s: drawn at the wrong place" % (panel, s, k))
+    check_sources(fig, [file_line(root, rel) for _, rel in LAUNCH], out)
+    return out
+
+
 FINDINGS = {"e0-efficiency.svg": e0_findings, "e1-learning.svg": e1_findings, "e2-recovery.svg": e2_findings,
-            "card-timed.svg": timed_findings, "pulses.svg": pulses_findings}
+            "card-timed.svg": timed_findings, "pulses.svg": pulses_findings, "launch-windows.svg": launch_findings}
 
 
 def committed(root, name):
@@ -373,7 +418,7 @@ def committed(root, name):
 # ---------------------------------------------------------------- 1. generated copies
 
 
-def test_viz_registry_is_the_five_figures():
+def test_viz_registry_is_the_six_figures():
     assert [n for n, _ in viz.figures.FIGURES] == NAMES
 
 
@@ -497,6 +542,18 @@ def test_viz_e2_judge_output_is_this_parts():
             assert ("gain over frozen %+.5f" % ((found - frozen) / part["n"])) in text
 
 
+@pytest.mark.parametrize("rel", [rel for _, rel in LAUNCH])
+def test_viz_launch_window_counts_are_the_summary_tables(rel):
+    """Each station's hits of each kind, counted here from the window rows, are what its summary rows print."""
+    stations, counts = launch_counts(ROOT, rel)
+    assert len(stations) == 4
+    text = open(path(ROOT, rel), encoding="utf-8").read()
+    for s in stations:
+        h = {k: "%d of %d" % counts[(s, k)] for k in LAUNCH_KINDS}
+        assert re.search(r"(?m)^\| %s \| [\d.]+ \| \d+ \| %s \| %s \| " % (re.escape(s), h["launch"], h["control"]), text)
+        assert re.search(r"(?m)^\| %s \| %s \| [^|]+ \| %s \| " % (re.escape(s), h["wrong"], h["shifted"]), text)
+
+
 def test_viz_timed_bars_add_to_each_generations_sum():
     for g in load(ROOT, TIMED)["generations"]:
         assert sum(g["parts_ns"].values()) == g["sum_ns"]
@@ -504,7 +561,8 @@ def test_viz_timed_bars_add_to_each_generations_sum():
 
 # ---------------------------------------------------------------- 4. the named controls, on copies
 
-COPIED = ["vectors/e0c/round1", "docs/studies/e0-card", "docs/studies/e1", "docs/studies/e2", "docs/figures"]
+COPIED = ["vectors/e0c/round1", "docs/studies/e0-card", "docs/studies/e1", "docs/studies/e2", "docs/studies/d2",
+          "docs/studies/d3", "docs/figures"]
 
 
 @pytest.fixture

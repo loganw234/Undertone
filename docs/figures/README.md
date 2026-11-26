@@ -62,11 +62,20 @@ The generator is `viz/`: the standard library, and `stats/` for a theory curve. 
 - **Reads:** `spec/constants.py`, the value of its `PULSES` assignment. **Its source line hashes that value as canonical JSON** (sorted keys, no spaces), not the file's bytes, so a change to the definition elsewhere does not make this figure stale and a change to a pulse does (the lead's ruling, 2026-11-25 17:44).
 - **Authority:** the definition.
 
+### Studies D2 and D3: launch windows against control windows
+
+![Studies D2 and D3: launch windows against control windows](launch-windows.svg)
+
+- **Shows:** for each study, at each of its four stations, nearest the pad first, the share of each kind of window in which the study's frozen rule found a hit: the launch windows, the two controls on the same records (the wrong window, which closes just before T0, and the window an hour early), and the control windows a whole number of weeks away. Each bar carries its hits and its windows with a record.
+- **Reads:** `docs/studies/d2/scored-output.txt` and `docs/studies/d3/scored-output.txt`: the counts from each output's table of every window, a window with no record left out; and each station's two summary rows, whose counts must equal the windows' (`VIZ-RECORD-PAIR`). A row of either kind not in the shape read is refused, `VIZ-PARSE`.
+- **Authority:** neither. Each study's own rule and Fisher's exact test, on recorded seismic data; no detector was run (`docs/studies/D2-launch-experiment.md`, `docs/studies/D3-faint-launches.md`).
+- **Does not show:** the p values, the readings, the constants M, the values of S, or the windows without a record. It counts each window's hit as the output prints it, and does not work a hit again from S and M. A share of zero draws no bar. Nothing here is evidence about the detector, the model or the fabric.
+
 ## How the figures are written
 
 - **The writer** is `viz/svg.py`: panels, linear, log and category axes with ticks from a nice-number rule in `decimal`, polylines, markers, error bars, a band, reference lines, bars, a legend, title and source lines. It does not smooth, fit or clip: a value outside its axis is refused, `VIZ-AXIS-RANGE`.
 - **Determinism.** No time, no random, no environment and no absolute path reaches a figure. Coordinates are written to the hundredth of a pixel by `"%.2f"`, never as `-0.00`; attributes are sorted; text is printable ASCII or refused, `VIZ-NOT-ASCII`; LF line ends and one final newline. Each value drawn from a record also sits on its element exactly: an int as written, a count ratio as the record's own two integers, a record's float as Python's `repr`.
-- **Order.** What a figure draws is in the generator's order, not the file's: parts by their number, E0's card parts paired with round 1's by amplitude, E2's snapshots by g, the timed generations by number, the pulses by name. The same records in another order make the same figure.
+- **Order.** What a figure draws is in the generator's order, not the file's: parts by their number, E0's card parts paired with round 1's by amplitude, E2's snapshots by g, the timed generations by number, the pulses by name, a launch study's stations in its test table's order. The same records in another order make the same figure: a test reverses the timed generations, E2's entries, the card's parts and the pulses, and the reader's test holds part files by their number, not their name. The stations' order is the table's by design, and is not so held.
 - **Light and dark.** An opaque background, the theme's colours as attributes in the light set, and a `prefers-color-scheme: dark` rule that overrides them. Each series colour is one for both themes, and a test holds it at a contrast of at least 3:1 against both backgrounds by WCAG's ratio, and the text at 4.5:1.
 - **Refusals,** each a `viz.errors.VizRefusal` with one of seven declared names: `VIZ-RECORD-MISSING`, `VIZ-RECORD-FIELD`, `VIZ-RECORD-PAIR`, `VIZ-PARSE`, `VIZ-AXIS-RANGE`, `VIZ-NOT-ASCII`, `VIZ-UNKNOWN-FIGURE`. `python -m viz` prints `REFUSED <name>: <detail>` and exits 2, and writes nothing when this folder holds an .svg the registry does not make.
 
@@ -85,7 +94,7 @@ The generator is `viz/`: the standard library, and `stats/` for a theory curve. 
 4. **`stats/`' code is not hashed.** A change to `stats/` that changes a curve's values fails the byte test; one that does not, does not.
 5. **E0's curve is D8 for the unrounded pulse `a e0`;** each part's own point uses its record's `d`, of the samples injected after rounding. At amplitude 1/2 the two `d` share their first six significant digits and differ in the seventh, which no figure can show.
 6. **A figure reads the records its function names,** by fixed paths and by file-name patterns (`part*.json`, `c*.json`). A record elsewhere appears only when the generator is taught it.
-7. **Colour.** The contrast test computes WCAG's ratio for the declared colours. It does not test a viewer's rendering, nor whether every reader can tell two colours apart: in E0, E1 and E2 the series differ by marker shape or dash as well, but the ten parts of the timed bars and the pulses differ by colour and legend order alone.
+7. **Colour.** The contrast test computes WCAG's ratio for the declared colours. It does not test a viewer's rendering, nor whether every reader can tell two colours apart: in E0, E1 and E2 the series differ by marker shape or dash as well, but the ten parts of the timed bars and the pulses differ by colour and legend order alone, and the four kinds of launch window by colour and place in their group.
 8. **Text widths are estimated,** 0.6 of the font size a character, and the font is the viewer's sans-serif. A wider font can make a label overlap its neighbour.
 9. **Dark mode rests on the viewer** honouring `prefers-color-scheme` inside an SVG shown as an image. One that does not shows the light set on its own white background (BELIEVED for GitHub's viewer; not tried).
 10. **The figures are no new evidence.** Each shows what its record already says. A bit-identity pass is not evidence about sensitivity, nor a sensitivity curve about the fabric (D0, section 2): each figure names the authority it rests on.
@@ -94,7 +103,7 @@ The generator is `viz/`: the standard library, and `stats/` for a theory curve. 
 
 | # | claim | basis | source or command | falsified by |
 |---|---|---|---|---|
-| V1 | The five figures in this folder are what `python -m viz` makes from the committed records, byte for byte, and the folder holds no other .svg | MEASURED | `python -m pytest tests/test_viz_figures.py -k "committed_figure or folder_holds or registry"` | a figure or a record changed alone |
+| V1 | The six figures in this folder are what `python -m viz` makes from the committed records, byte for byte, and the folder holds no other .svg | MEASURED | `python -m pytest tests/test_viz_figures.py -k "committed_figure or folder_holds or registry"` | a figure or a record changed alone |
 | V2 | Every value a figure carries from a record equals the record's, read independently; every marker, reference line, band, bar and curve point is drawn within 0.006 px of the test's own map of it (a bar's or the band's lower edge, the sum of two rounded figures, within 0.012 px); every source line names the file read and its SHA-256 | MEASURED | `python -m pytest tests/test_viz_figures.py -k shows_the_records_numbers` | that test |
 | V3 | `stats.theory.pd_matched(pfa, d)` equals `expected` exactly in all ten E0 parts, round 1's five and the card's five | MEASURED | `test_viz_e0_d8_is_each_parts_own_expected` | that test |
 | V4 | E0's tolerance bars are the card judge's: 0.00293, 0.00402, 0.00447, 0.00402, 0.00293 | MEASURED | `test_viz_e0_tolerances_are_the_card_judges`, against `docs/studies/e0-card/compare-output.txt` | that test |
@@ -106,8 +115,9 @@ The generator is `viz/`: the standard library, and `stats/` for a theory curve. 
 | V10 | An import of `model`, `learn`, `host`, `rtl` or another package planted in a copy of `viz/` is caught, and a build loads none of the four | MEASURED | `python -m pytest tests/test_viz_writer.py -k import` | those tests |
 | V11 | Every series colour has a contrast of at least 3:1 against both backgrounds, and the text at least 4.5:1; no figure uses another colour | MEASURED | `python -m pytest tests/test_viz_writer.py -k colour` | those tests |
 | V12 | Seven refusal names, each raised by a case with that fault alone | MEASURED | `python -m pytest tests/test_viz_writer.py -k refus` | those tests |
-| V13 | Coordinates to the hundredth of a pixel; the D8 curve every hundredth of an amplitude | DECISION | `viz/svg.py`, `fmt`; `viz/figures.py`, `CURVE_STEP` | those lines |
+| V13 | Coordinates to the hundredth of a pixel; the D8 curve every hundredth of an amplitude; a character's width estimated at 0.6 of its font size | DECISION | `viz/svg.py`, `fmt` and `CHAR_WIDTH`; `viz/figures.py`, `CURVE_STEP` | those lines |
 | V14 | The pulses' source line hashes `PULSES`' value as canonical JSON; E2's predictions are read from the judge's output; no registry row | DECISION | the lead's ruling, 2026-11-25 17:44, in the round's ledger | the ledger |
 | V15 | Byte identity holds on another platform | BELIEVED | limit 3 | a build on another platform |
 | V16 | The card's count equals round 1's at all five amplitudes, so E0's lowest panel is a row of zeros | MEASURED | `test_viz_e0_card_counts_equal_softwares` | that test |
 | V17 | The same records in another order make the same figure: the timed generations, E2's entries, the card's parts and the pulses, each reversed | MEASURED | `python -m pytest tests/test_viz_writer.py -k does_not_depend_on_the_records_order` | that test |
+| V18 | In each of D2's and D3's outputs, each station's hits of each kind counted from the window rows are what its two summary rows print, at four stations | MEASURED | `test_viz_launch_window_counts_are_the_summary_tables` | that test |
