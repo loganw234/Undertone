@@ -131,6 +131,8 @@ Records 0 to 4,194,303 are the matched filter's at epoch 0; 4,194,304 to 6,291,4
 
 **flow again**: flow's case, run a second time, held to flow's expectation.
 
+**If the fabric refuses the blank set** (E1C's card day shows whether it takes it), `python hw/lrnc/lrnc.py cases <folder> --start matched` makes flow and moved load the matched filter at epoch 0 instead, as rich does, with every operation, window and count unchanged (the lead's ruling, question 6). `test_lrn_c_flow_and_moved_from_the_matched_filter_...` runs that day through the stand-in.
+
 **The counts worked by hand.** They come from the window rules (docs/model/lrn-b.md), not from the model, with k = M / 128: flow's update at M sees k windows a label, and its end 4k; moved's update k + 1; rich's updates (0, 1), (k - 1, k + 2) and (3k - 1, 3k + 2), and its end 5k - 1 and 5k + 2. `expect` refuses a case, COUNTS_BY_HAND, whose model counts are not these, and a test holds them at M = 1,024.
 
 **Every refusal the case can meet on the card**:
@@ -148,7 +150,7 @@ Records 0 to 4,194,303 are the matched filter's at epoch 0; 4,194,304 to 6,291,4
 
 **Time on the card, an ESTIMATE:** round 4's pieces of 6,400,000 frames took 19 to 22 s whole ([CARD-e0.md](../studies/CARD-e0.md), row CE9), 2.97 to 3.44 us a frame. So the four runs are about 59 to 69 s. With health before and after, the copy back and SHA256SUMS, they take **under 15 minutes of the card session**.
 
-**The expectations on the desktop:** `expect` for one case at M = 2^18 made its three runs of 1,048,576 frames in 44.2 s, 71,130 frames a second (MEASURED). At that rate rich's three runs of 7,340,032 frames take about 310 s. **As three processes, one a case, the expectations take about 5 to 6 minutes** (ESTIMATE). They keep the model's records on the desktop, 330,301,440 bytes, so the judge names a differing record without making it again.
+**The expectations on the desktop:** `expect` for one case at M = 2^18 made its three runs of 1,048,576 frames in 44.2 s, 71,130 frames a second (MEASURED). At that rate rich's three runs of 7,340,032 frames take about 310 s. **As three processes, one a case, the expectations take about 5 to 6 minutes** (ESTIMATE). They keep the model's records on the desktop, 330,301,440 bytes, so the judge names a differing record without making it again. Each update's entry in `expected.json` also counts its set's ties, the coefficients where |D| x COEFF_MAX over the peak leaves exactly half the peak (limit 15).
 
 ## 5. The stand-in for the card
 
@@ -202,7 +204,7 @@ flow again is held to flow's own expectation, so the two flow runs, both IDENTIC
 | `test_lrn_c_library.py` | each learner call's operations, written out for one value each; LEARN_BOUND at each bound, for caps of 0 and for a build that is not the case's; SWAP_INDEX and SWAP_SHAPE before any write; a code latched before; each block's code read back, cleared and raised, the learner's first; both drivers the same; PROCEDURES the fourteen; round 3's `commit` on a learner kernel |
 | `test_lrn_c_run_case.py` | the learner path's files, report and PASS line; refusals as outcomes and the run going on; DEADLINE; argparse's refusals; LEARN_BOUND with nothing written; without `--learn`, round 3's operations |
 | `test_lrn_c_windows.py` | every operation of the three cases at lo, hi, lo - 1 and hi + 1; section 4's tables at M = 2^20, cell by cell; the guard; SCRIPT_WINDOW, SCRIPT_LATCH, COUNTS_BY_HAND and EDGES_DIFFER |
-| `test_lrn_c_standin.py` | the placed script's run is `model.run.learning`'s; the stand-in lands each operation inside its window and gives the canonical run at strides 1 and 37; its own checks; control 5 |
+| `test_lrn_c_standin.py` | the placed script's run is `model.run.learning`'s; the stand-in lands each operation inside its window and gives the canonical run at strides 1 and 37; its own checks and its latch; control 5; D0's learner gate's two faults; the day from the matched filter |
 | `test_lrn_c_judge.py` | the day passes; controls 1 to 4; each verdict condition broken alone fails; exit codes |
 | `test_lrn_c_box.py` | what the box runs and imports; every flag a flag of run_case's; `timeout 900`; no stop after a refused run |
 
@@ -217,6 +219,10 @@ flow again is held to flow's own expectation, so the two flow runs, both IDENTIC
 4. **A counter or the status read back changed by one.** `lrn_skip_busy 3 where the model has 2`; `made 0 where the model has 1`. Every count is changed by +1 and -1, every status bit is flipped, and `lrn_update_at`, `lrn_refusal`, both caps and an undeclared status bit are each changed: each is reported by its name.
 5. **A stand-in whose learner reads a truth record's amplitude or pulse id**, on flow with every third record of amplitude 0 and record 5 an `e1`. Reading the amplitude: `DIFFERENT: {'record': 2048, 'field': 'score', ...}`, `lrn_count0 22 where the model has 32`. Reading the pulse id: the same record, `lrn_count0 31 where the model has 32`. Both are the model's up to the commit at 2,048 and FAIL. The true learner on that stream PASSes.
 
+**And D0's learner gate's two faults** (section 9 of D0: a learner that does nothing, and one that rounds the other way), on the stand-in at M = 1,024:
+- a learner that judges, counts and finishes as the model's does but writes no set: rich is DIFFERENT first at record 4,096, the first commit's, in the score, with every register the model's, so the records alone see it;
+- a learner that rounds half away from zero: the records are the model's on all three cases, because no update's set there holds a tie. `ties` and the quantiser are held on a difference made for it, [262142, 1], where the two roundings give 0 and 1. That is limit 15.
+
 ## 9. Limits
 
 Each is stated by the behaviour it concedes.
@@ -227,7 +233,7 @@ Each is stated by the behaviour it concedes.
 4. **next_index's two words are read apart.** Every index of these cases is below 2^32, so its upper word is 0 throughout and no carry can fall between the reads; a case past 2^32 would need that held.
 5. **On the case's own stream a learner that reads amplitude or pulse id is not seen**: amplitude 1/1 and one pulse throughout. Control 5 sees it only on a stream made for it, and the card's injector holds `e0` alone (learn.md, limit 9). `test_lrn_c_on_the_cases_own_stream_...` shows the limit.
 6. **FULL is never reached on the card** (2^32 windows a label), and the six 64-bit counters' upper words read 0 there: the card holds their low words only. `lrn_skip_full` is 0 in every run.
-7. **`refused_again` is read only at the end**, where it must be 0. Whether a held-back shadow write sets it is the benches' to hold, not the card's.
+7. **`refused_again` is read only at the end**, where it must be 0. Whether a held-back shadow write sets it in the fabric is the benches' to hold, not the card's. The stand-in's own latch is held by `test_lrn_c_the_stand_in_latches_as_the_fabric_does_...`.
 8. **Round 3's calls do not read `lrn_refusal`.** On a learner kernel `commit`, `write_shadow` and `swap` return as if taken when the learner held the write back; `test_lrn_c_round_3s_commit_...` shows it. The learner path of run_case uses the `lrn_` calls only.
 9. **An operation outside its window FAILs** even where the card may have been right: the judge cannot then say.
 10. **The stand-in does not model the card's timing:**
@@ -241,9 +247,10 @@ Each is stated by the behaviour it concedes.
 
     What it holds is the library's and the judge's logic over the model's learner.
 11. **The model's speed at full scale is an ESTIMATE** until the lead's expect run, and the card's time until the card's day. The brackets measure the day's margins.
-12. **The card's records before a blank set's first commit are all scores of 0.** The blank set at epoch 0 makes every score 0, so in flow and moved those records hold the index, epoch and flags and say nothing of the filter. rich loads the matched filter so that its records before the first commit do. If the fabric refuses the blank set (E1C's card day shows it), flow and moved load the matched filter instead, and the ledger says so with the refusal's text (the lead's ruling, question 6).
+12. **The card's records before a blank set's first commit are all scores of 0.** The blank set at epoch 0 makes every score 0, so in flow and moved those records hold the index, epoch and flags and say nothing of the filter. rich loads the matched filter so that its records before the first commit do. If the fabric refuses the blank set (E1C's card day shows it), flow and moved load the matched filter instead, by `cases --start matched`, and the ledger says so with the refusal's text (the lead's ruling, question 6).
 13. **The model's latch is worked here**, not in the model, which has none: `hw/lrnc/windows.py` latches QUANTISE_INPUT at an unmade finish, as learn.md section 3 says the fabric does. A fabric that latched it elsewhere would be seen at the clear's read.
 14. **Nothing here is evidence about sensitivity.**
+15. **A learner that rounds the other way is seen only where an update's set holds a tie**, a coefficient whose |D| x COEFF_MAX over the peak leaves exactly half the peak, with an even integer part. The cases are not shaped to make one. At M = 1,024 no update of the three cases holds a tie, and such a learner gives the model's records there (`test_lrn_c_ties_...`). At M = 2^20, `expect` counts each update's ties; until the lead's expect run, whether the card's streams hold any is not known. The RTL benches hold the rounding on hand-worked ties (learn.md, section 4, `bit_identity_hand_worked_ties`).
 
 ## 10. Register
 
@@ -269,4 +276,4 @@ Each is stated by the behaviour it concedes.
 | K16 | One buffer in one segment holds 8,388,484 frames; the injector's store, `cap_inject_pending`, 1,024 records | READ | [e0c.md](e0c.md), its pieces (the plan's L7); `spec/constants.py`, MAX_INJECT_PENDING | those files |
 | K17 | The seeds 2026112601 (flow, moved) and 2026112602 (rich), the record at 2.5M, and the four runs' order | DECISION | the parcel's design, approved by the lead 2026-11-26 03:57 | a later ruling of the lead's |
 | K18 | The cases folder at M = 2^20 is 9,549,507 bytes: table.json 297,286, flow's folder 2,843,254, moved's 2,843,255, rich's 3,565,664 | MEASURED | `python hw/lrnc/lrnc.py cases <folder>` and `du -sb` on it and its entries, 2026-11-26 04:35:27 | a rerun |
-| K19 | The box's snapshot, host/, model/, spec/, hw/e0c/ and hw/lrnc/, is 471,040 bytes in 47 entries | MEASURED | `git archive <tree> host model spec hw/e0c hw/lrnc` piped to `wc -c` and to `tar -t` and `wc -l`, on the staged tree 0d00fa8, 2026-11-26 04:35 | the same on the READY commit |
+| K19 | The box's snapshot, host/, model/, spec/, hw/e0c/ and hw/lrnc/, is 471,040 bytes in 47 entries | MEASURED | `git archive <tree> host model spec hw/e0c hw/lrnc` piped to `wc -c` and to `tar -t` and `wc -l`, on the staged trees 0d00fa8 (04:35) and 77d5981 (04:48), 2026-11-26, the same both times | the same on the READY commit |

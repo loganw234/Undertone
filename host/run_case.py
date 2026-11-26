@@ -240,7 +240,7 @@ def read_script(path, frames):
         raise ValueError("a script is a JSON list of operations")
     out, last = [], 0
     for k, op in enumerate(script):
-        if not isinstance(op, dict) or op.get("op") not in LEARN_OPS:
+        if not isinstance(op, dict) or not isinstance(op.get("op"), str) or op["op"] not in LEARN_OPS:
             raise ValueError("operation %d is not a dict whose op is one of %s" % (k, ", ".join(sorted(LEARN_OPS))))
         want = {"update": {"op", "after", "arg"}, "commit": {"op", "after", "arg"},
                 "write_shadow": {"op", "after", "blob"}, "clear": {"op", "after"}}[op["op"]]
@@ -255,7 +255,7 @@ def read_script(path, frames):
         if "arg" in op and type(op["arg"]) is not int:
             raise ValueError("operation %d's arg is %r, not an int" % (k, op["arg"]))
         if op["op"] == "write_shadow":
-            if not isinstance(op["blob"], str) or os.path.basename(op["blob"]) != op["blob"]:
+            if not isinstance(op["blob"], str) or not op["blob"] or os.path.basename(op["blob"]) != op["blob"]:
                 raise ValueError("operation %d's blob is %r, not a file's name beside the script" % (k, op["blob"]))
             with open(os.path.join(os.path.dirname(os.path.abspath(path)), op["blob"]), "rb") as f:
                 item["bytes"] = f.read()

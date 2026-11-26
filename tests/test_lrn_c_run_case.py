@@ -104,6 +104,9 @@ BAD = [
     ([{"op": "update", "arg": 5, "after": True}], "after"),
     ([{"op": "write_shadow", "blob": "../blank.blob", "after": 0}], "not a file's name"),
     ([{"op": "clear", "after": 0, "arg": 1}], "keys"),
+    ([{"op": ["update"], "arg": 5, "after": 0}], "is not a dict whose op"),
+    ([{"op": "write_shadow", "blob": "", "after": 0}], "not a file's name"),
+    ([5], "is not a dict whose op"),
     ("not a list", "a JSON list"),
 ]
 

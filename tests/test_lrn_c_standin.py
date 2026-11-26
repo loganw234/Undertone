@@ -219,6 +219,83 @@ def test_lrn_c_control_a_stand_in_whose_learner_reads_amplitude_or_pulse_gives_o
     assert lrnc.compare(cases_dir, runs) == 0
 
 
+class DoesNothing(ML.Learner):
+    """D0's learner gate's first fault: a learner that does nothing. It counts and judges as the model's does, and
+    its updates finish made, but it writes no set into the shadow, so a commit swaps in the set already there."""
+
+    def _make(self):
+        kept = self.core.write_shadow
+        self.core.write_shadow = lambda blob: None
+        try:
+            super()._make()
+        finally:
+            self.core.write_shadow = kept
+
+
+def test_lrn_c_a_stand_in_whose_learner_does_nothing_gives_other_records_from_the_commit(folder, tmp_path, capsys):
+    base, cases_dir = folder
+    runs = str(tmp_path / "runs")
+    for run_name, case_name in lrnc.RUNS:
+        standin.run(cases_dir, case_name, os.path.join(runs, run_name),
+                    learner_class=DoesNothing if run_name == "rich" else ML.Learner)
+    capsys.readouterr()
+    assert lrnc.compare(cases_dir, runs) == 1
+    said = capsys.readouterr().out
+    got = json.load(open(os.path.join(runs, "card-lrnc.json"), encoding="utf-8"))["runs"]["rich"]
+    assert not got["identical"] and got["first"]["record"] == 4 * M and got["first"]["field"] == "score", got
+    assert got["registers"], "its counts and status are the model's: only the records see it"
+
+
+class RoundsAway(ML.Learner):
+    """D0's learner gate's second fault: a learner that rounds half away from zero, not half to even."""
+
+    def _quantise(self, d):
+        peak = max(abs(x) for x in d)
+        if peak == 0:
+            return super()._quantise(d)
+        out = []
+        for x in d:
+            q, r = divmod(abs(x) * C.COEFF_MAX, peak)
+            q += 1 if 2 * r >= peak else 0
+            out.append(q if x >= 0 else -q)
+        return out
+
+
+def test_lrn_c_ties_counts_where_the_two_roundings_can_differ_and_a_learner_rounding_away_is_seen_only_there(folder):
+    """The limit, shown: on a difference of [262142, 1] the coefficient of 1 is exactly 0.5, half to even gives 0
+    and half away 1, and `ties` counts it; on the three cases at M = 1,024 no update's set holds a tie, so a learner
+    that rounds the other way gives the model's records there (docs/host/lrn-c.md, limit 15)."""
+    from model import weights
+    assert lrnc.ties([262142, 1]) == 1 and lrnc.ties([262142, 3]) == 1 and lrnc.ties([262142, 4]) == 0
+    assert lrnc.ties([0, 0]) == 0
+    assert list(weights.quantise([262142, 3])) == [131071, 2] == RoundsAway._quantise(None, [262142, 3])
+    assert list(weights.quantise([262142, 1])) == [131071, 0]
+    assert RoundsAway._quantise(None, [262142, 1]) == [131071, 1]
+    base, cases_dir = folder
+    for name in lrnc.CASES:
+        assert [u["ties"] for u in expected(cases_dir, name)["updates"]] == [0] * {"flow": 1, "moved": 1, "rich": 3}[name]
+        out = os.path.join(base, "rounds-away", name)
+        assert standin.run(cases_dir, name, out, learner_class=RoundsAway)[0] == 0
+        assert open(os.path.join(out, "records.bin"), "rb").read() == \
+            open(os.path.join(cases_dir, "expect", name, "records.bin"), "rb").read()
+
+
+def test_lrn_c_flow_and_moved_from_the_matched_filter_if_the_fabric_refuses_the_blank_set(tmp_path, capsys):
+    """The lead's ruling, question 6: `cases --start matched`. The day then passes as it does from the blank set,
+    and the records before the commit are the matched filter's, not 0."""
+    capsys.readouterr()
+    assert lrnc.short(str(tmp_path), start="matched", m=M) == 0
+    assert "== LRN-C CONTROL moved: SEEN" in capsys.readouterr().out
+    cases_dir = os.path.join(str(tmp_path), "cases")
+    for name in ("flow", "moved"):
+        assert json.load(open(os.path.join(cases_dir, name, "case.json"), encoding="utf-8"))["blob"] == "matched.blob"
+    data = open(os.path.join(cases_dir, "expect", "flow", "records.bin"), "rb").read()
+    from hw.e0c import pieces
+    assert any(pieces.RECORD.unpack_from(data, r * 21)[3] for r in range(64, 2 * M))
+    with pytest.raises(ValueError):
+        lrnc.case("flow", M, start="zero")
+
+
 @pytest.mark.parametrize("learner_class", [ReadsAmplitude, ReadsPulse])
 def test_lrn_c_on_the_cases_own_stream_a_learner_reading_amplitude_or_pulse_is_not_seen(folder, learner_class):
     """The limit, shown: amplitude 1/1 and one pulse throughout, so such a learner is the model's."""

@@ -1,6 +1,9 @@
 """Learning in the fabric on the card, the host's side: the cases, the model's expectations, and the judge.
 
-    python hw/lrnc/lrnc.py cases <folder> [--m n]          the cases (M = 2^20 by default; the short form 2,048)
+    python hw/lrnc/lrnc.py cases <folder> [--m n] [--start blank|matched]
+                                                            the cases (M = 2^20 by default; the short form 2,048);
+                                                            flow and moved from the matched filter if the fabric
+                                                            refuses the blank set
     python hw/lrnc/lrnc.py expect <folder> --case <name>    one case's expectation: flow, rich or moved, a process each
     python hw/lrnc/lrnc.py compare <folder> <runs>          the judge, from the card's files; exit 0 only on PASS
     python hw/lrnc/lrnc.py short <folder>                   the whole day at M = 2,048, the card a stand-in
@@ -79,10 +82,17 @@ def _record(j):
     return {"index": j, "pulse_id": C.PULSE_IDS["e0"], "amplitude_num": AMPLITUDE[0], "amplitude_den": AMPLITUDE[1]}
 
 
-def case(name, m):
-    """One case at M = m: {"name", "frames", "seed", "schedule", "script", "blob", ...}. M is a multiple of 256."""
+START = {"blank": "blank.blob", "matched": "matched.blob"}
+
+
+def case(name, m, start="blank"):
+    """One case at M = m: {"name", "frames", "seed", "schedule", "script", "blob", ...}. M is a multiple of 256.
+    `start` is the set flow and moved load at epoch 0: E1's blank set, or the matched filter if the fabric refuses
+    the blank set (the lead's ruling, 2026-11-26 03:57, question 6). rich loads the matched filter either way."""
     if type(m) is not int or m < 1024 or m % 256:
         raise ValueError("M is a multiple of 256 of at least 1,024, not %r" % (m,))
+    if start not in START:
+        raise ValueError("flow and moved start from %s, not %r" % (" or ".join(sorted(START)), start))
     g = guard(m)
     common = {"name": name, "profile": PROFILE, "taps": TAPS, "sigma": list(SIGMA), "epoch": 0, "M": m, "G": g,
               "count_bits": COUNT_BITS, "update_frames": F}
@@ -92,7 +102,7 @@ def case(name, m):
         script = [{"op": "update", "arg": u, "after": 0},
                   {"op": "commit", "arg": 2 * m, "after": u + F + g}]
         schedule = [_record(FIRST + SPACING * t) for t in range(frames // SPACING)]
-        return dict(common, frames=frames, seed=SEEDS["flow"], blob="blank.blob", schedule=schedule, script=script,
+        return dict(common, frames=frames, seed=SEEDS["flow"], blob=START[start], schedule=schedule, script=script,
                     intended=[None, None])
     if name == "rich":
         frames = 7 * m
@@ -148,14 +158,14 @@ def _json(path, value):
         f.write("\n")
 
 
-def cases(folder, m=M_CARD):
+def cases(folder, m=M_CARD, start="blank"):
     """Write the cases: table.json, order.txt, and for each case its case.json, schedule.json, script.json and the
-    two blobs (the script's write_shadow names a blob beside it)."""
+    two blobs (the script's write_shadow names a blob beside it). `start`: see `case`."""
     os.makedirs(folder, exist_ok=True)
     blobs = {"blank.blob": blank_blob(), "matched.blob": matched_blob()}
     table = None
     for name in CASES:
-        c = case(name, m)
+        c = case(name, m, start)
         d = os.path.join(folder, name)
         os.makedirs(d, exist_ok=True)
         info = dict((k, v) for k, v in c.items() if k not in ("schedule", "script"))
@@ -224,12 +234,22 @@ def run_case_model(info, placed, sink=None, learner_class=W.ML.Learner):
                         info["count_bits"], info["epoch"], blobs=info["blobs"], learner_class=learner_class, sink=sink)
 
 
+def ties(difference):
+    """How many of an update's coefficients fall on a tie of the quantiser: |D| x COEFF_MAX over the peak leaves
+    exactly half the peak. Only there does rounding half to even differ from rounding half away from zero."""
+    peak = max((abs(d) for d in difference), default=0)
+    if peak == 0:
+        return 0
+    return sum(1 for d in difference if 2 * ((abs(d) * C.COEFF_MAX) % peak) == peak)
+
+
 def _summary(got, info):
     learner = got["learner"]
     return {"outcomes": got["outcomes"],
             "end": W.end_registers(learner, got["latch"], info["update_frames"], info["count_bits"]),
             "updates": [{"u": u["u"], "counts": list(u["counts"]), "outcome": u["outcome"],
-                         "blob_sha256": None if u["blob"] is None else hashlib.sha256(u["blob"]).hexdigest()}
+                         "blob_sha256": None if u["blob"] is None else hashlib.sha256(u["blob"]).hexdigest(),
+                         "ties": ties(u["difference"])}
                         for u in learner.updates]}
 
 
@@ -438,11 +458,11 @@ def _control_line(folder, runs, model):
 
 # --------------------------------------------------------------------- short
 
-def short(folder, stride=37):
+def short(folder, stride=37, start="blank", m=M_SHORT):
     """The whole day at M = 2,048 with the stand-in for the card: cases, expectations, the four runs through
     host.run_case, and the judge. Returns the judge's exit code."""
     from hw.lrnc import standin
-    cases_dir = cases(os.path.join(folder, "cases"), M_SHORT)
+    cases_dir = cases(os.path.join(folder, "cases"), m, start)
     for name in CASES:
         expect(cases_dir, name)
     runs = os.path.join(folder, "runs")
@@ -458,6 +478,8 @@ def main(argv=None):
     p = sub.add_parser("cases")
     p.add_argument("folder")
     p.add_argument("--m", type=int, default=M_CARD)
+    p.add_argument("--start", choices=sorted(START), default="blank",
+                   help="the set flow and moved load: blank, or matched if the fabric refuses the blank set")
     p = sub.add_parser("expect")
     p.add_argument("folder")
     p.add_argument("--case", required=True, choices=CASES)
@@ -466,10 +488,11 @@ def main(argv=None):
     p.add_argument("runs")
     p = sub.add_parser("short")
     p.add_argument("folder")
+    p.add_argument("--start", choices=sorted(START), default="blank")
     a = ap.parse_args(argv)
     if a.what == "cases":
-        cases(a.folder, a.m)
-        print("cases written to %s at M = %d" % (a.folder, a.m))
+        cases(a.folder, a.m, a.start)
+        print("cases written to %s at M = %d, flow and moved from the %s set" % (a.folder, a.m, a.start))
         return 0
     if a.what == "expect":
         e = expect(a.folder, a.case)
@@ -478,7 +501,7 @@ def main(argv=None):
         return 0
     if a.what == "compare":
         return compare(a.folder, a.runs)
-    return short(a.folder)
+    return short(a.folder, start=a.start)
 
 
 if __name__ == "__main__":
