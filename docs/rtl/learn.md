@@ -16,7 +16,7 @@ Labels are D0's: MEASURED, READ, COMPUTED, ESTIMATE, BELIEVED, SURVEY, DECISION.
 | the seam's chain with the learner at the definition's bounds | `rtl/learn/learn_chain.sv` |
 | the benches | `rtl/tb/bench_learn.py`, `rtl/tb/bench_learn_chain.py` |
 | what they share: the model's run, the design's run of the same script, the checks | `rtl/tb/learn_host.py` |
-| their rows and 49 mutants | `rtl/tb/benches.toml`, from the line that names this parcel |
+| their rows and 66 mutants | `rtl/tb/benches.toml`, from the line that names this parcel |
 
 ## 2. What it does
 
@@ -98,12 +98,14 @@ Each bench module has a row for each profile. Every comparison of records goes t
 | `bit_identity_hand_worked_ties` | small | LRN-B's hand-worked cases with ties (case 1 under s16x1, case 3 under s24x3), each coefficient alone in a score after the commit; the model's set is the hand-worked one |
 | `bit_identity_every_coefficient` | small | two updates at the build's 6 taps, each set read back coefficient by coefficient; the core's `shadow_count` and `whole` after the learner's writes |
 | `update_finishes_within_f` | both | F from both sides, at 6 taps and F 16, and at the definition's 128 taps and F 256 |
-| `skips_at_their_boundaries` | small | START at T − 1 and free at T; label 0 BUSY at 2T − 1 and free at 2T; label 1 BUSY at T − 1 from after and from before, and free at T; FULL; START before BUSY; label 0 and label 1 each both BUSY and FULL, counted BUSY |
+| `skips_at_their_boundaries` | small | START at T − 1 and free at T; label 0 BUSY at 2T − 1 and free at 2T; label 1 BUSY at T − 1 from after and from before, and free at T; each label's FULL alone; START before BUSY; two BUSY at one edge; label 0 and label 1 each both BUSY and FULL, counted BUSY |
 | `snapshot_at_u` | small | the windows judged at u in the update and the next not, made at u and made a frame late; windows judged while pass B divides |
 | `a_record_offered_late` | both | the race (section 2.5) |
 | `frames_every_clock` | small | windows at a frame a clock, the commit scripted after the learner is done |
-| `refuses_an_update`, `refuses_the_core_rows`, `refuses_swap_shape`, `refuses_what_the_model_cannot`, `quantise_input`, `refusal_order` | small | each refusal of section 3, each case alone where one can be made alone; the order in pairs, UPDATE_UNFINISHED before SWAP_SHAPE from a state written into both sides |
-| `rows_read_back`, `reads_while_the_learner_writes` | small | the rows; the counters past 2^32 from a written state; no read lost to a write of the learner's |
+| `refuses_an_update`, `refuses_the_core_rows`, `refuses_swap_shape`, `refuses_what_the_model_cannot`, `quantise_input`, `refusal_order` | small | each refusal of section 3, each case alone where one can be made alone; SWAP_INDEX below the next index, exactly one below it, written at the edge that takes a frame, and past the field's most; no SWAP_PENDING for an update written at the commit's own edge; the order in pairs, UPDATE_UNFINISHED before SWAP_SHAPE from a state written into both sides |
+| `rows_read_back`, `reads_while_the_learner_writes` | small | the rows, `lrn_status` at exactly next index u against the model's own there; `lrn_skip_busy`'s two words of one moment; no read lost to a write of the learner's |
+| `counters_past_two_to_the_32` | small | all six 64-bit counters carried past 2^32 from a state written into both sides, each to another upper word (1 to 6) |
+| `full_at_thirty_two_bits` | chain | FULL at count_bits 32: label 0's count written at 2^32 − 2 into both sides, one window to its most, two FULL, an update of that count |
 | `extremes_by_real_windows` | small | the sums, D and the peak at their bounds by 7 windows a label |
 | `widths_are_the_models`, `control_model_half_away` | small | the widths; the comparison handed a learner that rounds half away from zero, seen at the record of the tie |
 | `truth_isolation` | chain | the same samples under 3/1, 6/2, and 3/1 with an added record of amplitude 0: identical up to the named commit, each the model's with its own learner's set after it, the sets of the first and third different |
@@ -112,7 +114,7 @@ Each bench module has a row for each profile. Every comparison of records goes t
 
 ## 5. The mutants, and where each one's evidence fell
 
-49 mutants: 23 on `learn-s16x1`, 20 on `learn-s24x3`, 5 on `learn-chain-s16x1` and 1 on `learn-chain-s24x3`. Each was read against the record or the register its fault predicts (row L11), in the run of row L5; each named WORD below is held by the stage as a WORD mismatch from the harness, and each other by its test's failure.
+66 mutants: 32 on `learn-s16x1`, 28 on `learn-s24x3`, 5 on `learn-chain-s16x1` and 1 on `learn-chain-s24x3`. Each was read against the record or the register its fault predicts (row L11), in the run of row L5; each named WORD below is held by the stage as a WORD mismatch from the harness, and each other by its test's failure. Eighteen of them came after the verifier VRTLL, in place of one (section 5.1).
 
 | mutant | profile | where its evidence fell |
 |---|---|---|
@@ -120,7 +122,7 @@ Each bench module has a row for each profile. Every comparison of records goes t
 | `copy-one-early` | s24x3 | "made at u, T = 1", record 23 (WORD) |
 | `copy-one-late`, `no-copy` | s16x1, s24x3 | "made a frame late, T = 2", record 27 (WORD) |
 | `start-removed`, `busy0-removed`, `busy1-before-removed`, `busy1-after-removed` | both | that label's count register in the boundary's run |
-| `full-removed` | s16x1 | the FULL run's record 71 (WORD) |
+| `full0-removed`, `full1-removed` | s24x3, s16x1 | the FULL run's record 77: another set (WORD) |
 | `full-before-busy` | s24x3 | `lrn_skip_busy` 1 where the model has 3 |
 | `finished-a-frame-early` | s16x1, and s24x3 at 128 taps | `lrn_refusal` 0 after the commit at u + F − 1, where the model has 54 |
 | `finished-a-frame-late` | s24x3 | the commit's record 60: the old epoch (WORD) |
@@ -146,6 +148,23 @@ Each bench module has a row for each profile. Every comparison of records goes t
 - `shadow-begin-not-held`: the host's shadow write came before the learner's `shadow_begin`, which restarts the stream anyway. A second one is now placed inside the learner's pass B.
 - `dividend-narrower`: it narrowed a register whose top bits the division never reads. It now narrows the product itself.
 
+### 5.1 The verifier's gaps, and what holds each now
+
+The verifier VRTLL (round 5) found no wrong answer in the RTL, and eight one-place changes of `learn.sv` that both `learn_small` benches passed. No line of the RTL changed for them: each new test passed on the shipped RTL at its first run. Each gap now has a test that fails on it and a mutant in the manifest, but one that cannot fail (row L15):
+
+| the gap | what holds it now | mutant | where its evidence fell |
+|---|---|---|---|
+| two BUSY skips at one edge counted as one | `skips_at_their_boundaries`, records 3, 5 and 8 at T = 3: at 8, label 1 of 5 and label 0 of 8, both BUSY | `two-busy-counted-once` | `lrn_skip_busy` 3 where the model has 4 |
+| two FULL skips at one edge counted as one | cannot happen (limit 20) | none | none can fall |
+| SWAP_INDEX at exactly next index − 1 | `refuses_an_update`, an update of 40 at 41 | `index-one-below-taken` | `lrn_refusal` 0 where the model's is 20 |
+| an update written at the edge that takes a frame | `refuses_an_update`, an update of 42 landing at the edge that takes frame 42 | `index-before-the-frame` | the same, after the update of 42 |
+| SWAP_PENDING as the frame at the write's edge leaves it | `refuses_an_update`, an update landing at the commit's own edge, which the model takes | `pending-before-the-frame` | `lrn_refusal` 8 where the model's is 0 |
+| `lrn_status` at exactly next index u | `rows_read_back`, a read at u against the model's own `status()` there | `status-at-u` | named 1 and running 0 where the model has 0 and 1 |
+| every counter's upper word past 2^32 | `counters_past_two_to_the_32` | `start-upper-from-busy`, `busy-upper-from-full`, `full-upper-from-made`, `made-upper-from-unmade`, `unmade-upper-from-early`, `early-upper-from-made` | the counter's two words read at the end: `lrn_early` 4 × 2^32 where the model has 6 × 2^32, and the like |
+| every counter's width | `counters_past_two_to_the_32` | `start-thirty-two-bits`, `full-thirty-two-bits`, `made-thirty-two-bits`, `unmade-thirty-two-bits`, `early-thirty-two-bits`, and the earlier `counter-thirty-two-bits` for `lrn_skip_busy` | the counter at the end: 0 where the model has k × 2^32 |
+
+And two more of its notes. **Label 0's FULL and label 1's FULL are each removed alone** (`full0-removed`, `full1-removed`, in place of the pair): the FULL run now has nine records, so each label's eighth window is FULL with no BUSY beside it. **FULL at count_bits 32** is now `full_at_thirty_two_bits` on the chain (limit 7).
+
 ## 6. Limits
 
 Each is stated by the behaviour it concedes.
@@ -156,7 +175,7 @@ Each is stated by the behaviour it concedes.
 4. **`closed` is worked in the tops from core.sv's tag layout**, retyped from the package. A core that changed its layout would be seen only as a core refusal at the learner's write or as an update that never finishes.
 5. **One index space.** An injector begun at another first frame (`inj_frame`) is not mapped: the learner takes its indexes as the core's, wrong without a word. The host library never writes `inj_frame` (row L10).
 6. **The truth port's contract is not checked by the learner.** It takes what the injector took: strictly ascending, none behind the core's next index. Its store holds MAX_INJECT_PENDING + 4 indexes, held by derivation (row L6) and not by a run that fills it, and a push into a full store is not refused. `learn_small`'s truth port is the bench's, and keeps the contract by the bench's construction.
-7. **FULL at count_bits 32 is reached from a written state**, at 3 by real windows; a counter past 2^32 from a written state. A counter past 2^64 is outside both sides.
+7. **FULL is held at count_bits 3 by real windows on `learn_small`, and at count_bits 32 from a written state on `learn_chain`** (`full_at_thirty_two_bits`: label 0's count written at 2^32 − 2 into both sides, one window to its most, then two FULL). 2^32 real windows are not run. **Every one of the six 64-bit counters is carried past 2^32 from a written state** (`counters_past_two_to_the_32`), each to a different upper word, so a counter of 32 bits or an upper word read from another counter's hold is seen; `lrn_skip_busy`'s two words of one moment are also held across a skip between its two reads (`rows_read_back`). A counter past 2^64 is outside both sides. *Restated after the verifier VRTLL (2026-11-25): until then FULL at 32 bits was held by no bench, and only `lrn_skip_busy` was read past 2^32.*
 8. **The sums, D and the peak are not read out.** They are seen through the set, each coefficient alone in a score on `learn_small`, and through the counts. On `learn_chain` a wrong coefficient is seen through the noise, not alone.
 9. **One pulse in the fabric's injector.** A learner that reads the pulse id reads a constant, and no wording here can show it; reading the amplitude is the mutant `reads-the-amplitude`.
 10. **The race is shown under s24x3 in the chain**, where its window is 8 clocks, and under both profiles in `learn_small`. Under s16x1 in the chain it cannot occur at the chain's rate.
@@ -165,9 +184,11 @@ Each is stated by the behaviour it concedes.
 13. **A count width of 1 and an update time of 0 are not built** (LRN-B's F6 and F7): at 1 bit the closed-form widths are wider than the fewest, and an update takes clocks. A build refuses either at time zero, by name; the model keeps both.
 14. **The refusals' mutants:** each of section 3's conditions has one that removes it alone, but one mutant, `names-every-refusal-wrongly`, stands for every name reported wrongly, as in core.md's limit 11. No mutant reports one name wrongly and leaves the others right.
 15. **A mutant shows the bench sees its fault under one profile.**
-16. **What this bench holds at sampled sizes it holds at those sizes alone** (core.md limit 23): T at 1, 2, 3, 6, 16, 32, 64 and 128; F at 16 and 256; count_bits at 3 and 32.
+16. **What this bench holds at sampled sizes it holds at those sizes alone** (core.md limit 23): T at 1, 2, 3, 6, 16, 32, 64 and 128; F at 16 and 256. count_bits at 3 for everything `learn_small` holds, FULL among it; at 32 for what `learn_chain` holds, where FULL is reached only from a written state (limit 7), and for the widths, which `widths_are_the_models` reads at 3 alone.
 17. **The model has frames and no clocks.** The clocks of section 2.4 are this design's, held by F from both sides and by the chain bench's log.
 18. **Nothing here is evidence about sensitivity.**
+19. **Truth isolation in the fabric is held through the model, not by comparing the design's runs with each other.** `truth_isolation` requires the model's records of the wordings 3/1 and 6/2 to be equal, and those of 3/1 and of 3/1 with an added record of amplitude 0 to be equal up to the commit and different after it, and holds the design to the model in each run. So the fabric's records are equal across the wordings only because each equals the model's; no assertion compares two of the design's runs directly.
+20. **Two windows cannot both be counted FULL at one next index.** At next index n the windows judged are label 0 of a record at n and label 1 of a record at n − T. For label 1 of n − T to be free of BUSY no record lies in (n − T, n), so the record at n is the next after n − T, and label 0 of n is then BUSY, T < 2T. So `add_full`'s two terms are never true together, and the learner counting them with an OR in place of a sum is identical on every stream: no test can see it, and none does. Two BUSY at one edge do happen, and `skips_at_their_boundaries` holds them (row L14).
 
 ## 7. The kernel, a later round's
 
@@ -207,7 +228,7 @@ The truth store is read at three places at once in this RTL (the two cursors and
 | L2 | At 128 taps the update took 2,699 clocks under s16x1 and 7,819 under s24x3, from the edge it was made at to the edge its last write was taken | MEASURED | the stage on a copy, 2026-11-25 22:27: the LEARN-MARGIN line `update_finishes_within_f` of `bench_learn_chain` logs in each run's log | that line in the gate's run |
 | L3 | The budget in F − 1 frames at the chain's rate is 5,100 and 15,300 clocks | COMPUTED | 255 × 20 × 1 and 255 × 20 × 3, seam.md row K3's rate | arithmetic |
 | L4 | Under s24x3 at the chain's rate the core's next index is j for 8 clocks before the injector takes frame j; under s16x1 for none | COMPUTED | 60 − 52 and 20 − 52 clocks, from source.md rows S5 and S7 | `a_record_offered_late` under s24x3 |
-| L5 | This parcel's four rows pass 46 tests in 4 runs of 4 benches, hold 13,198 records identical to the model's, and see 49 mutant runs fail as named; 305 s of run time and 129 s of the stage alone, six at a time | MEASURED | the stage on a copy, 2026-11-25 22:38:37 to 22:40:46: its OK line, and the runner's "ran" lines | the gate's line for `rtl-benches`, which gives totals for every bench |
+| L5 | This parcel's four rows pass 50 tests in 4 runs of 4 benches, hold 14,520 records identical to the model's, and see 66 mutant runs fail as named; 462 s of run time and 181 s of the stage alone, six at a time | MEASURED | the stage on a copy, 2026-11-25 23:45:56 to 23:48:57: its OK line, and the runner's "ran" lines. Before the verifier's gaps (22:38:37 to 22:40:46) it was 46 tests, 13,198 records and 49 mutant runs | the gate's line for `rtl-benches`, which gives totals for every bench |
 | L6 | In the chain the learner's store holds at most the injector's 1,024 records and 2 more | COMPUTED | records 64 frames apart; a record leaves the injector after its 64th frame and the learner after j + T, T at most 128; the injector 52 clocks ahead of the core | a run that fills it, not made |
 | L7 | The storage of section 8: the buffer, the sums, the copy and the truth store | COMPUTED | 128 × C × S; 2 × 128 × C × (S + 32) twice; (1,024 + 4) × 64 | arithmetic |
 | L8 | Records through the injector are at least 64 frames apart | READ | `rtl/inject/inject.sv`, `free_from` and INJECT_OVERLAP; e0's length | that file |
@@ -216,3 +237,5 @@ The truth store is read at three places at once in this RTL (the two cursors and
 | L11 | Each mutant's evidence fell where section 5's table says | MEASURED | the run of L5: each mutant run's results file and evidence file, read one line a test | the gate's evidence under `verify/state/<run>/` |
 | L12 | At the first pass of the mutants, four of 49 survived, each for the bench's stream; with the four streams mended, none did | MEASURED | the stage on a copy, 2026-11-25 22:33:45 to 22:36:31, four findings MUTANT-SURVIVED; then the run of L5 | a rerun of the first pass's bench |
 | L13 | F = 256 frames is the definition's, and the learner meets it at the chain's rate | DECISION | the lead's ruling, 2026-11-25 22:00, on LRN-B's question 1 | `update_finishes_within_f` failing |
+| L14 | No next index judges two windows that are both free of START and BUSY, so two FULL skips never fall at one edge; two BUSY skips do | COMPUTED | limit 20's argument; and a script of the parcel's own that states the window rules anew and imports nothing, over every set of up to five records in 0..19 at T = 1 to 4: no such index. The script is in the round's scratch folder, not the tree | a stream of the model's whose log has two FULL outcomes at one next index |
+| L15 | Each of the verifier VRTLL's eight gaps but the two-FULL one fails a test, and each such test passed on the shipped RTL at its first run | MEASURED | the run of L5: the eighteen new mutants of section 5.1 each failed as named, their evidence read one line a test, and the new and changed tests passed on the unchanged RTL | the gate's second size with those mutants |

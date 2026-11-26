@@ -35,7 +35,7 @@ from cocotb.clock import Clock
 from cocotb.triggers import FallingEdge, RisingEdge
 
 from spec import constants as C
-from model import learner as L, run as R, weights, source
+from model import inject, learner as L, run as R, weights, source
 
 import harness
 import core_host as host
@@ -470,13 +470,16 @@ class Chain:
         await FallingEdge(dut.clk)
         dut.reg_valid.value, dut.reg_we.value = 0, 0
 
-    async def start(self, case, late_records=()):
+    async def start(self, case, late_records=(), before_rtl=None):
         """Reset; the core loaded; the source's table and the injector's records, but the late ones; the
-        source started. Returns the collector of records, started before the start write."""
+        source started. Returns the collector of records, started before the start write. `before_rtl` is a
+        coroutine function called with the dut after the load, to write a state into it."""
         dut, b = self.dut, self.bus
         await b.reset()
         self.took = {}
         await host.load(dut, case.blob, case.epoch)
+        if before_rtl is not None:
+            await before_rtl(dut)
         pairs = seam_host.table_writes(case.noise().table)
         for record in case.schedule:
             if record not in late_records:
@@ -487,21 +490,31 @@ class Chain:
         return seen
 
     async def run(self, test, label, case, script, *, update_frames=C.LEARN_UPDATE_FRAMES,
-                  count_bits=C.LEARN_COUNT_BITS, placement=None, late=None):
+                  count_bits=C.LEARN_COUNT_BITS, placement=None, late=None, before=None, before_rtl=None):
         """One run of the chain held to `model.run.learning`: every record, each operation's refusals, the
         eight counts and lrn_status at the end, and the injector's refusal 0. `placement` maps (index, 0) to
         "last" for an index's one operation, and (index, 0) to "with" for the next index's; `late` maps a next
-        index to truth records offered once the core's next index is that index. Returns the learner."""
+        index to truth records offered once the core's next index is that index. `before` writes a state into
+        the model's learner before its first frame, and `before_rtl` the same into the design: then the model
+        is `model.run.learning`'s own lines, its injector, a learner and its loop, with the state written
+        between the learner's making and the loop. Returns the learner."""
         dut, b = self.dut, self.bus
         placement = dict(placement or {})
         late = late or {}
-        records, _truth, outcomes, learner = R.learning(case.noise(), case.schedule, case.frames, case.blob, script,
-                                                        update_frames, count_bits, case.epoch)
+        if before is None:
+            records, _truth, outcomes, learner = R.learning(case.noise(), case.schedule, case.frames, case.blob,
+                                                            script, update_frames, count_bits, case.epoch)
+        else:
+            injected, truth = inject.inject(weights.unpack(case.blob)["profile"], case.noise(), case.schedule,
+                                            case.frames)
+            learner = L.Learner(case.blob, truth, update_frames, count_bits, case.epoch)
+            before(learner)
+            records, outcomes = R._learning_run(learner, injected, script)
         names = outcomes_by_index(outcomes)
         latch = Latch(learner)
         checks = Checks()
         late_records = [r for rs in late.values() for r in rs]
-        seen = await self.start(case, late_records)
+        seen = await self.start(case, late_records, before_rtl)
         period = seam_host.period(case.profile)
         bound = period * (case.frames + 4) + 400
         withs = set(i for (i, pos), p in placement.items() if p == "with")

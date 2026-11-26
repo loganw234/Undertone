@@ -15,21 +15,26 @@ rate, unless a test says otherwise.
                                   the learner's writes
   update_finishes_within_f        F from both sides: a commit at the last clock of u + F - 1 refused, at
                                   the first of u + F taken
-  skips_at_their_boundaries       START, BUSY (label 0; label 1 from before and from after) and FULL, each
-                                  at its boundary, and a label-1 window both BUSY and FULL counted BUSY
+  skips_at_their_boundaries       START, BUSY (label 0; label 1 from before and from after) and FULL of each
+                                  label, each at its boundary; two BUSY at one edge; a window of each label
+                                  both BUSY and FULL counted BUSY
   snapshot_at_u                   the windows judged at u in the update and those after it not, with the
                                   update made at u and made a frame late; windows judged during pass B
   a_record_offered_late           a record handed over after the core's next index reached it: judged,
                                   and the update at its index waits for it
   frames_every_clock              windows at a frame a clock, the commit scripted after the learner is done
-  refuses_an_update               UPDATE_UNFINISHED, SWAP_INDEX both ways, SWAP_PENDING
+  refuses_an_update               UPDATE_UNFINISHED; SWAP_INDEX below, exactly one below, at the edge that
+                                  takes a frame, and past the field's most; SWAP_PENDING, and none at the
+                                  commit's own edge
   refuses_the_core_rows           a commit, a shadow write and a lone shadow word while unfinished
   refuses_swap_shape              each condition of the matched-filter check alone
   refuses_what_the_model_cannot   CORE_STOPPED, WEIGHT_COUNT and REGISTER_ACCESS: this design's own
   quantise_input                  an update with no window, and one whose every D is zero
   refusal_order                   pairs of an update's faults
-  rows_read_back                  lrn_update_at, the caps, lrn_status through an update's life, and the
-                                  counters past 2^32 from a written state, their two words of one moment
+  rows_read_back                  lrn_update_at, the caps, lrn_status through an update's life (at exactly
+                                  next index u among them), and lrn_skip_busy's two words of one moment
+  counters_past_two_to_the_32     all six 64-bit counters carried past 2^32 from a written state, each to
+                                  another upper word
   extremes_by_real_windows        the sums, D and the peak at their bounds, by 7 windows a label
   widths_are_the_models           the learner's localparams against model.learner.widths
   control_model_half_away         the comparison handed a learner that rounds half away from zero
@@ -181,24 +186,30 @@ async def skips_at_their_boundaries(dut):
         ("label 0 free at 2T", [3, 9]),
         ("label 1 BUSY at T - 1, from after and from before", [3, 5]),
         ("label 1 free at T", [3, 6]),
+        # two BUSY at one edge: at 8, label 1 of 5 (BUSY, 2 after 3) and label 0 of 8 (BUSY, 3 after 5)
+        ("two BUSY at one edge", [3, 5, 8]),
     ]
     for label, records in runs:
         frames = noise(rng, records[-1] + t + 4)
         script = {records[-1] + t + 1: [("update", records[-1] + t + 1)]}
-        await lh.small_case(bench, "skips_at_their_boundaries", label, blob, records, frames, script)
-    # FULL: eight records 2T apart give eight windows a label, and the eighth is FULL; then a label-1 window
-    # both BUSY and FULL, which is counted BUSY
-    records = [3 + 6 * i for i in range(8)] + [3 + 6 * 7 + 2]
+        learner = await lh.small_case(bench, "skips_at_their_boundaries", label, blob, records, frames, script)
+    assert [e for e in learner.log if e[0] == 8 and e[3] == "busy"] == [(8, 5, 1, "busy"), (8, 8, 0, "busy")], \
+        "the stream has no two BUSY skips at one edge: %r" % (learner.log,)
+    # FULL: nine records 2T apart give nine windows a label: the eighth of each label is FULL alone (label 1's
+    # of 45 has its next record 6 on); then label 1 of 51 (the next record 2 on) and label 0 of 53 (2 after 51)
+    # are each both BUSY and FULL, and counted BUSY
+    records = [3 + 6 * i for i in range(9)] + [3 + 6 * 8 + 2]
     u = records[-1] + t + 1
     commit = u + F + 4
     frames = pad(noise(rng, u), commit) + lh.impulses(PROFILE, t)
     learner = await lh.small_case(bench, "skips_at_their_boundaries", "FULL, and BUSY before FULL", blob, records,
                                   frames, {4: [("update", u)], u + F: [("commit", commit)]})
     got = learner.counters()
-    both = records[-2]                                # its label 1 is BUSY (the next record 2 on) and FULL (7 taken)
-    assert got["lrn_count0"] == 7 and got["lrn_count1"] == 7 and got["lrn_skip_full"] >= 1, got
+    assert got["lrn_count0"] == 7 and got["lrn_count1"] == 7, got
+    assert (45, 45, 0, "full") in learner.log and (48, 45, 1, "full") in learner.log, \
+        "the stream has no FULL alone of each label"
+    both = records[-2]
     assert (both + t, both, 1, "busy") in learner.log, "the stream has no label-1 window both BUSY and FULL"
-    # and the last record's label 0 is BUSY (2 after the one before) and FULL (7 taken): counted BUSY
     assert (records[-1], records[-1], 0, "busy") in learner.log, "the stream has no label-0 window both BUSY and FULL"
 
 
@@ -284,13 +295,21 @@ async def refuses_an_update(dut):
         2: [("update", 20)],
         5: [("update", 30)],                         # UPDATE_UNFINISHED
         40: [("update", 30)],                        # SWAP_INDEX: below the next index
-        41: [("update", top - F + 1)],               # SWAP_INDEX: u + F past the index field's most
-        42: [("update", top - F)],                   # taken: u + F is the field's most, and it never finishes here
+        41: [("update", 40)],                        # SWAP_INDEX: exactly one below it
+        43: [("update", 42)],                        # SWAP_INDEX, written at the edge that takes frame 42 ("with")
+        44: [("update", top - F + 1)],               # SWAP_INDEX: u + F past the index field's most
+        45: [("update", top - F)],                   # taken: u + F is the field's most, and it never finishes here
     }
-    await lh.small_case(bench, "refuses_an_update", "unfinished and index", blob_of(TAPS), [6, 18], frames, script)
+    await lh.small_case(bench, "refuses_an_update", "unfinished and index", blob_of(TAPS), [6, 18], frames, script,
+                        placement={(43, 0): "with"})
     script = {2: [("commit", 50)], 3: [("update", 60)],     # SWAP_PENDING
               51: [("update", 60)], 60: [("commit", 70)]}   # after the swap: taken; then a commit refused
     await lh.small_case(bench, "refuses_an_update", "pending", blob_of(TAPS), [6, 18], frames, script)
+    # SWAP_PENDING as the frame at the write's edge leaves it: an update written at the very edge that takes the
+    # commit's frame, 10, finds the commit made and nothing scheduled, and is taken
+    script = {2: [("commit", 10)], 11: [("update", 20)]}
+    await lh.small_case(bench, "refuses_an_update", "an update at the swap's own edge", blob_of(TAPS), [6, 18],
+                        frames, script, placement={(11, 0): "with"})
 
 
 @cocotb.test()
@@ -473,9 +492,48 @@ async def rows_read_back(dut):
     await lh.small_case(bench, "rows_read_back", "a far update", blob_of(TAPS), [6], frames[:10], script,
                         probes={5: named_far})
     script = {2: [("update", u)]}
+    # the model's own lrn_status at exactly next index u: its run over the frames before u, with the same script
+    at_u_model = lh.model_run(blob_of(TAPS), records, frames[:u], script, F, NB, before=written)[0].status()
+
+    async def at_u(d):
+        st = await lh.status(d)
+        have = dict((k, st[k]) for k in at_u_model)
+        assert have == at_u_model, "lrn_status at next index u is %r, the model's %r" % (have, at_u_model)
+
     await lh.small_case(bench, "rows_read_back", "an update's life, the counters past 2^32", blob_of(TAPS), records,
                         frames, script, before=written, before_rtl=written_rtl,
-                        probes={4: before_u, 8: lower, 11: upper, u + 1: during, u + F + 2: after})
+                        probes={4: before_u, 8: lower, 11: upper, u: at_u, u + 1: during, u + F + 2: after})
+
+
+@cocotb.test()
+async def counters_past_two_to_the_32(dut):
+    """Every 64-bit counter carried past a multiple of 2^32, from a state written into both sides, each to a
+    different upper word (start 1, busy 2, full 3, made 4, unmade 5, early 6), so that a counter of 32 bits,
+    or an upper word read from another counter's hold, is seen. Label 0's count is written at its most, 7,
+    so that its next window is FULL; the first update then makes no set, the second does."""
+    bench = lh.Small(dut, PROFILE)
+    rng = random.Random(53 + CH)
+    names = ("lrn_skip_start", "lrn_skip_busy", "lrn_skip_full", "lrn_made", "lrn_unmade", "lrn_early")
+    regs = ("c_start", "c_busy", "c_full", "c_made", "c_unmade", "c_early")
+    start = dict((n, (k + 1) * (1 << 32) - 1) for k, n in enumerate(names))
+
+    def written(learner):
+        for n in names:
+            learner._counters[n] = start[n]
+        learner.counts[0] = (1 << NB) - 1
+
+    async def written_rtl(d):
+        for n, r in zip(names, regs):
+            getattr(d.u_learn, r).value = start[n]
+        d.u_learn.cnt0.value = (1 << NB) - 1
+
+    # records 2 (START; its label 1 BUSY), 4 (both BUSY) and 20 (label 0 FULL, label 1 taken)
+    frames = noise(rng, 50)
+    script = {1: [("update", 10)], 12: [("commit", 30)], 26: [("update", 30)]}
+    learner = await lh.small_case(bench, "counters_past_two_to_the_32", "six counters past 2^32", blob_of(3),
+                                  [2, 4, 20], frames, script, before=written, before_rtl=written_rtl)
+    got = learner.counters()
+    assert [got[n] >> 32 for n in names] == [1, 2, 3, 4, 5, 6], "the stream does not carry each counter: %r" % (got,)
 
 
 @cocotb.test()

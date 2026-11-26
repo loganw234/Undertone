@@ -19,6 +19,7 @@ injector's refusal 0.
                              the same offer is refused by the injector, INJECT_OVERLAP
   bit_identity_e1_flow       E1's layout at 64 taps: eight records 128 apart, the update at the training's end,
                              a host shadow write and a commit refused while it runs, the commit at its finish
+  full_at_thirty_two_bits    FULL at count_bits 32, from a count written at 2^32 - 2 into both sides
   one_bus_four_blocks        a word of each block, a refusal latched in each and each cleared in turn
 
 WHAT IT CANNOT SEE, each a stated limit of docs/rtl/learn.md: the injector holds e0 alone, so no wording
@@ -142,6 +143,31 @@ async def bit_identity_e1_flow(dut):
     learner, _ = await chain.run("bit_identity_e1_flow", "eight records 128 apart at 64 taps",
                                  case(t, records, commit + 40), script)
     assert learner.counters()["lrn_count0"] == 8 and learner.counters()["lrn_count1"] == 8, learner.counters()
+
+
+@cocotb.test()
+async def full_at_thirty_two_bits(dut):
+    """FULL at the definition's count_bits, 32, from a state written into both sides: label 0's count at
+    2^32 - 2, so that its next window takes it to its most and the two after are FULL. The update after them is
+    of a count of 2^32 - 1, so D and the division run near their 32-bit widths."""
+    chain = lh.Chain(dut)
+    t = 16
+    most = (1 << C.LEARN_COUNT_BITS) - 1
+
+    def written(learner):
+        learner.counts[0] = most - 1
+
+    async def written_rtl(d):
+        d.u_learn.cnt0.value = most - 1
+
+    u = 200
+    commit = u + F + 4
+    c = case(t, [record(32), record(96), record(160)], commit + 40)
+    script = {10: [("update", u)], u + F: [("commit", commit)]}
+    learner, _ = await chain.run("full_at_thirty_two_bits", "label 0 at its most of 2^32 - 1", c, script,
+                                 before=written, before_rtl=written_rtl)
+    got = learner.counters()
+    assert got["lrn_count0"] == most and got["lrn_skip_full"] == 2 and learner.updates[0]["counts"][0] == most, got
 
 
 @cocotb.test()

@@ -1352,7 +1352,7 @@ toplevel = "learn_small"
 sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_small.sv"]
 module = "bench_learn"
 profiles = ["s16x1"]
-identity = ["bit_identity_hand_worked_ties", "bit_identity_every_coefficient", "update_finishes_within_f", "skips_at_their_boundaries", "snapshot_at_u", "a_record_offered_late", "frames_every_clock", "refuses_an_update", "refuses_the_core_rows", "refuses_swap_shape", "refuses_what_the_model_cannot", "quantise_input", "refusal_order", "rows_read_back", "reads_while_the_learner_writes", "extremes_by_real_windows"]
+identity = ["bit_identity_hand_worked_ties", "bit_identity_every_coefficient", "update_finishes_within_f", "skips_at_their_boundaries", "snapshot_at_u", "a_record_offered_late", "frames_every_clock", "refuses_an_update", "refuses_the_core_rows", "refuses_swap_shape", "refuses_what_the_model_cannot", "quantise_input", "refusal_order", "rows_read_back", "counters_past_two_to_the_32", "reads_while_the_learner_writes", "extremes_by_real_windows"]
 limit = 120
 
 # A learner that does nothing: no window is ever taken.
@@ -1403,9 +1403,9 @@ must_fail = ["skips_at_their_boundaries"]
 kind = ""
 
 [[bench.mutant]]
-name = "full-removed"
+name = "full1-removed"
 file = "rtl/learn/learn.sv"
-edits = [["o0_full  = (cnt0 == COUNT_MAX);", "o0_full  = 1'b0;"], ["o1_full  = (cnt1 == COUNT_MAX);", "o1_full  = 1'b0;"]]
+edits = [["o1_full  = (cnt1 == COUNT_MAX);", "o1_full  = 1'b0;"]]
 must_fail = ["skips_at_their_boundaries"]
 kind = "WORD"
 
@@ -1529,13 +1529,79 @@ edits = [["da_s1 <= cpy1[is_k*CHANNELS + is_c];", "da_s1 <= cpy1[(T-1-is_k)*CHAN
 must_fail = ["bit_identity_every_coefficient"]
 kind = "WORD"
 
+# The verifier VRTLL's gaps, round 5, and their neighbours: two BUSY skips at one edge counted once; SWAP_INDEX
+# one below the next index taken; SWAP_PENDING read before the frame at the write's edge.
+[[bench.mutant]]
+name = "two-busy-counted-once"
+file = "rtl/learn/learn.sv"
+edits = [["add_busy = (fire0 && !o0_start && o0_busy) + (fire1 && o1_busy);", "add_busy = (fire0 && !o0_start && o0_busy) | (fire1 && o1_busy);"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = ""
+
+[[bench.mutant]]
+name = "index-one-below-taken"
+file = "rtl/learn/learn.sv"
+edits = [["((u_new < idx_n) ||", "((u_new + 1 < idx_n) ||"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+[[bench.mutant]]
+name = "pending-before-the-frame"
+file = "rtl/learn/learn.sv"
+edits = [["pend_n   = core_commit && !(take && (core_next_index == core_commit_at));", "pend_n   = core_commit;"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+# Three of the six 64-bit counters at 32 bits, and three upper words read from another counter's hold.
+[[bench.mutant]]
+name = "start-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["if (fire0 && o0_start) c_start <= c_start + 1;", "if (fire0 && o0_start) c_start <= {32'd0, c_start[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "full-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["c_full <= c_full + add_full;", "c_full <= {32'd0, c_full[31:0] + add_full};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "made-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["if (upd_set) c_made <= c_made + 1;", "if (upd_set) c_made <= {32'd0, c_made[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "start-upper-from-busy"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_start;", "reg_rdata <= h_busy;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "full-upper-from-made"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_full;", "reg_rdata <= h_made;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "unmade-upper-from-early"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_unmade;", "reg_rdata <= h_early;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
 [[bench]]
 name = "learn-s24x3"
 toplevel = "learn_small"
 sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_small.sv"]
 module = "bench_learn"
 profiles = ["s24x3"]
-identity = ["bit_identity_hand_worked_ties", "bit_identity_every_coefficient", "update_finishes_within_f", "skips_at_their_boundaries", "snapshot_at_u", "a_record_offered_late", "frames_every_clock", "refuses_an_update", "refuses_the_core_rows", "refuses_swap_shape", "refuses_what_the_model_cannot", "quantise_input", "refusal_order", "rows_read_back", "reads_while_the_learner_writes", "extremes_by_real_windows"]
+identity = ["bit_identity_hand_worked_ties", "bit_identity_every_coefficient", "update_finishes_within_f", "skips_at_their_boundaries", "snapshot_at_u", "a_record_offered_late", "frames_every_clock", "refuses_an_update", "refuses_the_core_rows", "refuses_swap_shape", "refuses_what_the_model_cannot", "quantise_input", "refusal_order", "rows_read_back", "counters_past_two_to_the_32", "reads_while_the_learner_writes", "extremes_by_real_windows"]
 limit = 150
 
 # The copy with the same edge's adds when they are the update's: the window judged at u left out of the sums.
@@ -1686,13 +1752,72 @@ edits = [["sum1[acc_k*CHANNELS + c] + $signed(dbuf[acc_a][c*S +: S]);", "sum1[ac
 must_fail = ["bit_identity_every_coefficient"]
 kind = "WORD"
 
+# The verifier VRTLL's gaps, round 5, and their neighbours: label 0's FULL alone; SWAP_INDEX against the
+# next index before the frame at the write's edge; lrn_status at exactly next index u.
+[[bench.mutant]]
+name = "full0-removed"
+file = "rtl/learn/learn.sv"
+edits = [["o0_full  = (cnt0 == COUNT_MAX);", "o0_full  = 1'b0;"]]
+must_fail = ["skips_at_their_boundaries"]
+kind = "WORD"
+
+[[bench.mutant]]
+name = "index-before-the-frame"
+file = "rtl/learn/learn.sv"
+edits = [["((u_new < idx_n) ||", "((u_new < core_next_index) ||"]]
+must_fail = ["refuses_an_update"]
+kind = ""
+
+[[bench.mutant]]
+name = "status-at-u"
+file = "rtl/learn/learn.sv"
+edits = [["upd_taken && (core_next_index < upd_u);", "upd_taken && (core_next_index <= upd_u);"], ["upd_taken && (core_next_index >= upd_u);", "upd_taken && (core_next_index > upd_u);"]]
+must_fail = ["rows_read_back"]
+kind = ""
+
+# The other three 64-bit counters at 32 bits, and three more upper words read from another counter's hold.
+[[bench.mutant]]
+name = "unmade-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["else c_unmade <= c_unmade + 1;", "else c_unmade <= {32'd0, c_unmade[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "early-thirty-two-bits"
+file = "rtl/learn/learn.sv"
+edits = [["if (port_intercept && w_commit_hi) c_early <= c_early + 1;", "if (port_intercept && w_commit_hi) c_early <= {32'd0, c_early[31:0] + 32'd1};"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "busy-upper-from-full"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_busy;", "reg_rdata <= h_full;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "made-upper-from-unmade"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_made;", "reg_rdata <= h_unmade;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
+[[bench.mutant]]
+name = "early-upper-from-made"
+file = "rtl/learn/learn.sv"
+edits = [["reg_rdata <= h_early;", "reg_rdata <= h_made;"]]
+must_fail = ["counters_past_two_to_the_32"]
+kind = ""
+
 [[bench]]
 name = "learn-chain-s16x1"
 toplevel = "learn_chain"
 sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_chain.sv"]
 module = "bench_learn_chain"
 profiles = ["s16x1"]
-identity = ["update_finishes_within_f", "truth_isolation", "bit_identity_e1_flow"]
+identity = ["update_finishes_within_f", "truth_isolation", "bit_identity_e1_flow", "full_at_thirty_two_bits"]
 limit = 240
 
 # A commit at an index no one named: the commit's lower word reaches the core one higher.
@@ -1747,7 +1872,7 @@ toplevel = "learn_chain"
 sources = ["spec/undertone_pkg.sv", "rtl/source/source_mulc.sv", "rtl/source/source.sv", "rtl/inject/inject.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/learn/learn.sv", "rtl/learn/learn_port.sv", "rtl/learn/learn_chain.sv"]
 module = "bench_learn_chain"
 profiles = ["s24x3"]
-identity = ["update_finishes_within_f", "truth_isolation", "a_record_offered_late", "bit_identity_e1_flow"]
+identity = ["update_finishes_within_f", "truth_isolation", "a_record_offered_late", "bit_identity_e1_flow", "full_at_thirty_two_bits"]
 limit = 300
 
 # Finished one frame early at the definition's 128 taps.
