@@ -9,14 +9,19 @@ synthesis of the core was run on is held here, as text:
   2. the memory has one write and one read, the form of a simple dual-port memory: outside
      comments `pool_mem[` occurs exactly twice, as `pool_mem[pool_wp] <= s4_rect;` and
      `pool_q <= pool_mem[pool_rp];`;
-  3. the read register `pool_q` has no reset: it is assigned once, and the block `st4_pool` that
+  3. the read register `pool_q` has no reset: it is assigned once, by any form of assignment,
+     nonblocking, blocking or continuous, whole or by a part select, and the block `st4_pool` that
      assigns it holds exactly the one line `if (!rst && vld[ST_S3]) pool_q <= pool_mem[pool_rp];`.
+     (Until VPOOLRAM's pass the check saw `<=` alone, and a blocking `pool_q = '0;` in an
+     `always @*` passed it.)
 
 Each check is shown to report a fault planted in a copy of the text (`PLANTS`), one at a time.
 
 WHAT IT CANNOT SEE: whether Vivado makes UltraRAM of this text, which is the lead's synthesis to
 show; a comment that hides code from these checks by a form other than `//` (a block comment);
-and anything about the memory but these three facts.
+an assignment to `pool_q` that does not begin with its name (inside a concatenation on the left,
+or from another module by a hierarchical name); and anything about the memory but these three
+facts.
 """
 import os
 import re
@@ -30,6 +35,10 @@ WRITE = "pool_mem[pool_wp] <= s4_rect;"
 READ = "pool_q <= pool_mem[pool_rp];"
 READ_LINE = "if (!rst && vld[ST_S3]) pool_q <= pool_mem[pool_rp];"
 BLOCK = "always @(posedge clk) begin : st4_pool"
+CHOICE = "    assign s4_old = fwd_sel ? fwd_val : pool_q;"
+# An assignment to pool_q: its name, any part selects, then `<=` or a single `=` (not `==`). A
+# comparison `pool_q <= x` inside a condition is counted too, which can only add a finding.
+ASSIGNED = re.compile(r"\bpool_q\b(\s*\[[^\]]*\])*\s*(<=|=(?!=))")
 
 
 def code_of(line):
@@ -65,7 +74,7 @@ def check_one_write_one_read(text):
 def check_read_register_unreset(text):
     code = [code_of(line).strip() for line in text.split("\n")]
     found = []
-    assigned = [line for line in code if re.search(r"\bpool_q\s*<=", line)]
+    assigned = [line for line in code for _ in ASSIGNED.finditer(line)]
     if assigned != [READ_LINE]:
         found.append("pool_q is assigned by %s, not once by %s" % (assigned, READ_LINE))
     if code.count(BLOCK) != 1:
@@ -97,6 +106,13 @@ PLANTS = (
     ("the read register's enable dropped", check_read_register_unreset, READ_LINE, READ),
     ("pool_q assigned a second time", check_read_register_unreset,
      "fwd_val <= s4_rect;", "fwd_val <= s4_rect; pool_q <= '0;"),
+    # VPOOLRAM's: assignments that are not `<=`, each outside the block st4_pool
+    ("a blocking assignment to pool_q in an always @*", check_read_register_unreset,
+     CHOICE, "    always @* pool_q = '0;\n" + CHOICE),
+    ("a blocking assignment to a bit of pool_q", check_read_register_unreset,
+     CHOICE, "    always @* pool_q[0] = 1'b0;\n" + CHOICE),
+    ("a continuous assignment to pool_q", check_read_register_unreset,
+     CHOICE, "    assign pool_q = '0;\n" + CHOICE),
 )
 
 
