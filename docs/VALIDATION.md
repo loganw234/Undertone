@@ -2521,3 +2521,21 @@ On Logan's word, "Go ahead and close round 5 and then push":
 ### Changed after the last pass, and not seen by a verifier
 
 The restatements above, in the ROADMAP, VALIDATION and the plan, and this entry, in one commit, which a narrow pass reads next. The merge of `main` into `r5` changes no file of `r5`'s.
+
+## 2026-11-27 - round 5: a narrow pass on the answers: its planted faults found, one statement given its source
+
+### What ran
+
+- **VNARROW5, on Sonnet,** on a sealed clone of `r5` with the answers (`3e2537a`) as one commit with two faults the lead planted, 08:57:43 to 08:58:01 by its own clock. It read the restatements and the closing pass's entry against `docs/studies/E3-software.md` and the round's ledger.
+
+### Measured
+
+- **Plants: 2 of 2:** the ROADMAP's E3 restatement with SRN and CDM swapped, and the new entry's tally given as 44 of 48. **Round 5: 45 of 50** with the plan's passes, 38 of 43 on the round's own work.
+- **Its one other point, and the answer:** "still routing at the round's close" had no source in the round's ledger. It has one now. Read at 08:58:28 on the box:
+  - the link's log had no end line;
+  - its implementation's log was last written at 08:58:15, in the router's tenth phase;
+  - all 25 of its processes were running.
+
+### Changed after the last pass, and not seen by a verifier
+
+This entry and the ROADMAP's line on this pass, in the round's last commit, and the merge of `main` into `r5`, which changes no file of `r5`'s. Then `main` moves to `r5`'s tip and is pushed, as the entry above says.
