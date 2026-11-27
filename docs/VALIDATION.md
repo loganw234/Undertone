@@ -2367,3 +2367,118 @@ Asked "Shall I push round 4 now: yes, or not yet?", after the lead had told him 
 ### Changed after the last pass, and not seen by a verifier
 
 The two restatements above, the ROADMAP's lines on this pass, and this entry, in the round's last commit.
+
+## 2026-11-27 - round 5: learning in the fabric, in simulation and then on the card; stage E1 on the card; stage E3 in software on real noise; the core's pool in UltraRAM
+
+Round 5's plan, [plans/R5-learning-in-fabric-and-real-noise.md](plans/R5-learning-in-fabric-and-real-noise.md), was approved by Logan on 2026-11-25 ("Approve all"). Its two tracks were learning in the fabric, in simulation, and stage E3 in software on real noise. His later words took it further, each in the plan's "Logan's word" and in the ROADMAP:
+- that evening, the round began at once and worked through the night, with one card day added: stage E1 on round 3's image;
+- at about 03:30 on 2026-11-26, the learner was wired into the kernel and taken onto the card the same day;
+- that evening, a parcel was set to balance the build's resources.
+
+The round ran on the local branch `r5`, cut at `5dab095` on 2026-11-25 at 16:44, and closed at `804c948` on 2026-11-27 at 08:28. Its folder, `Data/runs/2026-11-25-r5/`, is not committed; its ledger, briefs and reports are there.
+
+### What ran: eight parcels on Opus, verified on Sonnet
+
+Each parcel was designed first, ruled by the lead, built, then verified on a sealed clone with faults the lead planted. Merged into `r5` in this order:
+- **VIZ**, figures made from the committed records as generated copies of them (`c0ae4d1` to `d51302b`, fast-forward). Its five figure commits were also put onto `main` alone and pushed on Logan's word of 2026-11-25 evening (`main` = `1096118`).
+- **LRN-B**, the learner of phase B in the model, run in the stream beside the core ([model/lrn-b.md](model/lrn-b.md); `92e01ce`, `5d0c70a`, fast-forward). Its ruled design made the round's one change to the definition, applied by the lead: `8ba8c01`, hash `85e63d4def6d...`.
+- **E3S**, stage E3 in software on real SCSN noise ([model/e3s.md](model/e3s.md); merged `cbf2e77`, then the fixes from the lead's full run, `fefe77b`).
+- **RTL-L**, the learner in RTL beside the core, held to the model word for word in simulation ([rtl/learn.md](rtl/learn.md); merged `1107812`).
+- **KRNL-L**, the learner wired into the kernel, held to the model on the packaged top in simulation ([rtl/krnl-learn.md](rtl/krnl-learn.md); merged `99d98e2`).
+- **LRN-C**, the host's side of learning in the fabric on the card ([host/lrn-c.md](host/lrn-c.md); merged `f0ab684`).
+- **E1C**, the host's side of stage E1 on the card ([host/e1c.md](host/e1c.md); merged with the card day's record, `e26c51c`).
+- **POOLRAM**, the core's pool read registered on its own, so that Vivado maps it to UltraRAM ([rtl/poolram.md](rtl/poolram.md)). It was merged with the lead's floorplan, the line of the image the learner's card day ran on (`cc996aa`).
+
+**The lead's own pieces:**
+- the definition's change;
+- wave 3's records, E1, E2 and the premise made again under it, with stage E3's first full record (`e5e8b08`);
+- the learner's synthesis out of context, [studies/SYN-learn.md](studies/SYN-learn.md) (`8811791`, `10269c9`);
+- the floorplan that places the learner in SLR1 (`9bf71d7`, `98be3dc`), past VSLR1;
+- four links on the box, and the two card days with their records (`2bae3b1`, `804c948`).
+
+### Measured: the verifiers
+
+| pass | found |
+|---|---|
+| the plan's two passes | 7 of 7 |
+| VVIZ, its re-check | 3 of 3, 2 of 2 |
+| VLRNB, its re-check | 3 of 3, 2 of 2 |
+| VE1C, its re-check | 2 of 3, 2 of 2 |
+| VE3S, its re-check, its second re-check | 2 of 2, 2 of 2, 0 of 2 |
+| VRTLL, its re-check | 2 of 2, 2 of 2 |
+| VLRNC, its re-check | 2 of 3, 2 of 2 |
+| VKRNLL | 2 of 3 |
+| VSLR1 | 2 of 2 |
+| VPOOLRAM | 3 of 3 |
+
+**Round 5: 40 of 45**, the plan's passes among them; 33 of 38 on the round's own work.
+
+**The five missed were all one kind of fault: an assertion taken out of a test, or a guard out of a bench.** Each verifier read the weakened test as holding what its name says:
+- VE1C's: the swap control's assertion in `tests/test_e1c_card.py`;
+- VE3S's second re-check: both of its plants;
+- VLRNC's: the bracket test's assertion of why it fails, in `tests/test_lrn_c_judge.py`;
+- VKRNLL's: the model's guard in `rtl/tb/bench_krnl_learn.py` that a learner skipping the amplitude-0 record learns another set.
+
+Round 4's one notable miss was of the same kind. No pass found a regression.
+
+**What the verifiers found that was the work's own,** each answered before its merge by a test, a fix or a stated limit: the parcels' reports and the lead's ledger have each item. Among them:
+- **VKRNLL:** no defect in what the image held, so the day's link stood.
+- **VE3S:** E3S's blocks spanned five days, not eight, which the lead had missed.
+- **The lead's full run of E3** found that its command did nothing, and then that it hashed the wrong samples; E3S mended both (`fefe77b`).
+- **VLRNC:** the judge read a key missing from `report.json` as the model's value; LRN-C made it fail by name (`1d28bda`).
+- **VSLR1:** the floorplan's test held its refusals' names and not their conditions.
+- **VPOOLRAM:** the pool's text test missed a blocking assignment.
+
+### Measured: the results
+
+- **Learning in the fabric, in simulation** (RTL-L, then KRNL-L on the packaged top): every record, every learner register read and every refusal the model's, under both profiles. The second size on `r5` after KRNL-L's merge: PASS.
+- **The learner's cost:** 19,070 LUTs, 26,571 registers and 12 DSP slices under s16x1 out of context, with a timing estimate of WNS +5.747 ns at 100 MHz ([studies/SYN-learn.md](studies/SYN-learn.md)).
+- **Stage E3 in software, on real noise: the experiment held at every station.** For the learner named before the run: MPP REACHES, CDM REACHES, HDH SHORT, SRN REACHES ([studies/E3-software.md](studies/E3-software.md)). It is a sensitivity result in software.
+- **Stage E1 on the card: PASS** ([studies/CARD-e1.md](studies/CARD-e1.md)).
+  - On round 3's image, 2026-11-26, 08:00 to 08:18: all 51 runs identical to the model's.
+  - The six parts read from the card's bytes are E1's committed parts, key for key, and E1's own judge prints its committed output byte for byte.
+  - The sets were learned on the desktop and loaded by the host: it is not learning in the fabric.
+- **The links of the learner's kernel:**
+
+  | commit | what | outcome |
+  |---|---|---|
+  | `f9477c5` | KRNL-L's kernel | the placer put the whole kernel in SLR0, 93.27% of its CLBs; congestion level 6; stopped in routing on Logan's word |
+  | `9bf71d7` | the learner pinned in SLR1 | the placer moved the whole kernel to SLR1; closed at 100 MHz, WNS +0.003 ns |
+  | `e67967d` | the pool in UltraRAM, the pin kept | the kernel's synthesis fell to 70,607 LUTs with 48 URAM, from round 3's 329,499; both SLRs under half full, but DATA_CLK 93 MHz ("Achieved 93.9"), hbm_aclk 382 |
+  | `5db05d9` | the pool in UltraRAM, the pin taken out | stopped with `kill -STOP` in routing at 07:44 on 2026-11-27, before the card day; it resumes on cft-fp256's word |
+
+  That the pin is now what costs the clock is BELIEVED ([rtl/krnl.md](rtl/krnl.md), section 7, on `lead/krnl-l-nohook`).
+- **Learning in the fabric on the card: `== LRN-C CARD VERDICT: PASS`** ([studies/CARD-learn.md](studies/CARD-learn.md)).
+  - On `e67967d`'s image, 2026-11-27, 08:00:28 to 08:01:35: four runs, each identical to the model's run of its case.
+  - Every learner operation's outcome was the model's, and so were the learner's 19 registers at the end of each run.
+  - The control was seen: moved differs from flow first at the commit's record.
+  - The learner made its set from the blank set in the fabric, and the host committed it. It is bit identity, not a sensitivity result.
+
+### The lead's calls in the round, each a departure or a decision, for Logan
+
+- **The day's link started on KRNL-L's READY commit while its verifier read it,** with the ruling that a defect in what the image holds would stop the image. VKRNLL found none in it.
+- **The floorplan, the lead's own hw/ change,** made and verified (VSLR1) as a fallback, on Logan's word "In the event it does fail, can we prep to have a build ready to start which should hopefully resolve the congestion a bit by spreading to the other SLR?". It is now in `r5`. It is believed to cost the clock now that the pool is in UltraRAM, and `r5`'s `hw/build.sh` still carries it.
+- **A second fallback prepared** on his word ("Yes, prepare it"), unit in SLR0 and learner in SLR1, `70e3956` on `lead/krnl-l-split`. It was never linked and is left unmerged.
+- **POOLRAM's design ruled by the lead,** as his word allowed. UG901 was not fetched that night: its site's terms went to him, and he ruled in the morning (the ROADMAP).
+- **A fourth link, `5db05d9`, the pin taken out,** started at 01:32 on 2026-11-27 on the lead's own initiative, for future builds and not for the card. It went past no verifier: the one changed file of `hw/` is byte for byte f9477c5's, as git shows, and the rest are removals of the lead's own files. It is on `lead/krnl-l-nohook`, unmerged, its link stopped.
+- **The learner's card day ran on `e67967d`'s image at its lowered clocks,** by his word that the new image is used if done before the nightly ended. The lead read his "Yes, use it" of 2026-11-26 as standing for a lowered clock. 9bf71d7's image was kept as the control, to be run only if a run differed; none did.
+
+### The lead's slips
+
+- **Bookings:**
+  - B0408 ended at 11:30 on 2026-11-26 while the day's link ran on, unbooked, until 12:14, when the lead extended it and told cft-fp256's lead. Nothing of theirs was affected, by their word.
+  - Five runs started two to six minutes before their bookings' start, each inside the TimeSheet's free short-work slot: the learner's timing estimate (B0401), the fallback's link (B0433), the core's synthesis (B0441, six minutes), and two overnight links (B0444, B0445).
+- **Ledger headings:** two of the lead's were timed by hand, not by `date` (14:40 for 14:37, and 20:50 for 20:47), each corrected in the next entry. The entry of 08:04 on 2026-11-27 named op 1 among rich's seven refusals and counted four open windows for three, corrected at 08:06.
+- **The scripts:**
+  - start_lrnc.sh's first time gate compared only the hour and minute, so it passed at 20:39; the TimeSheet check refused before anything was copied.
+  - copy_back_l.sh's first edit hashed the old log name.
+  Both were corrected before any use.
+- **The brief's figures:** POOLRAM's brief gave the pool as about 12.6 Mbit; it is 10,747,904 bits (krnl.md, K9). It also cited a register row, K35, that is on another branch (`lead/krnl-l-split`). The parcel found both.
+- **The fallback's placement:** it moved the whole kernel, which the lead had not foreseen; VSLR1 had flagged that the trial could not rule it out.
+
+### Changed after the last pass, and not seen by a verifier
+
+Every piece of round 5's work went past a verifier but:
+- the lead's two card records and their tests (`2bae3b1`, `804c948`), each shown before its commit to report the lead's own planted faults;
+- `5db05d9`, as above;
+- this entry, the ROADMAP's, the plan's and CLAUDE.md's lines on the round's close, which the round's closing verifier reads next.

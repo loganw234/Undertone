@@ -2,8 +2,27 @@
 
 The lead's file. It holds Logan's decisions as he gave them, the plan of record, and how rounds are held. A parcel does not edit it.
 
-## Where the project stands (2026-11-25)
+## Where the project stands (2026-11-27)
 
+- **Round 5 (2026-11-25 to 27), learning in the fabric, in simulation and then on the card, on the local branch `r5`. Pushed on Logan's word of 2026-11-27, "Go ahead and close round 5 and then push": `main` is `r5`'s tip.** The record is in [VALIDATION.md](VALIDATION.md), round 5's entries.
+  - **Eight parcels on Opus, verified on Sonnet:**
+    - VIZ, the figures;
+    - LRN-B, the learner of phase B in the model, whose design made the round's one change to the definition;
+    - E3S, stage E3 in software on real noise;
+    - RTL-L, the learner in RTL;
+    - KRNL-L, the learner in the kernel;
+    - LRN-C and E1C, the host's sides of two card days;
+    - POOLRAM, the core's pool in UltraRAM.
+    The verifiers found 40 of 45 planted faults, the plan's passes among them. All five missed were an assertion or a guard taken out of a test.
+  - **Learning in the fabric on the card: PASS** ([studies/CARD-learn.md](studies/CARD-learn.md)). On 2026-11-27, four runs of LRN-C's cases on the U50 were the model's word for word. So were every learner operation's outcome and the learner's 19 registers at the end of each run. The learner made its set from the blank set in the fabric, the host committed it, and the control saw it reach the scores at the commit's record. It is bit identity, on one image at a lowered clock, 93.9 MHz; not a sensitivity result.
+  - **Stage E1 on the card: PASS** ([studies/CARD-e1.md](studies/CARD-e1.md)). 51 runs on round 3's image at 100 MHz were the model's, and E1's judge says of the card's parts what it said in software. The sets were learned on the desktop.
+  - **Stage E3 in software, on real seismic noise: the experiment held at every station** ([studies/E3-software.md](studies/E3-software.md)). The learner named before the run reaches the matched filter at three of four stations, and is short at HDH.
+  - **The build:**
+    - The learner costs 19,070 LUTs and 12 DSP slices out of context ([studies/SYN-learn.md](studies/SYN-learn.md)).
+    - With it, the first link congested and was stopped. A floorplan pinning the learner in SLR1 closed at 100 MHz.
+    - POOLRAM's pool in UltraRAM cut the kernel's synthesis from round 3's 329,499 LUTs to 70,607. But with the pin kept, its image runs at 93.9 MHz: the pin is BELIEVED to cost the clock now ([rtl/krnl.md](rtl/krnl.md), section 7).
+    - A link without the pin, `5db05d9` on `lead/krnl-l-nohook`, was stopped mid-route before the card day and is unjudged.
+  - **Not yet shown:** sensitivity from sets learned in the fabric; stage E2 on the card; s24x3 on the card; the URAM pool at 100 MHz.
 - **Round 4 (2026-11-25), stage E0 on the card and stage E2 in software, on the local branch `r4`. Nothing of it is pushed; the lead asks Logan first.** Its work is done but for its close: the closing verifier, the narrow passes on its answers, and the push. *Restated by the lead after its narrow pass, 2026-11-25:* the closing verifier and a narrow pass have reported and been answered (VALIDATION.md, round 4's last entries); a second narrow pass, and Logan's word on the push, remain. *Then:* the second narrow pass found its two planted faults and nothing else of weight, and its one small point is answered; Logan's word on the push remains. **Pushed on Logan's word of 2026-11-25, "Yes push, nice job": `main` is `r4`'s tip.**
   - **Two parcels on Opus, verified on Sonnet:** E0C, the host side of stage E0 on the card ([host/e0c.md](host/e0c.md)), past three passes; E2L, stage E2 in software ([model/e2l.md](model/e2l.md)), past one. The verifiers found 9 of 11 planted faults.
   - **The definition gained a second pulse, `e1`,** for E2's drift. The fabric's injector knows `e0` alone and refuses `e1` by name: a stated subset, the lead's call ([rtl/source.md](rtl/source.md), limit 7).
@@ -17,7 +36,7 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
   - **The card day:** every score word of ten runs on the U50 equals the reference model's, byte for byte, and a flipped-bit control was seen in both of its runs ([studies/CARD-first-light.md](studies/CARD-first-light.md)). Stage E1 in software was made again under round 3's definition, with the same result.
   - **Not yet shown:** sensitivity on the card, and learning in the fabric. The record is in [VALIDATION.md](VALIDATION.md), round 3's entries.
 - **Design:** [D0, the rough design](studies/D0-rough-design.md), approved by Logan on 2026-11-21 with all six of its questions answered as recommended.
-- **Plan of record:** **round 5's, [plans/R5-learning-in-fabric-and-real-noise.md](plans/R5-learning-in-fabric-and-real-noise.md), approved by Logan on 2026-11-25 with every recommendation:** learning in the fabric, in simulation, and stage E3 in software on real noise, on the local branch `r5`. Its parcels start on 2026-11-26, by his word. Before it: [round 3, first light on the card](plans/R3-first-light.md), approved by Logan on 2026-11-24 with every recommendation. It ran on the local branch `r3`, and `main` was moved to `r3`'s tip and pushed on Logan's word of 2026-11-25. **Round 4's plan, [plans/R4-card-e0-and-drift.md](plans/R4-card-e0-and-drift.md), was approved by Logan on 2026-11-25 with two changes** (his words below): stage E0 on the card and stage E2 in software, in parallel where they do not conflict, with verifiers on Sonnet and parcels on Opus. It runs on the local branch `r4`; nothing of it is pushed. *Restated by the lead at round 4's close, 2026-11-25:* its work is done on `r4`, both tracks, and waits on its closing verifier and Logan's word to push. *Restated after its narrow pass:* the closing verifier has reported and been answered; it waits on a second narrow pass and Logan's word. *Then:* pushed on his word of 2026-11-25, `main` being `r4`'s tip. Before it: [round 2, the fabric in simulation and the learner](plans/R2-fabric-in-simulation-and-the-learner.md), approved by Logan on 2026-11-23 with one change. Its work was done on the branch `r2`, each piece past verifiers but for what the round's row in the table below names, and `main` was moved to `r2`'s tip and pushed on Logan's word of 2026-11-23. Before it: [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work was done and verified on the branch `r1`, and `main` was moved to `r1`'s tip and pushed on Logan's word of 2026-11-23.
+- **Plan of record:** **round 5's, [plans/R5-learning-in-fabric-and-real-noise.md](plans/R5-learning-in-fabric-and-real-noise.md), approved by Logan on 2026-11-25 with every recommendation:** learning in the fabric, in simulation, and stage E3 in software on real noise, on the local branch `r5`. Its parcels start on 2026-11-26, by his word. *Restated by the lead at round 5's close, 2026-11-27:* by his later words the round began on the evening of 2026-11-25 and went past its plan, onto the card, as the plan's "Logan's word" section records. It closed on `r5` at `804c948` and was pushed on his word; no plan for round 6 is drafted. Before it: [round 3, first light on the card](plans/R3-first-light.md), approved by Logan on 2026-11-24 with every recommendation. It ran on the local branch `r3`, and `main` was moved to `r3`'s tip and pushed on Logan's word of 2026-11-25. **Round 4's plan, [plans/R4-card-e0-and-drift.md](plans/R4-card-e0-and-drift.md), was approved by Logan on 2026-11-25 with two changes** (his words below): stage E0 on the card and stage E2 in software, in parallel where they do not conflict, with verifiers on Sonnet and parcels on Opus. It runs on the local branch `r4`; nothing of it is pushed. *Restated by the lead at round 4's close, 2026-11-25:* its work is done on `r4`, both tracks, and waits on its closing verifier and Logan's word to push. *Restated after its narrow pass:* the closing verifier has reported and been answered; it waits on a second narrow pass and Logan's word. *Then:* pushed on his word of 2026-11-25, `main` being `r4`'s tip. Before it: [round 2, the fabric in simulation and the learner](plans/R2-fabric-in-simulation-and-the-learner.md), approved by Logan on 2026-11-23 with one change. Its work was done on the branch `r2`, each piece past verifiers but for what the round's row in the table below names, and `main` was moved to `r2`'s tip and pushed on Logan's word of 2026-11-23. Before it: [round 1, the reference model and the launch-data study](plans/R1-reference-model.md), approved by Logan on 2026-11-23. Its work was done and verified on the branch `r1`, and `main` was moved to `r1`'s tip and pushed on Logan's word of 2026-11-23.
 - **Licence:** MIT, by Logan's test of 2026-11-23: the easiest option for others to reuse the work.
 - **Built, in software only:** the reference model (`model/`), the statistics that judge sensitivity (`stats/`), and round 1's eleven gates of D0, none of which needs hardware. As a matched filter the model reproduces the textbook curve at five amplitudes. **Nothing of the system is built on a card**: there is RTL in simulation (below), no host library, and nothing placed, timed or on the card. Of D0's sixteen gates, thirteen have a row in the registry (`tests/gates.toml`): round 1's eleven; the comparison rules, held since round 2's learner on stage E1 in software; and bit identity, of whose three parts the first is held, RTL in simulation. Three have no row: capability bits and provenance, which are about a bitstream, and the learner, which is about weights updated in the fabric. *Restated by the lead after round 3's closing verifier:* the registry has 15 rows now, for 14 of D0's sixteen gates. Round 3 added two for capability bits, KRNL's `capability-bits` and HOST's `host-capabilities`. Provenance, which this round holds in the build's manifest and its check, and the learner have no row. *Restated by the lead on 2026-11-25, before round 3's close is written here:* round 3 built a kernel, a host library and a bitstream that closes at 100 MHz ([rtl/krnl.md](rtl/krnl.md), [host/host.md](host/host.md)). On the card day every score word of ten runs on the U50 equals the model's, and a flipped-bit control was seen in both of its runs ([studies/CARD-first-light.md](studies/CARD-first-light.md)). That is bit identity's third part, and nothing about sensitivity on the card.
 - **Round 2 (2026-11-23), pushed on Logan's word of that day:** the foundation for RTL. A simulation image of this project's own; a second size of the gate, `bash verify/run.sh --with rtl`; the definition generated as a SystemVerilog package and a C header beside the Python constants; a harness that holds RTL against the model on every score record; and a filter of one tap, written to prove that harness, which is not part of the detector. The register map is whole in the definition: three blocks, fifty-two registers, and three refusal names that are the fabric's alone. How it works is [rtl/README.md](rtl/README.md).
@@ -27,6 +46,27 @@ The lead's file. It holds Logan's decisions as he gave them, the plan of record,
 - **The launch experiment, [study D2](studies/D2-launch-experiment.md) (2026-11-23):** by a rule frozen before any scored record was opened, 23 Falcon 9 launches of 2024 were seen at the three nearest stations with full records in 66 of 69 launch windows, against none of 204 control windows; a fourth station has records for seven and hit at all seven. A verifier's own scorer agrees on every one of 548 windows. **Within 50 km the launch is loud, not faint**: this shows the source can label a loud event near the pad, and says nothing yet of a faint one farther out, which is what the project wants a label for.
 - **Looked at, once:** one rocket launch in public seismic records. By the rule fixed before the data was fetched it is seen at three stations, 16.5, 49.9 and 78.5 km from the pad, and not at 181 or 275 km. At a fourth, 32.6 km, the launch-day figure is as large as at the others, and the rule reads "cannot tell" because one control day has a ten-second stretch in the window. One launch and two control days; not a rate. [D1b](studies/D1b-first-look.md).
 - **Committed and pushed:** the setup, under Logan's word of 2026-11-21, up to `d13281f`; and round 1, under his word of 2026-11-23 at its close ("1. Push"). The remote is the public repository `loganw234/Undertone` on GitHub.
+
+### Open with Logan at round 5's close (2026-11-27)
+
+Round 5 ran on the branch `r5`. What the round leaves for him:
+
+1. **The push.** *Answered on 2026-11-27:* "Go ahead and close round 5 and then push". `main` is `r5`'s tip, with the earlier push of the figures merged into it (their commits were cherry-picks of `r5`'s own).
+2. **The lead's decisions in the round, each his to overturn.** The whole list is in VALIDATION.md under round 5's "The lead's calls". Among them:
+   - the day's link started on KRNL-L's READY commit while its verifier read it;
+   - the floorplan that pins the learner in SLR1, which is in `r5` and is now believed to cost the clock;
+   - a fourth link, the pin taken out, started overnight on the lead's own initiative and past no verifier;
+   - the learner's card day run on the new image at its lowered clocks.
+3. **Two branches left unmerged:**
+   - `lead/krnl-l-nohook` (`5db05d9`, the pin taken out; its link stopped and unjudged);
+   - `lead/krnl-l-split` (`70e3956`, a second fallback, never linked).
+4. **What round 6 is.** Nothing is drafted. Among the routes the round leaves:
+   - stage E1 with its sets learned in the fabric, on the card;
+   - the URAM pool's image at 100 MHz, which the pin's removal may give;
+   - stage E2 on the card, which needs `e1` in the fabric;
+   - s24x3 on the card;
+   - the host's parse, and Logan's 200 MHz goal, under "Routes for later".
+5. **Raspberry Shake's licence.** Held, by his word.
 
 ### Open with Logan at round 4's close (2026-11-25)
 
@@ -342,6 +382,72 @@ It is not leave to push. Then, the same evening:
 
 *The lead's reading:* no parcel is dispatched and nothing is run for round 5 tonight. Tonight the lead records the approval, cuts the round's branch, and writes the briefs and the worktrees. The parcels start on 2026-11-26, in the morning.
 
+**2026-11-25, about 20:30, after parcel VIZ's figures were sent to him.**
+
+> Push the visualizations to main, go ahead and begin the round now, its alright to work overnight as Im curious to the results of R5, we can hopefully be prepped to do some runs on the card by the time the nightly finished up at 8
+
+*The lead's reading,* in the plan's "Logan's word": the round begins that night and works through it; VIZ's figure commits go to `main` alone and are pushed (`1096118`); one card day is added for 08:00, stage E1 on round 3's image (parcel E1C).
+
+**2026-11-26, about 03:30,** after the lead had offered the learner's timing estimate on the box and named the learner's wiring into the kernel and a card day's host side as the work before learning in the fabric can be tested.
+
+> Run it and go ahead with the parcel dispatch, maybe we can get it ran today before the nightly begins tonight. I'd like to get learning on fabric tested
+
+*The lead's reading:* the estimate runs, and parcels KRNL-L and LRN-C are dispatched at once, pulling into that day what the plan left to a later round. The day's link starts on KRNL-L's READY commit while its verifier reads it; a defect in what the image holds would stop the image.
+
+**2026-11-26, after the lead's report at about 12:13 that the day's link was congested.**
+
+> In the event it does fail, can we prep to have a build ready to start which should hopefully resolve the congestion a bit by spreading to the other SLR?
+
+*The lead's reading:* a fallback is made ready, not started: the learner placed in SLR1 by a hook before placement, tried in Vivado, gated and committed (`9bf71d7`).
+
+**2026-11-26, about 12:39.** Asked "If the current link routes at a lowered clock, use that image for today's card session?":
+
+> Yes, use it
+
+*The lead's reading:* a lowered clock does not stop a card session; the clock is read from the image and stated in the record. The lead read this as standing for the next day's card session too.
+
+**2026-11-26, about 14:25.** Asked "Stop the current link now and start the SLR1 fallback?", after the router had nearly stalled:
+
+> Yes, switch now
+
+*The lead's reading:* the link is stopped by its process group, the fallback started, and that afternoon's card session released unused.
+
+**2026-11-26, the evening** (the round's ledger, 18:16). Asked "Prepare a second fallback that holds the rest of the kernel in SLR0?", after the fallback's placer had moved the whole kernel into SLR1:
+
+> Yes, prepare it
+
+*The lead's reading:* it is made ready and not started (`70e3956`); it is to be built only if the fallback failed, and it did not.
+
+**2026-11-26, about 20:40.** Asked "When should I run the learner's card session?":
+
+> Tomorrow morning
+
+*The lead's reading:* booked for 2026-11-27, 08:00 to 10:30, with cft-fp256's word.
+
+**2026-11-26, about 20:45.**
+
+> Since the overnight window is mostly empty, go ahead and dispatch a parcel tasked with optimizing the build to better balance resources to resolve the issue with future builds. As this is a contained parcel you can handle the approval of it and begin a build once the parcel is verified as Ill be heading to bed. The image we have will be the one used (unless by some chance the new one finishes prior to the nightly run finishing)
+
+*The lead's reading:* parcel POOLRAM moves the core's pool into UltraRAM; the lead rules its design; its link starts once its verifier reports. The new image ended at 01:18, before the nightly, so the learner's card day ran on it first.
+
+**2026-11-27, about 05:28.** Asked whether parcels may read AMD's synthesis guide, UG901, whose site's terms limit its use:
+
+> Regarding the UG901 question, the guide may be used for information and study, not directly included into the project verbatim.
+
+*The lead's reading:* a parcel may fetch and read UG901, and cite it in its own words by section, labelled READ; no passage of it is copied into a committed file. The ruling names UG901; another document whose terms limit its use still goes to him first.
+
+**2026-11-27, about 08:06.** Asked "Shall I write the card record and merge the round's branches into r5?", after learning in the fabric passed on the card:
+
+> Yes, record and merge
+
+*The lead's reading:* POOLRAM's line, which is the image's, is merged into `r5` (`cc996aa`), and the card day's record committed on the second size (`804c948`). The branches of links not used on the card stay unmerged.
+
+**2026-11-27, about 08:30.**
+
+> Go ahead and close round 5 and then push
+
+*The lead's reading:* the round's close is written and goes past a closing verifier; then `main` moves to `r5`'s tip and is pushed. Only `main` is pushed. It is his word for round 5's push, not a standing word for later ones.
+
 ## Standing rules
 
 **Carried over by Logan's word of 2026-11-21** (question 5 of D0). These are rules he set for cft-fp256, read that day from that project's lead notes, which are not in its repository.
@@ -372,7 +478,7 @@ It is not leave to push. Then, the same evening:
 
 | round | what | state |
 |---|---|---|
-| `2026-11-25-r5` | round 5: learning in the fabric, in simulation, and stage E3 in software on real noise | approved 2026-11-25; its branch `r5`, cut from `r5-plan`'s tip, and its briefs made that evening; its parcels start on 2026-11-26; not pushed |
+| `2026-11-25-r5` | round 5: learning in the fabric, in simulation, and stage E3 in software on real noise | approved 2026-11-25; its branch `r5`, cut from `r5-plan`'s tip, and its briefs made that evening; its parcels start on 2026-11-26; not pushed. *Restated by the lead at its close, 2026-11-27:* begun that evening on Logan's word, and taken onto the card by his later words. Eight parcels merged (VIZ, LRN-B, E3S, RTL-L, KRNL-L, LRN-C, E1C, POOLRAM), each built on Opus and past verifiers on Sonnet, with the lead's floorplan in POOLRAM's line, 40 of 45 planted faults found with the plan's passes. Two card days: stage E1 on the card, and learning in the fabric on the card, each PASS. Four links. Pushed on Logan's word of 2026-11-27: `main` is `r5`'s tip. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-25-r5-plan` | the draft plan for round 5, [plans/R5-learning-in-fabric-and-real-noise.md](plans/R5-learning-in-fabric-and-real-noise.md), and two verifier passes over its drafts | drafted 2026-11-25 on the local branch `r5-plan`, cut from `main` at round 4's push, on Logan's word "Begin drafting round 5's plan ..."; three drafts, two passes on Sonnet, 7 of 7 planted faults found; approved by Logan on 2026-11-25 with every recommendation |
 | `2026-11-25-r4` | round 4: stage E0 on the card, and stage E2 in software | running from 2026-11-25 on the local branch `r4`, cut from `r4-plan`'s tip; not pushed. *Restated by the lead at its close, 2026-11-25:* two parcels merged (E0C, E2L), each built on Opus and past verifiers on Sonnet, four passes, 9 of 11 planted faults found; the lead's `e1` in the definition, the card day and three runs in software; its closing verifier next. *Restated after its narrow pass:* the closing verifier and a narrow pass reported and were answered, 15 of 17 planted faults found in the round; not pushed. *Then* a second narrow pass: 17 of 19. Pushed on Logan's word of 2026-11-25; `main` is `r4`'s tip, and its commits went out with it. The record is in [VALIDATION.md](VALIDATION.md) |
 | `2026-11-25-r4-plan` | the draft plan for round 4, [plans/R4-card-e0-and-drift.md](plans/R4-card-e0-and-drift.md), and four verifier passes over its drafts | drafted 2026-11-25 on the local branch `r4-plan`, cut from `main` at round 3's push, on Logan's word "Then begin the round 4 draft"; five drafts, four passes on Opus, 11 of 11 planted faults found; approved by Logan on 2026-11-25 with two changes; its commits are in `r4`'s history; not pushed |

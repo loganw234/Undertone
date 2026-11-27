@@ -228,3 +228,21 @@ Then, at about 20:30 the same evening, after the figures of parcel VIZ were sent
 2. **The figures go to `main` without the plan.** The five commits of parcel VIZ are put onto `main` by themselves; this plan reaches `main` at the round's close, as each round's has.
 3. **One card day is added, which needs no new image: stage E1 on the card, on round 3's image** (parcel E1C), from 08:00 on 2026-11-26, after cft-fp256's nightly window. It is phase A's two halves together on the card for the first time (row L1): the host trains E1's learner, the card scores E1's held-out streams under the learned set and the matched filter, every record is compared with the model's, and one run swaps a trained set in at an index the host names. "Nothing here runs on the card", in "What this plan does not settle", stands for tracks A and B; this card day is the one exception. **Bit identity rests on the model, and the counts on `stats/`; the counts equal E1's in software exactly when every record is the model's, so the day adds nothing to E1 about sensitivity.**
 4. **Not chosen: a new image that night.** A link of r5's tip, or one with the injector taught `e1` (route C), is 4 h 24 min to 6 h 06 min (row L16) on a box another project shares that night, and either image would be refused again at the round's one change to the definition. Route C stays where the plan put it, for a link that can also carry the learner.
+
+## The round's close (2026-11-27), restated by the lead
+
+The round's later words of Logan's, each verbatim with the lead's reading, are in the ROADMAP's "Logan's words, as given". The round's record is VALIDATION.md's round 5 entry.
+
+- **Track A, learning in the fabric, in simulation: done, and taken further.**
+  - LRN-B wrote the learner in the model; RTL-L wrote it in RTL beside the core; KRNL-L wired it into the kernel. Each was held to the model word for word under both sample formats.
+  - D0's learner gate has its row, `learner`, held by the RTL benches and their control (`tests/gates.toml`, RTL-L's). That is W1 and W2.
+  - By his word of 2026-11-26 at about 03:30, the learner then went onto the card. On 2026-11-27 four runs were the model's, every learner operation and register with them ([CARD-learn.md](../studies/CARD-learn.md)). That was beyond this plan.
+- **Track B, stage E3 in software on real noise: done** (W3). The experiment held at every station, and the learner named before the run reaches the matched filter at three of four stations, short at HDH ([E3-software.md](../studies/E3-software.md)).
+- **W4:** both sizes of the gate pass at the round's tip. E1, E2 and the premise were made again under the round's definition (`e5e8b08`). The inner checks the gate skips by name at the tip are three:
+  - E0C-CARD-STALE twice, as W4 said;
+  - E1C-CARD-STALE once, the round's own E1 card day being round 3's definition.
+- **Added by his later words:**
+  - one card day of stage E1 on round 3's image, PASS ([CARD-e1.md](../studies/CARD-e1.md));
+  - the learner's link and its fallbacks;
+  - parcel POOLRAM, the core's pool in UltraRAM.
+- **Left:** the routes in the ROADMAP's "Open with Logan at round 5's close".
