@@ -1,0 +1,44 @@
+== 08:00:28 learning in the fabric on the card at /data/undertone-r5/lrnc/run-080028; host tree /data/undertone-r5/lhost-39c2061; image /data/undertone-r5/build-e67967d/out/undertone_hw.xclbin; cases /data/undertone-r5/cases-17a0d93
+0af21036a760ba40e1c9f73135c8a6b6cd5e38f1f6c8a07b0f09f56826f5a31b  /data/undertone-r5/build-e67967d/out/undertone_hw.xclbin
+8b0c6911919ea2c1dbb91c981dfd2cf2313916429ee9493e39a96bb1e0e87471  /data/undertone-r5/lhost-39c2061/libundertone_xrt.so
+5b029e9018a2a341c21a5ad921898c3462bb9decf1e1d141555c6772897dbca1  /data/undertone-r5/lhost-39c2061/hw/e0c/run_piece.py
+89abbdcb763df2979422d08244882248521e7fda4cd5a7b91ce843534d45e52d  /data/undertone-r5/lhost-39c2061/host/run_case.py
+dd001f6e0421c7e8a712875bb8846827388751de4c991b12a1b6a8ad18927f3d  /data/undertone-r5/lhost-39c2061/host/library.py
+286d78fa94731deb11588aa1e6d0af6317b0cad2156af62bbab3a5a896d7f302  /data/undertone-r5/lhost-39c2061/hw/lrnc/box_lrnc.sh
+== 08:00:28 health before
+before dynamic-regions exit 0
+before electrical exit 0
+before thermal exit 0
+  Device Status: HEALTHY
+    Xclbin UUID: 16658FE4-F5E9-1E70-F20C-041145575AC8
+  Power                  : 22.020775 Watts
+  |FPGA           |32       |
+== 08:00:29 flow: case flow, 4194304 frames, seed 2026112601, blob blank.blob
+flow run_piece exit 0
+PASS host.run_case: 4194304 records of 4194304 frames written to /data/undertone-r5/lrnc/run-080028/flow; 2 learner operation(s), 0 refused by name
+flow IDENTICAL by its SHA-256 2dda611ffe05c820a98f610cd584f879892cda84b047ad665b9bc732945ecf4d
+== 08:00:45 rich: case rich, 7340032 frames, seed 2026112602, blob matched.blob
+rich run_piece exit 0
+PASS host.run_case: 7340032 records of 7340032 frames written to /data/undertone-r5/lrnc/run-080028/rich; 13 learner operation(s), 7 refused by name
+rich IDENTICAL by its SHA-256 635fdd90f993c0b610ec9dd9169112fb16f5d761ab98ff9c03ac497064524104
+== 08:01:07 moved: case moved, 4194304 frames, seed 2026112601, blob blank.blob
+moved run_piece exit 0
+PASS host.run_case: 4194304 records of 4194304 frames written to /data/undertone-r5/lrnc/run-080028/moved; 2 learner operation(s), 0 refused by name
+moved IDENTICAL by its SHA-256 b0808f295181f45bf556c04d8f40faf88828a10dc4149f7df9f3be1bd6778f36
+== 08:01:20 flow-again: case flow, 4194304 frames, seed 2026112601, blob blank.blob
+flow-again run_piece exit 0
+PASS host.run_case: 4194304 records of 4194304 frames written to /data/undertone-r5/lrnc/run-080028/flow-again; 2 learner operation(s), 0 refused by name
+flow-again IDENTICAL by its SHA-256 2dda611ffe05c820a98f610cd584f879892cda84b047ad665b9bc732945ecf4d
+== 08:01:33 health after
+after dynamic-regions exit 0
+after electrical exit 0
+after thermal exit 0
+  Device Status: HEALTHY
+    Xclbin UUID: 5048622F-FD2B-97BA-951C-04EE27801086
+      |0      |undertone_krnl:undertone_krnl_1  |0x1400000     |0      |(--)    |
+  Power                  : 14.290118 Watts
+  |FPGA           |35       |
+  |FPGA HBM       |30       |
+processes holding the card's device files:
+SHA256SUMS: 12 files
+== 08:01:35 end

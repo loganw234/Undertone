@@ -1,0 +1,100 @@
+{
+ "identity": {
+  "id": 1431192660,
+  "spec_version": 1,
+  "spec_hash": "85e63d4def6d9b0bc697860b5a77ecf2bf6a52444a89d8a6edc6f0b0832de725",
+  "caps": {
+   "cap_sample_bits": 16,
+   "cap_channels": 1,
+   "cap_coeff_bits": 18,
+   "cap_filters": 4,
+   "cap_taps": 128,
+   "cap_rows": 4,
+   "cap_pool": 65536,
+   "cap_score_shift": 31,
+   "cap_hidden": 12,
+   "cap_hidden_shift": 31,
+   "cap_rectifiers": 3,
+   "cap_blob_versions": 6,
+   "cap_record_queue": 512,
+   "cap_noise_table": 32767,
+   "cap_inject_pending": 1024
+  },
+  "profile": "s16x1"
+ },
+ "memory_group": 0,
+ "learner": {
+  "caps": {
+   "count_bits": 32,
+   "update_frames": 256
+  },
+  "ops": [
+   {
+    "k": 0,
+    "op": "update",
+    "after": 0,
+    "polls": 0,
+    "arg": 1048704,
+    "next_index_before": 336,
+    "outcome": null,
+    "detail": "",
+    "ns": [
+     1383021613028857,
+     1383021613077104
+    ],
+    "next_index_after": 711
+   },
+   {
+    "k": 1,
+    "op": "commit",
+    "after": 1053056,
+    "polls": 4070,
+    "arg": 2097152,
+    "next_index_before": 1053197,
+    "outcome": null,
+    "detail": "",
+    "ns": [
+     1383021846995428,
+     1383021847033313
+    ],
+    "next_index_after": 1053511
+   }
+  ],
+  "end": {
+   "lrn_update_at": 0,
+   "lrn_status_word": 4,
+   "lrn_status": {
+    "named": 0,
+    "running": 0,
+    "made": 1,
+    "unmade": 0,
+    "refused": 0,
+    "refused_again": 0
+   },
+   "lrn_refusal": null,
+   "counts": {
+    "lrn_count0": 32768,
+    "lrn_count1": 32768,
+    "lrn_skip_start": 0,
+    "lrn_skip_busy": 0,
+    "lrn_skip_full": 0,
+    "lrn_made": 1,
+    "lrn_unmade": 0,
+    "lrn_early": 0
+   },
+   "caps": {
+    "lrn_cap_count_bits": 32,
+    "lrn_cap_update_frames": 256
+   }
+  }
+ },
+ "run": {
+  "frames": 4194304,
+  "records": 4194304,
+  "queue_peak": 1,
+  "truth_before_start": 1024,
+  "truth_while_running": 31744,
+  "least_slack": 130179
+ },
+ "records": 4194304
+}

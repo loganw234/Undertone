@@ -1,0 +1,29 @@
+== LRN-C RUN flow: IDENTICAL, 4194304 records
+   flow op 0 update(1048576): taken, the model's taken; bracket [296, 706] inside [0, 1048576]; margin left 1047870
+   flow op 1 commit(2097152): taken, the model's taken; bracket [1053154, 1053438] inside [1048832, 2097152]; margin left 1043714
+   flow registers at the end: 19 of 19 the model's
+== LRN-C RUN rich: IDENTICAL, 7340032 records
+   rich op 0 update(1048576): taken, the model's taken; bracket [299, 662] inside [0, 1048576]; margin left 1047914
+   rich op 1 clear(): read QUANTISE_INPUT, the model's QUANTISE_INPUT; bracket [1053094, 1053251] inside [1048832, None]
+   rich op 2 update(3145728): taken, the model's taken; bracket [1053363, 1053596] inside [1048832, 3145728]; margin left 2092132
+   rich op 3 commit(4194304): UPDATE_UNFINISHED, the model's UPDATE_UNFINISHED; bracket [1053705, 1054115] inside [None, 3145983]; margin left 2091868
+   rich op 4 write_shadow(blank.blob): UPDATE_UNFINISHED, the model's UPDATE_UNFINISHED; bracket [1054237, 1055214] inside [None, 3145983]; margin left 2090769
+   rich op 5 update(3146240): UPDATE_UNFINISHED, the model's UPDATE_UNFINISHED; bracket [1055357, 1055609] inside [None, 3145983]; margin left 2090374
+   rich op 6 commit(4194304): taken, the model's taken; bracket [3150299, 3150552] inside [3145984, 4194304]; margin left 1043752
+   rich op 7 update(6291456): SWAP_PENDING, the model's SWAP_PENDING; bracket [3150659, 3150944] inside [None, 4194304]; margin left 1043360
+   rich op 8 write_shadow(blank.blob): SWAP_PENDING, the model's SWAP_PENDING; bracket [3151057, 3151929] inside [None, 4194304]; margin left 1042375
+   rich op 9 commit(1): SWAP_INDEX, the model's SWAP_INDEX; bracket [4198500, 4198823] inside [4194305, None]
+   rich op 10 update(1): SWAP_INDEX, the model's SWAP_INDEX; bracket [4198935, 4199163] inside [4194305, None]
+   rich op 11 update(5242880): taken, the model's taken; bracket [4199297, 4199478] inside [4194305, 5242880]; margin left 1043402
+   rich op 12 commit(6291456): taken, the model's taken; bracket [5247381, 5247610] inside [5243136, 6291456]; margin left 1043846
+   rich registers at the end: 19 of 19 the model's
+== LRN-C RUN moved: IDENTICAL, 4194304 records
+   moved op 0 update(1048704): taken, the model's taken; bracket [336, 711] inside [0, 1048704]; margin left 1047993
+   moved op 1 commit(2097152): taken, the model's taken; bracket [1053197, 1053511] inside [1048960, 2097152]; margin left 1043641
+   moved registers at the end: 19 of 19 the model's
+== LRN-C RUN flow-again: IDENTICAL, 4194304 records
+   flow-again op 0 update(1048576): taken, the model's taken; bracket [314, 689] inside [0, 1048576]; margin left 1047887
+   flow-again op 1 commit(2097152): taken, the model's taken; bracket [1053028, 1053316] inside [1048832, 2097152]; margin left 1043836
+   flow-again registers at the end: 19 of 19 the model's
+== LRN-C CONTROL moved: SEEN: its own model run's, and different from flow's first at record 2097152, score, 2238591475 where flow's is 2239318260, as predicted
+== LRN-C CARD VERDICT: PASS

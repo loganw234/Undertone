@@ -1,0 +1,39 @@
+{
+ "verdict": "PASS",
+ "runs": {
+  "flow": {
+   "identical": true,
+   "first": null,
+   "ended": true,
+   "operations": true,
+   "registers": true,
+   "sha256": "2dda611ffe05c820a98f610cd584f879892cda84b047ad665b9bc732945ecf4d"
+  },
+  "rich": {
+   "identical": true,
+   "first": null,
+   "ended": true,
+   "operations": true,
+   "registers": true,
+   "sha256": "635fdd90f993c0b610ec9dd9169112fb16f5d761ab98ff9c03ac497064524104"
+  },
+  "moved": {
+   "identical": true,
+   "first": null,
+   "ended": true,
+   "operations": true,
+   "registers": true,
+   "sha256": "b0808f295181f45bf556c04d8f40faf88828a10dc4149f7df9f3be1bd6778f36"
+  },
+  "flow-again": {
+   "identical": true,
+   "first": null,
+   "ended": true,
+   "operations": true,
+   "registers": true,
+   "sha256": "2dda611ffe05c820a98f610cd584f879892cda84b047ad665b9bc732945ecf4d"
+  }
+ },
+ "failed": [],
+ "spec_sha256": "85e63d4def6d9b0bc697860b5a77ecf2bf6a52444a89d8a6edc6f0b0832de725"
+}
