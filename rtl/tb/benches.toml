@@ -469,10 +469,14 @@ kind = "WORD"
 
 # The pool with no forwarding: with a pool of 1 on consecutive clocks it reads a word not yet written.
 # What it reads is unknown, so the harness reports unknown bits, not a wrong word.
+# Re-expressed by parcel POOLRAM (round 5, docs/rtl/poolram.md) on the read it restructured: the
+# forwarding's flag is never set by a frame, and keeps its reset value, so s4_old is the memory's own
+# register after the first frame. Its must_fail and kind are as before: case 0 of the test is a pool of 1
+# unbroken, the mutant's run holds that test alone, so the memory is unknown, and record 1 drops it.
 [[bench.mutant]]
 name = "pool-no-forwarding"
 file = "rtl/core/core.sv"
-edits = [["s4_old  <= (vld[ST_S4] && (pool_wp == pool_rp)) ? s4_rect : pool_mem[pool_rp];", "s4_old  <= pool_mem[pool_rp];"]]
+edits = [["fwd_sel <= vld[ST_S4] && (pool_wp == pool_rp);", "fwd_sel <= 1'b0;"]]
 must_fail = ["bit_identity_swap_on_the_edge"]
 kind = "UNKNOWN-BITS"
 
@@ -2009,4 +2013,101 @@ name = "filters-view-one"
 file = "rtl/core/core.sv"
 edits = [["assign view_filters     = cfg_filters;", "assign view_filters     = 32'd1;"]]
 must_fail = ["refusals_through_the_views"]
+kind = "WORD"
+
+# ---- Parcel POOLRAM, round 5: the pool's read registered on its own, for UltraRAM (docs/rtl/poolram.md) ----
+#
+# The core on its small top. Two tests: the records of seven streams against the model, and s4_old against
+# the line it replaced at every clock. Each mutant edits the lines this parcel wrote, under one profile (the
+# core's ruling), and is read against the record or clock its fault predicts. The stream and clock each
+# mutant fails at are in docs/rtl/poolram.md, section 4. Two of them reach no record at all: only
+# s4_old_at_every_edge sees them.
+
+[[bench]]
+name = "poolram-s16x1"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_poolram"
+profiles = ["s16x1"]
+identity = ["bit_identity_pool_collisions"]
+limit = 120
+
+# The forwarding removed: the flag never set by a frame, its reset value kept. With the memory written with
+# known words first, the drop at a pool of 1 on consecutive clocks is a wrong word, not unknown bits.
+[[bench.mutant]]
+name = "forwarding-removed"
+file = "rtl/core/core.sv"
+edits = [["fwd_sel <= vld[ST_S4] && (pool_wp == pool_rp);", "fwd_sel <= 1'b0;"]]
+must_fail = ["bit_identity_pool_collisions", "s4_old_at_every_edge"]
+kind = "WORD"
+
+# The forwarded word one frame stale: the word written by the frame before the one being written.
+[[bench.mutant]]
+name = "forwarding-one-frame-stale"
+file = "rtl/core/core.sv"
+edits = [
+    ["head_valid;", "head_valid;\n    logic [B_FILTERS*W_RECT-1:0] fwd_stale = '0;"],
+    ["fwd_val <= s4_rect;", "fwd_val <= fwd_stale; fwd_stale <= s4_rect;"],
+]
+must_fail = ["bit_identity_pool_collisions", "s4_old_at_every_edge"]
+kind = "WORD"
+
+# The read register's enable dropped: it loads at every clock. s4_old is added only at the edge after one
+# that loaded it, so no record can show this; s4_old between frames can.
+[[bench.mutant]]
+name = "read-every-clock"
+file = "rtl/core/core.sv"
+edits = [["if (!rst && vld[ST_S3]) pool_q <= pool_mem[pool_rp];", "pool_q <= pool_mem[pool_rp];"]]
+must_fail = ["s4_old_at_every_edge"]
+kind = "WORD"
+
+# Half the forwarding's condition removed: a frame at s4 alone forwards, whatever the pointers.
+[[bench.mutant]]
+name = "forwarding-without-the-pointers"
+file = "rtl/core/core.sv"
+edits = [["fwd_sel <= vld[ST_S4] && (pool_wp == pool_rp);", "fwd_sel <= vld[ST_S4];"]]
+must_fail = ["bit_identity_pool_collisions", "s4_old_at_every_edge"]
+kind = "WORD"
+
+[[bench]]
+name = "poolram-s24x3"
+toplevel = "core_small"
+sources = ["spec/undertone_pkg.sv", "rtl/core/core_head.sv", "rtl/core/core.sv", "rtl/core/core_small.sv"]
+module = "bench_poolram"
+profiles = ["s24x3"]
+identity = ["bit_identity_pool_collisions"]
+limit = 120
+
+# The forwarding always taken: right at a pool of 1, wrong at every other.
+[[bench.mutant]]
+name = "forwarding-always"
+file = "rtl/core/core.sv"
+edits = [["fwd_sel <= vld[ST_S4] && (pool_wp == pool_rp);", "fwd_sel <= 1'b1;"]]
+must_fail = ["bit_identity_pool_collisions", "s4_old_at_every_edge"]
+kind = "WORD"
+
+# The memory read at the write pointer: right whenever the two pointers agree, a pool of 1 or a gap.
+[[bench.mutant]]
+name = "read-at-the-write-pointer"
+file = "rtl/core/core.sv"
+edits = [["pool_q <= pool_mem[pool_rp];", "pool_q <= pool_mem[pool_wp];"]]
+must_fail = ["bit_identity_pool_collisions", "s4_old_at_every_edge"]
+kind = "WORD"
+
+# s4_old not 0 after a reset: the flag's reset value 0, so s4_old is the memory's register, never reset.
+# Nothing adds s4_old before a frame has loaded it, so no record can show this.
+[[bench.mutant]]
+name = "not-zero-after-a-reset"
+file = "rtl/core/core.sv"
+edits = [["fwd_sel <= 1'b1;", "fwd_sel <= 1'b0;"]]
+must_fail = ["s4_old_at_every_edge"]
+kind = "WORD"
+
+# The other half of the condition removed: the pointers alone forward, with no frame at s4. They agree after
+# every gap, so this forwards there; stream 4's seeded gaps hold one past the fill, and the bench asserts it.
+[[bench.mutant]]
+name = "forwarding-without-the-valid"
+file = "rtl/core/core.sv"
+edits = [["fwd_sel <= vld[ST_S4] && (pool_wp == pool_rp);", "fwd_sel <= (pool_wp == pool_rp);"]]
+must_fail = ["bit_identity_pool_collisions", "s4_old_at_every_edge"]
 kind = "WORD"

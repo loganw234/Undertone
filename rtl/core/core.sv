@@ -198,7 +198,13 @@ module core #(
     logic signed [W_ROW-1:0]       s3_row [0:B_ROWS-1];
     logic [B_FILTERS*W_RECT-1:0]   s4_rect;                    // r_k at [k*W_RECT +: W_RECT]
     logic [B_FILTERS*W_RECT-1:0]   s4_old;                     // the values the pool drops, read a stage ahead
+    // The pool's memory, for UltraRAM: its read has a register of its own, pool_q, with the forwarding chosen after
+    // it (docs/rtl/poolram.md). A synthesis attribute only: Icarus Verilog ignores it.
+    (* ram_style = "ultra" *)
     logic [B_FILTERS*W_RECT-1:0]   pool_mem [0:B_POOL-1];
+    logic [B_FILTERS*W_RECT-1:0]   pool_q;                     // the memory's own output register: the word at pool_rp
+    logic [B_FILTERS*W_RECT-1:0]   fwd_val;                    // the word written at that read's edge
+    logic                          fwd_sel;                    // 1: s4_old is fwd_val. 0: s4_old is pool_q
     logic [PTR_BITS-1:0]           pool_rp, pool_wp;
     logic [FILL_BITS-1:0]          pool_fill;                  // frames since the start, stopping at P
     logic [B_FILTERS*W_POOL-1:0]   z_flat;                     // z_k at [k*W_POOL +: W_POOL]
@@ -639,7 +645,8 @@ module core #(
         logic signed [W_RECT-1:0] yx, rr;
         if (rst) begin
             s4_rect <= '0;
-            s4_old  <= '0;
+            fwd_sel <= 1'b1;                    // s4_old reads 0 after a reset, as its register did
+            fwd_val <= '0;
             pool_rp <= '0;
         end else if (vld[ST_S3]) begin
             for (int k = 0; k < B_FILTERS; k++) begin
@@ -652,11 +659,22 @@ module core #(
                 s4_rect[k*W_RECT +: W_RECT] <= rr;
             end
             // The value the pool will drop for this frame is the one written P frames ago. With a
-            // pool of 1 and frames on consecutive clocks that is being written at this very edge.
-            s4_old  <= (vld[ST_S4] && (pool_wp == pool_rp)) ? s4_rect : pool_mem[pool_rp];
+            // pool of 1 and frames on consecutive clocks that is being written at this very edge:
+            // the memory's read gives the word before it, so the word being written is kept here
+            // and chosen after the read.
+            fwd_sel <= vld[ST_S4] && (pool_wp == pool_rp);
+            fwd_val <= s4_rect;
             pool_rp <= (pool_rp == cfg_pool - 1) ? {PTR_BITS{1'b0}} : pool_rp + 1'b1;
         end
     end
+
+    // The pool's read: the memory's own output register, loaded where s4_old's register was and with
+    // no reset, so that synthesis can take it into the memory. s4_old is the choice after it: at
+    // every edge the value its register had (docs/rtl/poolram.md).
+    always @(posedge clk) begin : st4_pool
+        if (!rst && vld[ST_S3]) pool_q <= pool_mem[pool_rp];
+    end
+    assign s4_old = fwd_sel ? fwd_val : pool_q;
 
     // ------------------------------------------------------------------ s5: the pool's moving sum
     always @(posedge clk) begin : st5
