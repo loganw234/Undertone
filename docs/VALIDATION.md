@@ -2375,7 +2375,7 @@ Round 5's plan, [plans/R5-learning-in-fabric-and-real-noise.md](plans/R5-learnin
 - at about 03:30 on 2026-11-26, the learner was wired into the kernel and taken onto the card the same day;
 - that evening, a parcel was set to balance the build's resources.
 
-The round ran on the local branch `r5`, cut at `5dab095` on 2026-11-25 at 16:44, and closed at `804c948` on 2026-11-27 at 08:28. Its folder, `Data/runs/2026-11-25-r5/`, is not committed; its ledger, briefs and reports are there.
+The round ran on the local branch `r5`, cut at `5dab095` on 2026-11-25 at 16:44, and closed at `804c948` on 2026-11-27 at 08:28. *Restated after the closing verifier:* `804c948` is the round's last work commit; this record and its answers follow it. Its folder, `Data/runs/2026-11-25-r5/`, is not committed; its ledger, briefs and reports are there.
 
 ### What ran: eight parcels on Opus, verified on Sonnet
 
@@ -2433,7 +2433,7 @@ Round 4's one notable miss was of the same kind. No pass found a regression.
 
 - **Learning in the fabric, in simulation** (RTL-L, then KRNL-L on the packaged top): every record, every learner register read and every refusal the model's, under both profiles. The second size on `r5` after KRNL-L's merge: PASS.
 - **The learner's cost:** 19,070 LUTs, 26,571 registers and 12 DSP slices under s16x1 out of context, with a timing estimate of WNS +5.747 ns at 100 MHz ([studies/SYN-learn.md](studies/SYN-learn.md)).
-- **Stage E3 in software, on real noise: the experiment held at every station.** For the learner named before the run: MPP REACHES, CDM REACHES, HDH SHORT, SRN REACHES ([studies/E3-software.md](studies/E3-software.md)). It is a sensitivity result in software.
+- **Stage E3 in software, on real noise: the experiment held at every station.** For the learner named before the run: MPP REACHES, CDM REACHES, HDH SHORT, SRN REACHES ([studies/E3-software.md](studies/E3-software.md)). It is a sensitivity result in software. *Restated after the closing verifier:* those are the judge's readings. The study's own is narrower: the learner reached the matched filter at SRN, fell far short at HDH, and the run cannot say at CDM (its error too wide) or MPP (both models blind to the pulse).
 - **Stage E1 on the card: PASS** ([studies/CARD-e1.md](studies/CARD-e1.md)).
   - On round 3's image, 2026-11-26, 08:00 to 08:18: all 51 runs identical to the model's.
   - The six parts read from the card's bytes are E1's committed parts, key for key, and E1's own judge prints its committed output byte for byte.
@@ -2445,7 +2445,7 @@ Round 4's one notable miss was of the same kind. No pass found a regression.
   | `f9477c5` | KRNL-L's kernel | the placer put the whole kernel in SLR0, 93.27% of its CLBs; congestion level 6; stopped in routing on Logan's word |
   | `9bf71d7` | the learner pinned in SLR1 | the placer moved the whole kernel to SLR1; closed at 100 MHz, WNS +0.003 ns |
   | `e67967d` | the pool in UltraRAM, the pin kept | the kernel's synthesis fell to 70,607 LUTs with 48 URAM, from round 3's 329,499; both SLRs under half full, but DATA_CLK 93 MHz ("Achieved 93.9"), hbm_aclk 382 |
-  | `5db05d9` | the pool in UltraRAM, the pin taken out | stopped with `kill -STOP` in routing at 07:44 on 2026-11-27, before the card day; it resumes on cft-fp256's word |
+  | `5db05d9` | the pool in UltraRAM, the pin taken out | stopped with `kill -STOP` in routing at 07:44 on 2026-11-27, before the card day; it resumes on cft-fp256's word. *Restated after the closing verifier:* resumed with `kill -CONT` at 08:50, after cft-fp256's preflight; still routing at the round's close, unjudged |
 
   That the pin is now what costs the clock is BELIEVED ([rtl/krnl.md](rtl/krnl.md), section 7, on `lead/krnl-l-nohook`).
 - **Learning in the fabric on the card: `== LRN-C CARD VERDICT: PASS`** ([studies/CARD-learn.md](studies/CARD-learn.md)).
@@ -2460,14 +2460,14 @@ Round 4's one notable miss was of the same kind. No pass found a regression.
 - **The floorplan, the lead's own hw/ change,** made and verified (VSLR1) as a fallback, on Logan's word "In the event it does fail, can we prep to have a build ready to start which should hopefully resolve the congestion a bit by spreading to the other SLR?". It is now in `r5`. It is believed to cost the clock now that the pool is in UltraRAM, and `r5`'s `hw/build.sh` still carries it.
 - **A second fallback prepared** on his word ("Yes, prepare it"), unit in SLR0 and learner in SLR1, `70e3956` on `lead/krnl-l-split`. It was never linked and is left unmerged.
 - **POOLRAM's design ruled by the lead,** as his word allowed. UG901 was not fetched that night: its site's terms went to him, and he ruled in the morning (the ROADMAP).
-- **A fourth link, `5db05d9`, the pin taken out,** started at 01:32 on 2026-11-27 on the lead's own initiative, for future builds and not for the card. It went past no verifier: the one changed file of `hw/` is byte for byte f9477c5's, as git shows, and the rest are removals of the lead's own files. It is on `lead/krnl-l-nohook`, unmerged, its link stopped.
+- **A fourth link, `5db05d9`, the pin taken out,** started at 01:32 on 2026-11-27 on the lead's own initiative, for future builds and not for the card. It went past no verifier: the one changed file of `hw/` is byte for byte f9477c5's, as git shows, and the rest are removals of the lead's own files. It is on `lead/krnl-l-nohook`, unmerged, its link stopped. *Restated:* its link resumed at 08:50 and was unjudged at the close.
 - **The learner's card day ran on `e67967d`'s image at its lowered clocks,** by his word that the new image is used if done before the nightly ended. The lead read his "Yes, use it" of 2026-11-26 as standing for a lowered clock. 9bf71d7's image was kept as the control, to be run only if a run differed; none did.
 
 ### The lead's slips
 
 - **Bookings:**
   - B0408 ended at 11:30 on 2026-11-26 while the day's link ran on, unbooked, until 12:14, when the lead extended it and told cft-fp256's lead. Nothing of theirs was affected, by their word.
-  - Five runs started two to six minutes before their bookings' start, each inside the TimeSheet's free short-work slot: the learner's timing estimate (B0401), the fallback's link (B0433), the core's synthesis (B0441, six minutes), and two overnight links (B0444, B0445).
+  - Five runs started two to six minutes (*restated:* about 2.5, 3, 3.4, 4 and 6 minutes) before their bookings' start, each inside the TimeSheet's free short-work slot: the learner's timing estimate (B0401), the fallback's link (B0433), the core's synthesis (B0441, six minutes), and two overnight links (B0444, B0445).
 - **Ledger headings:** two of the lead's were timed by hand, not by `date` (14:40 for 14:37, and 20:50 for 20:47), each corrected in the next entry. The entry of 08:04 on 2026-11-27 named op 1 among rich's seven refusals and counted four open windows for three, corrected at 08:06.
 - **The scripts:**
   - start_lrnc.sh's first time gate compared only the hour and minute, so it passed at 20:39; the TimeSheet check refused before anything was copied.
@@ -2482,3 +2482,42 @@ Every piece of round 5's work went past a verifier but:
 - the lead's two card records and their tests (`2bae3b1`, `804c948`), each shown before its commit to report the lead's own planted faults;
 - `5db05d9`, as above;
 - this entry, the ROADMAP's, the plan's and CLAUDE.md's lines on the round's close, which the round's closing verifier reads next.
+
+## 2026-11-27 - round 5: the closing verifier on the record: its planted faults found, five points of the lead's, and the answers
+
+### What ran
+
+- **VCLOSE5, on Sonnet,** on a sealed clone of `r5` with the closing record (`a5ac249`) as one commit with three faults the lead planted, 08:52:28 to 08:54:29 by its own clock. It read the record's four files against the round's ledger, the tree and `git log`, about 75 figures, names and commits.
+- **Its document stages:** `bash verify/run.sh --only links,paths,claims,eol`, PASS for the selected stages.
+
+### Measured
+
+**Plants: 3 of 3:**
+- the ROADMAP's kernel synthesis given as 76,607 LUTs for 70,607;
+- VALIDATION's VKRNLL row given as 3 of 3, its table then summing to 41 against the 40 written under it;
+- CLAUDE.md's learner clock given as 96.9 MHz for 93.9.
+
+**Round 5: 43 of 48** with the plan's passes, 36 of 41 on the round's own work.
+
+### More or other than the evidence, the lead's, and the answers
+
+Each was restated where it stands, its earlier text kept:
+- **5db05d9's link was told as stopped,** though it had resumed with `kill -CONT` at 08:50, after cft-fp256's preflight.
+- **E3, "reaches the matched filter at three of four stations",** said more than the study. Those are the judge's readings. The study's own is that the learner reached the matched filter at SRN, fell far short at HDH, and the run cannot say at CDM, its error too wide, or MPP, both models blind to the pulse.
+- **The ROADMAP cited `rtl/krnl.md` section 7** for the belief that the pin costs the clock. In `r5` that section has no such row: it is K37 on `lead/krnl-l-nohook`.
+- **"Closed at `804c948`"** named the round's last work commit as if it were its tip; the record follows it.
+- **"Two to six minutes" early** was loose: about 2.5, 3, 3.4, 4 and 6.
+- **Logan's word to close and push had no source in the round's ledger,** being in the chat alone. The ledger has it now, with the time, about 08:30.
+
+It found no overclaim of bit identity as sensitivity, in any of the four files.
+
+### The push
+
+On Logan's word, "Go ahead and close round 5 and then push":
+- `main` held the five figure commits of 2026-11-25, cherry-picks of `r5`'s own. `r5` had since made two of those figures again under round 5's definition, in wave 3. So `main` is merged into `r5` keeping `r5`'s tree.
+- Then `main` moves to `r5`'s tip by a fast-forward, and only `main` is pushed.
+- `r5`, `lead/krnl-l-nohook`, `lead/krnl-l-split` and the parcels' branches stay local.
+
+### Changed after the last pass, and not seen by a verifier
+
+The restatements above, in the ROADMAP, VALIDATION and the plan, and this entry, in one commit, which a narrow pass reads next. The merge of `main` into `r5` changes no file of `r5`'s.

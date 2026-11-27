@@ -237,7 +237,7 @@ The round's later words of Logan's, each verbatim with the lead's reading, are i
   - LRN-B wrote the learner in the model; RTL-L wrote it in RTL beside the core; KRNL-L wired it into the kernel. Each was held to the model word for word under both sample formats.
   - D0's learner gate has its row, `learner`, held by the RTL benches and their control (`tests/gates.toml`, RTL-L's). That is W1 and W2.
   - By his word of 2026-11-26 at about 03:30, the learner then went onto the card. On 2026-11-27 four runs were the model's, every learner operation and register with them ([CARD-learn.md](../studies/CARD-learn.md)). That was beyond this plan.
-- **Track B, stage E3 in software on real noise: done** (W3). The experiment held at every station, and the learner named before the run reaches the matched filter at three of four stations, short at HDH ([E3-software.md](../studies/E3-software.md)).
+- **Track B, stage E3 in software on real noise: done** (W3). The experiment held at every station, and the learner named before the run reaches the matched filter at three of four stations, short at HDH ([E3-software.md](../studies/E3-software.md)). *Restated after the closing verifier:* those are the judge's readings. The study's own is narrower: reached at SRN, far short at HDH, and the run cannot say at CDM or MPP.
 - **W4:** both sizes of the gate pass at the round's tip. E1, E2 and the premise were made again under the round's definition (`e5e8b08`). The inner checks the gate skips by name at the tip are three:
   - E0C-CARD-STALE twice, as W4 said;
   - E1C-CARD-STALE once, the round's own E1 card day being round 3's definition.
